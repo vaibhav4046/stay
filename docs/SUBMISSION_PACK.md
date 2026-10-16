@@ -54,10 +54,9 @@ Most AI productivity tools either talk passively (chatbots that wait for prompts
 
 ## 5. Live Links & Repository
 
-- **Live Production Application:** [https://stay-two-swart.vercel.app](https://stay-two-swart.vercel.app)
-- **Direct Vercel Deployment:** [https://stay-r12ppmhvp-vaibhav4046s-projects.vercel.app](https://stay-r12ppmhvp-vaibhav4046s-projects.vercel.app)
-- **Interactive No-Login Demo:** [https://stay-two-swart.vercel.app/demo](https://stay-two-swart.vercel.app/demo)
-- **GitHub Repository:** [https://github.com/vaibhav4046/stay](https://github.com/vaibhav4046/stay)
+- **Live Production Application (Public):** [https://stay-two-swart.vercel.app](https://stay-two-swart.vercel.app)
+- **Interactive No-Login Demo (Public):** [https://stay-two-swart.vercel.app/demo](https://stay-two-swart.vercel.app/demo)
+- **GitHub Repository (Public):** [https://github.com/vaibhav4046/stay](https://github.com/vaibhav4046/stay)
 
 ---
 

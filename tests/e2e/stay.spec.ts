@@ -12,8 +12,25 @@ test.describe('Stay — End-to-End Test Suite', () => {
     await expect(page.getByText(/Not a medical device/i).first()).toBeVisible();
 
     // Test interactive walkthrough step advance
-    await page.getByTestId('walkthrough-next-btn').click();
+    const nextBtn = page.getByTestId('walkthrough-next-btn');
+    await nextBtn.click();
     await expect(page.getByText('2. Confirm the friction barrier')).toBeVisible();
+
+    // Advance to Step 5
+    await nextBtn.click(); // step 3
+    await nextBtn.click(); // step 4
+    await nextBtn.click(); // step 5
+    await expect(page.getByText('5. Record outcome & preview strategy learning')).toBeVisible();
+
+    // Test simulated outcome options
+    await page.getByTestId('simulate-outcome-started').click();
+    await expect(page.getByTestId('walkthrough-outcome-feedback')).toContainText('Simulated Outcome · Started');
+
+    await page.getByTestId('simulate-outcome-partly').click();
+    await expect(page.getByTestId('walkthrough-outcome-feedback')).toContainText('Simulated Outcome · Partly Started');
+
+    await page.getByTestId('simulate-outcome-not-started').click();
+    await expect(page.getByTestId('walkthrough-outcome-feedback')).toContainText('Simulated Outcome · Did Not Start');
   });
 
   test('Crisis panel opens and displays fixed UK emergency services', async ({ page }) => {

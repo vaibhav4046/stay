@@ -51,17 +51,17 @@ const PREVIEW_STEPS: WalkthroughStep[] = [
     stayResponse: "I'll keep time and check in the moment your 5 minutes are up.",
   },
   {
-    title: '5. Record outcome & update clinician summary',
+    title: '5. Record outcome & preview strategy learning',
     visualState: 'complete',
     stateLabel: 'Preview · Step 5 of 5',
     firstStep: 'Open thread & type one messy sentence without sending',
-    stayResponse: 'Logged: Started (1 of 1 on Reframing). Added to your 1-page appointment summary.',
+    stayResponse: 'Focus timer complete. Did you get moving on that first step?',
   },
 ];
 
 export function HeroInteractiveWalkthrough() {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [outcomeSelected, setOutcomeSelected] = useState<'started' | 'partly' | null>(null);
+  const [outcomeSelected, setOutcomeSelected] = useState<'started' | 'partly' | 'not_started' | null>(null);
 
   const step = PREVIEW_STEPS[currentStepIndex];
 
@@ -171,8 +171,9 @@ export function HeroInteractiveWalkthrough() {
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
+                  data-testid="simulate-outcome-started"
                   onClick={() => setOutcomeSelected('started')}
-                  className={`btn text-[0.88rem] py-1.5 px-3.5 ${
+                  className={`btn text-[0.85rem] py-1.5 px-3 ${
                     outcomeSelected === 'started' ? 'btn-primary' : 'btn-secondary'
                   }`}
                 >
@@ -180,19 +181,74 @@ export function HeroInteractiveWalkthrough() {
                 </button>
                 <button
                   type="button"
+                  data-testid="simulate-outcome-partly"
                   onClick={() => setOutcomeSelected('partly')}
-                  className={`btn text-[0.88rem] py-1.5 px-3.5 ${
+                  className={`btn text-[0.85rem] py-1.5 px-3 ${
                     outcomeSelected === 'partly' ? 'btn-primary' : 'btn-secondary'
                   }`}
                 >
                   ~ I partly started
                 </button>
+                <button
+                  type="button"
+                  data-testid="simulate-outcome-not-started"
+                  onClick={() => setOutcomeSelected('not_started')}
+                  className={`btn text-[0.85rem] py-1.5 px-3 ${
+                    outcomeSelected === 'not_started' ? 'btn-primary' : 'btn-secondary'
+                  }`}
+                >
+                  ✕ Did not start
+                </button>
               </div>
-              {outcomeSelected && (
-                <p className="mt-3 text-[0.85rem] text-[#236B48] font-medium">
-                  Logged to your local profile. Pattern updated: Reframing is now 1 of 1 started (100%).
-                </p>
+
+              {outcomeSelected === 'started' && (
+                <div
+                  className="mt-3 rounded-lg border border-[#236B48]/30 bg-[#236B48]/10 p-3 text-[0.88rem]"
+                  data-testid="walkthrough-outcome-feedback"
+                >
+                  <span className="block text-[0.75rem] font-semibold text-[#236B48] uppercase tracking-wide">
+                    Simulated Outcome · Started
+                  </span>
+                  <p className="mt-1 text-ink leading-relaxed">
+                    In live mode, this logs a confirmed start for <strong>Cognitive Reframing (1 of 1, 100%)</strong>.
+                    Stay learns this strategy helps you initiate and reflects the start rate in your 1-page clinician appointment export.
+                  </p>
+                </div>
               )}
+
+              {outcomeSelected === 'partly' && (
+                <div
+                  className="mt-3 rounded-lg border border-[#9A6318]/30 bg-[#9A6318]/10 p-3 text-[0.88rem]"
+                  data-testid="walkthrough-outcome-feedback"
+                >
+                  <span className="block text-[0.75rem] font-semibold text-[#9A6318] uppercase tracking-wide">
+                    Simulated Outcome · Partly Started
+                  </span>
+                  <p className="mt-1 text-ink leading-relaxed">
+                    In live mode, partial momentum is tracked honestly without penalty (<strong>0 of 1 confirmed started</strong>).
+                    Stay uses this feedback to suggest a tighter sub-step or an implementation intention next time.
+                  </p>
+                </div>
+              )}
+
+              {outcomeSelected === 'not_started' && (
+                <div
+                  className="mt-3 rounded-lg border border-line bg-surface-recessed p-3 text-[0.88rem]"
+                  data-testid="walkthrough-outcome-feedback"
+                >
+                  <span className="block text-[0.75rem] font-semibold text-ink-3 uppercase tracking-wide">
+                    Simulated Outcome · Did Not Start
+                  </span>
+                  <p className="mt-1 text-ink leading-relaxed">
+                    In live mode, unstarted blocks carry <strong>zero shame and no broken streaks</strong>.
+                    Stay notes the friction barrier and rotates to a different evidence-informed strategy (e.g. 5-min timeboxing) for your next session.
+                  </p>
+                </div>
+              )}
+
+              <p className="mt-2.5 text-[0.78rem] text-ink-3">
+                Simulation preview only · No data is stored until you use Demo (<code className="font-mono text-xs">/demo</code>) or Real Mode (<code className="font-mono text-xs">/app</code>).
+              </p>
             </div>
           )}
         </div>

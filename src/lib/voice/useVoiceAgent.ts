@@ -75,6 +75,13 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   optionsRef.current = options;
 
   const stopPlaybackQueue = useCallback(() => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch {
+        // ignore
+      }
+    }
     for (const source of activeSourcesRef.current) {
       try {
         source.stop();
@@ -86,6 +93,64 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     activeSourcesRef.current.clear();
     if (audioCtxRef.current) {
       nextPlaybackTimeRef.current = audioCtxRef.current.currentTime;
+    }
+  }, []);
+
+  const speakDeterministicBoundary = useCallback((text: string) => {
+    if (typeof window === 'undefined') return;
+
+    // 1. Play soft clinical boundary tone if audio context is active
+    if (audioCtxRef.current && audioCtxRef.current.state === 'running') {
+      try {
+        const ctx = audioCtxRef.current;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(520, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(390, ctx.currentTime + 0.22);
+        gain.gain.setValueAtTime(0.12, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.28);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.28);
+      } catch {
+        // ignore audio tone failure
+      }
+    }
+
+    // 2. Play deterministic spoken boundary via browser SpeechSynthesis
+    if ('speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-GB';
+        const voices = window.speechSynthesis.getVoices();
+        const gbVoice = voices.find(
+          (v) =>
+            v.lang === 'en-GB' ||
+            (v.lang.startsWith('en') && (v.name.includes('UK') || v.name.includes('British') || v.name.includes('Natural')))
+        );
+        if (gbVoice) {
+          utterance.voice = gbVoice;
+        }
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        setVisualState('speaking');
+        setAudioEnergy(0.25);
+
+        utterance.onend = () => {
+          setVisualState('listening');
+          setAudioEnergy(0.05);
+        };
+        utterance.onerror = () => {
+          setVisualState('listening');
+          setAudioEnergy(0.05);
+        };
+        window.speechSynthesis.speak(utterance);
+      } catch {
+        setVisualState('listening');
+      }
     }
   }, []);
 
@@ -373,6 +438,13 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           if (crisis.triggered) {
             disconnectVoiceSession();
             optionsRef.current.onCrisisDetected?.(crisis.message);
+            return;
+          }
+
+          const medBoundary = detectMedicationAdviceRequest(text);
+          if (medBoundary.triggered) {
+            medicationSuppressionRef.current = true;
+            stopPlaybackQueue();
           }
           return;
         }
@@ -405,7 +477,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
             const medBoundary = detectMedicationAdviceRequest(text);
             if (medBoundary.triggered) {
-              // Explicit safety gate: suppress any agent speech/audio for this turn
+              // Explicit safety gate: suppress any agent speech/audio from model for this turn
               medicationSuppressionRef.current = true;
               stopPlaybackQueue();
               optionsRef.current.onMedicalBoundaryDetected?.(medBoundary.message);
@@ -418,15 +490,9 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
                   timestamp: new Date().toISOString(),
                 },
               ]);
-              if (socket.readyState === WebSocket.OPEN) {
-                socket.send(
-                  JSON.stringify({
-                    type: 'reply.create',
-                    instructions:
-                      "The user asked for medication advice. State ONLY: 'Stay cannot advise on medication or doses. Please speak with your prescribing clinician or pharmacist.'",
-                  })
-                );
-              }
+              // Genuinely audible and deterministic speech path:
+              // speak the exact clinical boundary without requesting an LLM reply
+              speakDeterministicBoundary(medBoundary.message);
             }
           }
           return;
@@ -474,6 +540,10 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         }
 
         if (type === 'tool.call') {
+          if (medicationSuppressionRef.current) {
+            // Drop any tool call emitted by model during medication suppression
+            return;
+          }
           const callId = String(msg.call_id || '');
           const name = String(msg.name || '');
           const args = (msg.arguments as Record<string, unknown>) || {};
@@ -605,6 +675,9 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
             timestamp: new Date().toISOString(),
           },
         ]);
+        if (sessionReadyRef.current) {
+          speakDeterministicBoundary(medBoundary.message);
+        }
         return true;
       }
 
@@ -616,7 +689,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       }
       return false;
     },
-    [disconnectVoiceSession, stopPlaybackQueue]
+    [disconnectVoiceSession, stopPlaybackQueue, speakDeterministicBoundary]
   );
 
   useEffect(() => {
