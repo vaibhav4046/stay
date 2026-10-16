@@ -13,105 +13,127 @@ interface Props {
 
 interface StateColorConfig {
   coreColor: number;
-  membraneColor: number;
-  haloColor: number;
-  lightIntensity: number;
+  emissiveColor: number;
+  rimColor: number;
+  ambientColor: number;
   speed: number;
-  noiseAmp: number;
+  baseAmp: number;
+  energyScale: number;
+  lightIntensity: number;
 }
 
-const ORB_STATE_CONFIG: Record<VoiceVisualState, StateColorConfig> = {
+/**
+ * Authentic ChatGPT Voice-style Chromatic Fluid Liquid Orb.
+ * Seamless, iridescent, organic liquid plasma that breathes and reacts to human voice.
+ */
+const CHROMATIC_STATE_CONFIG: Record<VoiceVisualState, StateColorConfig> = {
   idle: {
     coreColor: 0x004d40,
-    membraneColor: 0x006a67,
-    haloColor: 0x38b2ac,
-    lightIntensity: 1.4,
-    speed: 0.6,
-    noiseAmp: 0.08,
+    emissiveColor: 0x006a67,
+    rimColor: 0x00f5d4,
+    ambientColor: 0x002826,
+    speed: 0.7,
+    baseAmp: 0.035,
+    energyScale: 0.15,
+    lightIntensity: 1.8,
   },
   connecting: {
-    coreColor: 0x334155,
-    membraneColor: 0x64748b,
-    haloColor: 0x94a3b8,
-    lightIntensity: 1.8,
-    speed: 1.4,
-    noiseAmp: 0.12,
+    coreColor: 0x1e293b,
+    emissiveColor: 0x475569,
+    rimColor: 0x94a3b8,
+    ambientColor: 0x0f172a,
+    speed: 1.3,
+    baseAmp: 0.05,
+    energyScale: 0.2,
+    lightIntensity: 2.0,
   },
   listening: {
-    coreColor: 0x005f5b,
-    membraneColor: 0x028090,
-    haloColor: 0x00f5d4,
-    lightIntensity: 2.2,
-    speed: 0.9,
-    noiseAmp: 0.16,
+    // Vibrant electric cyan / deep teal with active liquid attention
+    coreColor: 0x025a58,
+    emissiveColor: 0x00a896,
+    rimColor: 0x00f5d4,
+    ambientColor: 0x003d3a,
+    speed: 1.0,
+    baseAmp: 0.065,
+    energyScale: 0.55,
+    lightIntensity: 2.8,
   },
   thinking: {
-    coreColor: 0x312e81,
-    membraneColor: 0x4338ca,
-    haloColor: 0x818cf8,
-    lightIntensity: 2.6,
-    speed: 2.0,
-    noiseAmp: 0.14,
+    // Deep iridescent celestial indigo & lavender nebula
+    coreColor: 0x2e1065,
+    emissiveColor: 0x6366f1,
+    rimColor: 0xa855f7,
+    ambientColor: 0x1e1b4b,
+    speed: 1.8,
+    baseAmp: 0.08,
+    energyScale: 0.25,
+    lightIntensity: 3.2,
   },
   speaking: {
-    coreColor: 0x005f5b,
-    membraneColor: 0x008080,
-    haloColor: 0x70e000,
-    lightIntensity: 2.8,
-    speed: 1.2,
-    noiseAmp: 0.22,
+    // Radiant living emerald / turquoise with acoustic soundwave ripples
+    coreColor: 0x064e3b,
+    emissiveColor: 0x059669,
+    rimColor: 0x34d399,
+    ambientColor: 0x022c22,
+    speed: 1.3,
+    baseAmp: 0.09,
+    energyScale: 0.75,
+    lightIntensity: 3.5,
   },
   interrupted: {
-    coreColor: 0x78350f,
-    membraneColor: 0xb45309,
-    haloColor: 0xfbbf24,
+    // Soft warm amber settling smoothly
+    coreColor: 0x7c2d12,
+    emissiveColor: 0xd97706,
+    rimColor: 0xfbbf24,
+    ambientColor: 0x431407,
+    speed: 0.6,
+    baseAmp: 0.04,
+    energyScale: 0.2,
     lightIntensity: 2.4,
-    speed: 0.5,
-    noiseAmp: 0.06,
   },
   backchannel: {
+    // Warm conversational attunement (ChatGPT Voice "mm-hmm" cue)
     coreColor: 0x064e3b,
-    membraneColor: 0x059669,
-    haloColor: 0x34d399,
-    lightIntensity: 2.5,
+    emissiveColor: 0x10b981,
+    rimColor: 0x6ee7b7,
+    ambientColor: 0x064e3b,
     speed: 1.1,
-    noiseAmp: 0.18,
+    baseAmp: 0.07,
+    energyScale: 0.45,
+    lightIntensity: 3.0,
   },
   saving: {
-    coreColor: 0x1f2937,
-    membraneColor: 0x4b5563,
-    haloColor: 0x9ca3af,
-    lightIntensity: 1.6,
-    speed: 1.5,
-    noiseAmp: 0.08,
+    coreColor: 0x1e293b,
+    emissiveColor: 0x475569,
+    rimColor: 0x64748b,
+    ambientColor: 0x0f172a,
+    speed: 1.2,
+    baseAmp: 0.04,
+    energyScale: 0.15,
+    lightIntensity: 1.8,
   },
   complete: {
-    coreColor: 0x14532d,
-    membraneColor: 0x16a34a,
-    haloColor: 0x86efac,
-    lightIntensity: 2.0,
-    speed: 0.5,
-    noiseAmp: 0.07,
+    coreColor: 0x064e3b,
+    emissiveColor: 0x10b981,
+    rimColor: 0x86efac,
+    ambientColor: 0x022c22,
+    speed: 0.6,
+    baseAmp: 0.04,
+    energyScale: 0.15,
+    lightIntensity: 2.2,
   },
   error: {
     coreColor: 0x7f1d1d,
-    membraneColor: 0xdc2626,
-    haloColor: 0xfca5a5,
-    lightIntensity: 1.8,
-    speed: 0.4,
-    noiseAmp: 0.05,
+    emissiveColor: 0xdc2626,
+    rimColor: 0xfca5a5,
+    ambientColor: 0x450a0a,
+    speed: 0.5,
+    baseAmp: 0.03,
+    energyScale: 0.1,
+    lightIntensity: 1.9,
   },
 };
 
-/**
- * 3D Luminous Living Orb.
- * Features:
- * - Fluid organic noise-displaced outer membrane responding in real-time to voice energy
- * - Luminous pulsing crystalline inner core
- * - Orbital chromatic energy rings with gyroscopic rotation
- * - Ambient orbiting stardust swarm
- * - Accessible graceful fallback for reduced motion
- */
 export default function SignalScene({ state, energy, reducedMotion, onUnsupported }: Props) {
   const mountRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef(state);
@@ -125,7 +147,11 @@ export default function SignalScene({ state, energy, reducedMotion, onUnsupporte
 
     let renderer: THREE.WebGLRenderer;
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+      renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+        powerPreference: 'high-performance',
+      });
     } catch {
       onUnsupported();
       return;
@@ -136,114 +162,95 @@ export default function SignalScene({ state, energy, reducedMotion, onUnsupporte
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(w, h);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.1;
+    renderer.toneMappingExposure = 1.15;
     mount.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(38, w / h, 0.1, 100);
-    camera.position.set(0, 0, 6.2);
+    camera.position.set(0, 0, 5.8);
 
-    // Dynamic point lights that orbit the Orb
+    // Ambient diffuse light
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
     scene.add(ambientLight);
 
-    const coreLight = new THREE.PointLight(0x006a67, 3, 10);
-    coreLight.position.set(0, 0, 0);
-    scene.add(coreLight);
+    // Internal Core Glow Light (illuminates fluid droplet from inside)
+    const centerPointLight = new THREE.PointLight(0x00f5d4, 3.5, 9);
+    centerPointLight.position.set(0, 0, 0);
+    scene.add(centerPointLight);
 
-    const keyLight = new THREE.DirectionalLight(0xfff7ed, 1.8);
-    keyLight.position.set(4, 5, 4);
+    // Warm specular key light
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.8);
+    keyLight.position.set(3, 4, 4);
     scene.add(keyLight);
 
-    const rimLight = new THREE.PointLight(0x38b2ac, 2.5, 8);
-    rimLight.position.set(-3, -2, 3);
+    // Chromatic rim backlight
+    const rimLight = new THREE.PointLight(0x38b2ac, 2.8, 8);
+    rimLight.position.set(-3.5, -2.5, 2.5);
     scene.add(rimLight);
 
-    // 1. Inner Luminous Core
-    const coreGeo = new THREE.SphereGeometry(0.82, 48, 48);
+    // 1. Soft Ambient Bloom Halo (behind the orb)
+    const auraGeo = new THREE.PlaneGeometry(5.2, 5.2);
+    // Radial gradient texture created programmatically
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+      grad.addColorStop(0, 'rgba(0, 245, 212, 0.55)');
+      grad.addColorStop(0.35, 'rgba(0, 106, 103, 0.28)');
+      grad.addColorStop(0.7, 'rgba(0, 50, 48, 0.08)');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 128, 128);
+    }
+    const auraTexture = new THREE.CanvasTexture(canvas);
+    const auraMat = new THREE.MeshBasicMaterial({
+      map: auraTexture,
+      transparent: true,
+      opacity: 0.55,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const auraMesh = new THREE.Mesh(auraGeo, auraMat);
+    auraMesh.position.set(0, 0, -0.6);
+    scene.add(auraMesh);
+
+    // 2. Inner Undulating Luminous Core
+    const coreGeo = new THREE.SphereGeometry(0.88, 48, 48);
     const coreMat = new THREE.MeshStandardMaterial({
       color: 0x004d40,
       emissive: 0x006a67,
-      emissiveIntensity: 0.9,
-      roughness: 0.15,
-      metalness: 0.2,
-      wireframe: false,
+      emissiveIntensity: 1.4,
+      roughness: 0.12,
+      metalness: 0.1,
     });
     const coreMesh = new THREE.Mesh(coreGeo, coreMat);
     scene.add(coreMesh);
 
-    // 2. Outer Fluid Organic Membrane with noise displacement
-    const membraneGeo = new THREE.IcosahedronGeometry(1.35, 26);
-    const basePositions = (membraneGeo.attributes.position.array as Float32Array).slice();
-    const membraneMat = new THREE.MeshPhysicalMaterial({
+    // 3. Outer Fluid Liquid Chromatic Droplet (ChatGPT AVM style)
+    const sphereRadius = 1.38;
+    const sphereGeo = new THREE.SphereGeometry(sphereRadius, 96, 96);
+    const basePositions = (sphereGeo.attributes.position.array as Float32Array).slice();
+
+    const fluidMat = new THREE.MeshPhysicalMaterial({
       color: 0x006a67,
-      emissive: 0x00332c,
-      emissiveIntensity: 0.35,
-      roughness: 0.25,
-      metalness: 0.3,
+      emissive: 0x002c29,
+      emissiveIntensity: 0.45,
+      roughness: 0.08,
+      metalness: 0.05,
       transparent: true,
-      opacity: 0.78,
-      clearcoat: 0.85,
-      clearcoatRoughness: 0.2,
-      transmission: 0.45,
-      ior: 1.35,
+      opacity: 0.88,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.04,
+      transmission: 0.85,
+      ior: 1.45,
+      thickness: 1.8,
+      iridescence: 0.95,
+      iridescenceIOR: 1.33,
     });
-    const membraneMesh = new THREE.Mesh(membraneGeo, membraneMat);
-    scene.add(membraneMesh);
-
-    // 3. Orbital Energy Halos (Twin gyroscopic rings)
-    const haloGeoA = new THREE.TorusGeometry(1.82, 0.016, 16, 120);
-    const haloMatA = new THREE.MeshStandardMaterial({
-      color: 0x38b2ac,
-      emissive: 0x006a67,
-      emissiveIntensity: 1.2,
-      roughness: 0.3,
-    });
-    const haloMeshA = new THREE.Mesh(haloGeoA, haloMatA);
-    haloMeshA.rotation.x = Math.PI / 4;
-    scene.add(haloMeshA);
-
-    const haloGeoB = new THREE.TorusGeometry(2.05, 0.012, 16, 120);
-    const haloMatB = new THREE.MeshStandardMaterial({
-      color: 0x00f5d4,
-      emissive: 0x004d40,
-      emissiveIntensity: 0.9,
-      roughness: 0.4,
-    });
-    const haloMeshB = new THREE.Mesh(haloGeoB, haloMatB);
-    haloMeshB.rotation.y = Math.PI / 3;
-    haloMeshB.rotation.z = Math.PI / 6;
-    scene.add(haloMeshB);
-
-    // 4. Ethereal Stardust Swarm (100 particles)
-    const particleCount = 100;
-    const particleGeo = new THREE.BufferGeometry();
-    const particlePositions = new Float32Array(particleCount * 3);
-    const particleOriginals = new Float32Array(particleCount * 3);
-    for (let i = 0; i < particleCount * 3; i += 3) {
-      const radius = 1.6 + Math.random() * 1.2;
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(Math.random() * 2 - 1);
-      const px = radius * Math.sin(phi) * Math.cos(theta);
-      const py = radius * Math.sin(phi) * Math.sin(theta);
-      const pz = radius * Math.cos(phi);
-      particlePositions[i] = px;
-      particlePositions[i + 1] = py;
-      particlePositions[i + 2] = pz;
-      particleOriginals[i] = px;
-      particleOriginals[i + 1] = py;
-      particleOriginals[i + 2] = pz;
-    }
-    particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
-    const particleMat = new THREE.PointsMaterial({
-      color: 0x38b2ac,
-      size: 0.045,
-      transparent: true,
-      opacity: 0.75,
-      blending: THREE.AdditiveBlending,
-    });
-    const particleSystem = new THREE.Points(particleGeo, particleMat);
-    scene.add(particleSystem);
+    const fluidMesh = new THREE.Mesh(sphereGeo, fluidMat);
+    scene.add(fluidMesh);
 
     let smoothEnergy = 0;
     let t = 0;
@@ -251,90 +258,81 @@ export default function SignalScene({ state, energy, reducedMotion, onUnsupporte
     const clock = new THREE.Clock();
 
     const targetCore = new THREE.Color();
-    const targetMembrane = new THREE.Color();
-    const targetHalo = new THREE.Color();
+    const targetEmissive = new THREE.Color();
+    const targetRim = new THREE.Color();
 
     const render = () => {
       const dt = Math.min(clock.getDelta(), 0.05);
-      const config = ORB_STATE_CONFIG[stateRef.current] || ORB_STATE_CONFIG.idle;
-      smoothEnergy += (energyRef.current - smoothEnergy) * 0.15;
+      const config = CHROMATIC_STATE_CONFIG[stateRef.current] || CHROMATIC_STATE_CONFIG.idle;
+      smoothEnergy += (energyRef.current - smoothEnergy) * 0.18;
 
-      // Color interpolation across all layers
+      // Color interpolation
       targetCore.setHex(config.coreColor);
-      targetMembrane.setHex(config.membraneColor);
-      targetHalo.setHex(config.haloColor);
+      targetEmissive.setHex(config.emissiveColor);
+      targetRim.setHex(config.rimColor);
 
       coreMat.color.lerp(targetCore, 0.08);
-      coreMat.emissive.lerp(targetHalo, 0.08);
-      membraneMat.color.lerp(targetMembrane, 0.08);
-      haloMatA.color.lerp(targetHalo, 0.08);
-      haloMatB.color.lerp(targetHalo, 0.08);
-      particleMat.color.lerp(targetHalo, 0.08);
-      coreLight.color.lerp(targetHalo, 0.08);
-      coreLight.intensity = config.lightIntensity + smoothEnergy * 2.2;
+      coreMat.emissive.lerp(targetEmissive, 0.08);
+      fluidMat.color.lerp(targetEmissive, 0.08);
+      fluidMat.emissive.lerp(targetCore, 0.08);
+      centerPointLight.color.lerp(targetRim, 0.08);
+      rimLight.color.lerp(targetRim, 0.08);
+      auraMat.color.lerp(targetRim, 0.08);
+
+      centerPointLight.intensity = config.lightIntensity + smoothEnergy * 3.0;
 
       if (!reducedMotion) {
         t += dt * config.speed;
 
-        // Dynamic 3-octave fluid noise displacement on outer membrane
-        const pos = membraneGeo.attributes.position.array as Float32Array;
-        const totalAmp = config.noiseAmp + smoothEnergy * 0.35;
+        // Smooth breathing & acoustic energy scale
+        const breath = Math.sin(t * 1.1) * 0.035;
+        const totalAmp = config.baseAmp + smoothEnergy * config.energyScale;
 
+        // Fluid organic wave displacement across smooth spherical harmonics
+        const pos = sphereGeo.attributes.position.array as Float32Array;
         for (let i = 0; i < pos.length; i += 3) {
           const bx = basePositions[i];
           const by = basePositions[i + 1];
           const bz = basePositions[i + 2];
 
-          // Normalized spherical coordinates
-          const nx = bx / 1.35;
-          const ny = by / 1.35;
-          const nz = bz / 1.35;
+          // Normalized coordinates
+          const nx = bx / sphereRadius;
+          const ny = by / sphereRadius;
+          const nz = bz / sphereRadius;
 
-          const n1 = Math.sin(nx * 3.2 + t * 2.5) * Math.cos(ny * 3.2 + t * 1.9);
-          const n2 = Math.sin(nz * 4.0 - t * 1.7) * Math.cos(nx * 2.5 + t * 1.3);
-          const n3 = Math.sin((nx + ny + nz) * 5.0 + t * 3.1);
+          // Continuous fluid wave equation (smooth surface tension ripples)
+          const wave1 = Math.sin(nx * 2.4 + ny * 1.8 + t * 2.2);
+          const wave2 = Math.cos(ny * 2.2 - nz * 2.0 + t * 1.7);
+          const wave3 = Math.sin((nx + nz) * 2.8 + t * 2.6) * Math.cos(ny * 2.2);
+          const ripple = (wave1 * 0.45 + wave2 * 0.35 + wave3 * 0.2) * totalAmp;
 
-          const displacement = (n1 * 0.5 + n2 * 0.3 + n3 * 0.2) * totalAmp;
-          const scale = 1 + displacement / 1.35;
-
-          pos[i] = bx * scale;
-          pos[i + 1] = by * scale;
-          pos[i + 2] = bz * scale;
+          const rScale = 1 + breath + ripple;
+          pos[i] = bx * rScale;
+          pos[i + 1] = by * rScale;
+          pos[i + 2] = bz * rScale;
         }
-        membraneGeo.attributes.position.needsUpdate = true;
+        sphereGeo.attributes.position.needsUpdate = true;
+        sphereGeo.computeVertexNormals();
 
-        // Core breathing & gentle rotation
-        const coreScale = 1 + Math.sin(t * 1.5) * 0.04 + smoothEnergy * 0.22;
+        // Inner core breathing and subtle rotation
+        const coreScale = 1 + Math.sin(t * 1.4) * 0.06 + smoothEnergy * 0.25;
         coreMesh.scale.set(coreScale, coreScale, coreScale);
-        coreMesh.rotation.y = t * 0.4;
-        coreMesh.rotation.x = Math.sin(t * 0.3) * 0.15;
+        coreMesh.rotation.y = t * 0.35;
+        coreMesh.rotation.x = Math.sin(t * 0.25) * 0.15;
 
-        membraneMesh.rotation.y = -t * 0.25;
-        membraneMesh.rotation.z = Math.sin(t * 0.2) * 0.12;
+        // Outer fluid rotation
+        fluidMesh.rotation.y = -t * 0.2;
+        fluidMesh.rotation.z = Math.sin(t * 0.15) * 0.1;
 
-        // Gyroscopic halo spin
-        haloMeshA.rotation.z = t * 0.5;
-        haloMeshA.rotation.x = Math.PI / 4 + Math.sin(t * 0.4) * 0.15;
-        haloMeshB.rotation.y = t * 0.4;
-        haloMeshB.rotation.z = Math.PI / 6 + Math.cos(t * 0.3) * 0.18;
-
-        // Orbiting particle swarm
-        const pArray = particleGeo.attributes.position.array as Float32Array;
-        for (let i = 0; i < particleCount * 3; i += 3) {
-          const ox = particleOriginals[i];
-          const oy = particleOriginals[i + 1];
-          const oz = particleOriginals[i + 2];
-          const angle = t * 0.25 + i * 0.02;
-          pArray[i] = ox * Math.cos(angle) - oz * Math.sin(angle);
-          pArray[i + 1] = oy + Math.sin(t * 1.2 + i) * 0.1 * (1 + smoothEnergy);
-          pArray[i + 2] = ox * Math.sin(angle) + oz * Math.cos(angle);
-        }
-        particleGeo.attributes.position.needsUpdate = true;
+        // Ambient aura bloom pulse
+        const auraScale = 1 + breath * 2.5 + smoothEnergy * 0.35;
+        auraMesh.scale.set(auraScale, auraScale, 1);
+        auraMat.opacity = 0.45 + smoothEnergy * 0.35;
       } else {
-        // Reduced motion: serene smooth breathing
-        const calmBreath = 1 + Math.sin(clock.getElapsedTime() * 0.8) * 0.03;
+        // Serene translucent breathing pearl for reduced motion
+        const calmBreath = 1 + Math.sin(clock.getElapsedTime() * 0.8) * 0.025;
         coreMesh.scale.set(calmBreath, calmBreath, calmBreath);
-        membraneMesh.scale.set(calmBreath, calmBreath, calmBreath);
+        fluidMesh.scale.set(calmBreath, calmBreath, calmBreath);
       }
 
       renderer.render(scene, camera);
@@ -344,7 +342,7 @@ export default function SignalScene({ state, energy, reducedMotion, onUnsupporte
     render();
 
     const ro = new ResizeObserver(() => {
-      ({ w, h } = size());
+      const { w, h } = size();
       renderer.setSize(w, h);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
@@ -354,8 +352,9 @@ export default function SignalScene({ state, energy, reducedMotion, onUnsupporte
     return () => {
       cancelAnimationFrame(raf);
       ro.disconnect();
+      auraTexture.dispose();
       scene.traverse((obj) => {
-        if (obj instanceof THREE.Mesh || obj instanceof THREE.Points) {
+        if (obj instanceof THREE.Mesh) {
           obj.geometry.dispose();
           if (Array.isArray(obj.material)) {
             obj.material.forEach((m) => m.dispose());
@@ -371,5 +370,5 @@ export default function SignalScene({ state, energy, reducedMotion, onUnsupporte
     };
   }, [reducedMotion, onUnsupported]);
 
-  return <div ref={mountRef} className="h-full w-full" aria-hidden="true" />;
+  return <div ref={mountRef} className="h-full w-full select-none" aria-hidden="true" />;
 }

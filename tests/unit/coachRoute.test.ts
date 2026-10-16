@@ -44,9 +44,18 @@ describe('POST /api/coach/plan safety regression', () => {
 
     const data = await res.json();
     expect(data.safetyFlag).toBe('none');
-    expect([5, 10, 15]).toContain(data.timerMinutes);
+    expect(data.timerMinutes).toBeGreaterThanOrEqual(5);
     expect(data.firstStep).toBeTruthy();
     expect(data.whyThisFits).toBeTruthy();
+  });
+
+  it('respects user requested 20-minute focus duration', async () => {
+    const req = makeRequest({ taskText: 'Sort invoices and receipts', preferredMinutes: 20 });
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.timerMinutes).toBe(20);
   });
 
   it('returns 400 for empty or invalid task text', async () => {

@@ -19,6 +19,7 @@ import {
 } from '@/lib/coach/schema';
 import { buildDeterministicCoachPlan } from '@/lib/coach/strategies';
 import { analyzeStreamingUtterance, type RealtimeStreamingAnalysis } from '@/lib/coach/knowledge';
+import { loadUserCalibration, buildAdaptiveSystemPrompt } from '@/lib/coach/selfImprovement';
 
 export interface VoiceTranscriptEntry {
   id: string;
@@ -29,7 +30,7 @@ export interface VoiceTranscriptEntry {
 
 export interface UseVoiceAgentOptions {
   onPlanProposed?: (plan: CoachPlanProposal) => void;
-  onStartTimerRequested?: (minutes: 5 | 10 | 15, firstStep: string) => void;
+  onStartTimerRequested?: (minutes: number, firstStep: string) => void;
   onOutcomeRecorded?: (outcome: SessionOutcome, helpfulRating?: number) => void;
   onCrisisDetected?: (message: string) => void;
   onMedicalBoundaryDetected?: (message: string) => void;
@@ -346,33 +347,38 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       wsRef.current = socket;
 
       socket.onopen = () => {
-        if (agentId) {
-          socket.send(
-            JSON.stringify({
-              type: 'session.update',
-              session: {
-                agent_id: agentId,
+        const calibration = loadUserCalibration();
+        const adaptivePrompt = buildAdaptiveSystemPrompt(calibration);
+        const warmHumanPrompt = `You are Stay, an authentic, warm, deeply human conversational body-double companion for adults with ADHD.
+You sound and feel like ChatGPT Voice: natural conversational pacing, casual contractions ("yeah", "I'm", "totally", "let's"), warm emotional validation, and genuine empathy.
+You are sitting right beside the user as a trusted friend helping them through task paralysis.
+Rules:
+- Speak naturally, gently, and warmly. Use spontaneous conversational backchannels ("Yeah, I totally hear you", "Ugh, that sounds exhausting", "Let's take all the pressure off").
+- Never sound robotic, preachy, or clinical. Never lecture on ADHD psychology or symptoms.
+- Keep spoken replies under 30 words so the conversation flows back and forth quickly without long monologues.
+- Default focus timer is ${calibration.preferredMinutes} minutes if the user asks for focus, or whatever duration they say (such as 20 or 25 minutes).
+- When they mention what they are avoiding, acknowledge how they feel, propose ONE ridiculously small first move (<60 seconds), and ask warmly if that feels doable.
+- Never diagnose ADHD or advise on medication or doses.
+
+${adaptivePrompt}`;
+
+        const greeting = "Hey! I'm Stay. What's one thing hanging over your head right now? We'll make the first move ridiculously easy.";
+
+        socket.send(
+          JSON.stringify({
+            type: 'session.update',
+            session: {
+              agent_id: agentId || undefined,
+              system_prompt: warmHumanPrompt,
+              greeting,
+              output: {
+                type: 'audio',
+                voice: 'anna',
+                format: { encoding: 'audio/pcm', sample_rate: 24000 },
               },
-            })
-          );
-        } else {
-          socket.send(
-            JSON.stringify({
-              type: 'session.update',
-              session: {
-                system_prompt:
-                  'You are Stay, a calm, practical task-initiation companion for adults with ADHD. Keep spoken responses under 35 words. Never diagnose or advise on medication doses.',
-                greeting:
-                  "Hi, I'm Stay. Tell me one thing you're avoiding right now, and we'll make the first step smaller.",
-                output: {
-                  type: 'audio',
-                  voice: 'anna',
-                  format: { encoding: 'audio/pcm', sample_rate: 24000 },
-                },
-              },
-            })
-          );
-        }
+            },
+          })
+        );
       };
 
       socket.onmessage = (event) => {

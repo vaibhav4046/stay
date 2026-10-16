@@ -60,16 +60,25 @@ describe('coach plan', () => {
 });
 
 describe('tool arg parsing', () => {
-  it('clamps timer minutes and tolerates unknown enums', () => {
-    const p = ProposeCoachingPlanToolArgsSchema.parse({
+  it('supports custom focus intervals (like 20 or 25 min) and clamps excessive timers', () => {
+    const p20 = ProposeCoachingPlanToolArgsSchema.parse({
       taskText: 'x',
       barrierType: 'nonsense',
       strategyKey: 'task_shrinking',
       firstStep: 'open it',
-      timerMinutes: 25,
+      timerMinutes: 20,
     });
-    expect(p.timerMinutes).toBe(15);
-    expect(p.barrierType).toBe('overwhelm');
+    expect(p20.timerMinutes).toBe(20);
+    expect(p20.barrierType).toBe('overwhelm');
+
+    const pMax = ProposeCoachingPlanToolArgsSchema.parse({
+      taskText: 'x',
+      barrierType: 'overwhelm',
+      strategyKey: 'task_shrinking',
+      firstStep: 'open it',
+      timerMinutes: 120,
+    });
+    expect(pMax.timerMinutes).toBe(60);
   });
 });
 

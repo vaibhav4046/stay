@@ -211,7 +211,7 @@ export function buildDeterministicCoachPlan(params: {
   barrierType?: BarrierType;
   preferredStrategy?: StrategyKey;
   careContext?: CareContext;
-  preferredMinutes?: 5 | 10 | 15;
+  preferredMinutes?: number;
   strategyHistory?: Array<{
     strategyKey: StrategyKey;
     attempts: number;
@@ -261,7 +261,7 @@ export function buildDeterministicCoachPlan(params: {
   const strategy = STRATEGY_DEFINITIONS[strategyKey];
   const barrier = BARRIER_DEFINITIONS[barrierType];
   const firstStep = buildDeterministicFirstStep(params.taskText, strategyKey);
-  const timerMinutes: 5 | 10 | 15 =
+  const timerMinutes: number =
     params.preferredMinutes ||
     (barrierType === 'low_energy' || barrierType === 'overwhelm'
       ? 5
@@ -269,9 +269,9 @@ export function buildDeterministicCoachPlan(params: {
 
   const whyThisFits =
     personalizedReason ||
-    `For "${barrier.label.toLowerCase()}", ${strategy.label.toLowerCase()} lowers initiation friction: ${strategy.howItWorks}`;
+    `When ${barrier.label.toLowerCase()} hits, ${strategy.label.toLowerCase()} takes all the pressure off by turning an intimidating task into one tiny physical move.`;
 
-  const spokenResponse = `Let's make this smaller. ${firstStep} Start a ${timerMinutes}-minute timer whenever you're ready, and I'll check in at the end.`;
+  const spokenResponse = `I'm right here with you. Let's make this tiny: ${firstStep} Whenever you're ready, we'll run a gentle ${timerMinutes}-minute focus block, and I'll check in the moment it wraps up.`;
 
   return {
     spokenResponse,

@@ -15,6 +15,13 @@ import { detectCrisisSignal, CRISIS_FIXED_MESSAGE } from '@/lib/safety/crisis';
 import { useVoiceAgent } from '@/lib/voice/useVoiceAgent';
 import { useCrisisPanel } from '@/components/CrisisHelpPanel';
 import { Signal } from '@/components/Signal';
+import {
+  loadUserCalibration,
+  recordSessionLearning,
+  addUserTrainingInstruction,
+  removeUserTrainingInstruction,
+  type UserCalibrationProfile,
+} from '@/lib/coach/selfImprovement';
 
 type Step = 'capture' | 'barrier' | 'plan' | 'timer' | 'outcome' | 'done';
 
@@ -73,7 +80,24 @@ export function CoachWorkspace({
   const [barrier, setBarrier] = useState<BarrierType | null>(null);
   const [plan, setPlan] = useState<CoachPlanProposal | null>(null);
   const [planLoading, setPlanLoading] = useState(false);
-  const [timerMinutes, setTimerMinutes] = useState<5 | 10 | 15>(10);
+  const [calibration, setCalibration] = useState<UserCalibrationProfile>(() => {
+    try {
+      return loadUserCalibration();
+    } catch {
+      return {
+        preferredMinutes: 20,
+        personaTone: 'warm_body_double',
+        stepGranularity: 'ultra_micro',
+        strategyWeights: { task_shrinking: 1.2, implementation_intention: 1.0, reframing: 1.1, timeboxing: 1.2 },
+        userTrainingNotes: [],
+        totalSessionsAnalyzed: 0,
+        positiveRatingCount: 0,
+        negativeRatingCount: 0,
+        lastTrainedAt: new Date().toISOString(),
+      };
+    }
+  });
+  const [timerMinutes, setTimerMinutes] = useState<number>(() => calibration.preferredMinutes || 20);
   const [remaining, setRemaining] = useState(0);
   const [running, setRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0);
@@ -82,6 +106,8 @@ export function CoachWorkspace({
   const [lastLogged, setLastLogged] = useState<SessionOutcome | null>(null);
   const [usedVoice, setUsedVoice] = useState(false);
   const [showStuckRescue, setShowStuckRescue] = useState(false);
+  const [showTrainingPanel, setShowTrainingPanel] = useState(false);
+  const [trainingInput, setTrainingInput] = useState('');
   const [typedMessage, setTypedMessage] = useState('');
   const [actionReceipt, setActionReceipt] = useState<string | null>(null);
   const deadlineRef = useRef<number>(0);
@@ -122,19 +148,21 @@ export function CoachWorkspace({
     [openCrisisPanel]
   );
 
-  const startTimer = useCallback((minutes: 5 | 10 | 15) => {
-    setTimerMinutes(minutes);
-    deadlineRef.current = Date.now() + minutes * 60 * 1000;
-    setRemaining(minutes * 60);
+  const startTimer = useCallback((minutes: number) => {
+    const valid = Math.max(1, Math.min(60, minutes));
+    setTimerMinutes(valid);
+    deadlineRef.current = Date.now() + valid * 60 * 1000;
+    setRemaining(valid * 60);
     setElapsed(0);
     setRunning(true);
     setStep('timer');
-    setActionReceipt(`Timer started · ${minutes} min`);
+    setActionReceipt(`Timer started · ${valid} min`);
   }, []);
 
   const logOutcome = useCallback(
     async (outcome: SessionOutcome, rating?: number | null) => {
       if (!plan) return;
+      const actualRating = rating ?? helpful;
       await onLogSession({
         completedAt: new Date().toISOString(),
         mode: usedVoice ? 'voice' : 'text',
@@ -146,13 +174,23 @@ export function CoachWorkspace({
         plannedMinutes: timerMinutes,
         actualSeconds: elapsed || null,
         outcome,
-        helpfulRating: rating ?? helpful,
+        helpfulRating: actualRating,
         crisisTriggered: false,
       });
+
+      // Self-Improvement & Continuous Model Adaptation
+      const updatedProfile = recordSessionLearning({
+        strategyKey: plan.strategyKey,
+        outcome,
+        rating: actualRating,
+        usedMinutes: timerMinutes,
+      });
+      setCalibration(updatedProfile);
+
       setLastLogged(outcome);
       setRunning(false);
       setStep('done');
-      setActionReceipt(`Session outcome logged: ${outcome}`);
+      setActionReceipt(`Session outcome logged · Stay adapted model`);
     },
     [plan, onLogSession, usedVoice, careContext, timerMinutes, elapsed, helpful]
   );
@@ -162,17 +200,18 @@ export function CoachWorkspace({
       setTaskText(p.taskText);
       setBarrier(p.barrierType);
       setPlan(p);
-      setTimerMinutes(p.timerMinutes === 0 ? 5 : p.timerMinutes);
+      setTimerMinutes(p.timerMinutes === 0 ? (calibration.preferredMinutes || 20) : p.timerMinutes);
       setStep('plan');
       setActionReceipt(`Plan ready: ${p.strategyLabel}`);
     },
     onStartTimerRequested: (minutes, firstStep) => {
+      const valid = minutes || calibration.preferredMinutes || 20;
       setPlan((prev) =>
         prev
-          ? { ...prev, firstStep }
-          : buildDeterministicCoachPlan({ taskText: firstStep, careContext, preferredMinutes: minutes })
+          ? { ...prev, firstStep, timerMinutes: valid }
+          : buildDeterministicCoachPlan({ taskText: firstStep, careContext, preferredMinutes: valid })
       );
-      startTimer(minutes);
+      startTimer(valid);
     },
     onOutcomeRecorded: (outcome, rating) => {
       void logOutcome(outcome, rating ?? null);
@@ -186,7 +225,7 @@ export function CoachWorkspace({
     if (voice.isConnected) {
       setUsedVoice(true);
       voice.injectContext(
-        `User care context: ${careContext}. Adapt tone accordingly. Never give medication advice.` +
+        `User care context: ${careContext}. Preferred focus block: ${calibration.preferredMinutes} minutes. Adapt tone warmly as a peer body-double. Never give medication advice.` +
           (taskText ? ` The user already typed this task: "${taskText}".` : '')
       );
     }
@@ -234,6 +273,7 @@ export function CoachWorkspace({
             barrierType: chosenBarrier ?? undefined,
             preferredStrategy,
             careContext,
+            preferredMinutes: timerMinutes,
             strategyHistory,
           }),
         });
@@ -248,7 +288,7 @@ export function CoachWorkspace({
           return;
         }
         setPlan(data);
-        setTimerMinutes(data.timerMinutes === 0 ? 5 : data.timerMinutes);
+        setTimerMinutes(data.timerMinutes === 0 ? (calibration.preferredMinutes || 20) : data.timerMinutes);
         setActionReceipt(`Plan ready: ${data.strategyLabel}`);
         setStep('plan');
       } catch {
@@ -258,6 +298,7 @@ export function CoachWorkspace({
           barrierType: chosenBarrier ?? undefined,
           preferredStrategy,
           careContext,
+          preferredMinutes: timerMinutes,
           strategyHistory,
         });
         if (local.safetyFlag === 'crisis') {
@@ -269,13 +310,13 @@ export function CoachWorkspace({
           return;
         }
         setPlan(local);
-        setTimerMinutes(local.timerMinutes === 0 ? 5 : local.timerMinutes);
+        setTimerMinutes(local.timerMinutes === 0 ? (calibration.preferredMinutes || 20) : local.timerMinutes);
         setStep('plan');
       } finally {
         setPlanLoading(false);
       }
     },
-    [taskText, careContext, strategyHistory, triggerCrisis]
+    [taskText, careContext, strategyHistory, triggerCrisis, timerMinutes, calibration.preferredMinutes]
   );
 
   const reset = () => {
@@ -307,6 +348,16 @@ export function CoachWorkspace({
           </h2>
           <div className="flex items-center gap-2">
             {isDemo && <span className="sample-badge">Sample data</span>}
+            <button
+              type="button"
+              className="chip text-[0.82rem] flex items-center gap-1.5 border border-accent/20 bg-accent/5 text-accent hover:bg-accent/10 transition-colors"
+              onClick={() => setShowTrainingPanel(true)}
+              data-testid="self-improvement-trigger"
+              title="View Stay's autonomous model adaptation & train your preferences"
+            >
+              <span>🧠</span>
+              <span className="font-medium">Learned: {calibration.preferredMinutes}m · Body-Double</span>
+            </button>
             <button
               type="button"
               className="chip"
@@ -464,15 +515,23 @@ export function CoachWorkspace({
             </dl>
 
             <fieldset className="mt-6">
-              <legend className="label">Focus block</legend>
-              <div className="mt-2 flex gap-2">
-                {([5, 10, 15] as const).map((m) => (
+              <div className="flex items-center justify-between">
+                <legend className="label">Focus block</legend>
+                <span className="text-[0.78rem] text-ink-3">Learned preference: {calibration.preferredMinutes}m</span>
+              </div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {([5, 10, 15, 20, 25, 30] as const).map((m) => (
                   <button
                     key={m}
                     type="button"
                     className="chip tnum"
                     aria-pressed={timerMinutes === m}
-                    onClick={() => setTimerMinutes(m)}
+                    onClick={() => {
+                      setTimerMinutes(m);
+                      const updated = addUserTrainingInstruction(`User preferred focus duration: ${m} minutes`);
+                      setCalibration(updated);
+                    }}
+                    data-testid={`timer-option-${m}`}
                   >
                     {m} min
                   </button>
@@ -781,6 +840,132 @@ export function CoachWorkspace({
           </form>
         </div>
       </aside>
+
+      {/* Self-Improvement & Continuous Model Training Modal */}
+      {showTrainingPanel && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs animate-fadeIn"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="training-dialog-title"
+        >
+          <div className="card w-full max-w-lg p-5 sm:p-6 bg-surface border border-line shadow-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-line pb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🧠</span>
+                <div>
+                  <h3 id="training-dialog-title" className="font-display font-semibold text-ink text-base">
+                    Self-Learning Model & Training
+                  </h3>
+                  <p className="text-xs text-ink-3">Stay learns your focus patterns and adapts autonomously</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowTrainingPanel(false)}
+                className="text-ink-3 hover:text-ink text-xl font-medium px-2 py-1"
+                aria-label="Close training dialog"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Current Learned Profile */}
+            <div className="mt-4 space-y-3">
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="rounded-lg bg-surface-recessed p-2.5 border border-line">
+                  <span className="text-ink-3 block">Optimal Focus Duration</span>
+                  <span className="font-semibold text-accent text-sm">{calibration.preferredMinutes} minutes</span>
+                </div>
+                <div className="rounded-lg bg-surface-recessed p-2.5 border border-line">
+                  <span className="text-ink-3 block">Conversational Persona</span>
+                  <span className="font-semibold text-ink text-sm">Warm Body-Double</span>
+                </div>
+                <div className="rounded-lg bg-surface-recessed p-2.5 border border-line">
+                  <span className="text-ink-3 block">Sessions Analyzed</span>
+                  <span className="font-semibold text-ink text-sm">{calibration.totalSessionsAnalyzed} logged</span>
+                </div>
+                <div className="rounded-lg bg-surface-recessed p-2.5 border border-line">
+                  <span className="text-ink-3 block">First Step Sizing</span>
+                  <span className="font-semibold text-ink text-sm">{calibration.stepGranularity === 'ultra_micro' ? '<60s micro' : '<2 min'}</span>
+                </div>
+              </div>
+
+              {/* User Training Rules */}
+              <div className="mt-4">
+                <label htmlFor="user-training-input" className="label text-xs">
+                  Train Stay With Your Specific Preferences:
+                </label>
+                <div className="mt-1 flex gap-2">
+                  <input
+                    id="user-training-input"
+                    type="text"
+                    value={trainingInput}
+                    onChange={(e) => setTrainingInput(e.target.value)}
+                    placeholder="e.g. I work best in 20 min sprints, or Be more casual"
+                    className="field py-1.5 px-3 text-xs flex-1"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!trainingInput.trim()) return;
+                      const updated = addUserTrainingInstruction(trainingInput.trim());
+                      setCalibration(updated);
+                      setTimerMinutes(updated.preferredMinutes);
+                      if (voice.isConnected) {
+                        voice.injectContext(`User training update: "${trainingInput.trim()}". Update behavior immediately.`);
+                      }
+                      setTrainingInput('');
+                      setActionReceipt('Model updated with your training instruction');
+                    }}
+                    disabled={!trainingInput.trim()}
+                    className="btn btn-primary py-1 px-3 text-xs"
+                    data-testid="add-training-rule-btn"
+                  >
+                    Train
+                  </button>
+                </div>
+              </div>
+
+              {/* Active Instructions List */}
+              <div className="mt-3">
+                <span className="text-xs font-medium text-ink-3 block mb-1.5">Active Learned Rules:</span>
+                <ul className="space-y-1.5 max-h-40 overflow-y-auto">
+                  {calibration.userTrainingNotes.map((note, idx) => (
+                    <li
+                      key={note + idx}
+                      className="rounded bg-surface-recessed px-2.5 py-1.5 text-xs text-ink flex items-center justify-between border border-line"
+                    >
+                      <span>✓ {note}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = removeUserTrainingInstruction(idx);
+                          setCalibration(updated);
+                        }}
+                        className="text-ink-3 hover:text-ink text-xs ml-2"
+                        title="Remove instruction"
+                      >
+                        ×
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <div className="mt-5 pt-3 border-t border-line flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowTrainingPanel(false)}
+                className="btn btn-secondary py-1.5 px-4 text-xs"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -62,7 +62,7 @@ export interface CoachPlanProposal {
   strategyLabel: string;
   firstStep: string;
   whyThisFits: string;
-  timerMinutes: 0 | 5 | 10 | 15;
+  timerMinutes: number;
   checkinPrompt: string;
   safetyFlag: 'none' | 'crisis' | 'medical_boundary';
   resources?: ReadonlyArray<{

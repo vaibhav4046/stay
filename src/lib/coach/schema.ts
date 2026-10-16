@@ -36,7 +36,7 @@ export const CoachPlanRequestSchema = z.object({
   barrierType: BarrierTypeSchema.optional(),
   preferredStrategy: StrategyKeySchema.optional(),
   careContext: CareContextSchema.optional().default('self_managing'),
-  preferredMinutes: z.union([z.literal(5), z.literal(10), z.literal(15)]).optional(),
+  preferredMinutes: z.number().int().min(1).max(60).optional(),
   strategyHistory: z
     .array(
       z.object({
@@ -56,7 +56,7 @@ export const CoachPlanResponseSchema = z.object({
   strategyLabel: z.string().max(80),
   firstStep: z.string().max(220),
   whyThisFits: z.string().max(240),
-  timerMinutes: z.union([z.literal(0), z.literal(5), z.literal(10), z.literal(15)]),
+  timerMinutes: z.number().int().min(0).max(60),
   checkinPrompt: z.string().max(200),
   safetyFlag: z.enum(['none', 'crisis', 'medical_boundary']),
   resources: z
@@ -78,13 +78,13 @@ export const ProposeCoachingPlanToolArgsSchema = z.object({
   firstStep: z.string().min(1).max(220),
   timerMinutes: z
     .number()
-    .transform((n): 5 | 10 | 15 => (n <= 5 ? 5 : n >= 15 ? 15 : 10)),
+    .transform((n): number => (n <= 1 ? 5 : n > 60 ? 60 : Math.round(n))),
 });
 
 export const StartFocusTimerToolArgsSchema = z.object({
   minutes: z
     .number()
-    .transform((n): 5 | 10 | 15 => (n <= 5 ? 5 : n >= 15 ? 15 : 10)),
+    .transform((n): number => (n <= 1 ? 5 : n > 60 ? 60 : Math.round(n))),
   firstStep: z.string().min(1).max(220),
 });
 
