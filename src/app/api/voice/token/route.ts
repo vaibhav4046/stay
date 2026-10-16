@@ -1,0 +1,105 @@
+import { NextRequest, NextResponse } from 'next/server';
+
+const RATE_WINDOW_MS = 10 * 60 * 1000;
+const MAX_TOKENS_PER_WINDOW = 25;
+const ipRequests = new Map<string, number[]>();
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const timestamps = (ipRequests.get(ip) || []).filter((t) => now - t < RATE_WINDOW_MS);
+  if (timestamps.length >= MAX_TOKENS_PER_WINDOW) {
+    ipRequests.set(ip, timestamps);
+    return false;
+  }
+  timestamps.push(now);
+  ipRequests.set(ip, timestamps);
+  return true;
+}
+
+async function handleMintToken(req: NextRequest) {
+  const ip =
+    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    req.headers.get('x-real-ip') ||
+    'local';
+
+  if (!checkRateLimit(ip)) {
+    return NextResponse.json(
+      { error: 'Too many voice session requests. Please wait a few minutes or use Quiet Text Mode.' },
+      { status: 429 }
+    );
+  }
+
+  const apiKey = process.env.ASSEMBLYAI_API_KEY;
+  const agentId = process.env.ASSEMBLYAI_AGENT_ID || '';
+
+  if (!apiKey) {
+    return NextResponse.json(
+      {
+        error:
+          'Server voice credentials are not configured in this environment. Quiet Text Mode is fully available.',
+      },
+      { status: 503 }
+    );
+  }
+
+  try {
+    const url =
+      'https://agents.assemblyai.com/v1/token?expires_in_seconds=180&max_session_duration_seconds=600';
+    const upstream = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+      },
+      cache: 'no-store',
+    });
+
+    if (!upstream.ok) {
+      return NextResponse.json(
+        {
+          error:
+            'Unable to mint a temporary AssemblyAI voice session token right now. Please try Quiet Text Mode.',
+        },
+        { status: 502 }
+      );
+    }
+
+    const data = (await upstream.json()) as { token?: string };
+    if (!data.token) {
+      return NextResponse.json(
+        { error: 'Invalid token response from voice provider.' },
+        { status: 502 }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        token: data.token,
+        agentId,
+        wsUrl: 'wss://agents.assemblyai.com/v1/ws',
+        expiresInSeconds: 180,
+      },
+      {
+        status: 200,
+        headers: {
+          'Cache-Control': 'no-store, max-age=0',
+        },
+      }
+    );
+  } catch {
+    return NextResponse.json(
+      {
+        error:
+          'Network error reaching AssemblyAI token service. Quiet Text Mode remains available.',
+      },
+      { status: 502 }
+    );
+  }
+}
+
+export async function GET(req: NextRequest) {
+  return handleMintToken(req);
+}
+
+export async function POST(req: NextRequest) {
+  return handleMintToken(req);
+}
