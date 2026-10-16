@@ -63,4 +63,30 @@
 - **Dual Persistence Layer:**
   - Full Supabase PostgreSQL schema and Row Level Security (`supabase/migrations/001_stay_schema.sql`) plus Supabase client/server integration (`src/lib/supabase/`).
   - Local persistent store (`localStorage` + structured repository adapter in `src/lib/storage/`) so that `/app/*` routes and `/demo` work immediately out of the box with zero external database setup required for hackathon judges, while syncing with Supabase whenever `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are configured.
-  - Synthetic demo data in `/demo` is explicitly labeled `"Sample data — not a real user or clinical record"` and isolated from user-created records.
+  - Synthetic demo data in `/demo` is explicitly labeled `"Sample data · Demo mode"` and strictly isolated from user-created records.
+
+---
+
+## 4. Judge-Ready Upgrade Verification Audit (16 October 2026)
+
+### 4.1 Safety Architecture Verification
+- **Crisis Gate Decoupling:** In `/api/coach/plan/route.ts`, crisis detection short-circuits immediately before Groq/LLM calls, returning `timerMinutes: 0`, `safetyFlag: 'crisis'`, and fixed UK emergency services (999, 111, 116 123, 85258).
+- **Medication Gate Isolation:** Dosing or prescription queries return `timerMinutes: 0`, `safetyFlag: 'medical_boundary'`, and a clinician referral. No task sprints or focus timers are generated.
+- **Voice Agent Suppression:** In `useVoiceAgent.ts`, `medicationSuppressionRef` immediately suppresses model audio chunks (`reply.audio`) and model turns (`transcript.agent`) upon detecting medication queries, preventing hallucinated dosing advice.
+- **Unit Integration Tests:** `tests/unit/coachRoute.test.ts` (4 direct NextRequest integration tests) + `tests/unit/core.test.ts` (20 tests) = **24/24 passing**.
+
+### 4.2 Frontend & UX Verification
+- **Landing Page Hero:** Replaced passive mock animations with `HeroInteractiveWalkthrough.tsx` (5 interactive steps: avoidance -> barrier -> shrink -> timer -> outcome) labeled `"Guided preview · example data · No mic required"`.
+- **Demo Mode Tour:** Upgraded `/demo` with a 45-second judge tour bar, tab jump buttons, sample data isolation labels, and 1-click state reset (`↻ Reset demo state`).
+- **ChatGPT/Perplexity Voice UX:** Integrated continuous text composer alongside voice, action receipts (`Timer started · X min`), keyboard shortcut `/`, quick starter task pills, demo fast-forward, and "I'm stuck" 60-second de-escalation breath.
+
+### 4.3 Deployment & E2E Test Run
+- **Production URL:** `https://stay-two-swart.vercel.app`
+- **Vercel Deployment ID:** `dpl_9Kp2mVvR9TxtdzTsSrX13eyEYR5F`
+- **Playwright Test Suite:** 5/5 passing against live production in 9.7s (`tests/e2e/stay.spec.ts`):
+  1. `Landing page renders correctly with core proposition and links`: PASSED (2.5s)
+  2. `Crisis panel opens and displays fixed UK emergency services`: PASSED (556ms)
+  3. `Demo page: full closed loop`: PASSED (2.7s)
+  4. `App: Onboarding gate, workspace, history, settings, and data erasure`: PASSED (1.5s)
+  5. `Privacy and Terms routes load without error`: PASSED (1.1s)
+

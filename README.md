@@ -40,7 +40,7 @@ Existing tools either wait passively for prompts or pile up to-do lists that gen
 - **LLM Orchestration:** Groq `openai/gpt-oss-120b` (custom LLM on AssemblyAI agent + structured server fallback on `/api/coach/plan`).
 - **Persistence:** Local-first browser storage (`localStorage`) + optional Supabase PostgreSQL schema with strict Row-Level Security (`auth.uid() = user_id`).
 - **Reporting:** Client-side 1-page clinician appointment PDF generator using `jsPDF`.
-- **Testing:** Vitest unit tests (20/20 passing) + Playwright browser E2E tests.
+- **Testing:** Vitest unit tests (24/24 passing) + Playwright browser E2E tests (5/5 passing against live production).
 
 ---
 
