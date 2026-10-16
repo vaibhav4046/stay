@@ -11,107 +11,100 @@ interface Props {
   onUnsupported: () => void;
 }
 
-interface StateColorConfig {
-  coreColor: number;
-  membraneColor: number;
-  haloColor: number;
-  lightIntensity: number;
+interface OrbStateConfig {
+  base: string;
+  top: string;
+  wave: string;
+  ring: string;
   speed: number;
-  noiseAmp: number;
+  activityFloor: number;
 }
 
-const ORB_STATE_CONFIG: Record<VoiceVisualState, StateColorConfig> = {
-  idle: {
-    coreColor: 0x004d40,
-    membraneColor: 0x006a67,
-    haloColor: 0x38b2ac,
-    lightIntensity: 1.4,
-    speed: 0.6,
-    noiseAmp: 0.08,
-  },
-  connecting: {
-    coreColor: 0x334155,
-    membraneColor: 0x64748b,
-    haloColor: 0x94a3b8,
-    lightIntensity: 1.8,
-    speed: 1.4,
-    noiseAmp: 0.12,
-  },
-  listening: {
-    coreColor: 0x005f5b,
-    membraneColor: 0x028090,
-    haloColor: 0x00f5d4,
-    lightIntensity: 2.2,
-    speed: 0.9,
-    noiseAmp: 0.16,
-  },
-  thinking: {
-    coreColor: 0x312e81,
-    membraneColor: 0x4338ca,
-    haloColor: 0x818cf8,
-    lightIntensity: 2.6,
-    speed: 2.0,
-    noiseAmp: 0.14,
-  },
-  speaking: {
-    coreColor: 0x005f5b,
-    membraneColor: 0x008080,
-    haloColor: 0x70e000,
-    lightIntensity: 2.8,
-    speed: 1.2,
-    noiseAmp: 0.22,
-  },
-  interrupted: {
-    coreColor: 0x78350f,
-    membraneColor: 0xb45309,
-    haloColor: 0xfbbf24,
-    lightIntensity: 2.4,
-    speed: 0.5,
-    noiseAmp: 0.06,
-  },
-  backchannel: {
-    coreColor: 0x064e3b,
-    membraneColor: 0x059669,
-    haloColor: 0x34d399,
-    lightIntensity: 2.5,
-    speed: 1.1,
-    noiseAmp: 0.18,
-  },
-  saving: {
-    coreColor: 0x1f2937,
-    membraneColor: 0x4b5563,
-    haloColor: 0x9ca3af,
-    lightIntensity: 1.6,
-    speed: 1.5,
-    noiseAmp: 0.08,
-  },
-  complete: {
-    coreColor: 0x14532d,
-    membraneColor: 0x16a34a,
-    haloColor: 0x86efac,
-    lightIntensity: 2.0,
-    speed: 0.5,
-    noiseAmp: 0.07,
-  },
-  error: {
-    coreColor: 0x7f1d1d,
-    membraneColor: 0xdc2626,
-    haloColor: 0xfca5a5,
-    lightIntensity: 1.8,
-    speed: 0.4,
-    noiseAmp: 0.05,
-  },
+const ORB_STATE_CONFIG: Record<VoiceVisualState, OrbStateConfig> = {
+  idle: { base: '#064943', top: '#0B625B', wave: '#ABD5C8', ring: '#659A8F', speed: 0.16, activityFloor: 0.025 },
+  connecting: { base: '#405651', top: '#627570', wave: '#D0DED7', ring: '#8EA79E', speed: 0.42, activityFloor: 0.08 },
+  listening: { base: '#064A45', top: '#087068', wave: '#B9E2D4', ring: '#76B2A2', speed: 0.62, activityFloor: 0.08 },
+  thinking: { base: '#174943', top: '#28645D', wave: '#C0DBD1', ring: '#83AFA3', speed: 0.3, activityFloor: 0.19 },
+  speaking: { base: '#044B45', top: '#08766C', wave: '#D6EADF', ring: '#7FB8A9', speed: 0.8, activityFloor: 0.12 },
+  interrupted: { base: '#5B4228', top: '#89673D', wave: '#EAD0A7', ring: '#B99A6B', speed: 0.22, activityFloor: 0.06 },
+  backchannel: { base: '#0B4B42', top: '#1A6E60', wave: '#C8E2D6', ring: '#7EB6A5', speed: 0.52, activityFloor: 0.09 },
+  saving: { base: '#454D48', top: '#69736D', wave: '#DAE0D9', ring: '#AAB9AE', speed: 0.24, activityFloor: 0.035 },
+  complete: { base: '#1D5134', top: '#34764B', wave: '#D1E7CA', ring: '#87B891', speed: 0.14, activityFloor: 0.025 },
+  error: { base: '#632F29', top: '#914D42', wave: '#F0C0B4', ring: '#C38477', speed: 0.12, activityFloor: 0.02 },
 };
 
-/**
- * 3D Luminous Living Orb.
- * Features:
- * - Fluid organic noise-displaced outer membrane responding in real-time to voice energy
- * - Luminous pulsing crystalline inner core
- * - Orbital chromatic energy rings with gyroscopic rotation
- * - Ambient orbiting stardust swarm
- * - Accessible graceful fallback for reduced motion
- */
+function clamp01(value: number): number {
+  return Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0));
+}
+
+const vertexShader = [
+  'uniform float uTime;',
+  'uniform float uEnergy;',
+  'uniform float uActivity;',
+  'uniform float uMotion;',
+  'varying vec3 vLocalPosition;',
+  'varying vec3 vNormalView;',
+  'varying vec3 vViewDirection;',
+  'void main() {',
+  '  vec3 p = position;',
+  '  float activity = max(uEnergy, uActivity);',
+  '  float swellA = sin(position.y * 10.0 - uTime * 1.25 + sin(position.x * 3.8 + uTime * 0.22) * 0.9);',
+  '  float swellB = sin(position.x * 7.0 + position.z * 3.1 - uTime * 0.72);',
+  '  float displacement = (swellA * 0.012 + swellB * 0.004) * (0.18 + activity * 1.45) * uMotion;',
+  '  p += normal * displacement;',
+  '  vec4 viewPosition = modelViewMatrix * vec4(p, 1.0);',
+  '  vLocalPosition = p;',
+  '  vNormalView = normalize(normalMatrix * normal);',
+  '  vViewDirection = normalize(-viewPosition.xyz);',
+  '  gl_Position = projectionMatrix * viewPosition;',
+  '}',
+].join('\n');
+
+const fragmentShader = [
+  'uniform float uTime;',
+  'uniform float uEnergy;',
+  'uniform float uActivity;',
+  'uniform float uMotion;',
+  'uniform vec3 uBaseColor;',
+  'uniform vec3 uTopColor;',
+  'uniform vec3 uWaveColor;',
+  'varying vec3 vLocalPosition;',
+  'varying vec3 vNormalView;',
+  'varying vec3 vViewDirection;',
+  'void main() {',
+  '  vec3 p = normalize(vLocalPosition);',
+  '  vec3 n = normalize(vNormalView);',
+  '  vec3 viewDirection = normalize(vViewDirection);',
+  '  float activity = max(uEnergy, uActivity);',
+  '  float flow = uTime * uMotion;',
+  '  float bend = sin(p.x * 5.4 + flow * 1.25) * (0.28 + activity * 0.92)',
+  '    + sin(p.z * 6.1 - flow * 0.82) * 0.19',
+  '    + sin((p.x + p.z) * 3.7 + flow * 0.54) * 0.10;',
+  '  float phase = p.y * 15.0 + bend;',
+  '  float contour = 1.0 - smoothstep(0.035, 0.16, abs(sin(phase)));',
+  '  float contourBloom = 1.0 - smoothstep(0.12, 0.42, abs(sin(phase)));',
+  '  float phase2 = p.y * 8.6 + sin(p.x * 4.4 - flow * 0.7) * (0.18 + activity * 0.35) + p.x * 1.35;',
+  '  float secondaryContour = 1.0 - smoothstep(0.045, 0.19, abs(sin(phase2)));',
+  '  float verticalShade = smoothstep(-0.95, 0.86, p.y);',
+  '  vec3 base = mix(uBaseColor, uTopColor, verticalShade * 0.74);',
+  '  vec3 lightDirection = normalize(vec3(-0.44, 0.72, 0.92));',
+  '  float diffuse = 0.45 + 0.55 * max(dot(n, lightDirection), 0.0);',
+  '  float fresnel = pow(1.0 - max(dot(n, viewDirection), 0.0), 2.8);',
+  '  vec3 color = base * diffuse;',
+  '  color += uWaveColor * contour * (0.19 + activity * 0.74);',
+  '  color += uWaveColor * contourBloom * (0.025 + activity * 0.09);',
+  '  color += uWaveColor * secondaryContour * (0.045 + activity * 0.12);',
+  '  color = mix(color, uWaveColor, fresnel * 0.20);',
+  '  vec3 halfVector = normalize(lightDirection + viewDirection);',
+  '  float specular = pow(max(dot(n, halfVector), 0.0), 34.0);',
+  '  color += vec3(0.78, 0.91, 0.84) * specular * 0.22;',
+  '  gl_FragColor = vec4(color, 1.0);',
+  '  #include <tonemapping_fragment>',
+  '  #include <colorspace_fragment>',
+  '}',
+].join('\n');
+
+/** A mineral-glass orb with a live energy-reactive field inside it. */
 export default function SignalScene({ state, energy, reducedMotion, onUnsupported }: Props) {
   const mountRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef(state);
@@ -125,246 +118,148 @@ export default function SignalScene({ state, energy, reducedMotion, onUnsupporte
 
     let renderer: THREE.WebGLRenderer;
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+      renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+        powerPreference: 'low-power',
+      });
     } catch {
       onUnsupported();
       return;
     }
 
-    const size = () => ({ w: mount.clientWidth || 320, h: mount.clientHeight || 320 });
-    let { w, h } = size();
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(w, h);
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.1;
+    const getSize = () => ({
+      width: Math.max(mount.clientWidth, 1),
+      height: Math.max(mount.clientHeight, 1),
+    });
+
+    let { width, height } = getSize();
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+    renderer.setSize(width, height);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.setClearColor(0x000000, 0);
     mount.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(38, w / h, 0.1, 100);
-    camera.position.set(0, 0, 6.2);
+    const camera = new THREE.PerspectiveCamera(36, width / height, 0.1, 100);
+    camera.position.set(0, 0, 4.25);
 
-    // Dynamic point lights that orbit the Orb
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
-    scene.add(ambientLight);
+    scene.add(new THREE.AmbientLight(0xfff8f0, 1.05));
 
-    const coreLight = new THREE.PointLight(0x006a67, 3, 10);
-    coreLight.position.set(0, 0, 0);
-    scene.add(coreLight);
-
-    const keyLight = new THREE.DirectionalLight(0xfff7ed, 1.8);
-    keyLight.position.set(4, 5, 4);
+    const keyLight = new THREE.DirectionalLight(0xfff5e8, 2.15);
+    keyLight.position.set(-3.2, 4.0, 4.5);
     scene.add(keyLight);
 
-    const rimLight = new THREE.PointLight(0x38b2ac, 2.5, 8);
-    rimLight.position.set(-3, -2, 3);
+    const rimLight = new THREE.PointLight(0x73a99b, 0.85, 7);
+    rimLight.position.set(2.7, -1.7, 2.7);
     scene.add(rimLight);
 
-    // 1. Inner Luminous Core
-    const coreGeo = new THREE.SphereGeometry(0.82, 48, 48);
-    const coreMat = new THREE.MeshStandardMaterial({
-      color: 0x004d40,
-      emissive: 0x006a67,
-      emissiveIntensity: 0.9,
-      roughness: 0.15,
-      metalness: 0.2,
-      wireframe: false,
-    });
-    const coreMesh = new THREE.Mesh(coreGeo, coreMat);
-    scene.add(coreMesh);
+    const initial = ORB_STATE_CONFIG.idle;
+    const uniforms = {
+      uTime: { value: 0 },
+      uEnergy: { value: 0 },
+      uActivity: { value: initial.activityFloor },
+      uMotion: { value: reducedMotion ? 0 : 1 },
+      uBaseColor: { value: new THREE.Color(initial.base) },
+      uTopColor: { value: new THREE.Color(initial.top) },
+      uWaveColor: { value: new THREE.Color(initial.wave) },
+    };
 
-    // 2. Outer Fluid Organic Membrane with noise displacement
-    const membraneGeo = new THREE.IcosahedronGeometry(1.35, 26);
-    const basePositions = (membraneGeo.attributes.position.array as Float32Array).slice();
-    const membraneMat = new THREE.MeshPhysicalMaterial({
-      color: 0x006a67,
-      emissive: 0x00332c,
-      emissiveIntensity: 0.35,
-      roughness: 0.25,
-      metalness: 0.3,
+    const sphereGeometry = new THREE.SphereGeometry(1, 96, 72);
+    const sphereMaterial = new THREE.ShaderMaterial({
+      uniforms,
+      vertexShader,
+      fragmentShader,
+      side: THREE.FrontSide,
+    });
+    const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+
+    const signalGroup = new THREE.Group();
+    signalGroup.add(sphere);
+    scene.add(signalGroup);
+
+    // One hairline orbit gives the orb an instrument-like silhouette.
+    const ringGeometry = new THREE.TorusGeometry(1.19, 0.007, 8, 160);
+    const ringMaterial = new THREE.MeshBasicMaterial({
+      color: initial.ring,
       transparent: true,
-      opacity: 0.78,
-      clearcoat: 0.85,
-      clearcoatRoughness: 0.2,
-      transmission: 0.45,
-      ior: 1.35,
+      opacity: 0.34,
+      depthWrite: false,
     });
-    const membraneMesh = new THREE.Mesh(membraneGeo, membraneMat);
-    scene.add(membraneMesh);
+    const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+    ring.rotation.set(1.02, 0.12, -0.22);
+    signalGroup.add(ring);
 
-    // 3. Orbital Energy Halos (Twin gyroscopic rings)
-    const haloGeoA = new THREE.TorusGeometry(1.82, 0.016, 16, 120);
-    const haloMatA = new THREE.MeshStandardMaterial({
-      color: 0x38b2ac,
-      emissive: 0x006a67,
-      emissiveIntensity: 1.2,
-      roughness: 0.3,
-    });
-    const haloMeshA = new THREE.Mesh(haloGeoA, haloMatA);
-    haloMeshA.rotation.x = Math.PI / 4;
-    scene.add(haloMeshA);
+    const targetBase = new THREE.Color();
+    const targetTop = new THREE.Color();
+    const targetWave = new THREE.Color();
+    const targetRing = new THREE.Color();
 
-    const haloGeoB = new THREE.TorusGeometry(2.05, 0.012, 16, 120);
-    const haloMatB = new THREE.MeshStandardMaterial({
-      color: 0x00f5d4,
-      emissive: 0x004d40,
-      emissiveIntensity: 0.9,
-      roughness: 0.4,
-    });
-    const haloMeshB = new THREE.Mesh(haloGeoB, haloMatB);
-    haloMeshB.rotation.y = Math.PI / 3;
-    haloMeshB.rotation.z = Math.PI / 6;
-    scene.add(haloMeshB);
-
-    // 4. Ethereal Stardust Swarm (100 particles)
-    const particleCount = 100;
-    const particleGeo = new THREE.BufferGeometry();
-    const particlePositions = new Float32Array(particleCount * 3);
-    const particleOriginals = new Float32Array(particleCount * 3);
-    for (let i = 0; i < particleCount * 3; i += 3) {
-      const radius = 1.6 + Math.random() * 1.2;
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(Math.random() * 2 - 1);
-      const px = radius * Math.sin(phi) * Math.cos(theta);
-      const py = radius * Math.sin(phi) * Math.sin(theta);
-      const pz = radius * Math.cos(phi);
-      particlePositions[i] = px;
-      particlePositions[i + 1] = py;
-      particlePositions[i + 2] = pz;
-      particleOriginals[i] = px;
-      particleOriginals[i + 1] = py;
-      particleOriginals[i + 2] = pz;
-    }
-    particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
-    const particleMat = new THREE.PointsMaterial({
-      color: 0x38b2ac,
-      size: 0.045,
-      transparent: true,
-      opacity: 0.75,
-      blending: THREE.AdditiveBlending,
-    });
-    const particleSystem = new THREE.Points(particleGeo, particleMat);
-    scene.add(particleSystem);
-
-    let smoothEnergy = 0;
-    let t = 0;
-    let raf = 0;
+    let time = 0;
+    let smoothedEnergy = 0;
+    let frameId = 0;
+    let disposed = false;
     const clock = new THREE.Clock();
 
-    const targetCore = new THREE.Color();
-    const targetMembrane = new THREE.Color();
-    const targetHalo = new THREE.Color();
-
     const render = () => {
+      if (disposed) return;
+
       const dt = Math.min(clock.getDelta(), 0.05);
-      const config = ORB_STATE_CONFIG[stateRef.current] || ORB_STATE_CONFIG.idle;
-      smoothEnergy += (energyRef.current - smoothEnergy) * 0.15;
+      const config = ORB_STATE_CONFIG[stateRef.current] || initial;
+      const rawEnergy = clamp01(energyRef.current);
+      const smoothing = rawEnergy > smoothedEnergy ? 0.24 : 0.09;
+      smoothedEnergy += (rawEnergy - smoothedEnergy) * smoothing;
 
-      // Color interpolation across all layers
-      targetCore.setHex(config.coreColor);
-      targetMembrane.setHex(config.membraneColor);
-      targetHalo.setHex(config.haloColor);
+      if (!reducedMotion) time += dt * config.speed;
 
-      coreMat.color.lerp(targetCore, 0.08);
-      coreMat.emissive.lerp(targetHalo, 0.08);
-      membraneMat.color.lerp(targetMembrane, 0.08);
-      haloMatA.color.lerp(targetHalo, 0.08);
-      haloMatB.color.lerp(targetHalo, 0.08);
-      particleMat.color.lerp(targetHalo, 0.08);
-      coreLight.color.lerp(targetHalo, 0.08);
-      coreLight.intensity = config.lightIntensity + smoothEnergy * 2.2;
+      uniforms.uTime.value = reducedMotion ? 0 : time;
+      uniforms.uEnergy.value = smoothedEnergy;
+      uniforms.uActivity.value = Math.max(config.activityFloor, smoothedEnergy * 0.72);
+      uniforms.uMotion.value = reducedMotion ? 0 : 1;
+
+      targetBase.set(config.base);
+      targetTop.set(config.top);
+      targetWave.set(config.wave);
+      uniforms.uBaseColor.value.lerp(targetBase, 0.055);
+      uniforms.uTopColor.value.lerp(targetTop, 0.055);
+      uniforms.uWaveColor.value.lerp(targetWave, 0.07);
+      targetRing.set(config.ring);
+      ringMaterial.color.lerp(targetRing, 0.06);
+
+      const breath = reducedMotion
+        ? 1
+        : 1 + Math.sin(time * 0.7) * 0.007 + Math.max(smoothedEnergy, config.activityFloor) * 0.016;
+      signalGroup.scale.setScalar(breath);
 
       if (!reducedMotion) {
-        t += dt * config.speed;
-
-        // Dynamic 3-octave fluid noise displacement on outer membrane
-        const pos = membraneGeo.attributes.position.array as Float32Array;
-        const totalAmp = config.noiseAmp + smoothEnergy * 0.35;
-
-        for (let i = 0; i < pos.length; i += 3) {
-          const bx = basePositions[i];
-          const by = basePositions[i + 1];
-          const bz = basePositions[i + 2];
-
-          // Normalized spherical coordinates
-          const nx = bx / 1.35;
-          const ny = by / 1.35;
-          const nz = bz / 1.35;
-
-          const n1 = Math.sin(nx * 3.2 + t * 2.5) * Math.cos(ny * 3.2 + t * 1.9);
-          const n2 = Math.sin(nz * 4.0 - t * 1.7) * Math.cos(nx * 2.5 + t * 1.3);
-          const n3 = Math.sin((nx + ny + nz) * 5.0 + t * 3.1);
-
-          const displacement = (n1 * 0.5 + n2 * 0.3 + n3 * 0.2) * totalAmp;
-          const scale = 1 + displacement / 1.35;
-
-          pos[i] = bx * scale;
-          pos[i + 1] = by * scale;
-          pos[i + 2] = bz * scale;
-        }
-        membraneGeo.attributes.position.needsUpdate = true;
-
-        // Core breathing & gentle rotation
-        const coreScale = 1 + Math.sin(t * 1.5) * 0.04 + smoothEnergy * 0.22;
-        coreMesh.scale.set(coreScale, coreScale, coreScale);
-        coreMesh.rotation.y = t * 0.4;
-        coreMesh.rotation.x = Math.sin(t * 0.3) * 0.15;
-
-        membraneMesh.rotation.y = -t * 0.25;
-        membraneMesh.rotation.z = Math.sin(t * 0.2) * 0.12;
-
-        // Gyroscopic halo spin
-        haloMeshA.rotation.z = t * 0.5;
-        haloMeshA.rotation.x = Math.PI / 4 + Math.sin(t * 0.4) * 0.15;
-        haloMeshB.rotation.y = t * 0.4;
-        haloMeshB.rotation.z = Math.PI / 6 + Math.cos(t * 0.3) * 0.18;
-
-        // Orbiting particle swarm
-        const pArray = particleGeo.attributes.position.array as Float32Array;
-        for (let i = 0; i < particleCount * 3; i += 3) {
-          const ox = particleOriginals[i];
-          const oy = particleOriginals[i + 1];
-          const oz = particleOriginals[i + 2];
-          const angle = t * 0.25 + i * 0.02;
-          pArray[i] = ox * Math.cos(angle) - oz * Math.sin(angle);
-          pArray[i + 1] = oy + Math.sin(t * 1.2 + i) * 0.1 * (1 + smoothEnergy);
-          pArray[i + 2] = ox * Math.sin(angle) + oz * Math.cos(angle);
-        }
-        particleGeo.attributes.position.needsUpdate = true;
-      } else {
-        // Reduced motion: serene smooth breathing
-        const calmBreath = 1 + Math.sin(clock.getElapsedTime() * 0.8) * 0.03;
-        coreMesh.scale.set(calmBreath, calmBreath, calmBreath);
-        membraneMesh.scale.set(calmBreath, calmBreath, calmBreath);
+        ring.rotation.z = -0.22 + Math.sin(time * 0.22) * 0.06;
+        ring.rotation.y = 0.12 + time * 0.035;
       }
 
       renderer.render(scene, camera);
-      raf = requestAnimationFrame(render);
+      frameId = window.requestAnimationFrame(render);
     };
 
     render();
 
-    const ro = new ResizeObserver(() => {
-      ({ w, h } = size());
-      renderer.setSize(w, h);
-      camera.aspect = w / h;
+    const resizeObserver = new ResizeObserver(() => {
+      ({ width, height } = getSize());
+      renderer.setSize(width, height);
+      camera.aspect = width / height;
       camera.updateProjectionMatrix();
     });
-    ro.observe(mount);
+    resizeObserver.observe(mount);
 
     return () => {
-      cancelAnimationFrame(raf);
-      ro.disconnect();
-      scene.traverse((obj) => {
-        if (obj instanceof THREE.Mesh || obj instanceof THREE.Points) {
-          obj.geometry.dispose();
-          if (Array.isArray(obj.material)) {
-            obj.material.forEach((m) => m.dispose());
-          } else {
-            obj.material.dispose();
-          }
-        }
-      });
+      disposed = true;
+      window.cancelAnimationFrame(frameId);
+      resizeObserver.disconnect();
+      sphereGeometry.dispose();
+      sphereMaterial.dispose();
+      ringGeometry.dispose();
+      ringMaterial.dispose();
       renderer.dispose();
+
       if (renderer.domElement.parentNode === mount) {
         mount.removeChild(renderer.domElement);
       }
