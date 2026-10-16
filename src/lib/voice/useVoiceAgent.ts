@@ -20,6 +20,13 @@ import {
 import { buildDeterministicCoachPlan } from '@/lib/coach/strategies';
 import { analyzeStreamingUtterance, type RealtimeStreamingAnalysis } from '@/lib/coach/knowledge';
 import { loadUserCalibration, buildAdaptiveSystemPrompt } from '@/lib/coach/selfImprovement';
+import {
+  loadUserMemory,
+  extractMemoriesFromUtterance,
+  buildMemorySystemPrompt,
+  type UserMemoryProfile,
+} from '@/lib/coach/userMemory';
+import { detectVoiceCommand, type VoiceCommandAction } from '@/lib/voice/voiceCommands';
 
 export interface VoiceTranscriptEntry {
   id: string;
@@ -34,6 +41,7 @@ export interface UseVoiceAgentOptions {
   onOutcomeRecorded?: (outcome: SessionOutcome, helpfulRating?: number) => void;
   onCrisisDetected?: (message: string) => void;
   onMedicalBoundaryDetected?: (message: string) => void;
+  onVoiceCommandDetected?: (command: VoiceCommandAction) => void;
 }
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
@@ -62,6 +70,22 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const [transcripts, setTranscripts] = useState<VoiceTranscriptEntry[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [streamingAnalysis, setStreamingAnalysis] = useState<RealtimeStreamingAnalysis | null>(null);
+  const [isHandsFreePaused, setIsHandsFreePaused] = useState(false);
+  const [userMemory, setUserMemory] = useState<UserMemoryProfile>(() => {
+    try {
+      return loadUserMemory();
+    } catch {
+      return {
+        name: null,
+        roleOrField: null,
+        coreTriggers: [],
+        knownStrengths: [],
+        facts: [],
+        recentSessionsSummary: [],
+        lastActive: new Date().toISOString(),
+      };
+    }
+  });
 
   const wsRef = useRef<WebSocket | null>(null);
   const sessionReadyRef = useRef(false);
@@ -74,8 +98,49 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     Array<{ call_id: string; result: string; is_error: boolean }>
   >([]);
   const medicationSuppressionRef = useRef(false);
+  const handsFreePausedRef = useRef(false);
   const optionsRef = useRef(options);
   optionsRef.current = options;
+
+  const playEarcon = useCallback((type: 'pause' | 'resume' | 'chime') => {
+    if (typeof window === 'undefined') return;
+    try {
+      const ctx = audioCtxRef.current || new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      if (type === 'pause') {
+        osc.frequency.setValueAtTime(520, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(330, ctx.currentTime + 0.22);
+      } else if (type === 'resume') {
+        osc.frequency.setValueAtTime(380, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(640, ctx.currentTime + 0.22);
+      } else {
+        osc.frequency.setValueAtTime(660, ctx.currentTime);
+      }
+      gain.gain.setValueAtTime(0.001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.26);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const toggleHandsFreeMute = useCallback(() => {
+    handsFreePausedRef.current = !handsFreePausedRef.current;
+    setIsHandsFreePaused(handsFreePausedRef.current);
+    if (handsFreePausedRef.current) {
+      setVisualState('idle');
+      playEarcon('pause');
+    } else {
+      setVisualState('listening');
+      playEarcon('resume');
+    }
+  }, [playEarcon]);
 
   const stopPlaybackQueue = useCallback(() => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -348,7 +413,9 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
       socket.onopen = () => {
         const calibration = loadUserCalibration();
+        const memory = loadUserMemory();
         const adaptivePrompt = buildAdaptiveSystemPrompt(calibration);
+        const memoryPrompt = buildMemorySystemPrompt(memory);
         const warmHumanPrompt = `You are Stay, an authentic, warm, deeply human conversational body-double companion for adults with ADHD.
 You sound and feel like ChatGPT Voice: natural conversational pacing, casual contractions ("yeah", "I'm", "totally", "let's"), warm emotional validation, and genuine empathy.
 You are sitting right beside the user as a trusted friend helping them through task paralysis.
@@ -359,10 +426,19 @@ Rules:
 - Default focus timer is ${calibration.preferredMinutes} minutes if the user asks for focus, or whatever duration they say (such as 20 or 25 minutes).
 - When they mention what they are avoiding, acknowledge how they feel, propose ONE ridiculously small first move (<60 seconds), and ask warmly if that feels doable.
 - Never diagnose ADHD or advise on medication or doses.
+- You have native hands-free voice command awareness:
+  • If the user says "start timer", "start 20 minutes", or "let's do 15 min", invoke start_focus_timer with that duration.
+  • If the user says "break this down" or "make it smaller", invoke propose_coaching_plan with task_shrinking.
+  • If the user says "I'm done" or "I started", invoke record_session_outcome.
+  • If the user says "stay pause" or "hold on", gently acknowledge and pause.
+
+${memoryPrompt}
 
 ${adaptivePrompt}`;
 
-        const greeting = "Hey! I'm Stay. What's one thing hanging over your head right now? We'll make the first move ridiculously easy.";
+        const greeting = memory.name
+          ? `Hey ${memory.name}! I'm right here with you. What's on your mind today? Let's make the first step ridiculously light.`
+          : "Hey! I'm Stay, sitting right here with you. What's one thing hanging over your head right now? We'll make the first move ridiculously easy.";
 
         socket.send(
           JSON.stringify({
@@ -416,6 +492,9 @@ ${adaptivePrompt}`;
               sessionReadyRef.current &&
               socket.readyState === WebSocket.OPEN
             ) {
+              // Suppress mic audio chunks when hands-free listening is paused
+              if (handsFreePausedRef.current) return;
+
               const b64 = arrayBufferToBase64(payload.buffer);
               socket.send(
                 JSON.stringify({
@@ -433,7 +512,9 @@ ${adaptivePrompt}`;
         if (type === 'input.speech.started') {
           stopPlaybackQueue();
           medicationSuppressionRef.current = false;
-          setVisualState('listening');
+          if (!handsFreePausedRef.current) {
+            setVisualState('listening');
+          }
           setStreamingAnalysis(null);
           return;
         }
@@ -446,6 +527,27 @@ ${adaptivePrompt}`;
           if (text.length > 4) {
             const analysis = analyzeStreamingUtterance(text);
             setStreamingAnalysis(analysis);
+          }
+
+          // Hands-free voice command interception in streaming delta
+          const cmd = detectVoiceCommand(text);
+          if (cmd) {
+            optionsRef.current.onVoiceCommandDetected?.(cmd);
+            if (cmd.type === 'pause_listening' && !handsFreePausedRef.current) {
+              handsFreePausedRef.current = true;
+              setIsHandsFreePaused(true);
+              setVisualState('idle');
+              stopPlaybackQueue();
+              playEarcon('pause');
+              return;
+            }
+            if (cmd.type === 'resume_listening' && handsFreePausedRef.current) {
+              handsFreePausedRef.current = false;
+              setIsHandsFreePaused(false);
+              setVisualState('listening');
+              playEarcon('resume');
+              return;
+            }
           }
 
           const crisis = detectCrisisSignal(text);
@@ -481,6 +583,41 @@ ${adaptivePrompt}`;
                 timestamp: new Date().toISOString(),
               },
             ]);
+
+            // Autonomous Long-term memory extraction from spoken utterance
+            const { profile: updatedMemory, extractedFact } = extractMemoriesFromUtterance(text);
+            if (extractedFact) {
+              setUserMemory(updatedMemory);
+            }
+
+            // Hands-free voice command execution on finalized user turn
+            const cmd = detectVoiceCommand(text);
+            if (cmd) {
+              optionsRef.current.onVoiceCommandDetected?.(cmd);
+              if (cmd.type === 'pause_listening') {
+                handsFreePausedRef.current = true;
+                setIsHandsFreePaused(true);
+                setVisualState('idle');
+                stopPlaybackQueue();
+                playEarcon('pause');
+                return;
+              }
+              if (cmd.type === 'resume_listening') {
+                handsFreePausedRef.current = false;
+                setIsHandsFreePaused(false);
+                setVisualState('listening');
+                playEarcon('resume');
+                return;
+              }
+              if (cmd.type === 'start_timer') {
+                optionsRef.current.onStartTimerRequested?.(cmd.minutes, text);
+                playEarcon('chime');
+              }
+              if (cmd.type === 'record_outcome') {
+                optionsRef.current.onOutcomeRecorded?.(cmd.outcome);
+                playEarcon('chime');
+              }
+            }
 
             const crisis = detectCrisisSignal(text);
             if (crisis.triggered) {
@@ -658,6 +795,35 @@ ${adaptivePrompt}`;
       const clean = text.trim();
       if (!clean) return false;
 
+      // Extract long-term memory from typed text
+      const { profile: updatedMemory, extractedFact } = extractMemoriesFromUtterance(clean);
+      if (extractedFact) {
+        setUserMemory(updatedMemory);
+      }
+
+      // Check text-based voice command
+      const cmd = detectVoiceCommand(clean);
+      if (cmd) {
+        optionsRef.current.onVoiceCommandDetected?.(cmd);
+        if (cmd.type === 'pause_listening') {
+          handsFreePausedRef.current = true;
+          setIsHandsFreePaused(true);
+          setVisualState('idle');
+          playEarcon('pause');
+        } else if (cmd.type === 'resume_listening') {
+          handsFreePausedRef.current = false;
+          setIsHandsFreePaused(false);
+          setVisualState('listening');
+          playEarcon('resume');
+        } else if (cmd.type === 'start_timer') {
+          optionsRef.current.onStartTimerRequested?.(cmd.minutes, clean);
+          playEarcon('chime');
+        } else if (cmd.type === 'record_outcome') {
+          optionsRef.current.onOutcomeRecorded?.(cmd.outcome);
+          playEarcon('chime');
+        }
+      }
+
       setTranscripts((prev) => [
         ...prev,
         {
@@ -703,7 +869,7 @@ ${adaptivePrompt}`;
       }
       return false;
     },
-    [disconnectVoiceSession, stopPlaybackQueue, speakDeterministicBoundary]
+    [disconnectVoiceSession, stopPlaybackQueue, speakDeterministicBoundary, playEarcon]
   );
 
   useEffect(() => {
@@ -733,6 +899,11 @@ ${adaptivePrompt}`;
     transcripts,
     errorMessage,
     streamingAnalysis,
+    isHandsFreePaused,
+    toggleHandsFreeMute,
+    userMemory,
+    refreshUserMemory: () => setUserMemory(loadUserMemory()),
+    playEarcon,
     startVoiceSession,
     disconnectVoiceSession,
     speakProactively,

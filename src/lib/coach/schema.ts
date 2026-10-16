@@ -37,6 +37,7 @@ export const CoachPlanRequestSchema = z.object({
   preferredStrategy: StrategyKeySchema.optional(),
   careContext: CareContextSchema.optional().default('self_managing'),
   preferredMinutes: z.number().int().min(1).max(60).optional(),
+  userMemoryPrompt: z.string().max(2000).optional(),
   strategyHistory: z
     .array(
       z.object({

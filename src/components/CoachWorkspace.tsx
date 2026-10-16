@@ -22,6 +22,13 @@ import {
   removeUserTrainingInstruction,
   type UserCalibrationProfile,
 } from '@/lib/coach/selfImprovement';
+import {
+  addUserMemoryFact,
+  removeUserMemoryFact,
+  clearAllUserMemories,
+  recordSessionMemory,
+  buildMemorySystemPrompt,
+} from '@/lib/coach/userMemory';
 
 type Step = 'capture' | 'barrier' | 'plan' | 'timer' | 'outcome' | 'done';
 
@@ -107,6 +114,8 @@ export function CoachWorkspace({
   const [usedVoice, setUsedVoice] = useState(false);
   const [showStuckRescue, setShowStuckRescue] = useState(false);
   const [showTrainingPanel, setShowTrainingPanel] = useState(false);
+  const [showMemoryPanel, setShowMemoryPanel] = useState(false);
+  const [newMemoryFact, setNewMemoryFact] = useState('');
   const [trainingInput, setTrainingInput] = useState('');
   const [typedMessage, setTypedMessage] = useState('');
   const [actionReceipt, setActionReceipt] = useState<string | null>(null);
@@ -159,6 +168,43 @@ export function CoachWorkspace({
     setActionReceipt(`Timer started · ${valid} min`);
   }, []);
 
+  const voice = useVoiceAgent({
+    onPlanProposed: (p) => {
+      setTaskText(p.taskText);
+      setBarrier(p.barrierType);
+      setPlan(p);
+      setTimerMinutes(p.timerMinutes === 0 ? (calibration.preferredMinutes || 20) : p.timerMinutes);
+      setStep('plan');
+      setActionReceipt(`Plan ready: ${p.strategyLabel}`);
+    },
+    onStartTimerRequested: (minutes, firstStep) => {
+      const valid = minutes || calibration.preferredMinutes || 20;
+      setPlan((prev) =>
+        prev
+          ? { ...prev, firstStep, timerMinutes: valid }
+          : buildDeterministicCoachPlan({ taskText: firstStep, careContext, preferredMinutes: valid })
+      );
+      startTimer(valid);
+    },
+    onOutcomeRecorded: (outcome, rating) => {
+      void logOutcome(outcome, rating ?? null);
+    },
+    onCrisisDetected: triggerCrisis,
+    onMedicalBoundaryDetected: (m) => setBoundaryNote(m),
+    onVoiceCommandDetected: (cmd) => {
+      if (!cmd) return;
+      if (cmd.type === 'start_timer') {
+        setActionReceipt(`Voice command: Started ${cmd.minutes}m focus timer`);
+      } else if (cmd.type === 'pause_listening') {
+        setActionReceipt('Voice command: Hands-free listening paused');
+      } else if (cmd.type === 'resume_listening') {
+        setActionReceipt('Voice command: Hands-free listening active');
+      } else if (cmd.type === 'record_outcome') {
+        setActionReceipt(`Voice command: Logged outcome (${cmd.outcome})`);
+      }
+    },
+  });
+
   const logOutcome = useCallback(
     async (outcome: SessionOutcome, rating?: number | null) => {
       if (!plan) return;
@@ -187,38 +233,21 @@ export function CoachWorkspace({
       });
       setCalibration(updatedProfile);
 
+      // Long-term Episodic Memory Recording
+      recordSessionMemory({
+        task: plan.taskText,
+        outcome,
+        minutes: timerMinutes,
+      });
+      voice.refreshUserMemory();
+
       setLastLogged(outcome);
       setRunning(false);
       setStep('done');
-      setActionReceipt(`Session outcome logged · Stay adapted model`);
+      setActionReceipt(`Session outcome logged · Memory updated`);
     },
-    [plan, onLogSession, usedVoice, careContext, timerMinutes, elapsed, helpful]
+    [plan, onLogSession, usedVoice, careContext, timerMinutes, elapsed, helpful, voice]
   );
-
-  const voice = useVoiceAgent({
-    onPlanProposed: (p) => {
-      setTaskText(p.taskText);
-      setBarrier(p.barrierType);
-      setPlan(p);
-      setTimerMinutes(p.timerMinutes === 0 ? (calibration.preferredMinutes || 20) : p.timerMinutes);
-      setStep('plan');
-      setActionReceipt(`Plan ready: ${p.strategyLabel}`);
-    },
-    onStartTimerRequested: (minutes, firstStep) => {
-      const valid = minutes || calibration.preferredMinutes || 20;
-      setPlan((prev) =>
-        prev
-          ? { ...prev, firstStep, timerMinutes: valid }
-          : buildDeterministicCoachPlan({ taskText: firstStep, careContext, preferredMinutes: valid })
-      );
-      startTimer(valid);
-    },
-    onOutcomeRecorded: (outcome, rating) => {
-      void logOutcome(outcome, rating ?? null);
-    },
-    onCrisisDetected: triggerCrisis,
-    onMedicalBoundaryDetected: (m) => setBoundaryNote(m),
-  });
 
   // Seed the agent with care context once connected.
   useEffect(() => {
@@ -274,6 +303,7 @@ export function CoachWorkspace({
             preferredStrategy,
             careContext,
             preferredMinutes: timerMinutes,
+            userMemoryPrompt: buildMemorySystemPrompt(voice.userMemory),
             strategyHistory,
           }),
         });
@@ -348,6 +378,18 @@ export function CoachWorkspace({
           </h2>
           <div className="flex items-center gap-2">
             {isDemo && <span className="sample-badge">Sample data</span>}
+            <button
+              type="button"
+              className="chip text-[0.82rem] flex items-center gap-1.5 border border-accent/20 bg-accent/5 text-accent hover:bg-accent/10 transition-colors"
+              onClick={() => setShowMemoryPanel(true)}
+              data-testid="user-memory-trigger"
+              title="View Stay's persistent memory of you"
+            >
+              <span>🧬</span>
+              <span className="font-medium">
+                Memory ({voice.userMemory.facts.length + voice.userMemory.recentSessionsSummary.length})
+              </span>
+            </button>
             <button
               type="button"
               className="chip text-[0.82rem] flex items-center gap-1.5 border border-accent/20 bg-accent/5 text-accent hover:bg-accent/10 transition-colors"
@@ -727,15 +769,42 @@ export function CoachWorkspace({
                 disabled={voice.visualState === 'connecting'}
                 data-testid="voice-start"
               >
-                {voice.visualState === 'connecting' ? 'Connecting' : 'Talk to Stay'}
+                {voice.visualState === 'connecting' ? 'Connecting' : 'Talk to Stay (Full AGI Live)'}
               </button>
             ) : (
-              <button type="button" className="btn btn-secondary w-full" onClick={voice.disconnectVoiceSession} data-testid="voice-stop">
-                End voice
-              </button>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-surface-recessed border border-line text-xs">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`h-2.5 w-2.5 rounded-full ${
+                        voice.isHandsFreePaused ? 'bg-amber-500' : 'bg-emerald-500 animate-pulse'
+                      }`}
+                    />
+                    <span className="font-medium text-ink">
+                      {voice.isHandsFreePaused ? 'Listening Paused' : 'Hands-Free Active'}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={voice.toggleHandsFreeMute}
+                    className="chip py-0.5 px-2 text-[0.75rem]"
+                    title={voice.isHandsFreePaused ? 'Resume listening' : 'Pause listening'}
+                  >
+                    {voice.isHandsFreePaused ? 'Resume ("Hey Stay")' : 'Pause ("Stay pause")'}
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-secondary w-full py-1.5 text-xs"
+                  onClick={voice.disconnectVoiceSession}
+                  data-testid="voice-stop"
+                >
+                  End voice
+                </button>
+              </div>
             )}
             <p className="meta mt-2 text-center text-xs">
-              Interrupt any time. Audio is streamed ephemerally, never stored.
+              Voice commands: &ldquo;Stay pause&rdquo; · &ldquo;Hey Stay&rdquo; · &ldquo;Start 20m&rdquo; · &ldquo;I&apos;m done&rdquo;
             </p>
             {voice.errorMessage && (
               <p className="notice mt-3" role="alert">
@@ -958,6 +1027,195 @@ export function CoachWorkspace({
               <button
                 type="button"
                 onClick={() => setShowTrainingPanel(false)}
+                className="btn btn-secondary py-1.5 px-4 text-xs"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Persistent Cognitive Memory (AGI) Modal */}
+      {showMemoryPanel && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs animate-fadeIn"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="memory-dialog-title"
+        >
+          <div className="card w-full max-w-lg p-5 sm:p-6 bg-surface border border-line shadow-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-line pb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🧬</span>
+                <div>
+                  <h3 id="memory-dialog-title" className="font-display font-semibold text-ink text-base">
+                    Persistent Cognitive Memory (AGI)
+                  </h3>
+                  <p className="text-xs text-ink-3">Long-term episodic & contextual memory stored securely in your browser</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowMemoryPanel(false)}
+                className="text-ink-3 hover:text-ink text-xl font-medium px-2 py-1"
+                aria-label="Close memory dialog"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Profile Overview */}
+            <div className="mt-4 space-y-3">
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="rounded-lg bg-surface-recessed p-2.5 border border-line">
+                  <span className="text-ink-3 block">User Name</span>
+                  <span className="font-semibold text-accent text-sm">
+                    {voice.userMemory.name || 'Learning naturally...'}
+                  </span>
+                </div>
+                <div className="rounded-lg bg-surface-recessed p-2.5 border border-line">
+                  <span className="text-ink-3 block">Work / Life Context</span>
+                  <span className="font-semibold text-ink text-sm">
+                    {voice.userMemory.roleOrField || 'Learning from chats...'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Avoidance Triggers & Strengths */}
+              <div className="space-y-2 text-xs">
+                <div className="rounded-lg bg-surface-recessed p-2.5 border border-line">
+                  <span className="text-ink-3 block font-medium mb-1">Known Avoidance Traps:</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {voice.userMemory.coreTriggers.map((t) => (
+                      <span
+                        key={t}
+                        className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[0.72rem] text-amber-800 dark:text-amber-300 border border-amber-500/20"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-lg bg-surface-recessed p-2.5 border border-line">
+                  <span className="text-ink-3 block font-medium mb-1">Known Strengths:</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {voice.userMemory.knownStrengths.map((s) => (
+                      <span
+                        key={s}
+                        className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[0.72rem] text-emerald-800 dark:text-emerald-300 border border-emerald-500/20"
+                      >
+                        {s}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Add Memory Fact Form */}
+              <div className="mt-4">
+                <label htmlFor="user-memory-input" className="label text-xs">
+                  Teach Stay A Fact About Yourself:
+                </label>
+                <div className="mt-1 flex gap-2">
+                  <input
+                    id="user-memory-input"
+                    type="text"
+                    value={newMemoryFact}
+                    onChange={(e) => setNewMemoryFact(e.target.value)}
+                    placeholder="e.g. Call me Sarah, or I get overwhelmed by Slack"
+                    className="field py-1.5 px-3 text-xs flex-1"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!newMemoryFact.trim()) return;
+                      addUserMemoryFact(newMemoryFact.trim());
+                      voice.refreshUserMemory();
+                      if (voice.isConnected) {
+                        voice.injectContext(
+                          `User added new memory fact: "${newMemoryFact.trim()}". Remember this permanently.`
+                        );
+                      }
+                      setNewMemoryFact('');
+                      setActionReceipt('Saved new fact to persistent memory');
+                    }}
+                    disabled={!newMemoryFact.trim()}
+                    className="btn btn-primary py-1 px-3 text-xs"
+                    data-testid="add-memory-fact-btn"
+                  >
+                    Remember
+                  </button>
+                </div>
+              </div>
+
+              {/* Stored Facts List */}
+              <div className="mt-3">
+                <span className="text-xs font-medium text-ink-3 block mb-1.5">
+                  Stored Facts & Insights ({voice.userMemory.facts.length}):
+                </span>
+                <ul className="space-y-1.5 max-h-36 overflow-y-auto">
+                  {voice.userMemory.facts.map((fact, idx) => (
+                    <li
+                      key={fact + idx}
+                      className="rounded bg-surface-recessed px-2.5 py-1.5 text-xs text-ink flex items-center justify-between border border-line"
+                    >
+                      <span>✓ {fact}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          removeUserMemoryFact(idx);
+                          voice.refreshUserMemory();
+                        }}
+                        className="text-ink-3 hover:text-ink text-xs ml-2"
+                        title="Remove memory fact"
+                      >
+                        ×
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Episodic Sessions History */}
+              {voice.userMemory.recentSessionsSummary.length > 0 && (
+                <div className="mt-3">
+                  <span className="text-xs font-medium text-ink-3 block mb-1.5">Recent Session Breakthroughs:</span>
+                  <ul className="space-y-1 max-h-28 overflow-y-auto">
+                    {voice.userMemory.recentSessionsSummary.map((item, idx) => (
+                      <li
+                        key={item.task + idx}
+                        className="text-[0.78rem] text-ink-2 bg-surface-recessed/60 px-2 py-1 rounded border border-line/60 flex items-center justify-between"
+                      >
+                        <span className="truncate max-w-[280px]">{item.task}</span>
+                        <span className="font-mono text-accent text-[0.72rem] shrink-0 ml-2">
+                          {item.minutes}m · {item.outcome}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-5 pt-3 border-t border-line flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm('Clear all stored Stay memories?')) {
+                    clearAllUserMemories();
+                    voice.refreshUserMemory();
+                    setActionReceipt('Persistent memories cleared');
+                  }
+                }}
+                className="text-xs text-ink-3 hover:text-red-500 transition-colors"
+              >
+                Clear all memories
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowMemoryPanel(false)}
                 className="btn btn-secondary py-1.5 px-4 text-xs"
               >
                 Done

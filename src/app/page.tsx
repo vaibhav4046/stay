@@ -22,12 +22,12 @@ export default function Home() {
               Tell Stay what you&apos;re avoiding. Choose a practical first move, work for a short block,
               and keep a clear record of what helped.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/demo" className="btn btn-primary" data-testid="hero-demo">
-                Try the 45-second demo
+            <div className="mt-8 flex flex-wrap gap-3 items-center">
+              <Link href="/app/today" className="btn btn-primary" data-testid="hero-real-session">
+                Start Real Voice &amp; Text Companion
               </Link>
-              <Link href="/app/today" className="btn btn-secondary">
-                Start a real session
+              <Link href="/demo" className="btn btn-secondary" data-testid="hero-demo">
+                Interactive Preview Tour
               </Link>
             </div>
             <p className="meta mt-4 text-[0.82rem]">
@@ -78,8 +78,8 @@ export default function Home() {
             medication, therapy or your clinician. Whether it improves outcomes is a question it measures openly, with
             your own numbers, rather than promises.
           </p>
-          <Link href="/demo" className="btn btn-primary mt-8">
-            See the full loop
+          <Link href="/app/today" className="btn btn-primary mt-8" data-testid="bottom-real-session">
+            Start your real session now
           </Link>
         </section>
       </main>

@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
 You speak like a trusted, empathetic friend sitting right across the table — casual contractions ("I'm", "let's", "you're"), natural conversational cadence, zero clinical jargon, zero condescending lectures, 100% warm reassurance.
 Your spoken response MUST be under 35 words. Gently validate how heavy starting feels, propose one ridiculously tiny physical move, and offer to keep time.
 
-Return ONLY a valid JSON object matching this exact schema:
+${input.userMemoryPrompt ? `${input.userMemoryPrompt}\n\n` : ''}Return ONLY a valid JSON object matching this exact schema:
 {
   "spokenResponse": "string (under 35 words, warm, casual, empathetic friend register)",
   "taskText": "string",
