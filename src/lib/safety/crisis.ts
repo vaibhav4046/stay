@@ -49,16 +49,20 @@ const CRISIS_PATTERNS: Array<{ regex: RegExp; label: string }> = [
 
 const MEDICATION_ADVICE_PATTERNS: Array<{ regex: RegExp; label: string }> = [
   {
-    regex: /\b(should\s+i|can\s+i)\s+(stop\s+taking|start\s+taking|double|increase|decrease|lower|raise|change|stop|skip|split|take\s+an?\s+extra|take\s+another)\s+(my\s+)?(dose|medication|meds|pill|pills|tablet|tablets|capsule|capsules|elvanse|vyvanse|ritalin|concerta|methylphenidate|lisdexamfetamine|adderall|atomoxetine|strattera)\b/i,
+    regex: /\b(should\s+i|can\s+i)\s+(stop\s+taking|start\s+taking|double|increase|decrease|lower|raise|change|stop|skip|split|take\s+an?\s+extra|take\s+another)\s+(my\s+)?(\d+\s*mg\s+)?(dose|dosage|medication|meds|pill|pills|tablet|tablets|capsule|capsules|elvanse|vyvanse|ritalin|concerta|methylphenidate|lisdexamfetamine|adderall|atomoxetine|strattera)\b/i,
     label: 'dosing change question',
   },
   {
-    regex: /\b(what\s+dose|how\s+many\s+mg|how\s+much\s+mg|which\s+medication\s+should\s+i\s+take|what\s+medication\s+is\s+best)\b/i,
+    regex: /\b(what\s+dose|what\s+dosage|how\s+many\s+mg|how\s+much\s+mg|which\s+medication\s+should\s+i\s+take|what\s+medication\s+is\s+best)\b/i,
     label: 'medication prescribing question',
   },
   {
-    regex: /\b(is\s+\d+\s*mg\s+too\s+(high|low|much)|extra\s+\d+\s*mg|double\s+my\s+dose|stop\s+taking\s+my\s+(meds|medication|pills|elvanse|concerta|ritalin))\b/i,
+    regex: /\b(is\s+\d+\s*mg\s+too\s+(high|low|much|dangerous|safe)|extra\s+\d+\s*mg|double\s+my\s+dose|double\s+(my\s+)?\d+\s*mg|stop\s+taking\s+my\s+(meds|medication|pills|elvanse|concerta|ritalin))\b/i,
     label: 'dosage adjustment question',
+  },
+  {
+    regex: /\b(double|increase|decrease|lower|raise|cut\s+in\s+half)\s+(my\s+)?(\d+\s*mg\s+)?(dose|dosage)\b/i,
+    label: 'dose alteration',
   },
 ];
 

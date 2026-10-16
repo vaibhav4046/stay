@@ -24,11 +24,17 @@ describe('medication boundary', () => {
 });
 
 describe('coach plan', () => {
-  it('crisis input short-circuits to crisis flag', () => {
-    expect(buildDeterministicCoachPlan({ taskText: 'I want to end my life' }).safetyFlag).toBe('crisis');
+  it('crisis input short-circuits to crisis flag with 0 timerMinutes and resources', () => {
+    const plan = buildDeterministicCoachPlan({ taskText: 'I want to end my life' });
+    expect(plan.safetyFlag).toBe('crisis');
+    expect(plan.timerMinutes).toBe(0);
+    expect(plan.resources?.length).toBeGreaterThanOrEqual(3);
   });
-  it('medication question gets boundary flag', () => {
-    expect(buildDeterministicCoachPlan({ taskText: 'should I increase my dose' }).safetyFlag).toBe('medical_boundary');
+  it('medication question gets boundary flag with 0 timerMinutes and doctor referral', () => {
+    const plan = buildDeterministicCoachPlan({ taskText: 'should I increase my dose' });
+    expect(plan.safetyFlag).toBe('medical_boundary');
+    expect(plan.timerMinutes).toBe(0);
+    expect(plan.spokenResponse).toContain('prescribing clinician');
   });
   it('normal task produces schema-valid plan', () => {
     const p = buildDeterministicCoachPlan({ taskText: 'Reply to landlord email', barrierType: 'overwhelm' });

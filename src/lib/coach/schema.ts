@@ -49,16 +49,26 @@ export const CoachPlanRequestSchema = z.object({
 });
 
 export const CoachPlanResponseSchema = z.object({
-  spokenResponse: z.string().min(1).max(320),
-  taskText: z.string().min(1).max(280),
+  spokenResponse: z.string().min(1).max(400),
+  taskText: z.string().max(280),
   barrierType: BarrierTypeSchema,
   strategyKey: StrategyKeySchema,
-  strategyLabel: z.string().min(1).max(80),
-  firstStep: z.string().min(1).max(220),
-  whyThisFits: z.string().min(1).max(240),
-  timerMinutes: z.union([z.literal(5), z.literal(10), z.literal(15)]),
-  checkinPrompt: z.string().min(1).max(200),
+  strategyLabel: z.string().max(80),
+  firstStep: z.string().max(220),
+  whyThisFits: z.string().max(240),
+  timerMinutes: z.union([z.literal(0), z.literal(5), z.literal(10), z.literal(15)]),
+  checkinPrompt: z.string().max(200),
   safetyFlag: z.enum(['none', 'crisis', 'medical_boundary']),
+  resources: z
+    .array(
+      z.object({
+        name: z.string(),
+        contact: z.string(),
+        href: z.string(),
+        detail: z.string(),
+      })
+    )
+    .optional(),
 });
 
 export const ProposeCoachingPlanToolArgsSchema = z.object({

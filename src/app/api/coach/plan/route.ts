@@ -13,7 +13,9 @@ import {
 import {
   detectCrisisSignal,
   detectMedicationAdviceRequest,
+  UK_CRISIS_RESOURCES,
 } from '@/lib/safety/crisis';
+import type { CoachPlanProposal } from '@/types/domain';
 
 export async function POST(req: NextRequest) {
   let body: unknown;
@@ -38,13 +40,36 @@ export async function POST(req: NextRequest) {
   // 1. Pre-LLM deterministic safety checks (Crisis & Medication Dosing)
   const crisisCheck = detectCrisisSignal(input.taskText);
   if (crisisCheck.triggered) {
-    const crisisPlan = buildDeterministicCoachPlan(input);
+    const crisisPlan: CoachPlanProposal = {
+      spokenResponse: crisisCheck.message,
+      taskText: input.taskText,
+      barrierType: 'other',
+      strategyKey: 'task_shrinking',
+      strategyLabel: 'Crisis Resources & Immediate Support',
+      firstStep: 'Pause task coaching and connect with human crisis support right now.',
+      whyThisFits: 'Immediate personal safety comes before any task.',
+      timerMinutes: 0,
+      checkinPrompt: 'Please connect with 999, NHS 111, or Samaritans on 116 123.',
+      safetyFlag: 'crisis',
+      resources: UK_CRISIS_RESOURCES,
+    };
     return NextResponse.json(crisisPlan, { status: 200 });
   }
 
   const medCheck = detectMedicationAdviceRequest(input.taskText);
   if (medCheck.triggered) {
-    const medPlan = buildDeterministicCoachPlan(input);
+    const medPlan: CoachPlanProposal = {
+      spokenResponse: medCheck.message,
+      taskText: input.taskText,
+      barrierType: 'other',
+      strategyKey: 'task_shrinking',
+      strategyLabel: 'Prescriber / Pharmacist Referral',
+      firstStep: 'Consult your prescribing clinician or pharmacist regarding medication queries.',
+      whyThisFits: 'Stay never gives medication or dosing advice.',
+      timerMinutes: 0,
+      checkinPrompt: 'Please speak with your prescribing clinician or pharmacist.',
+      safetyFlag: 'medical_boundary',
+    };
     return NextResponse.json(medPlan, { status: 200 });
   }
 

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
-import { HeroSignal } from '@/components/HeroSignal';
+import { HeroInteractiveWalkthrough } from '@/components/HeroInteractiveWalkthrough';
 
 const STEPS = [
   { n: '1', title: "Say what you're stuck on", body: 'Speak naturally, or type if you are somewhere quiet.' },
@@ -14,25 +14,27 @@ export default function Home() {
     <>
       <SiteHeader />
       <main>
-        <section className="mx-auto grid max-w-6xl items-center gap-10 px-5 pt-8 pb-16 sm:px-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:pt-16">
+        <section className="mx-auto grid max-w-6xl items-center gap-10 px-5 pt-8 pb-16 sm:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:pt-16">
           <div>
-            <p className="meta">For adults with ADHD, including people waiting for care</p>
-            <h1 className="hero-title mt-4 max-w-[16ch]">Make starting easier.</h1>
-            <p className="mt-5 max-w-[52ch] text-[1.1rem] text-ink-2">
-              Tell Stay what you&apos;re avoiding. It finds a first step small enough to begin, stays with you while you
-              do it, and keeps a clear record you can take to your clinician.
+            <p className="meta">A task-starting companion for adults with ADHD</p>
+            <h1 className="hero-title mt-4 max-w-[16ch]">One small first step. Then stay with it.</h1>
+            <p className="mt-5 max-w-[50ch] text-[1.1rem] text-ink-2 leading-relaxed">
+              Tell Stay what you&apos;re avoiding. Choose a practical first move, work for a short block,
+              and keep a clear record of what helped.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/demo" className="btn btn-primary" data-testid="hero-demo">
-                Try it now, no sign-up
+                Try the 45-second demo
               </Link>
               <Link href="/app/today" className="btn btn-secondary">
-                Start for real
+                Start a real session
               </Link>
             </div>
-            <p className="meta mt-4">Not a medical device. No diagnosis. No medication advice.</p>
+            <p className="meta mt-4 text-[0.82rem]">
+              Not a medical device · No diagnosis · No medication advice · Local-first browser storage
+            </p>
           </div>
-          <HeroSignal />
+          <HeroInteractiveWalkthrough />
         </section>
 
         <section className="mx-auto max-w-6xl px-5 sm:px-8" aria-labelledby="how-title">

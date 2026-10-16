@@ -3,12 +3,17 @@ import { test, expect } from '@playwright/test';
 test.describe('Stay — End-to-End Test Suite', () => {
   test('Landing page renders correctly with core proposition and links', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: 'Make starting easier.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'One small first step. Then stay with it.' })).toBeVisible();
     await expect(page.getByTestId('hero-demo')).toBeVisible();
+    await expect(page.getByTestId('hero-interactive-walkthrough')).toBeVisible();
     await expect(page.getByTestId('crisis-help-trigger')).toBeVisible();
 
     // Verify clinical boundary text is prominent
-    await expect(page.getByText('Not a medical device. No diagnosis. No medication advice.')).toBeVisible();
+    await expect(page.getByText(/Not a medical device/i).first()).toBeVisible();
+
+    // Test interactive walkthrough step advance
+    await page.getByTestId('walkthrough-next-btn').click();
+    await expect(page.getByText('2. Confirm the friction barrier')).toBeVisible();
   });
 
   test('Crisis panel opens and displays fixed UK emergency services', async ({ page }) => {

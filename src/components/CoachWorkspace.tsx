@@ -81,8 +81,27 @@ export function CoachWorkspace({
   const [boundaryNote, setBoundaryNote] = useState<string | null>(null);
   const [lastLogged, setLastLogged] = useState<SessionOutcome | null>(null);
   const [usedVoice, setUsedVoice] = useState(false);
+  const [showStuckRescue, setShowStuckRescue] = useState(false);
+  const [typedMessage, setTypedMessage] = useState('');
+  const [actionReceipt, setActionReceipt] = useState<string | null>(null);
   const deadlineRef = useRef<number>(0);
   const crisisRef = useRef(false);
+  const taskInputRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (
+        e.key === '/' &&
+        document.activeElement?.tagName !== 'INPUT' &&
+        document.activeElement?.tagName !== 'TEXTAREA'
+      ) {
+        e.preventDefault();
+        taskInputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   const strategyHistory = useMemo(
     () =>
@@ -110,6 +129,7 @@ export function CoachWorkspace({
     setElapsed(0);
     setRunning(true);
     setStep('timer');
+    setActionReceipt(`Timer started · ${minutes} min`);
   }, []);
 
   const logOutcome = useCallback(
@@ -132,6 +152,7 @@ export function CoachWorkspace({
       setLastLogged(outcome);
       setRunning(false);
       setStep('done');
+      setActionReceipt(`Session outcome logged: ${outcome}`);
     },
     [plan, onLogSession, usedVoice, careContext, timerMinutes, elapsed, helpful]
   );
@@ -141,8 +162,9 @@ export function CoachWorkspace({
       setTaskText(p.taskText);
       setBarrier(p.barrierType);
       setPlan(p);
-      setTimerMinutes(p.timerMinutes);
+      setTimerMinutes(p.timerMinutes === 0 ? 5 : p.timerMinutes);
       setStep('plan');
+      setActionReceipt(`Plan ready: ${p.strategyLabel}`);
     },
     onStartTimerRequested: (minutes, firstStep) => {
       setPlan((prev) =>
@@ -221,9 +243,14 @@ export function CoachWorkspace({
           triggerCrisis(data.spokenResponse);
           return;
         }
-        if (data.safetyFlag === 'medical_boundary') setBoundaryNote(data.spokenResponse);
+        if (data.safetyFlag === 'medical_boundary') {
+          setBoundaryNote(data.spokenResponse);
+          return;
+        }
         setPlan(data);
-        setTimerMinutes(data.timerMinutes);
+        setTimerMinutes(data.timerMinutes === 0 ? 5 : data.timerMinutes);
+        setActionReceipt(`Plan ready: ${data.strategyLabel}`);
+        setStep('plan');
       } catch {
         // Offline / server error: deterministic local plan keeps the loop working.
         const local = buildDeterministicCoachPlan({
@@ -233,11 +260,19 @@ export function CoachWorkspace({
           careContext,
           strategyHistory,
         });
+        if (local.safetyFlag === 'crisis') {
+          triggerCrisis(local.spokenResponse);
+          return;
+        }
+        if (local.safetyFlag === 'medical_boundary') {
+          setBoundaryNote(local.spokenResponse);
+          return;
+        }
         setPlan(local);
-        setTimerMinutes(local.timerMinutes);
+        setTimerMinutes(local.timerMinutes === 0 ? 5 : local.timerMinutes);
+        setStep('plan');
       } finally {
         setPlanLoading(false);
-        setStep('plan');
       }
     },
     [taskText, careContext, strategyHistory, triggerCrisis]
@@ -316,11 +351,15 @@ export function CoachWorkspace({
               if (taskText.trim()) setStep('barrier');
             }}
           >
-            <label htmlFor="task" className="label">
-              Say it out loud, or type it. One task is enough.
-            </label>
+            <div className="flex items-center justify-between">
+              <label htmlFor="task" className="label">
+                Say it out loud, or type it. One task is enough.
+              </label>
+              <span className="text-[0.78rem] text-ink-3 hidden sm:inline">Press &apos;/&apos; to focus</span>
+            </div>
             <textarea
               id="task"
+              ref={taskInputRef}
               className="field mt-2 min-h-[96px] resize-y"
               maxLength={280}
               placeholder="Reply to my landlord about the lease renewal"
@@ -328,6 +367,29 @@ export function CoachWorkspace({
               onChange={(e) => setTaskText(e.target.value)}
               data-testid="task-input"
             />
+            <div className="mt-3">
+              <span className="text-[0.8rem] text-ink-3 block mb-1.5 font-medium">Quick examples:</span>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { label: 'Reply to landlord', text: 'Reply to my landlord about the lease renewal date' },
+                  { label: 'Sort expense receipts', text: 'Upload three overdue expense receipts to portal' },
+                  { label: 'Q4 handover notes', text: 'Outline Q4 project handover notes for team' },
+                  { label: 'Desk mail pile', text: 'Sort the mail and document pile on the counter' },
+                ].map((item) => (
+                  <button
+                    key={item.label}
+                    type="button"
+                    className="chip text-[0.82rem] py-1 px-2.5 hover:bg-line transition-colors"
+                    onClick={() => {
+                      setTaskText(item.text);
+                      taskInputRef.current?.focus();
+                    }}
+                  >
+                    + {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <button type="submit" className="btn btn-primary" disabled={!taskText.trim()} data-testid="task-continue">
                 Continue
@@ -458,7 +520,7 @@ export function CoachWorkspace({
             <p className="meta mt-3">
               {proactiveCheckins ? 'Stay will check in when the block ends.' : 'Check-ins are off. You can end any time.'}
             </p>
-            <div className="mt-6 flex justify-center gap-3">
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
               <button
                 type="button"
                 className="btn btn-secondary"
@@ -470,7 +532,46 @@ export function CoachWorkspace({
               >
                 End block now
               </button>
+              <button
+                type="button"
+                className="btn btn-ghost text-[0.88rem] text-ink-2"
+                onClick={() => setShowStuckRescue(!showStuckRescue)}
+                data-testid="im-stuck-btn"
+              >
+                I&apos;m stuck
+              </button>
+              {isDemo && (
+                <button
+                  type="button"
+                  className="btn btn-ghost text-[0.85rem] text-accent font-medium"
+                  onClick={() => {
+                    deadlineRef.current = Date.now() + 2000;
+                    setRemaining(2);
+                  }}
+                  data-testid="fast-forward-timer"
+                >
+                  ⚡ Fast-forward timer (Demo)
+                </button>
+              )}
             </div>
+
+            {showStuckRescue && (
+              <div className="mt-5 mx-auto max-w-md rounded-xl border border-accent/30 bg-surface-recessed p-4 text-left text-[0.92rem]">
+                <p className="font-semibold text-accent">60-second de-escalation</p>
+                <p className="mt-1 text-ink leading-relaxed">
+                  Take one slow breath. You don&apos;t have to finish or do this well.
+                  What is the single smallest physical movement you can make right now?
+                  (e.g., place two fingers on the keyboard, or open the document without reading it).
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowStuckRescue(false)}
+                  className="mt-3 text-[0.82rem] font-medium text-accent underline"
+                >
+                  Back to timer
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -547,8 +648,8 @@ export function CoachWorkspace({
                 End voice
               </button>
             )}
-            <p className="meta mt-2 text-center">
-              Interrupt any time. Audio is streamed, not stored.
+            <p className="meta mt-2 text-center text-xs">
+              Interrupt any time. Audio is streamed ephemerally, never stored.
             </p>
             {voice.errorMessage && (
               <p className="notice mt-3" role="alert">
@@ -560,24 +661,82 @@ export function CoachWorkspace({
           <p className="notice mt-4">Quiet mode: text only, no microphone. Everything still works.</p>
         )}
 
-        <div className="mt-5 flex-1 min-h-[120px] max-h-[320px] overflow-y-auto border-t border-line pt-4" aria-live="polite" aria-label="Conversation">
-          {voice.transcripts.length === 0 && !voice.partialUserTranscript && (
-            <p className="meta">The conversation shows here as captions.</p>
-          )}
-          <ul className="space-y-3">
-            {voice.transcripts.map((t) => (
-              <li key={t.id + t.timestamp} className="text-[0.92rem]">
-                <span className="meta block">{t.role === 'user' ? 'You' : 'Stay'}</span>
-                <span className={t.role === 'user' ? 'text-ink' : 'text-ink-2'}>{t.text}</span>
-              </li>
-            ))}
-            {voice.partialUserTranscript && (
-              <li className="text-[0.92rem] text-muted">
-                <span className="meta block">You</span>
-                {voice.partialUserTranscript}
-              </li>
+        {actionReceipt && (
+          <div className="mt-2 rounded bg-surface-recessed px-3 py-1.5 text-[0.8rem] text-accent font-mono flex items-center justify-between border border-line">
+            <span>✓ {actionReceipt}</span>
+            <button
+              type="button"
+              onClick={() => setActionReceipt(null)}
+              className="text-ink-3 hover:text-ink font-sans text-xs ml-2"
+              aria-label="Dismiss receipt"
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        <div className="mt-4 flex-1 flex flex-col min-h-[160px] max-h-[380px] border-t border-line pt-3">
+          <div className="flex-1 overflow-y-auto space-y-3 pr-1" aria-live="polite" aria-label="Conversation">
+            {voice.transcripts.length === 0 && !voice.partialUserTranscript && (
+              <p className="meta text-xs">Captions and typed replies appear here in real time.</p>
             )}
-          </ul>
+            <ul className="space-y-2.5">
+              {voice.transcripts.map((t) => (
+                <li
+                  key={t.id + t.timestamp}
+                  className={`rounded-lg p-2.5 text-[0.88rem] ${
+                    t.role === 'user'
+                      ? 'bg-surface-recessed ml-4 text-ink'
+                      : 'bg-accent/5 border border-accent/15 mr-4 text-ink-2'
+                  }`}
+                >
+                  <span className="block text-[0.7rem] font-semibold uppercase tracking-wider text-ink-3 mb-0.5">
+                    {t.role === 'user' ? 'You' : 'Stay'}
+                  </span>
+                  <span>{t.text}</span>
+                </li>
+              ))}
+              {voice.partialUserTranscript && (
+                <li className="rounded-lg p-2.5 text-[0.88rem] bg-surface-recessed ml-4 text-muted italic">
+                  <span className="block text-[0.7rem] font-semibold uppercase tracking-wider text-ink-3 mb-0.5">
+                    Listening...
+                  </span>
+                  {voice.partialUserTranscript}
+                </li>
+              )}
+            </ul>
+          </div>
+
+          {/* Integrated continuous text input */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!typedMessage.trim()) return;
+              const sent = voice.sendUserTextMessage(typedMessage);
+              if (!sent && step === 'capture') {
+                setTaskText(typedMessage);
+                setStep('barrier');
+              }
+              setTypedMessage('');
+            }}
+            className="mt-3 flex gap-2 border-t border-line pt-2.5"
+          >
+            <input
+              type="text"
+              className="field py-1.5 px-3 text-[0.85rem] flex-1"
+              placeholder={voice.isConnected ? "Type reply to agent..." : "Type in session..."}
+              value={typedMessage}
+              onChange={(e) => setTypedMessage(e.target.value)}
+              aria-label="Type message in coaching session"
+            />
+            <button
+              type="submit"
+              disabled={!typedMessage.trim()}
+              className="btn btn-secondary py-1 px-3 text-[0.82rem]"
+            >
+              Send
+            </button>
+          </form>
         </div>
       </aside>
     </div>

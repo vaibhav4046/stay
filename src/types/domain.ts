@@ -61,9 +61,15 @@ export interface CoachPlanProposal {
   strategyLabel: string;
   firstStep: string;
   whyThisFits: string;
-  timerMinutes: 5 | 10 | 15;
+  timerMinutes: 0 | 5 | 10 | 15;
   checkinPrompt: string;
   safetyFlag: 'none' | 'crisis' | 'medical_boundary';
+  resources?: ReadonlyArray<{
+    name: string;
+    contact: string;
+    href: string;
+    detail: string;
+  }>;
 }
 
 export interface CoachSessionRecord {

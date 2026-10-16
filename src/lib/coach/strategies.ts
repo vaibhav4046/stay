@@ -7,6 +7,7 @@ import type {
 import {
   detectCrisisSignal,
   detectMedicationAdviceRequest,
+  UK_CRISIS_RESOURCES,
 } from '@/lib/safety/crisis';
 
 export interface BarrierDefinition {
@@ -224,12 +225,13 @@ export function buildDeterministicCoachPlan(params: {
       taskText: params.taskText,
       barrierType: 'other',
       strategyKey: 'task_shrinking',
-      strategyLabel: STRATEGY_DEFINITIONS.task_shrinking.label,
+      strategyLabel: 'Crisis Resources & Immediate Support',
       firstStep: 'Pause task coaching and connect with human crisis support right now.',
-      whyThisFits: 'Immediate safety comes before any task.',
-      timerMinutes: 5,
-      checkinPrompt: 'Please reach out to 999, NHS 111, or Samaritans on 116 123.',
+      whyThisFits: 'Immediate personal safety comes before any task.',
+      timerMinutes: 0,
+      checkinPrompt: 'Please connect with 999, NHS 111, or Samaritans on 116 123.',
       safetyFlag: 'crisis',
+      resources: UK_CRISIS_RESOURCES,
     };
   }
 
@@ -240,11 +242,11 @@ export function buildDeterministicCoachPlan(params: {
       taskText: params.taskText,
       barrierType: 'other',
       strategyKey: 'task_shrinking',
-      strategyLabel: STRATEGY_DEFINITIONS.task_shrinking.label,
-      firstStep: 'Write down your medication question in the Clinician Report notes to ask your prescriber or pharmacist.',
+      strategyLabel: 'Prescriber / Pharmacist Referral',
+      firstStep: 'Consult your prescribing clinician or pharmacist regarding medication queries.',
       whyThisFits: 'Stay never gives medication or dosing advice.',
-      timerMinutes: 5,
-      checkinPrompt: 'Did you note down the question for your prescriber or pharmacist?',
+      timerMinutes: 0,
+      checkinPrompt: 'Please speak with your prescribing clinician or pharmacist.',
       safetyFlag: 'medical_boundary',
     };
   }

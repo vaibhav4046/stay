@@ -70,6 +70,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const pendingToolResultsRef = useRef<
     Array<{ call_id: string; result: string; is_error: boolean }>
   >([]);
+  const medicationSuppressionRef = useRef(false);
   const optionsRef = useRef(options);
   optionsRef.current = options;
 
@@ -358,6 +359,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
         if (type === 'input.speech.started') {
           stopPlaybackQueue();
+          medicationSuppressionRef.current = false;
           setVisualState('listening');
           return;
         }
@@ -403,7 +405,28 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
             const medBoundary = detectMedicationAdviceRequest(text);
             if (medBoundary.triggered) {
+              // Explicit safety gate: suppress any agent speech/audio for this turn
+              medicationSuppressionRef.current = true;
+              stopPlaybackQueue();
               optionsRef.current.onMedicalBoundaryDetected?.(medBoundary.message);
+              setTranscripts((prev) => [
+                ...prev,
+                {
+                  id: `med-boundary-${Date.now()}`,
+                  role: 'agent',
+                  text: medBoundary.message,
+                  timestamp: new Date().toISOString(),
+                },
+              ]);
+              if (socket.readyState === WebSocket.OPEN) {
+                socket.send(
+                  JSON.stringify({
+                    type: 'reply.create',
+                    instructions:
+                      "The user asked for medication advice. State ONLY: 'Stay cannot advise on medication or doses. Please speak with your prescribing clinician or pharmacist.'",
+                  })
+                );
+              }
             }
           }
           return;
@@ -411,11 +434,17 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
         if (type === 'reply.started') {
           pendingToolResultsRef.current = [];
-          setVisualState('speaking');
+          if (!medicationSuppressionRef.current) {
+            setVisualState('speaking');
+          }
           return;
         }
 
         if (type === 'reply.audio') {
+          if (medicationSuppressionRef.current) {
+            // Drop raw audio chunks from model to prevent any spoken dosing advice
+            return;
+          }
           const b64 = String(msg.data || '');
           if (b64) {
             setVisualState('speaking');
@@ -425,6 +454,10 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         }
 
         if (type === 'transcript.agent') {
+          if (medicationSuppressionRef.current) {
+            // Drop model transcript turn in favor of deterministic medical boundary turn
+            return;
+          }
           const text = String(msg.text || '').trim();
           if (text) {
             setTranscripts((prev) => [
@@ -451,6 +484,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         }
 
         if (type === 'reply.done') {
+          medicationSuppressionRef.current = false;
           const status = String(msg.status || 'completed');
           if (status === 'interrupted') {
             pendingToolResultsRef.current = [];
@@ -535,6 +569,56 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     return true;
   }, []);
 
+  const sendUserTextMessage = useCallback(
+    (text: string) => {
+      const clean = text.trim();
+      if (!clean) return false;
+
+      setTranscripts((prev) => [
+        ...prev,
+        {
+          id: `typed-${Date.now()}`,
+          role: 'user',
+          text: clean,
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+
+      const crisis = detectCrisisSignal(clean);
+      if (crisis.triggered) {
+        disconnectVoiceSession();
+        optionsRef.current.onCrisisDetected?.(crisis.message);
+        return true;
+      }
+
+      const medBoundary = detectMedicationAdviceRequest(clean);
+      if (medBoundary.triggered) {
+        medicationSuppressionRef.current = true;
+        stopPlaybackQueue();
+        optionsRef.current.onMedicalBoundaryDetected?.(medBoundary.message);
+        setTranscripts((prev) => [
+          ...prev,
+          {
+            id: `med-boundary-${Date.now()}`,
+            role: 'agent',
+            text: medBoundary.message,
+            timestamp: new Date().toISOString(),
+          },
+        ]);
+        return true;
+      }
+
+      const ws = wsRef.current;
+      if (ws && ws.readyState === WebSocket.OPEN && sessionReadyRef.current) {
+        ws.send(JSON.stringify({ type: 'conversation.message', role: 'user', content: clean }));
+        ws.send(JSON.stringify({ type: 'reply.create' }));
+        return true;
+      }
+      return false;
+    },
+    [disconnectVoiceSession, stopPlaybackQueue]
+  );
+
   useEffect(() => {
     const onPageHide = () => {
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -565,5 +649,6 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     disconnectVoiceSession,
     speakProactively,
     injectContext,
+    sendUserTextMessage,
   };
 }
