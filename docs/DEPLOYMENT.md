@@ -45,3 +45,14 @@ npm run build
 # Start production server
 npm run start
 ```
+
+---
+
+## 4. Live Vercel Production Deployment
+
+- **Production URL**: [https://stay-two-swart.vercel.app](https://stay-two-swart.vercel.app)
+- **Direct Deployment**: [https://stay-rd3hn06ql-vaibhav4046s-projects.vercel.app](https://stay-rd3hn06ql-vaibhav4046s-projects.vercel.app)
+- **Vercel Project**: `vaibhav4046s-projects/stay`
+- **GitHub Repository**: [https://github.com/vaibhav4046/stay](https://github.com/vaibhav4046/stay)
+- **Live Demo Route**: [https://stay-two-swart.vercel.app/demo](https://stay-two-swart.vercel.app/demo)
+

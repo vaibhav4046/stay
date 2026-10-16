@@ -44,3 +44,23 @@ Most AI productivity tools either talk passively (chatbots that wait for prompts
 - **TypeScript:** Strict typecheck passing with zero errors (`npm run lint`).
 - **Production Build:** Passes cleanly (`npm run build`).
 - **Playwright E2E:** Full user flows covered (`tests/e2e/stay.spec.ts`).
+
+---
+
+## 5. Live Links & Repository
+
+- **Live Production Application:** [https://stay-two-swart.vercel.app](https://stay-two-swart.vercel.app)
+- **Direct Deployment URL:** [https://stay-rd3hn06ql-vaibhav4046s-projects.vercel.app](https://stay-rd3hn06ql-vaibhav4046s-projects.vercel.app)
+- **Interactive No-Login Demo:** [https://stay-two-swart.vercel.app/demo](https://stay-two-swart.vercel.app/demo)
+- **GitHub Repository:** [https://github.com/vaibhav4046/stay](https://github.com/vaibhav4046/stay)
+
+---
+
+## 6. Hackathon Submission Form Fields Ready-to-Copy
+
+- **Project Title:** Stay — Voice-First ADHD Task-Initiation & Adherence Companion
+- **Demo URL:** [https://stay-two-swart.vercel.app/demo](https://stay-two-swart.vercel.app/demo)
+- **GitHub URL:** [https://github.com/vaibhav4046/stay](https://github.com/vaibhav4046/stay)
+- **Description:** A voice-first ADHD support companion built with AssemblyAI Voice Agent API and Groq. Helps adults with ADHD turn difficult tasks into sub-2-minute entry steps, speaks first at timer completion, logs personal strategy efficacy without gamification, and exports a 1-page clinician appointment PDF. Deterministic safety boundaries route crises immediately to NHS/emergency services.
+- **AssemblyAI Features Used:** AssemblyAI Voice Agent API (`wss://agents.assemblyai.com/v1/ws`), Stored Voice Agent with voice `anna` (24kHz mono PCM16), Groq custom LLM (`openai/gpt-oss-120b`), client-side function tools (`propose_coaching_plan`, `start_focus_timer`, `record_session_outcome`), proactive agent check-ins (`reply.create`), and real-time interruption (barge-in).
+

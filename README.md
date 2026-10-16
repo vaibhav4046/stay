@@ -2,6 +2,10 @@
 
 A voice-first task-initiation and treatment-adherence companion for adults with ADHD, built with the **AssemblyAI Voice Agent API** for the AssemblyAI Online Hackathon #2 (October 2026).
 
+**Live App**: [https://stay-two-swart.vercel.app](https://stay-two-swart.vercel.app)  
+**Interactive Demo**: [https://stay-two-swart.vercel.app/demo](https://stay-two-swart.vercel.app/demo)  
+**GitHub Repository**: [https://github.com/vaibhav4046/stay](https://github.com/vaibhav4046/stay)
+
 ---
 
 ## The Problem
@@ -44,7 +48,7 @@ Existing tools either wait passively for prompts or pile up to-do lists that gen
 
 ### 1. Clone & Install
 ```bash
-git clone https://github.com/vvaibhavv2005/stay.git
+git clone https://github.com/vaibhav4046/stay.git
 cd stay
 npm install
 ```
