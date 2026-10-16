@@ -1,21 +1,6 @@
 import type { Metadata, Viewport } from 'next';
-import { DM_Sans, Instrument_Sans } from 'next/font/google';
 import './globals.css';
 import { CrisisHelpProvider } from '@/components/CrisisHelpPanel';
-
-const dmSans = DM_Sans({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
-  variable: '--font-dm-sans',
-  display: 'swap',
-});
-
-const instrument = Instrument_Sans({
-  subsets: ['latin'],
-  weight: ['500', '600'],
-  variable: '--font-instrument',
-  display: 'swap',
-});
 
 export const metadata: Metadata = {
   title: 'Stay — make starting easier',
@@ -29,7 +14,15 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-GB" className={`${dmSans.variable} ${instrument.variable}`}>
+    <html lang="en-GB">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap"
+        />
+      </head>
       <body>
         <CrisisHelpProvider>{children}</CrisisHelpProvider>
       </body>
