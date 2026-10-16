@@ -16,10 +16,13 @@ describe('crisis detection', () => {
 });
 
 describe('medication boundary', () => {
-  it.each(['Should I double my dose?', 'what dose should I take', 'can I stop taking my elvanse', 'is 30mg too high'])(
-    'flags "%s"',
-    (t) => expect(detectMedicationAdviceRequest(t).triggered).toBe(true)
-  );
+  it.each([
+    'Should I double my dose?',
+    'what dose should I take',
+    'can I stop taking my elvanse',
+    'is 30mg too high',
+    'Should I take 30mg or 40mg of my Vyvanse?',
+  ])('flags "%s"', (t) => expect(detectMedicationAdviceRequest(t).triggered).toBe(true));
   it('does not flag logging', () => expect(detectMedicationAdviceRequest('I took my meds this morning').triggered).toBe(false));
 });
 

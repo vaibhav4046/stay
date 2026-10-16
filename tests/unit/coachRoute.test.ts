@@ -37,6 +37,17 @@ describe('POST /api/coach/plan safety regression', () => {
     expect(data.firstStep).toContain('prescribing clinician or pharmacist');
   });
 
+  it('catches comparative Vyvanse dosing question as medical boundary', async () => {
+    const req = makeRequest({ taskText: 'Should I take 30mg or 40mg of my Vyvanse?' });
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.safetyFlag).toBe('medical_boundary');
+    expect(data.timerMinutes).toBe(0);
+    expect(data.spokenResponse).toContain('prescribing clinician');
+  });
+
   it('handles regular task with a valid coaching plan and positive timer block', async () => {
     const req = makeRequest({ taskText: 'Reply to landlord email about renewal' });
     const res = await POST(req);
