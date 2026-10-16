@@ -11,26 +11,28 @@ const SignalScene = dynamic(() => import('./SignalScene'), {
 
 export const STATE_LABELS: Record<VoiceVisualState, string> = {
   idle: 'Ready when you are',
-  connecting: 'Connecting',
-  listening: 'Listening',
-  thinking: 'Thinking',
+  connecting: 'Connecting voice session',
+  listening: 'Listening to your voice',
+  thinking: 'Synthesizing strategy',
   speaking: 'Speaking',
-  interrupted: 'Go ahead',
-  saving: 'Saving',
-  complete: 'Logged',
+  interrupted: 'Listening (interrupted)',
+  backchannel: 'Listening closely',
+  saving: 'Saving progress',
+  complete: 'Focus block logged',
   error: 'Voice unavailable',
 };
 
-const FALLBACK_COLOR: Record<VoiceVisualState, string> = {
-  idle: '#006A67',
-  connecting: '#626B66',
-  listening: '#006A67',
-  thinking: '#3C7F7C',
-  speaking: '#006A67',
-  interrupted: '#9A6318',
-  saving: '#626B66',
-  complete: '#236B48',
-  error: '#B23A2E',
+const FALLBACK_COLOR: Record<VoiceVisualState, { primary: string; secondary: string; glow: string }> = {
+  idle: { primary: '#006A67', secondary: '#004D40', glow: '#38B2AC' },
+  connecting: { primary: '#64748B', secondary: '#334155', glow: '#94A3B8' },
+  listening: { primary: '#028090', secondary: '#005F5B', glow: '#00F5D4' },
+  thinking: { primary: '#4338CA', secondary: '#312E81', glow: '#818CF8' },
+  speaking: { primary: '#008080', secondary: '#005F5B', glow: '#70E000' },
+  interrupted: { primary: '#B45309', secondary: '#78350F', glow: '#FBBF24' },
+  backchannel: { primary: '#059669', secondary: '#064E3B', glow: '#34D399' },
+  saving: { primary: '#4B5563', secondary: '#1F2937', glow: '#9CA3AF' },
+  complete: { primary: '#16A34A', secondary: '#14532D', glow: '#86EFAC' },
+  error: { primary: '#DC2626', secondary: '#7F1D1D', glow: '#FCA5A5' },
 };
 
 function hasWebGL(): boolean {
@@ -42,15 +44,55 @@ function hasWebGL(): boolean {
   }
 }
 
+/**
+ * 3D Luminous Orb SVG fallback.
+ * Renders a layered radial gradient sphere with specular highlight and ambient glow aura.
+ */
 export function SignalFallbackSvg({ state, energy = 0 }: { state: VoiceVisualState; energy?: number }) {
-  const r = 34 + energy * 4;
+  const col = FALLBACK_COLOR[state] || FALLBACK_COLOR.idle;
+  const radius = 38 + energy * 6;
+  const glowRadius = 52 + energy * 10;
+
   return (
     <svg viewBox="0 0 120 120" className="h-full w-full" aria-hidden="true" data-testid="signal-fallback">
-      <g className={state === 'idle' || state === 'listening' ? 'breathe' : ''} style={{ transformOrigin: '60px 60px' }}>
-        <circle cx="54" cy="60" r={r} fill="none" stroke="#212422" strokeWidth="4" />
-        <circle cx="66" cy="60" r="20" fill="none" stroke={FALLBACK_COLOR[state]} strokeWidth="4" />
-      </g>
-      <line x1="10" y1="60" x2="110" y2="60" stroke="#212422" strokeWidth="3" strokeLinecap="round" />
+      <defs>
+        {/* Ambient Halo */}
+        <radialGradient id={`halo-${state}`} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor={col.glow} stopOpacity="0.45" />
+          <stop offset="70%" stopColor={col.primary} stopOpacity="0.12" />
+          <stop offset="100%" stopColor={col.secondary} stopOpacity="0" />
+        </radialGradient>
+
+        {/* 3D Spherical Core Shading */}
+        <radialGradient id={`orb-${state}`} cx="35%" cy="32%" r="68%">
+          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.85" />
+          <stop offset="22%" stopColor={col.glow} stopOpacity="0.95" />
+          <stop offset="65%" stopColor={col.primary} stopOpacity="1" />
+          <stop offset="100%" stopColor={col.secondary} stopOpacity="1" />
+        </radialGradient>
+
+        {/* Specular Glint */}
+        <linearGradient id={`glint-${state}`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.7" />
+          <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+
+      {/* Outer Glow Aura */}
+      <circle cx="60" cy="60" r={glowRadius} fill={`url(#halo-${state})`} />
+
+      {/* Inner 3D Sphere */}
+      <circle
+        cx="60"
+        cy="60"
+        r={radius}
+        fill={`url(#orb-${state})`}
+        className={state === 'listening' || state === 'speaking' || state === 'idle' ? 'breathe' : ''}
+        style={{ transformOrigin: '60px 60px' }}
+      />
+
+      {/* Surface Specular Highlight */}
+      <ellipse cx="48" cy="46" rx={radius * 0.45} ry={radius * 0.28} fill={`url(#glint-${state})`} transform="rotate(-25 48 46)" />
     </svg>
   );
 }

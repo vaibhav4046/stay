@@ -40,6 +40,7 @@ export type VoiceVisualState =
   | 'thinking'
   | 'speaking'
   | 'interrupted'
+  | 'backchannel'
   | 'saving'
   | 'complete'
   | 'error';

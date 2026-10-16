@@ -631,6 +631,33 @@ export function CoachWorkspace({
       <aside className="card p-5 sm:p-6 flex flex-col" aria-label="Voice companion">
         <Signal state={quietMode ? 'idle' : voice.visualState} energy={voice.audioEnergy} className="mx-auto w-full max-w-[260px]" />
 
+        {/* Real-time NLU comprehension chips (Full-duplex VoiceAgentRAG) */}
+        {!quietMode && voice.streamingAnalysis && (voice.partialUserTranscript || voice.visualState === 'listening' || voice.visualState === 'backchannel') && (
+          <div className="mt-3 flex flex-wrap justify-center gap-1.5 animate-fadeIn" data-testid="streaming-analysis-hud">
+            {voice.streamingAnalysis.detectedTask && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (voice.streamingAnalysis?.detectedTask) {
+                    setTaskText(voice.streamingAnalysis.detectedTask);
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-2.5 py-1 text-[0.72rem] font-medium text-accent border border-accent/20 hover:bg-accent/15 transition-colors cursor-pointer text-left"
+                title="Click to adopt detected task into workspace"
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
+                <span>Task: <strong>{voice.streamingAnalysis.detectedTask}</strong></span>
+              </button>
+            )}
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-recessed px-2.5 py-1 text-[0.72rem] font-medium text-ink-2 border border-line">
+              <span>Barrier: <strong>{BARRIER_DEFINITIONS[voice.streamingAnalysis.detectedBarrier]?.label || voice.streamingAnalysis.detectedBarrier}</strong></span>
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-1 text-[0.72rem] font-medium text-amber-800 dark:text-amber-300 border border-amber-500/20">
+              <span>Backchannel: &ldquo;{voice.streamingAnalysis.suggestedBackchannel}&rdquo;</span>
+            </span>
+          </div>
+        )}
+
         {voiceAvailable ? (
           <div className="mt-4">
             {!voice.isConnected ? (
@@ -698,10 +725,25 @@ export function CoachWorkspace({
               ))}
               {voice.partialUserTranscript && (
                 <li className="rounded-lg p-2.5 text-[0.88rem] bg-surface-recessed ml-4 text-muted italic">
-                  <span className="block text-[0.7rem] font-semibold uppercase tracking-wider text-ink-3 mb-0.5">
-                    Listening...
-                  </span>
-                  {voice.partialUserTranscript}
+                  <div className="flex items-center justify-between">
+                    <span className="block text-[0.7rem] font-semibold uppercase tracking-wider text-ink-3 mb-0.5">
+                      Listening in real time...
+                    </span>
+                    {voice.streamingAnalysis && (
+                      <span className="text-[0.68rem] font-mono text-accent not-italic">
+                        {Math.round(voice.streamingAnalysis.confidence * 100)}% match
+                      </span>
+                    )}
+                  </div>
+                  <span>{voice.partialUserTranscript}</span>
+                  {voice.streamingAnalysis && (
+                    <div className="mt-1.5 pt-1.5 border-t border-line/50 flex flex-wrap gap-1 text-[0.7rem] not-italic">
+                      <span className="text-ink-3">Understood barrier:</span>
+                      <strong className="text-ink font-semibold">
+                        {BARRIER_DEFINITIONS[voice.streamingAnalysis.detectedBarrier]?.label}
+                      </strong>
+                    </div>
+                  )}
                 </li>
               )}
             </ul>

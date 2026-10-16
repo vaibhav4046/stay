@@ -18,6 +18,7 @@ import {
   StartFocusTimerToolArgsSchema,
 } from '@/lib/coach/schema';
 import { buildDeterministicCoachPlan } from '@/lib/coach/strategies';
+import { analyzeStreamingUtterance, type RealtimeStreamingAnalysis } from '@/lib/coach/knowledge';
 
 export interface VoiceTranscriptEntry {
   id: string;
@@ -59,6 +60,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const [partialUserTranscript, setPartialUserTranscript] = useState('');
   const [transcripts, setTranscripts] = useState<VoiceTranscriptEntry[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [streamingAnalysis, setStreamingAnalysis] = useState<RealtimeStreamingAnalysis | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
   const sessionReadyRef = useRef(false);
@@ -426,6 +428,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           stopPlaybackQueue();
           medicationSuppressionRef.current = false;
           setVisualState('listening');
+          setStreamingAnalysis(null);
           return;
         }
 
@@ -433,6 +436,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           // Per AssemblyAI docs: text is the full partial transcript so far — replace, never append
           const text = String(msg.text || '');
           setPartialUserTranscript(text);
+
+          if (text.length > 4) {
+            const analysis = analyzeStreamingUtterance(text);
+            setStreamingAnalysis(analysis);
+          }
 
           const crisis = detectCrisisSignal(text);
           if (crisis.triggered) {
@@ -718,6 +726,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     partialUserTranscript,
     transcripts,
     errorMessage,
+    streamingAnalysis,
     startVoiceSession,
     disconnectVoiceSession,
     speakProactively,
