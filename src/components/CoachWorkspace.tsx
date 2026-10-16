@@ -29,6 +29,12 @@ import {
   recordSessionMemory,
   buildMemorySystemPrompt,
 } from '@/lib/coach/userMemory';
+import { OrbCompanionView } from '@/components/OrbCompanionView';
+import { GroundingPanel } from '@/components/GroundingPanel';
+import { AuthModal } from '@/components/AuthModal';
+import { useAssistantHardware } from '@/lib/voice/useAssistantHardware';
+import { useAuth } from '@/lib/auth/useAuth';
+import { detectSensoryGroundingRequest, detectImpulsiveActionRisk } from '@/lib/safety/crisis';
 
 type Step = 'capture' | 'barrier' | 'plan' | 'timer' | 'outcome' | 'done';
 
@@ -111,6 +117,10 @@ export function CoachWorkspace({
   const [helpful, setHelpful] = useState<number | null>(null);
   const [boundaryNote, setBoundaryNote] = useState<string | null>(null);
   const [lastLogged, setLastLogged] = useState<SessionOutcome | null>(null);
+  const [viewMode, setViewMode] = useState<'orb' | 'grid'>('orb');
+  const [showGroundingPanel, setShowGroundingPanel] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const { user } = useAuth();
   const [usedVoice, setUsedVoice] = useState(false);
   const [showStuckRescue, setShowStuckRescue] = useState(false);
   const [showTrainingPanel, setShowTrainingPanel] = useState(false);
@@ -201,8 +211,26 @@ export function CoachWorkspace({
         setActionReceipt('Voice command: Hands-free listening active');
       } else if (cmd.type === 'record_outcome') {
         setActionReceipt(`Voice command: Logged outcome (${cmd.outcome})`);
+      } else if (cmd.type === 'break_down') {
+        voice.sendUserTextMessage('Can you break this down into an ultra-micro step?');
+        setActionReceipt('Voice command: Shrinking task step');
+      } else if (cmd.type === 'stop_timer') {
+        setRunning(false);
+        setActionReceipt('Voice command: Timer stopped');
       }
     },
+  });
+
+  useAssistantHardware({
+    isConnected: voice.isConnected,
+    isHandsFreePaused: voice.isHandsFreePaused,
+    onToggleVoice: () => {
+      if (!voice.isConnected) voice.startVoiceSession();
+      else voice.disconnectVoiceSession();
+    },
+    onToggleHandsFreeMute: voice.toggleHandsFreeMute,
+    onTriggerGrounding: () => setShowGroundingPanel(true),
+    onStartTimer: (mins) => startTimer(mins),
   });
 
   const logOutcome = useCallback(
@@ -364,56 +392,129 @@ export function CoachWorkspace({
   const progress = running || step === 'timer' ? 1 - remaining / (timerMinutes * 60) : 0;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-      {/* Main loop column */}
-      <section className="card p-5 sm:p-7" aria-labelledby="workspace-title">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 id="workspace-title" className="card-title">
-            {step === 'capture' && 'What are you putting off?'}
-            {step === 'barrier' && "What's making it hard to start?"}
-            {step === 'plan' && 'One smaller first step'}
-            {step === 'timer' && 'Focus block'}
-            {step === 'outcome' && 'How did it go?'}
-            {step === 'done' && 'Logged'}
-          </h2>
-          <div className="flex items-center gap-2">
-            {isDemo && <span className="sample-badge">Sample data</span>}
-            <button
-              type="button"
-              className="chip text-[0.82rem] flex items-center gap-1.5 border border-accent/20 bg-accent/5 text-accent hover:bg-accent/10 transition-colors"
-              onClick={() => setShowMemoryPanel(true)}
-              data-testid="user-memory-trigger"
-              title="View Stay's persistent memory of you"
-            >
-              <span>🧬</span>
-              <span className="font-medium">
-                Memory ({voice.userMemory.facts.length + voice.userMemory.recentSessionsSummary.length})
-              </span>
-            </button>
-            <button
-              type="button"
-              className="chip text-[0.82rem] flex items-center gap-1.5 border border-accent/20 bg-accent/5 text-accent hover:bg-accent/10 transition-colors"
-              onClick={() => setShowTrainingPanel(true)}
-              data-testid="self-improvement-trigger"
-              title="View Stay's autonomous model adaptation & train your preferences"
-            >
-              <span>🧠</span>
-              <span className="font-medium">Learned: {calibration.preferredMinutes}m · Body-Double</span>
-            </button>
-            <button
-              type="button"
-              className="chip"
-              aria-pressed={quietMode}
-              onClick={() => {
-                if (!quietMode) voice.disconnectVoiceSession();
-                onQuietModeChange(!quietMode);
-              }}
-              data-testid="quiet-mode-toggle"
-            >
-              {quietMode ? 'Quiet mode on' : 'Quiet mode'}
-            </button>
-          </div>
-        </div>
+    <>
+      {viewMode === 'orb' ? (
+        <OrbCompanionView
+          voice={voice}
+          taskText={taskText}
+          onTaskTextChange={(t) => {
+            setTaskText(t);
+            const ground = detectSensoryGroundingRequest(t);
+            if (ground.triggered) {
+              setShowGroundingPanel(true);
+              return;
+            }
+            const impulse = detectImpulsiveActionRisk(t);
+            if (impulse.triggered) {
+              setBoundaryNote(impulse.message);
+              setActionReceipt('Safeguard: 10-Minute Dopamine Pause');
+              return;
+            }
+            void requestPlan(null);
+          }}
+          plan={plan}
+          running={running}
+          remaining={remaining}
+          timerMinutes={timerMinutes}
+          onStartTimer={startTimer}
+          onStopTimer={() => {
+            setRunning(false);
+            setActionReceipt('Timer stopped');
+          }}
+          onLogOutcome={(outcome) => {
+            void logOutcome(outcome, 5);
+          }}
+          onOpenMemory={() => setShowMemoryPanel(true)}
+          onOpenTraining={() => setShowTrainingPanel(true)}
+          onOpenGrounding={() => setShowGroundingPanel(true)}
+          onOpenAuth={() => setShowAuthModal(true)}
+          onToggleQuietMode={() => {
+            if (!quietMode) voice.disconnectVoiceSession();
+            onQuietModeChange(!quietMode);
+          }}
+          quietMode={quietMode}
+          onSwitchToWorkspace={() => setViewMode('grid')}
+          actionReceipt={actionReceipt}
+          userEmail={user?.email}
+        />
+      ) : (
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+          {/* Main loop column */}
+          <section className="card p-5 sm:p-7" aria-labelledby="workspace-title">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 id="workspace-title" className="card-title">
+                {step === 'capture' && 'What are you putting off?'}
+                {step === 'barrier' && "What's making it hard to start?"}
+                {step === 'plan' && 'One smaller first step'}
+                {step === 'timer' && 'Focus block'}
+                {step === 'outcome' && 'How did it go?'}
+                {step === 'done' && 'Logged'}
+              </h2>
+              <div className="flex items-center gap-2">
+                {isDemo && <span className="sample-badge">Sample data</span>}
+                <button
+                  type="button"
+                  className="chip text-[0.82rem] flex items-center gap-1.5 border border-accent/30 bg-accent/10 text-accent hover:bg-accent/20 transition-colors font-medium shadow-xs"
+                  onClick={() => setViewMode('orb')}
+                  title="Switch to Living Voice AGI Orb"
+                >
+                  <span>✨</span>
+                  <span>Living Orb</span>
+                </button>
+                <button
+                  type="button"
+                  className="chip text-[0.82rem] flex items-center gap-1.5 border border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-500/20 transition-colors"
+                  onClick={() => setShowGroundingPanel(true)}
+                  title="Sensory Grounding (Key: G)"
+                >
+                  <span>🌿</span>
+                  <span className="font-medium hidden sm:inline">Ground Me</span>
+                </button>
+                <button
+                  type="button"
+                  className="chip text-[0.82rem] flex items-center gap-1.5 border border-accent/20 bg-accent/5 text-accent hover:bg-accent/10 transition-colors"
+                  onClick={() => setShowMemoryPanel(true)}
+                  data-testid="user-memory-trigger"
+                  title="View Stay's persistent memory of you"
+                >
+                  <span>🧬</span>
+                  <span className="font-medium">
+                    Memory ({voice.userMemory.facts.length + voice.userMemory.recentSessionsSummary.length})
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className="chip text-[0.82rem] flex items-center gap-1.5 border border-accent/20 bg-accent/5 text-accent hover:bg-accent/10 transition-colors"
+                  onClick={() => setShowTrainingPanel(true)}
+                  data-testid="self-improvement-trigger"
+                  title="View Stay's autonomous model adaptation & train your preferences"
+                >
+                  <span>🧠</span>
+                  <span className="font-medium">Learned: {calibration.preferredMinutes}m</span>
+                </button>
+                <button
+                  type="button"
+                  className="chip text-[0.82rem] flex items-center gap-1.5 border border-line hover:bg-line transition-colors"
+                  onClick={() => setShowAuthModal(true)}
+                  title="Google Sign In & Cloud Sync"
+                >
+                  <span>{user ? '👤' : '🔐'}</span>
+                  <span className="font-medium hidden sm:inline">{user ? user.email?.split('@')[0] : 'Sign In'}</span>
+                </button>
+                <button
+                  type="button"
+                  className="chip"
+                  aria-pressed={quietMode}
+                  onClick={() => {
+                    if (!quietMode) voice.disconnectVoiceSession();
+                    onQuietModeChange(!quietMode);
+                  }}
+                  data-testid="quiet-mode-toggle"
+                >
+                  {quietMode ? 'Quiet mode on' : 'Quiet mode'}
+                </button>
+              </div>
+            </div>
 
         <ol className="mt-4 flex gap-1.5" aria-label="Progress">
           {(['capture', 'barrier', 'plan', 'timer', 'outcome'] as Step[]).map((s, i) => {
@@ -909,6 +1010,8 @@ export function CoachWorkspace({
           </form>
         </div>
       </aside>
+    </div>
+  )}
 
       {/* Self-Improvement & Continuous Model Training Modal */}
       {showTrainingPanel && (
@@ -1224,6 +1327,22 @@ export function CoachWorkspace({
           </div>
         </div>
       )}
-    </div>
+
+      {/* Grounding & Box Breathing Panel */}
+      {showGroundingPanel && (
+        <GroundingPanel
+          isOpen={showGroundingPanel}
+          onClose={() => setShowGroundingPanel(false)}
+        />
+      )}
+
+      {/* Google OAuth & Cloud Sync Modal */}
+      {showAuthModal && (
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+        />
+      )}
+    </>
   );
 }

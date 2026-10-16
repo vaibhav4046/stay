@@ -5,9 +5,13 @@ import { useStayData } from '@/lib/storage/useStayData';
 import { CARE_OPTIONS } from '@/components/Onboarding';
 import { deleteAllUserData, exportAllUserDataJson, getLocalAuditEvents } from '@/lib/storage/repository';
 import type { AuditEventRecord } from '@/types/domain';
+import { useAuth } from '@/lib/auth/useAuth';
+import { AuthModal } from '@/components/AuthModal';
 
 export default function SettingsPage() {
   const { profile, loaded, updateProfile } = useStayData('app');
+  const { user, signOut } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [audits, setAudits] = useState<AuditEventRecord[]>([]);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleted, setDeleted] = useState(false);
@@ -49,6 +53,39 @@ export default function SettingsPage() {
           <input type="checkbox" className="h-5 w-5 accent-[#006A67]" checked={profile.proactiveCheckins} onChange={(e) => updateProfile({ proactiveCheckins: e.target.checked })} />
           <span>Check in when a focus block ends</span>
         </label>
+      </section>
+
+      <section className="card p-5 sm:p-6" aria-labelledby="auth-title">
+        <h2 id="auth-title" className="card-title">Account &amp; Cloud Sync</h2>
+        <p className="text-ink-2 mt-2 text-[0.95rem]">
+          Stay runs 100% offline and locally by default. Sign in with Google to securely synchronize your cognitive memory profile, ADHD triggers, and session history across your phone and desktop.
+        </p>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          {user ? (
+            <div className="flex items-center gap-3">
+              <span className="rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold text-accent border border-accent/20">
+                ✓ Signed in as {user.email}
+              </span>
+              <button
+                type="button"
+                className="btn btn-secondary text-xs py-1.5 px-3"
+                onClick={() => signOut()}
+              >
+                Sign out
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="btn btn-primary text-xs py-2 px-4 flex items-center gap-2"
+              onClick={() => setShowAuthModal(true)}
+              data-testid="settings-signin-btn"
+            >
+              <span>🔐</span>
+              <span>Sign in with Google</span>
+            </button>
+          )}
+        </div>
       </section>
 
       <section className="card p-5 sm:p-6" aria-labelledby="data-title">
@@ -110,6 +147,11 @@ export default function SettingsPage() {
           </ul>
         )}
       </section>
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
     </div>
   );
 }

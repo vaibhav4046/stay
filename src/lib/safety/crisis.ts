@@ -35,6 +35,12 @@ export const UK_CRISIS_RESOURCES = [
     href: 'sms:85258',
     detail: 'Free 24/7 text support for anyone in crisis across the UK.',
   },
+  {
+    name: '988 Suicide & Crisis Lifeline (US & Canada)',
+    contact: '988',
+    href: 'tel:988',
+    detail: 'Free, confidential 24/7 support by call or text across the US and Canada.',
+  },
 ] as const;
 
 const CRISIS_PATTERNS: Array<{ regex: RegExp; label: string }> = [
@@ -115,5 +121,70 @@ export function detectMedicationAdviceRequest(input: string): MedicalBoundaryChe
     }
   }
 
+  return { triggered: false, message: '' };
+}
+
+export interface SensoryGroundingResult {
+  triggered: boolean;
+  phrase?: string;
+  guidePrompt: string;
+}
+
+export const GROUNDING_FIXED_PROMPT =
+  "I am right here with you. Everything can wait. Let's ground right now with 5-4-3-2-1: Name 5 things you can see around you, 4 things you can physically touch, 3 sounds you can hear, 2 scents you notice, and 1 slow breath. Follow the breathing circle on screen.";
+
+const GROUNDING_PATTERNS = [
+  /\b(?:stay ground me|ground me|having a panic attack|panic attack|can't breathe|cannot breathe|sensory overload|everything is too loud|freaking out|hyperventilating|rsd meltdown|meltdown)\b/i,
+];
+
+export function detectSensoryGroundingRequest(input: string): SensoryGroundingResult {
+  const normalized = (input || '').trim();
+  if (!normalized) return { triggered: false, guidePrompt: '' };
+  for (const re of GROUNDING_PATTERNS) {
+    if (re.test(normalized)) {
+      return {
+        triggered: true,
+        phrase: 'sensory_overload_or_panic',
+        guidePrompt: GROUNDING_FIXED_PROMPT,
+      };
+    }
+  }
+  return { triggered: false, guidePrompt: '' };
+}
+
+export interface ImpulsePauseResult {
+  triggered: boolean;
+  reason?: string;
+  message: string;
+}
+
+const IMPULSE_PATTERNS = [
+  {
+    regex: /\b(?:going to quit my job|about to quit my job|i'm quitting right now)\b/i,
+    reason: 'career impulse pause',
+  },
+  {
+    regex: /\b(?:send an angry (?:email|message|text)|tell them off right now)\b/i,
+    reason: 'interpersonal communication impulse',
+  },
+  {
+    regex: /\b(?:spend all my (?:savings|money)|drain my bank account|blow all my money|impulsively buy)\b/i,
+    reason: 'financial impulsive action',
+  },
+];
+
+export function detectImpulsiveActionRisk(input: string): ImpulsePauseResult {
+  const normalized = (input || '').trim();
+  if (!normalized) return { triggered: false, message: '' };
+  for (const item of IMPULSE_PATTERNS) {
+    if (item.regex.test(normalized)) {
+      return {
+        triggered: true,
+        reason: item.reason,
+        message:
+          "ADHD Dopamine Pause: This feels intensely urgent right now, but big decisions deserve a 10-minute buffer. Let's take a 10-minute pause before sending or spending anything.",
+      };
+    }
+  }
   return { triggered: false, message: '' };
 }

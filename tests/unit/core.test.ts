@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { detectCrisisSignal, detectMedicationAdviceRequest } from '@/lib/safety/crisis';
+import {
+  detectCrisisSignal,
+  detectMedicationAdviceRequest,
+  detectSensoryGroundingRequest,
+  detectImpulsiveActionRisk,
+  UK_CRISIS_RESOURCES,
+} from '@/lib/safety/crisis';
 import { buildDeterministicCoachPlan, chooseBestStrategy } from '@/lib/coach/strategies';
 import { computeAdherenceSummary, computeOverallMetrics, computeStrategyStats } from '@/lib/coach/patterns';
 import { SAMPLE_DEMO_CHECKINS, SAMPLE_DEMO_SESSIONS } from '@/lib/storage/repository';
@@ -13,6 +19,36 @@ describe('crisis detection', () => {
   it.each(['this deadline is killing me', 'reply to my landlord', 'I am dying to finish this'])('does not flag "%s"', (t) =>
     expect(detectCrisisSignal(t).triggered).toBe(false)
   );
+  it('includes 999, 111, 116 123, 85258 and 988 in emergency resources', () => {
+    const contacts = UK_CRISIS_RESOURCES.map((r) => r.contact);
+    expect(contacts).toContain('999');
+    expect(contacts).toContain('111');
+    expect(contacts).toContain('116 123');
+    expect(contacts).toContain('988');
+  });
+});
+
+describe('sensory grounding & acute dysregulation safety tier', () => {
+  it.each(['Stay ground me', 'I am having a panic attack', 'sensory overload', "I can't breathe", 'having a meltdown'])(
+    'triggers grounding for "%s"',
+    (t) => expect(detectSensoryGroundingRequest(t).triggered).toBe(true)
+  );
+  it('does not trigger on ordinary task', () => {
+    expect(detectSensoryGroundingRequest('Organize my desk drawers').triggered).toBe(false);
+  });
+});
+
+describe('ADHD impulsive action & dopamine pause safeguard', () => {
+  it.each([
+    'going to quit my job right now',
+    'spend all my savings on this gadget',
+    'send an angry email to my manager',
+  ])('triggers dopamine pause for "%s"', (t) =>
+    expect(detectImpulsiveActionRisk(t).triggered).toBe(true)
+  );
+  it('does not trigger on planned task', () => {
+    expect(detectImpulsiveActionRisk('Write draft reply to landlord').triggered).toBe(false);
+  });
 });
 
 describe('medication boundary', () => {

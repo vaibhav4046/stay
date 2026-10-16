@@ -911,3 +911,5 @@ ${adaptivePrompt}`;
     sendUserTextMessage,
   };
 }
+
+export type UseVoiceAgentReturn = ReturnType<typeof useVoiceAgent>;
