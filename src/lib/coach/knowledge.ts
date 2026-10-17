@@ -133,39 +133,47 @@ const BARRIER_TRIGGERS: Array<{ barrier: BarrierType; regex: RegExp; backchannel
 ];
 
 const TASK_VERB_PATTERNS = [
-  /(?:reply|email|message|write|send|call|contact)\s+(?:to\s+)?([^,.;!?\n]+?)(?:\s+(?:for|because|since|before|until|due to|but|and)\b|[.,;!?]|$)/i,
-  /(?:finish|complete|do|work on|sort|organi[sz]e|file|clean)\s+([^,.;!?\n]+?)(?:\s+(?:for|because|since|before|until|due to|but|and)\b|[.,;!?]|$)/i,
-  /(?:dreading|avoiding|stuck on|putting off)\s+([^,.;!?\n]+?)(?:\s+(?:for|because|since|before|until|due to|but|and)\b|[.,;!?]|$)/i,
+  /(?:reply|email|message|write|send|call|contact|text)\s+(?:to\s+)?([^,.;!?\n]+?)(?:\s+(?:for|because|since|before|until|due to|but|and|right now|ugh|idk)\b|[.,;!?]|$)/i,
+  /(?:finish|complete|do|work on|sort|organi[sz]e|file|clean|pay|submit|open)\s+([^,.;!?\n]+?)(?:\s+(?:for|because|since|before|until|due to|but|and|right now|ugh|idk)\b|[.,;!?]|$)/i,
+  /(?:dreading|avoiding|stuck on|putting off|have to|gotta|need to|supposed to)\s+([^,.;!?\n]+?)(?:\s+(?:for|because|since|before|until|due to|but|and|right now|ugh|idk)\b|[.,;!?]|$)/i,
+  /\b(?:my\s+)?(landlord|taxes|vat|hmrc|inbox|emails|dishes|laundry|report|essay|proposal|resume|bills|rent)\b/i,
 ];
+
+/**
+ * Strips chaotic ADHD filler words ("uhh", "like", "idk", "my brain is fried")
+ * to isolate the true underlying task from a messy brain-dump.
+ */
+export function extractCleanTaskFromBrainDump(rawText: string): string {
+  const cleaned = rawText
+    .replace(/\b(?:uh+|um+|ugh+|ah+|like|literally|honestly|basically|i\s+don'?t\s+know|idk|my\s+brain\s+is\s+(?:fried|cooked|mush|broken)|i\s+can'?t\s+even|everything\s+is\s+a\s+mess|i'?m\s+just\s+scrolling)\b/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  for (const p of TASK_VERB_PATTERNS) {
+    const match = cleaned.match(p);
+    if (match && match[1]) {
+      return match[1].trim().slice(0, 52);
+    }
+  }
+  return (cleaned || rawText).slice(0, 52);
+}
 
 export function analyzeStreamingUtterance(text: string): RealtimeStreamingAnalysis {
   const clean = text.trim();
   let detectedBarrier: BarrierType = 'overwhelm';
-  let backchannel = 'I\'m listening. Take your time.';
-  let confidence = 0.4;
+  let backchannel = "I'm right here with you. Don't worry about organizing your thoughts—just brain-dump.";
+  let confidence = 0.55;
 
   for (const item of BARRIER_TRIGGERS) {
     if (item.regex.test(clean)) {
       detectedBarrier = item.barrier;
       backchannel = item.backchannel;
-      confidence = 0.88;
+      confidence = 0.92;
       break;
     }
   }
 
-  let detectedTask: string | null = null;
-  for (const p of TASK_VERB_PATTERNS) {
-    const match = clean.match(p);
-    if (match && match[1]) {
-      detectedTask = match[1].trim().slice(0, 40);
-      break;
-    }
-  }
-
-  if (!detectedTask && clean.length > 5) {
-    // Fallback: clean snippet of first 40 chars
-    detectedTask = clean.slice(0, 40);
-  }
+  const detectedTask = clean.length > 4 ? extractCleanTaskFromBrainDump(clean) : null;
 
   const words = clean.toLowerCase().split(/\s+/).filter((w) => w.length > 3);
 

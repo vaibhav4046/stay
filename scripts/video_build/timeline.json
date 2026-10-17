@@ -1,0 +1,171 @@
+{
+  "total_duration_sec": 192.41,
+  "master_wav": "C:\\Users\\lalwa\\.gemini\\antigravity\\scratch\\stay\\scripts\\video_build\\master_demo_audio.wav",
+  "turns": [
+    {
+      "id": "01_stay_intro_1",
+      "speaker": "stay",
+      "action": "act1_orb_intro",
+      "caption": "Hi, I am Stay \u2014 Voice-First ADHD Task Initiation & Living Visual Companion.",
+      "text": "Hi, I am Stay. I am a voice-first point-of-performance companion built for the exact second ADHD executive freeze hits.",
+      "start_sec": 1.2,
+      "duration_sec": 9.0,
+      "end_sec": 10.2,
+      "pause_after_sec": 0.8
+    },
+    {
+      "id": "02_stay_intro_2",
+      "speaker": "stay",
+      "action": "act1_orb_morph_showcase",
+      "caption": "Living Shape Morphing: \ud83c\udf0a Fluid Wave \u2192 \ud83e\udeb7 8-Petal Lotus \u2192 \u2712\ufe0f Letterform Gem \u2192 \ud83c\udf66 Ice Cream Swirl \u2192 \ud83c\udfa8 Creative Star.",
+      "text": "Instead of overwhelming task lists that trigger guilt, I listen to messy, unfiltered thoughts and physically transform my geometry in real time\u2014shifting into calming lotus petals, crystalline letterforms, or an ice cream cone reward to anchor your attention.",
+      "start_sec": 11.0,
+      "duration_sec": 15.528,
+      "end_sec": 26.528,
+      "pause_after_sec": 1.0
+    },
+    {
+      "id": "03_user_hello",
+      "speaker": "user",
+      "action": "act2_user_wake",
+      "caption": "Hi Stay... ugh, are you there?",
+      "text": "Hi Stay... ugh, are you there?",
+      "start_sec": 27.528,
+      "duration_sec": 2.16,
+      "end_sec": 29.688,
+      "pause_after_sec": 0.5
+    },
+    {
+      "id": "04_stay_hello",
+      "speaker": "stay",
+      "action": "act2_stay_greet",
+      "caption": "Hi! I'm right here with you. Dump whatever is in your head\u2014no need to organize it.",
+      "text": "Hi! I'm right here with you. Take a slow breath and dump whatever is bouncing around in your head\u2014you don't have to organize it for me.",
+      "start_sec": 30.188,
+      "duration_sec": 8.4,
+      "end_sec": 38.588,
+      "pause_after_sec": 0.7
+    },
+    {
+      "id": "05_user_chaotic_dump",
+      "speaker": "user",
+      "action": "act2_chaotic_brain_dump",
+      "caption": "Uhh my brain is completely fried, I have like 10 tabs open, landlord emails, VAT taxes... idk where to start.",
+      "text": "Honestly, uhh, my brain is completely fried right now. I have like ten tabs open, my landlord is asking for a lease letter, my quarterly VAT taxes are overdue, and I'm just doomscrolling because I don't even know where to start.",
+      "start_sec": 39.288,
+      "duration_sec": 13.32,
+      "end_sec": 52.608,
+      "pause_after_sec": 0.7
+    },
+    {
+      "id": "06_stay_hook_and_lotus",
+      "speaker": "stay",
+      "action": "act2_lotus_to_letterform_reality",
+      "caption": "Auto-Morph: \ud83e\udeb7 8-Petal Lotus Calm \u2192 \u2712\ufe0f Crystalline Letterform Gem \u00b7 180m Dread shrunk to 45s Micro-Entry.",
+      "text": "Pause right there\u2014you don't need to fix all ten tabs today. Watch my orb open into an eight-petal lotus first to slow your breathing down, and now crystallize into a letterform gem. I stripped out the noise and isolated one target: your landlord and tax letter. Your brain predicts three hours of misery, but breaking inertia takes just forty-five seconds.",
+      "start_sec": 53.308,
+      "duration_sec": 23.088,
+      "end_sec": 76.396,
+      "pause_after_sec": 0.8
+    },
+    {
+      "id": "07_user_ice_cream_hook",
+      "speaker": "user",
+      "action": "act2_select_angle_and_ice_cream",
+      "caption": "Wait, 45 seconds for 3 messy bullets? I can do that! Remind me I get ice cream after.",
+      "text": "Wait, forty-five seconds just to type three terrible, messy bullets? Okay, I can actually do that. Let's pick that angle\u2014and hey, remind me I can grab ice cream right after I finish!",
+      "start_sec": 77.196,
+      "duration_sec": 11.976,
+      "end_sec": 89.172,
+      "pause_after_sec": 0.7
+    },
+    {
+      "id": "08_stay_ice_cream_morph",
+      "speaker": "stay",
+      "action": "act2_ice_cream_and_memory_extract",
+      "caption": "Orb Morphs into \ud83c\udf66 Ice Cream Cone & Swirl \u00b7 Dopamine Reward Saved to Cognitive Memory.",
+      "text": "Look at my shape\u2014I just morphed into a strawberry ice cream cone with a waffle base so your brain can see the reward waiting for you! And I automatically saved that reward to your cognitive memory.",
+      "start_sec": 89.872,
+      "duration_sec": 11.76,
+      "end_sec": 101.632,
+      "pause_after_sec": 0.8
+    },
+    {
+      "id": "09_user_commands",
+      "speaker": "user",
+      "action": "act2_voice_cmd_memory_and_history",
+      "caption": "No way\u2014show me memory, and then show me chat history!",
+      "text": "No way\u2014show me memory, and then show me chat history!",
+      "start_sec": 102.432,
+      "duration_sec": 3.72,
+      "end_sec": 106.152,
+      "pause_after_sec": 0.7
+    },
+    {
+      "id": "10_stay_memory_shown",
+      "speaker": "stay",
+      "action": "act2_close_modals_and_path",
+      "caption": "100% Hands-Free Voice Control: Cognitive Memory \u2192 Session History \u2192 3-Phase Action Path.",
+      "text": "Here is your persistent cognitive memory and your past session history, opened completely hands-free by voice. Now check out your three-phase action path right below.",
+      "start_sec": 106.852,
+      "duration_sec": 10.656,
+      "end_sec": 117.508,
+      "pause_after_sec": 0.8
+    },
+    {
+      "id": "11_user_multilingual",
+      "speaker": "user",
+      "action": "act2_multilingual_and_timer",
+      "caption": "Switch to Spanish, and start 20 minutes!",
+      "text": "That is so clean. Switch to Spanish, and start 20 minutes!",
+      "start_sec": 118.308,
+      "duration_sec": 4.032,
+      "end_sec": 122.34,
+      "pause_after_sec": 0.7
+    },
+    {
+      "id": "12_stay_spanish_timer",
+      "speaker": "stay",
+      "action": "act2_timer_running",
+      "caption": "\u00a1Claro que s\u00ed! 32-Language Live Switch + 20-Minute Focus Sprint Started.",
+      "text": "Claro que s\u00ed. I've switched to Spanish across our thirty-two language engine and started your twenty-minute focus sprint. Just write three messy bullets\u2014I'm staying right here with you.",
+      "start_sec": 123.04,
+      "duration_sec": 11.592,
+      "end_sec": 134.632,
+      "pause_after_sec": 1.1
+    },
+    {
+      "id": "13_stay_arch_1",
+      "speaker": "stay",
+      "action": "act3_architecture_reports",
+      "caption": "System Architecture SVG: AssemblyAI Universal-3 Pro (24kHz Single-WebSocket) + Groq 120B.",
+      "text": "Here is the engineering behind what you just saw. Stay streams raw twenty-four kilohertz PCM audio over a single full-duplex WebSocket to AssemblyAI's Universal-Three Pro Voice Agent API\u2014delivering sub-second turn-taking, live barge-in, ADHD keyterm boosting, and thirty-two language detection without stitching separate pipelines.",
+      "start_sec": 135.732,
+      "duration_sec": 21.6,
+      "end_sec": 157.332,
+      "pause_after_sec": 0.9
+    },
+    {
+      "id": "14_stay_arch_2",
+      "speaker": "stay",
+      "action": "act3_orb_diagnostic_and_safety",
+      "caption": "Groq openai/gpt-oss-120b \u00b7 Deterministic Safety Gates \u00b7 60fps GLSL & SVG Shape-Morphing Engine.",
+      "text": "For chaotic brain-dump extraction and time-blindness math, Stay pairs AssemblyAI with Groq's ultra-fast GPT-OSS one-twenty-B model, protected by deterministic pre-LLM crisis and medication safety gates, and one-click clinician PDF exports.",
+      "start_sec": 158.232,
+      "duration_sec": 16.776,
+      "end_sec": 175.008,
+      "pause_after_sec": 0.9
+    },
+    {
+      "id": "15_stay_outro",
+      "speaker": "stay",
+      "action": "act3_closing_card",
+      "caption": "STAY \u2014 Voice-First ADHD Task Initiation \u00b7 stay-two-swart.vercel.app \u00b7 github.com/vaibhav4046/stay",
+      "text": "Available today on Web, Desktop, and Mobile PWA, with full open-source code on GitHub. Stay\u2014helping any mind move from chaos to started, in sixty seconds.",
+      "start_sec": 175.908,
+      "duration_sec": 12.504,
+      "end_sec": 188.412,
+      "pause_after_sec": 2.0
+    }
+  ]
+}

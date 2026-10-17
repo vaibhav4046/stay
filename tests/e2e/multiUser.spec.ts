@@ -326,7 +326,7 @@ test.describe('Stay — Multi-User Concurrency, Executive Engine & Session Isola
     }
   });
 
-  test('Living Voice Orb mode: one-tap starter prompt, Orb Executive Engine (Reality/Angles/Path), and Halo Sprint timer', async ({
+  test('Living Voice Orb mode: messy ADHD brain-dump hook, Orb Executive Engine (Reality/Angles/Path), and Halo Sprint timer', async ({
     page,
   }) => {
     await page.goto('/app/today');
@@ -337,13 +337,13 @@ test.describe('Stay — Multi-User Concurrency, Executive Engine & Session Isola
     await page.getByTestId('onboarding-ack').click();
     await page.getByTestId('onboarding-done').click();
 
-    // Stay in default Living Voice Orb mode — click the zero-friction starter prompt
-    await page.getByRole('button', { name: /Write proposal abstract/i }).click();
+    // Stay in default Living Voice Orb mode — click the messy ADHD brain-dump starter hook
+    await page.getByRole('button', { name: /Brain is fried, 10 tabs open/i }).click();
 
-    // Floating ADHD First-Step Card appears with Executive Engine pills
+    // Floating ADHD First-Step Card appears with Executive Engine pills & de-jargoned task
     await expect(page.getByTestId('orb-first-step')).toBeVisible();
     await expect(page.getByTestId('orb-panel-reality')).toBeVisible();
-    await expect(page.getByTestId('orb-panel-reality')).toContainText('Dread: ~240m');
+    await expect(page.getByTestId('orb-panel-reality')).toContainText('Dread: ~180m');
 
     // Switch to 3 Angles in Orb card and apply Angle 0
     await page.getByTestId('orb-exec-brainstorm').click();
@@ -361,7 +361,7 @@ test.describe('Stay — Multi-User Concurrency, Executive Engine & Session Isola
     await expect(page.getByRole('button', { name: 'Log Done' })).toBeVisible();
   });
 
-  test('AGI Voice Commands & Topic-Reactive Orb Morphing: memory, chat history, close panel, live shape morphing (ice cream, therapeutic, letters), and route navigation', async ({
+  test('AGI Voice Commands & True Topic-Reactive Orb Shape Morphing: chaotic speech morphs, interactive shape switcher, memory, chat history, and route navigation', async ({
     page,
   }) => {
     await page.goto('/app/today');
@@ -374,38 +374,45 @@ test.describe('Stay — Multi-User Concurrency, Executive Engine & Session Isola
 
     const input = page.getByTestId('task-input');
 
-    // 1. Live Topic Shape Morphing on typing ("ice cream" -> Mode 1 Reward Swirl)
+    // 1. Chaotic ADHD speech ("uhh my brain is fried and I'm stuck spiraling") -> auto-morphs to Mode 4 (Therapeutic Lotus Calm) without clinical jargon
+    await input.fill("uhh my brain is fried and I'm stuck spiraling right now");
+    await expect(page.getByTestId('orb-morph-badge')).toHaveAttribute('data-topic-shape', '4');
+    await expect(page.getByTestId('orb-morph-badge')).toContainText('Therapeutic Lotus Calm');
+    await expect(page.locator('[data-signal-state]').first()).toHaveAttribute('data-topic-shape', '4');
+
+    // 2. Live Topic Shape Morphing on typing ("ice cream" -> Mode 1 Reward Swirl)
     await input.fill('I want some ice cream as a reward');
     await expect(page.getByTestId('orb-morph-badge')).toHaveAttribute('data-topic-shape', '1');
     await expect(page.getByTestId('orb-morph-badge')).toContainText('Reward Swirl');
-
-    // 2. Live Topic Shape Morphing ("therapeutic calm" -> Mode 4 Therapeutic Lotus Calm)
-    await input.fill('Give me a therapeutic calm breathing moment');
-    await expect(page.getByTestId('orb-morph-badge')).toHaveAttribute('data-topic-shape', '4');
-    await expect(page.getByTestId('orb-morph-badge')).toContainText('Therapeutic Lotus Calm');
+    await expect(page.locator('[data-signal-state]').first()).toHaveAttribute('data-topic-shape', '1');
 
     // 3. Live Topic Shape Morphing ("write letters" -> Mode 2 Crystalline Letterforms)
     await input.fill('Write letters and tax paperwork');
     await expect(page.getByTestId('orb-morph-badge')).toHaveAttribute('data-topic-shape', '2');
     await expect(page.getByTestId('orb-morph-badge')).toContainText('Crystalline Letterforms');
 
-    // 4. Voice Command: "show me memory" opens Cognitive Memory panel WITHOUT triggering task decomposition
+    // 4. Direct Interactive Shape Switcher buttons (Creative Star Mode 3)
+    await page.getByTestId('orb-shape-btn-3').click();
+    await expect(page.getByTestId('orb-morph-badge')).toHaveAttribute('data-topic-shape', '3');
+    await expect(page.getByTestId('orb-morph-badge')).toContainText('Creative Ribbon');
+
+    // 5. Voice Command: "show me memory" opens Cognitive Memory panel WITHOUT triggering task decomposition
     await input.fill('show me memory');
     await input.press('Enter');
     await expect(page.locator('body')).toContainText('Voice command: Displaying user memory');
     await expect(page.getByTestId('orb-first-step')).toHaveCount(0);
 
-    // 5. Voice Command: "close panel" closes open modals
+    // 6. Voice Command: "close panel" closes open modals
     await input.fill('close panel');
     await input.press('Enter');
     await expect(page.locator('body')).toContainText('Voice command: Closed panels');
 
-    // 6. Voice Command: "show me chat history" opens Session History modal
+    // 7. Voice Command: "show me chat history" opens Session History modal
     await input.fill('show me chat history');
     await input.press('Enter');
     await expect(page.locator('body')).toContainText('Voice command: Displaying session history');
 
-    // 7. Voice Command: "go to settings" navigates to /app/settings
+    // 8. Voice Command: "go to settings" navigates to /app/settings
     await page.keyboard.press('Escape');
     await input.fill('go to settings');
     await input.press('Enter');

@@ -18,38 +18,38 @@ USER_VOICE = "en-US-AndrewNeural"  # Natural, relatable user voice ("Vaibhav")
 
 # 3-Act Script (~175s - 180s total with natural pauses)
 TURNS = [
-    # --- ACT 1: STAY LIVING ORB INTRO (0:00 - 0:30) ---
+    # --- ACT 1: STAY LIVING ORB INTRO & LIVE SHAPE MORPH DEMO (0:00 - 0:32) ---
     {
         "id": "01_stay_intro_1",
         "speaker": "stay",
         "voice": STAY_VOICE,
-        "rate": "-4%",
+        "rate": "-3%",
         "action": "act1_orb_intro",
-        "caption": "Hi, I am Stay.",
+        "caption": "Hi, I am Stay — Voice-First ADHD Task Initiation & Living Visual Companion.",
         "text": "Hi, I am Stay. I am a voice-first point-of-performance companion built for the exact second ADHD executive freeze hits.",
-        "pause_after": 0.9,
+        "pause_after": 0.8,
     },
     {
         "id": "02_stay_intro_2",
         "speaker": "stay",
         "voice": STAY_VOICE,
-        "rate": "-4%",
-        "action": "act1_orb_mission",
-        "caption": "No complex task lists. No shame spirals. Just one calm voice.",
-        "text": "While millions wait years for clinical care or struggle between appointments, traditional task managers only pile on more guilt. I sit right beside you as a warm, judgment-free body double—shrinking overwhelming mountains into one sixty-second physical move.",
-        "pause_after": 1.2,
+        "rate": "-3%",
+        "action": "act1_orb_morph_showcase",
+        "caption": "Living Shape Morphing: 🌊 Fluid Wave → 🪷 8-Petal Lotus → ✒️ Letterform Gem → 🍦 Ice Cream Swirl → 🎨 Creative Star.",
+        "text": "Instead of overwhelming task lists that trigger guilt, I listen to messy, unfiltered thoughts and physically transform my geometry in real time—shifting into calming lotus petals, crystalline letterforms, or an ice cream cone reward to anchor your attention.",
+        "pause_after": 1.0,
     },
 
-    # --- ACT 2: LIVE CONVERSATION — SHOW, DON'T TELL (0:30 - 2:15) ---
+    # --- ACT 2: REALISTIC CHAOTIC ADHD USER — DE-JARGONING, HOOK & HANDS-FREE COMMANDS (0:32 - 2:14) ---
     {
         "id": "03_user_hello",
         "speaker": "user",
         "voice": USER_VOICE,
-        "rate": "+0%",
+        "rate": "+2%",
         "action": "act2_user_wake",
-        "caption": "Hi Stay.",
-        "text": "Hi Stay.",
-        "pause_after": 0.6,
+        "caption": "Hi Stay... ugh, are you there?",
+        "text": "Hi Stay... ugh, are you there?",
+        "pause_after": 0.5,
     },
     {
         "id": "04_stay_hello",
@@ -57,49 +57,49 @@ TURNS = [
         "voice": STAY_VOICE,
         "rate": "-2%",
         "action": "act2_stay_greet",
-        "caption": "Hi! I'm right here with you. What's hanging over your head?",
-        "text": "Hi! I'm right here with you. Take a slow breath—what's hanging over your head right now?",
-        "pause_after": 0.8,
+        "caption": "Hi! I'm right here with you. Dump whatever is in your head—no need to organize it.",
+        "text": "Hi! I'm right here with you. Take a slow breath and dump whatever is bouncing around in your head—you don't have to organize it for me.",
+        "pause_after": 0.7,
     },
     {
-        "id": "05_user_freeze",
+        "id": "05_user_chaotic_dump",
         "speaker": "user",
         "voice": USER_VOICE,
-        "rate": "+2%",
-        "action": "act2_type_letters_task",
-        "caption": "I have to write letters to my landlord and finish my quarterly tax paperwork...",
-        "text": "Honestly, I'm completely frozen. I have to write letters to my landlord and finish my quarterly tax paperwork, and it feels like it's going to take three hours.",
-        "pause_after": 0.8,
+        "rate": "+5%",
+        "action": "act2_chaotic_brain_dump",
+        "caption": "Uhh my brain is completely fried, I have like 10 tabs open, landlord emails, VAT taxes... idk where to start.",
+        "text": "Honestly, uhh, my brain is completely fried right now. I have like ten tabs open, my landlord is asking for a lease letter, my quarterly VAT taxes are overdue, and I'm just doomscrolling because I don't even know where to start.",
+        "pause_after": 0.7,
     },
     {
-        "id": "06_stay_reality",
+        "id": "06_stay_hook_and_lotus",
         "speaker": "stay",
         "voice": STAY_VOICE,
         "rate": "-3%",
-        "action": "act2_show_reality_and_angles",
-        "caption": "Time Blindness Check: ~180m perceived dread → 45-second micro-entry (86% momentum).",
-        "text": "Ugh, tax letters trigger instant dread—Notice how my orb just shifted into crystalline letterforms with you. Your ADHD brain predicts three hours of pain, but our Time Reality Calculator shows breaking inertia takes just forty-five seconds, with an eighty-six percent momentum rate. Want the three-bullet draft angle?",
-        "pause_after": 0.9,
-    },
-    {
-        "id": "07_user_therapeutic",
-        "speaker": "user",
-        "voice": USER_VOICE,
-        "rate": "+0%",
-        "action": "act2_select_angle_and_therapeutic",
-        "caption": "Yes, let's pick that angle. Give me a therapeutic calm moment first, and maybe ice cream as a reward after.",
-        "text": "Yes, let's pick that angle. Can we make this feel therapeutic and calm first? And remind me I can grab ice cream as a reward when I finish.",
+        "action": "act2_lotus_to_letterform_reality",
+        "caption": "Auto-Morph: 🪷 8-Petal Lotus Calm → ✒️ Crystalline Letterform Gem · 180m Dread shrunk to 45s Micro-Entry.",
+        "text": "Pause right there—you don't need to fix all ten tabs today. Watch my orb open into an eight-petal lotus first to slow your breathing down, and now crystallize into a letterform gem. I stripped out the noise and isolated one target: your landlord and tax letter. Your brain predicts three hours of misery, but breaking inertia takes just forty-five seconds.",
         "pause_after": 0.8,
     },
     {
-        "id": "08_stay_morph",
+        "id": "07_user_ice_cream_hook",
+        "speaker": "user",
+        "voice": USER_VOICE,
+        "rate": "+2%",
+        "action": "act2_select_angle_and_ice_cream",
+        "caption": "Wait, 45 seconds for 3 messy bullets? I can do that! Remind me I get ice cream after.",
+        "text": "Wait, forty-five seconds just to type three terrible, messy bullets? Okay, I can actually do that. Let's pick that angle—and hey, remind me I can grab ice cream right after I finish!",
+        "pause_after": 0.7,
+    },
+    {
+        "id": "08_stay_ice_cream_morph",
         "speaker": "stay",
         "voice": STAY_VOICE,
-        "rate": "-4%",
+        "rate": "-3%",
         "action": "act2_ice_cream_and_memory_extract",
-        "caption": "Orb morphs: 🪷 Therapeutic Lotus Calm → 🍦 Reward Swirl (Saved to Memory).",
-        "text": "Watch my geometry soften into therapeutic lotus ripples, and swirl into an ice cream cone for your reward. I've saved that reward to your cognitive memory.",
-        "pause_after": 0.9,
+        "caption": "Orb Morphs into 🍦 Ice Cream Cone & Swirl · Dopamine Reward Saved to Cognitive Memory.",
+        "text": "Look at my shape—I just morphed into a strawberry ice cream cone with a waffle base so your brain can see the reward waiting for you! And I automatically saved that reward to your cognitive memory.",
+        "pause_after": 0.8,
     },
     {
         "id": "09_user_commands",
@@ -107,9 +107,9 @@ TURNS = [
         "voice": USER_VOICE,
         "rate": "+0%",
         "action": "act2_voice_cmd_memory_and_history",
-        "caption": "Show me memory, and then show me chat history.",
-        "text": "Show me memory, and then show me chat history.",
-        "pause_after": 0.8,
+        "caption": "No way—show me memory, and then show me chat history!",
+        "text": "No way—show me memory, and then show me chat history!",
+        "pause_after": 0.7,
     },
     {
         "id": "10_stay_memory_shown",
@@ -117,9 +117,9 @@ TURNS = [
         "voice": STAY_VOICE,
         "rate": "-2%",
         "action": "act2_close_modals_and_path",
-        "caption": "Opening Cognitive Memory & Session History — 100% hands-free.",
-        "text": "Here is your persistent cognitive memory and your full session history—all controlled hands-free by voice. I've also mapped your three-phase action path right below.",
-        "pause_after": 0.9,
+        "caption": "100% Hands-Free Voice Control: Cognitive Memory → Session History → 3-Phase Action Path.",
+        "text": "Here is your persistent cognitive memory and your past session history, opened completely hands-free by voice. Now check out your three-phase action path right below.",
+        "pause_after": 0.8,
     },
     {
         "id": "11_user_multilingual",
@@ -128,7 +128,7 @@ TURNS = [
         "rate": "+0%",
         "action": "act2_multilingual_and_timer",
         "caption": "Switch to Spanish, and start 20 minutes!",
-        "text": "Amazing. Switch to Spanish, and start 20 minutes!",
+        "text": "That is so clean. Switch to Spanish, and start 20 minutes!",
         "pause_after": 0.7,
     },
     {
@@ -137,21 +137,21 @@ TURNS = [
         "voice": STAY_VOICE,
         "rate": "-2%",
         "action": "act2_timer_running",
-        "caption": "¡Claro! Temporizador de veinte minutos iniciado Across 32 Languages.",
-        "text": "Claro que sí. I've switched to Spanish across our thirty-two language engine and started your twenty-minute focus sprint. Just type three messy bullet points—I'm staying right here with you.",
-        "pause_after": 1.2,
+        "caption": "¡Claro que sí! 32-Language Live Switch + 20-Minute Focus Sprint Started.",
+        "text": "Claro que sí. I've switched to Spanish across our thirty-two language engine and started your twenty-minute focus sprint. Just write three messy bullets—I'm staying right here with you.",
+        "pause_after": 1.1,
     },
 
-    # --- ACT 3: ARCHITECTURE, EFFICIENCY & HACKATHON CLOSING (2:15 - 3:00) ---
+    # --- ACT 3: FULL SVG ARCHITECTURE DIAGRAMS, UNIVERSAL-3 PRO & CLOSING (2:14 - 3:00) ---
     {
         "id": "13_stay_arch_1",
         "speaker": "stay",
         "voice": STAY_VOICE,
         "rate": "-3%",
         "action": "act3_architecture_reports",
-        "caption": "How Stay Works: AssemblyAI Universal-3 Pro + Groq gpt-oss-120b.",
-        "text": "What you just witnessed is Stay's full-duplex architecture in action. Under the hood, Stay streams raw twenty-four kilohertz PCM audio over a single WebSocket to AssemblyAI's Universal-Three Pro Voice Agent API—delivering sub-second turn-taking, live barge-in, keyterm boosting, and thirty-two language detection without stitching separate pipelines.",
-        "pause_after": 1.0,
+        "caption": "System Architecture SVG: AssemblyAI Universal-3 Pro (24kHz Single-WebSocket) + Groq 120B.",
+        "text": "Here is the engineering behind what you just saw. Stay streams raw twenty-four kilohertz PCM audio over a single full-duplex WebSocket to AssemblyAI's Universal-Three Pro Voice Agent API—delivering sub-second turn-taking, live barge-in, ADHD keyterm boosting, and thirty-two language detection without stitching separate pipelines.",
+        "pause_after": 0.9,
     },
     {
         "id": "14_stay_arch_2",
@@ -159,9 +159,9 @@ TURNS = [
         "voice": STAY_VOICE,
         "rate": "-3%",
         "action": "act3_orb_diagnostic_and_safety",
-        "caption": "Deterministic Safety Gates · Clinician PDF Export · 60fps Three.js GLSL Orb.",
-        "text": "For structured task decomposition and time-blindness math, Stay pairs AssemblyAI with Groq's ultra-fast GPT-OSS one-twenty-B model, backed by a deterministic offline CBT engine, hard clinical and crisis safety boundaries, and one-click clinician PDF exports.",
-        "pause_after": 1.0,
+        "caption": "Groq openai/gpt-oss-120b · Deterministic Safety Gates · 60fps GLSL & SVG Shape-Morphing Engine.",
+        "text": "For chaotic brain-dump extraction and time-blindness math, Stay pairs AssemblyAI with Groq's ultra-fast GPT-OSS one-twenty-B model, protected by deterministic pre-LLM crisis and medication safety gates, and one-click clinician PDF exports.",
+        "pause_after": 0.9,
     },
     {
         "id": "15_stay_outro",
@@ -169,28 +169,14 @@ TURNS = [
         "voice": STAY_VOICE,
         "rate": "-4%",
         "action": "act3_closing_card",
-        "caption": "Stay — Voice-First ADHD Task Initiation · github.com/vaibhav4046/stay",
-        "text": "Available today on Web, Desktop, and Mobile PWA, with full open-source code on GitHub. Stay—helping you move from frozen to started, one gentle conversation at a time.",
+        "caption": "STAY — Voice-First ADHD Task Initiation · stay-two-swart.vercel.app · github.com/vaibhav4046/stay",
+        "text": "Available today on Web, Desktop, and Mobile PWA, with full open-source code on GitHub. Stay—helping any mind move from chaos to started, in sixty seconds.",
         "pause_after": 2.0,
     },
 ]
 
 
 def mp3_to_wav_24k_stereo(mp3_path: Path, wav_path: Path):
-    cmd = [
-        FFMPEG_EXE,
-        "-y",
-        "-i",
-        str(mp3_path),
-        "-ar",
-        "24000",
-        "-ac",
-        "2",
-        "-Sample_fmt",
-        "s16",
-        str(wav_path),
-    ]
-    # Note: -sample_fmt is lowercase in ffmpeg
     cmd = [
         FFMPEG_EXE,
         "-y",
@@ -225,20 +211,15 @@ def synthesize_therapeutic_bgm(duration_sec: float, sr: int = 24000) -> np.ndarr
     n_samples = int(duration_sec * sr)
     t = np.linspace(0, duration_sec, n_samples, endpoint=False, dtype=np.float32)
 
-    # Chord progression crossfading slowly every 16 seconds:
-    # Chord 1 (Cmaj9): 130.81 (C3), 196.00 (G3), 246.94 (B3), 293.66 (D4), 329.63 (E4)
-    # Chord 2 (Fmaj9): 174.61 (F3), 220.00 (A3), 261.63 (C4), 329.63 (E4), 392.00 (G4)
     c1_freqs = [130.81, 196.00, 246.94, 293.66, 329.63]
     c2_freqs = [174.61, 220.00, 261.63, 329.63, 392.00]
 
     pad_l = np.zeros(n_samples, dtype=np.float32)
     pad_r = np.zeros(n_samples, dtype=np.float32)
 
-    # Smooth crossfade wave between Chord 1 and Chord 2 (period = 24s)
     blend = 0.5 + 0.5 * np.sin(2 * np.pi * t / 24.0)
 
     for i, (f1, f2) in enumerate(zip(c1_freqs, c2_freqs)):
-        # Slight detune for warm chorus stereo width
         lfo_l = 0.7 + 0.3 * np.sin(2 * np.pi * (0.07 + i * 0.015) * t + i)
         lfo_r = 0.7 + 0.3 * np.cos(2 * np.pi * (0.06 + i * 0.015) * t + i * 0.5)
         amp = 0.22 / (i + 1) ** 0.45
@@ -249,70 +230,64 @@ def synthesize_therapeutic_bgm(duration_sec: float, sr: int = 24000) -> np.ndarr
         c2_wave_l = np.sin(2 * np.pi * (f2 * 0.999) * t) * lfo_l
         c2_wave_r = np.sin(2 * np.pi * (f2 * 1.001) * t) * lfo_r
 
-        pad_l += amp * (blend * c1_wave_l + (1.0 - blend) * c2_wave_l)
-        pad_r += amp * (blend * c1_wave_r + (1.0 - blend) * c2_wave_r)
+        pad_l += amp * ((1.0 - blend) * c1_wave_l + blend * c2_wave_l)
+        pad_r += amp * ((1.0 - blend) * c1_wave_r + blend * c2_wave_r)
 
-    # Deep sub-bass grounding drone (C2 = 65.41 Hz)
-    sub = 0.14 * np.sin(2 * np.pi * 65.41 * t) * (0.8 + 0.2 * np.sin(2 * np.pi * 0.05 * t))
+    sub = 0.16 * np.sin(2 * np.pi * 65.41 * t) * (0.85 + 0.15 * np.sin(2 * np.pi * 0.08 * t))
     pad_l += sub
     pad_r += sub
 
-    # Gentle Tibetan singing bowl harmonic chimes every 9 seconds
-    bowl_notes = [523.25, 659.25, 587.33, 493.88, 783.99]  # C5, E5, D5, B4, G5
-    for idx, start_t in enumerate(np.arange(1.5, duration_sec - 4.0, 8.5)):
-        f_bowl = bowl_notes[idx % len(bowl_notes)]
-        start_idx = int(start_t * sr)
-        length = min(int(6.5 * sr), n_samples - start_idx)
-        if length <= 0:
+    chime_notes = [523.25, 659.25, 783.99, 587.33, 659.25, 880.00]
+    chime_interval = 7.5
+    n_chimes = int(duration_sec / chime_interval)
+    for c_idx in range(n_chimes):
+        start_time = c_idx * chime_interval + 1.2
+        start_sample = int(start_time * sr)
+        chime_len = int(5.5 * sr)
+        end_sample = min(n_samples, start_sample + chime_len)
+        if end_sample <= start_sample:
             continue
-        tb = np.linspace(0, length / sr, length, endpoint=False, dtype=np.float32)
-        env = np.sin(np.pi * np.minimum(tb / 0.08, 1.0)) * np.exp(-tb / 2.2)
-        tone = 0.06 * (
-            np.sin(2 * np.pi * f_bowl * tb)
-            + 0.35 * np.sin(2 * np.pi * (f_bowl * 2.0) * tb)
-        ) * env
-        pan = 0.35 if idx % 2 == 0 else 0.65
-        pad_l[start_idx : start_idx + length] += tone * pan
-        pad_r[start_idx : start_idx + length] += tone * (1.0 - pan)
+        local_t = np.arange(end_sample - start_sample, dtype=np.float32) / sr
+        freq = chime_notes[c_idx % len(chime_notes)]
+        env = np.minimum(1.0, local_t / 0.08) * np.exp(-local_t / 1.8)
+        tone = 0.12 * np.sin(2 * np.pi * freq * local_t) * env
+        pan = 0.35 if c_idx % 2 == 0 else 0.65
+        pad_l[start_sample:end_sample] += tone * pan
+        pad_r[start_sample:end_sample] += tone * (1.0 - pan)
 
-    # Fade in 2.0s and fade out 3.5s
-    fade_in = int(2.0 * sr)
-    fade_out = int(3.5 * sr)
-    pad_l[:fade_in] *= np.linspace(0, 1, fade_in, dtype=np.float32)
-    pad_r[:fade_in] *= np.linspace(0, 1, fade_in, dtype=np.float32)
-    pad_l[-fade_out:] *= np.linspace(1, 0, fade_out, dtype=np.float32)
-    pad_r[-fade_out:] *= np.linspace(1, 0, fade_out, dtype=np.float32)
+    bgm = np.stack([pad_l, pad_r], axis=-1)
+    peak = np.max(np.abs(bgm)) + 1e-6
+    bgm = bgm / peak * 0.14  # Gentle therapeutic level under voice
 
-    stereo = np.stack([pad_l, pad_r], axis=1)
-    max_val = np.max(np.abs(stereo)) + 1e-6
-    return (stereo / max_val) * 0.25
+    fade_in = min(int(2.0 * sr), n_samples)
+    fade_out = min(int(3.0 * sr), n_samples)
+    bgm[:fade_in] *= np.linspace(0.0, 1.0, fade_in, dtype=np.float32)[:, None]
+    bgm[-fade_out:] *= np.linspace(1.0, 0.0, fade_out, dtype=np.float32)[:, None]
+
+    return bgm
 
 
-async def main():
+async def build_all():
     sr = 24000
     timeline = []
     voice_segments = []
 
-    # 1.2s calm BGM lead-in before Stay speaks
-    lead_in_sec = 1.2
-    voice_segments.append(np.zeros((int(lead_in_sec * sr), 2), dtype=np.float32))
-    current_time = lead_in_sec
+    current_sec = 1.2  # 1.2s calm BGM intro before Stay speaks
 
     for turn in TURNS:
         mp3_file = OUT_DIR / f"{turn['id']}.mp3"
         wav_file = OUT_DIR / f"{turn['id']}.wav"
 
-        communicate = edge_tts.Communicate(
-            turn["text"],
-            turn["voice"],
-            rate=turn.get("rate", "+0%"),
-        )
-        await communicate.save(str(mp3_file))
+        print(f"Synthesizing [{turn['id']}] ({turn['speaker']})...")
+        comm = edge_tts.Communicate(turn["text"], turn["voice"], rate=turn["rate"])
+        await comm.save(str(mp3_file))
         mp3_to_wav_24k_stereo(mp3_file, wav_file)
 
-        samples = read_wav_float(wav_file)
-        dur = len(samples) / sr
-        pause = turn.get("pause_after", 0.8)
+        audio_data = read_wav_float(wav_file)
+        dur_sec = len(audio_data) / sr
+
+        start_sec = round(current_sec, 3)
+        end_sec = round(start_sec + dur_sec, 3)
 
         timeline.append(
             {
@@ -321,63 +296,58 @@ async def main():
                 "action": turn["action"],
                 "caption": turn["caption"],
                 "text": turn["text"],
-                "start_sec": round(current_time, 3),
-                "duration_sec": round(dur, 3),
-                "end_sec": round(current_time + dur, 3),
-                "pause_after_sec": pause,
+                "start_sec": start_sec,
+                "duration_sec": round(dur_sec, 3),
+                "end_sec": end_sec,
+                "pause_after_sec": turn["pause_after"],
             }
         )
 
-        voice_segments.append(samples)
-        voice_segments.append(np.zeros((int(pause * sr), 2), dtype=np.float32))
-        current_time += dur + pause
+        voice_segments.append((int(start_sec * sr), audio_data))
+        current_sec = end_sec + turn["pause_after"]
 
-    # Pad or trim outro so total video is right around 178-180s (3 minutes)
-    target_total = 178.0
-    if current_time < target_total:
-        extra = target_total - current_time
-        voice_segments.append(np.zeros((int(extra * sr), 2), dtype=np.float32))
-        current_time = target_total
+    total_duration_sec = round(current_sec + 2.0, 2)
+    print(f"Total video timeline duration: {total_duration_sec:.2f}s ({total_duration_sec/60:.2f} min)")
 
-    voice_track = np.concatenate(voice_segments, axis=0)
-    total_duration = len(voice_track) / sr
-    print(f"Total narration + pauses duration: {total_duration:.2f}s ({total_duration/60:.2f} min)")
+    total_samples = int(total_duration_sec * sr)
+    master = synthesize_therapeutic_bgm(total_duration_sec, sr)
 
-    bgm_track = synthesize_therapeutic_bgm(total_duration, sr=sr)
+    voice_track = np.zeros_like(master)
+    duck_envelope = np.ones((total_samples, 1), dtype=np.float32)
 
-    # Duck BGM gently whenever someone is speaking (sidechain envelope)
-    speech_env = np.mean(np.abs(voice_track), axis=1)
-    # Smooth envelope with 200ms window
-    win = int(0.2 * sr)
-    kernel = np.ones(win, dtype=np.float32) / win
-    smooth_env = np.convolve(speech_env, kernel, mode="same")
-    duck_gain = np.where(smooth_env > 0.008, 0.42, 0.85).astype(np.float32)
-    duck_gain = np.convolve(duck_gain, kernel, mode="same")[:, None]
+    for start_idx, seg in voice_segments:
+        end_idx = min(total_samples, start_idx + len(seg))
+        seg_slice = seg[: end_idx - start_idx]
+        peak = np.max(np.abs(seg_slice)) + 1e-6
+        seg_norm = seg_slice / peak * 0.86
+        voice_track[start_idx:end_idx] += seg_norm
+        duck_envelope[start_idx:end_idx] = 0.52
 
-    mixed = voice_track * 0.92 + bgm_track * duck_gain
-    mixed = np.clip(mixed, -0.98, 0.98)
+    mix = master * duck_envelope + voice_track
+    mix = np.clip(mix, -0.98, 0.98)
 
-    master_wav = OUT_DIR / "master_audio.wav"
+    master_wav = OUT_DIR / "master_demo_audio.wav"
     with wave.open(str(master_wav), "wb") as wf:
         wf.setnchannels(2)
         wf.setsampwidth(2)
         wf.setframerate(sr)
-        pcm16 = (mixed * 32767.0).astype(np.int16)
+        pcm16 = (mix * 32767.0).astype(np.int16)
         wf.writeframes(pcm16.tobytes())
 
-    manifest_path = OUT_DIR / "timeline.json"
-    with open(manifest_path, "w", encoding="utf-8") as f:
+    timeline_json = OUT_DIR / "timeline.json"
+    with open(timeline_json, "w", encoding="utf-8") as f:
         json.dump(
             {
-                "total_duration_sec": round(total_duration, 3),
+                "total_duration_sec": total_duration_sec,
                 "master_wav": str(master_wav),
                 "turns": timeline,
             },
             f,
             indent=2,
         )
-    print(f"Saved master audio to {master_wav} and timeline to {manifest_path}")
+
+    print(f"Saved master audio to {master_wav} and timeline to {timeline_json}")
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(build_all())

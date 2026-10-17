@@ -90,20 +90,20 @@ export const TOPIC_SHAPE_LABELS: Record<number, { icon: string; label: string }>
 
 export function detectTopicShape(text: string): number {
   const clean = text.toLowerCase();
-  // 1. Calming Concentric Ripples / Somatic Grounding / Breathing / Therapeutic / Overwhelm (Mode 4)
-  if (/\b(?:breath|breathe|breathing|calm|calming|therapeutic|therapy|soothe|soothing|gentle|zen|mindful|mindfulness|serene|ground|grounding|overwhelm(?:ed|ing)?|anxious|anxiety|panic|relax|slow|meditate|meditation|peace|rest)\b/i.test(clean)) {
-    return 4;
+  // 1. Conical Swell / Sweet Treats / Food / Rewards / Dopamine Boost (Mode 1)
+  if (/\b(?:ice\s*cream|sweet|treat|cake|coffee|snack|dessert|reward|sugar|fruit|cookie|eat|eating|chocolate|boba|pizza|dopamine\s+treat)\b/i.test(clean)) {
+    return 1;
   }
   // 2. Dual Fluid Spiral Ribbons / Creative / Music / Brainstorming / Art (Mode 3)
   if (/\b(?:music|song|art|draw|drawing|paint|painting|creative|creativity|design|brainstorm|idea|sketch|dance|guitar|canvas|create|build)\b/i.test(clean)) {
     return 3;
   }
-  // 3. Conical Swell / Sweet Treats / Food / Rewards / Energy (Mode 1)
-  if (/\b(?:ice\s*cream|sweet|treat|cake|coffee|snack|dessert|reward|sugar|fruit|cookie|eat|eating)\b/i.test(clean)) {
-    return 1;
+  // 3. Calming Concentric Ripples / Somatic Grounding / Chaotic Brain Fog / Frozen / Overwhelm (Mode 4)
+  if (/\b(?:breath|breathe|breathing|calm|calming|therapeutic|therapy|soothe|soothing|gentle|zen|mindful|mindfulness|serene|ground|grounding|overwhelm(?:ed|ing)?|anxious|anxiety|panic|relax|slow|meditate|meditation|peace|rest|frozen|stuck|paralyzed|brain\s*fog|spiraling|scrolling|can'?t\s+think|mess|drowning|burnt?\s+out|exhausted)\b/i.test(clean)) {
+    return 4;
   }
   // 4. Structured Geometric Facets / Letters / Writing / Docs / Taxes / Code / Paperwork (Mode 2)
-  if (/\b(?:letter|letters|alphabet|word|words|email|write|writing|doc|document|form|tax|taxes|paper|paperwork|report|text|code|coding|draft|essay|spreadsheet|work|file)\b/i.test(clean)) {
+  if (/\b(?:letter|letters|alphabet|word|words|email|emails|inbox|write|writing|doc|document|form|forms|tax|taxes|vat|hmrc|irs|bill|bills|rent|landlord|paper|paperwork|report|text|code|coding|draft|essay|spreadsheet|work|file)\b/i.test(clean)) {
     return 2;
   }
   return 0; // Standard organic liquid wave

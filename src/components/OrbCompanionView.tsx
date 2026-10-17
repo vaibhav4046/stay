@@ -272,7 +272,7 @@ export function OrbCompanionView({
             bands={voice.audioBands}
             topicShape={voice.topicShape}
             hideLabel
-            className="w-full h-full rounded-full overflow-hidden filter drop-shadow-2xl"
+            className="w-full h-full filter drop-shadow-2xl"
           />
 
           {/* Living Pulsing Rings around the Orb */}
@@ -292,20 +292,48 @@ export function OrbCompanionView({
         </button>
 
         {/* Status text subtitle & Morph Resonance Pill */}
-        <div className="mt-4 text-center flex flex-col items-center gap-1.5">
+        <div className="mt-4 text-center flex flex-col items-center gap-2">
           {voice.topicShape > 0 && TOPIC_SHAPE_LABELS[voice.topicShape] && (
             <span
               data-testid="orb-morph-badge"
               data-topic-shape={voice.topicShape}
-              className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 border border-accent/25 px-3 py-0.5 text-xs font-medium text-accent animate-fadeIn"
+              className="inline-flex items-center gap-1.5 rounded-full bg-accent/15 border border-accent/35 px-3.5 py-1 text-xs font-semibold text-accent shadow-xs animate-fadeIn"
             >
               <span>{TOPIC_SHAPE_LABELS[voice.topicShape].icon}</span>
               <span>{TOPIC_SHAPE_LABELS[voice.topicShape].label}</span>
             </span>
           )}
+
+          {/* Interactive Live Shape Morph Selector (Auto-morphs on speech/typing or click to preview) */}
+          <div className="flex flex-wrap items-center justify-center gap-1.5" data-testid="orb-shape-switcher">
+            {[
+              { id: 0, icon: '🌊', label: 'Fluid Wave' },
+              { id: 1, icon: '🍦', label: 'Ice Cream Swirl' },
+              { id: 2, icon: '✒️', label: 'Letterform Gem' },
+              { id: 3, icon: '🎨', label: 'Creative Star' },
+              { id: 4, icon: '🪷', label: 'Lotus Calm' },
+            ].map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => voice.setTopicShape(s.id)}
+                data-testid={`orb-shape-btn-${s.id}`}
+                aria-pressed={voice.topicShape === s.id}
+                className={`rounded-full px-2.5 py-0.5 text-[0.7rem] font-medium transition-all flex items-center gap-1 border ${
+                  voice.topicShape === s.id
+                    ? 'bg-accent text-white border-accent shadow-xs scale-105'
+                    : 'bg-surface/70 text-ink-2 border-line hover:border-accent/40'
+                }`}
+              >
+                <span>{s.icon}</span>
+                <span>{s.label}</span>
+              </button>
+            ))}
+          </div>
+
           <p className="text-sm font-medium text-ink transition-colors">{getStatusText()}</p>
-          <p className="text-[0.78rem] text-ink-3">
-            Voice commands: &ldquo;Show me memory&rdquo; · &ldquo;Show chat history&rdquo; · &ldquo;Go to settings&rdquo; · &ldquo;Start 20m&rdquo; · &ldquo;Change voice&rdquo;
+          <p className="text-[0.76rem] text-ink-3">
+            Speak messy thoughts, ramble, or command: &ldquo;I&apos;m stuck&rdquo; · &ldquo;Show me memory&rdquo; · &ldquo;Show chat history&rdquo; · &ldquo;Start 20m&rdquo;
           </p>
         </div>
 
@@ -452,22 +480,36 @@ export function OrbCompanionView({
           </div>
         )}
 
-        {/* Zero-Friction Starter Prompts when Idle */}
+        {/* Zero-Friction ADHD Brain-Dump & Freeze Rescue Hooks when Idle */}
         {!plan && !running && (
-          <div className="mt-4 flex flex-wrap justify-center gap-1.5 max-w-md">
+          <div className="mt-4 flex flex-wrap justify-center gap-1.5 max-w-lg">
             {[
-              { label: '⚡ Reply to landlord', text: 'Reply to landlord about lease renewal' },
-              { label: '📄 File quarterly taxes', text: 'Submit overdue quarterly VAT tax report' },
-              { label: '✍️ Write proposal abstract', text: 'Write conference proposal abstract' },
+              {
+                label: '🫠 "Brain is fried, 10 tabs open, landlord + taxes..."',
+                text: "Ugh my brain is completely fried, I have ten tabs open, landlord emails and quarterly VAT tax paperwork and I can't even move",
+              },
+              {
+                label: '🍦 "Need a sweet ice cream reward to start writing..."',
+                text: 'I am so stuck on writing this proposal draft, I need an ice cream reward after',
+              },
+              {
+                label: '🪷 "Spiraling & overwhelmed, calm my head first"',
+                text: 'Stay ground me',
+              },
             ].map((chip) => (
               <button
                 key={chip.label}
                 type="button"
                 onClick={() => {
-                  onTaskSubmit?.(chip.text);
+                  const cmd = detectVoiceCommand(chip.text);
+                  if (!cmd) {
+                    onTaskSubmit?.(chip.text);
+                  }
+                  const shape = detectTopicShape(chip.text);
+                  if (shape > 0) voice.setTopicShape(shape);
                   voice.sendUserTextMessage(chip.text);
                 }}
-                className="chip text-[0.75rem] py-1 px-2.5 bg-surface/80 hover:bg-surface transition-colors"
+                className="chip text-[0.74rem] py-1 px-2.5 bg-surface/80 hover:bg-surface transition-colors"
               >
                 {chip.label}
               </button>

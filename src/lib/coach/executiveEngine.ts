@@ -1,4 +1,4 @@
-import { inferBarrierFromTask, BARRIER_DEFINITIONS } from '@/lib/coach/strategies';
+import { inferBarrierFromTask, BARRIER_DEFINITIONS, deJargonChaoticTask } from '@/lib/coach/strategies';
 import type { BarrierType } from '@/types/domain';
 
 export interface TaskRealityCalculation {
@@ -45,7 +45,7 @@ export interface TaskPathResult {
  * Grounded in Russell Barkley's temporal myopia model & Safren's CBT behavioral activation.
  */
 export function calculateTaskReality(taskText: string): TaskRealityCalculation {
-  const clean = taskText.trim();
+  const clean = deJargonChaoticTask(taskText);
   const lower = clean.toLowerCase();
   const barrier = inferBarrierFromTask(clean);
 
@@ -98,7 +98,7 @@ export function calculateTaskReality(taskText: string): TaskRealityCalculation {
  * Brainstorms 3 zero-friction starter angles to bypass executive freeze.
  */
 export function brainstormStarterAngles(taskText: string): TaskBrainstormResult {
-  const clean = taskText.trim();
+  const clean = deJargonChaoticTask(taskText);
   const lower = clean.toLowerCase();
 
   const isWritingOrDoc = /(write|writing|essay|report|email|deck|slides|article|paper|draft|resume|cv|abstract|proposal|blog)/i.test(lower);
@@ -218,7 +218,7 @@ export function brainstormStarterAngles(taskText: string): TaskBrainstormResult 
  * Synthesizes a structured 3-phase execution path for complex bureaucratic, study, or admin tasks.
  */
 export function synthesizeTaskPath(taskText: string): TaskPathResult {
-  const clean = taskText.trim();
+  const clean = deJargonChaoticTask(taskText);
   const calculation = calculateTaskReality(clean);
 
   const phases: TaskPathPhase[] = [

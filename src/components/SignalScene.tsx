@@ -149,38 +149,66 @@ const VERTEX_SHADER = `
   void main() {
     vUv = uv;
     vNormal = normalize(normalMatrix * normal);
-    
+
     // Low band (0-700 Hz: vowels/formants) triggers organic radial swell
     float vowelSwell = uReducedMotion > 0.5 ? 0.0 : uLowBand * 0.085 * sin(position.y * 3.5 + uTime * 4.5);
     // Mid band (700-1500 Hz: transitions/consonants) triggers lip-sync vertical mouth-like contour
     float mouthContour = uReducedMotion > 0.5 ? 0.0 : uMidBand * 0.065 * cos(position.x * 4.2 - uTime * 5.2);
     // High band (1500+ Hz: sibilants/plosives) triggers acoustic surface ripple
     float sibilantRipple = uReducedMotion > 0.5 ? 0.0 : uHighBand * 0.05 * sin(position.y * 14.0 + uTime * 16.0);
-    
-    // Topic-reactive organic geometric modulation
-    // Mode 1 (Treats/Sweets/Ice cream): Conical dome & soft swirl atop the fluid wave
-    float coneTaper = (uTopicShape > 0.5 && uTopicShape < 1.5)
-      ? (0.13 * smoothstep(-0.2, 1.0, position.y) * sin(position.x * 3.4 + uTime * 2.6) * (1.0 + uMidBand * 0.7))
-      : 0.0;
-    // Mode 2 (Letterforms / Writing / Docs / Code): Harmonic facet contours
-    float facetContour = (uTopicShape > 1.5 && uTopicShape < 2.5)
-      ? (0.09 * cos(position.x * 6.8 + position.y * 6.8 + uTime * 3.2) * (0.8 + uMidBand * 1.1))
-      : 0.0;
-    // Mode 3 (Creative / Music / Brainstorming): Double spiral fluid vortex ribbons
-    float ribbonSpiral = (uTopicShape > 2.5 && uTopicShape < 3.5)
-      ? (0.11 * sin(position.y * 4.6 + position.x * 3.8 - uTime * 4.0) * (1.0 + uHighBand * 1.4))
-      : 0.0;
-    // Mode 4 (Calming / Somatic / Breathing): Concentric soothing ripples
-    float calmRipple = (uTopicShape > 3.5)
-      ? (0.07 * cos(length(position.xy) * 8.0 - uTime * 2.0) * (0.5 + uLowBand * 0.5))
-      : 0.0;
 
-    float topicDisplacement = uReducedMotion > 0.5 ? 0.0 : (coneTaper + facetContour + ribbonSpiral + calmRipple);
+    vec3 pos = position;
+    float r = length(pos);
+    vec3 dir = normalize(pos);
+    float angleXY = atan(pos.y, pos.x);
+    float angleXZ = atan(pos.z, pos.x);
+
+    if (uReducedMotion < 0.5) {
+      // Mode 1: Ice Cream Cone + Swirl Scoop Geometry
+      if (uTopicShape > 0.5 && uTopicShape < 1.5) {
+        if (pos.y < -0.05) {
+          // Taper lower hemisphere into a pointed waffle cone
+          float coneFactor = clamp((pos.y + 1.45) / 1.4, 0.14, 1.0);
+          pos.x *= coneFactor * 0.88;
+          pos.z *= coneFactor * 0.88;
+          pos.y *= 1.16;
+          // Waffle cone diamond ridges
+          pos += dir * 0.035 * sin(pos.y * 18.0 + angleXZ * 8.0);
+        } else {
+          // Upper soft-serve triple swirl scoop dome
+          float swirl = 0.16 * sin(angleXZ * 3.0 + pos.y * 5.0 - uTime * 3.0);
+          float scoopBulge = 0.14 * sin(pos.y * 3.8);
+          pos.x *= 1.08 + scoopBulge;
+          pos.z *= 1.08 + scoopBulge;
+          pos += dir * swirl;
+        }
+      }
+      // Mode 2: Crystalline Octahedral Gem / Faceted Letterform Geometry
+      else if (uTopicShape > 1.5 && uTopicShape < 2.5) {
+        // Octahedral L1 norm blend + sharp harmonic facets
+        float l1 = (abs(dir.x) + abs(dir.y) + abs(dir.z)) / 1.55;
+        pos = mix(pos, dir * (1.45 / max(l1, 0.65)), 0.52);
+        float facet = 0.09 * cos(pos.x * 7.5) * cos(pos.y * 7.5) * cos(pos.z * 7.5 + uTime * 2.4);
+        pos += dir * facet;
+      }
+      // Mode 3: 5-Lobe Creative Star / Infinity Wave Geometry
+      else if (uTopicShape > 2.5 && uTopicShape < 3.5) {
+        float starLobes = 0.24 * cos(angleXY * 5.0 - uTime * 2.2) * (1.0 - abs(dir.z) * 0.45);
+        float spiralTwist = 0.11 * sin(pos.y * 6.0 + angleXZ * 2.0 - uTime * 3.5);
+        pos += dir * (starLobes + spiralTwist);
+      }
+      // Mode 4: Sacred 8-Petal Meditative Lotus Blossom Geometry
+      else if (uTopicShape > 3.5) {
+        float lotusPetals = 0.22 * abs(cos(angleXY * 4.0 + uTime * 0.8)) * (1.0 - abs(dir.z) * 0.4);
+        float calmRings = 0.08 * cos(length(pos.xy) * 9.0 - uTime * 2.2);
+        pos += dir * (lotusPetals + calmRings);
+      }
+    }
 
     // Subtle organic surface breathing
     float breath = uReducedMotion > 0.5 ? 0.0 : sin(uTime * 1.2) * 0.02;
-    vec3 displaced = position * (1.0 + breath + vowelSwell + mouthContour + sibilantRipple + topicDisplacement);
-    
+    vec3 displaced = pos * (1.0 + breath + vowelSwell + mouthContour + sibilantRipple);
+
     vPosition = displaced;
     vec4 mvPosition = modelViewMatrix * vec4(displaced, 1.0);
     vViewPosition = -mvPosition.xyz;
@@ -201,6 +229,7 @@ const FRAGMENT_SHADER = `
   uniform float uLowBand;
   uniform float uMidBand;
   uniform float uHighBand;
+  uniform float uTopicShape;
   uniform float uSpeed;
   uniform float uWaveAmp;
   uniform float uReducedMotion;
@@ -384,8 +413,6 @@ export default function SignalScene({ state, energy, bands, topicShape = 0, redu
     renderer.setSize(w, h);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.15;
-    renderer.domElement.style.borderRadius = '50%';
-    renderer.domElement.style.overflow = 'hidden';
     renderer.domElement.style.outline = 'none';
     renderer.domElement.style.userSelect = 'none';
     (renderer.domElement.style as unknown as { webkitTapHighlightColor: string }).webkitTapHighlightColor = 'transparent';
@@ -473,9 +500,46 @@ export default function SignalScene({ state, energy, bands, topicShape = 0, redu
     const targetRim = new THREE.Color();
     const targetStar = new THREE.Color();
 
+    const TOPIC_PALETTE_OVERRIDES: Record<number, Partial<CosmicPaletteConfig>> = {
+      1: {
+        // Ice Cream / Sweet Reward: Strawberry Rose + Warm Vanilla Waffle Gold
+        primary: 0xe11d48,
+        secondary: 0x4c0519,
+        base: 0xfef3c7,
+        core: 0xfb7185,
+        rim: 0xfda4af,
+      },
+      2: {
+        // Crystalline Letterforms / Docs / Taxes: Sapphire Crystal Prism
+        primary: 0x2563eb,
+        secondary: 0x0f172a,
+        base: 0xe0f2fe,
+        core: 0x38bdf8,
+        rim: 0x93c5fd,
+      },
+      3: {
+        // Creative Ribbon / Music / Art: Electric Magenta & Amethyst Vortex
+        primary: 0x9333ea,
+        secondary: 0x2e1065,
+        base: 0xfdf4ff,
+        core: 0xe879f9,
+        rim: 0xf0abfc,
+      },
+      4: {
+        // Therapeutic Lotus Calm / Overwhelm Rescue: Serene Jade & Warm Lotus Gold
+        primary: 0x0d9488,
+        secondary: 0x042f2e,
+        base: 0xf0fdfa,
+        core: 0x5eead4,
+        rim: 0x99f6e4,
+      },
+    };
+
     const render = () => {
       const dt = Math.min(clock.getDelta(), 0.05);
-      const config = COSMIC_PALETTES[stateRef.current] || COSMIC_PALETTES.idle;
+      const baseConfig = COSMIC_PALETTES[stateRef.current] || COSMIC_PALETTES.idle;
+      const shapeOverride = (topicShapeRef.current && TOPIC_PALETTE_OVERRIDES[topicShapeRef.current]) || {};
+      const config = { ...baseConfig, ...shapeOverride };
       smoothEnergy += (energyRef.current - smoothEnergy) * 0.18;
 
       const curBands = bandsRef.current;
@@ -496,12 +560,12 @@ export default function SignalScene({ state, energy, bands, topicShape = 0, redu
       targetStar.setHex(config.star);
 
       // Smooth color interpolation
-      uniforms.uColorPrimary.value.lerp(targetPrimary, 0.08);
-      uniforms.uColorSecondary.value.lerp(targetSecondary, 0.08);
-      uniforms.uColorBase.value.lerp(targetBase, 0.08);
-      uniforms.uColorCore.value.lerp(targetCore, 0.08);
-      uniforms.uColorRim.value.lerp(targetRim, 0.08);
-      uniforms.uColorStar.value.lerp(targetStar, 0.08);
+      uniforms.uColorPrimary.value.lerp(targetPrimary, 0.12);
+      uniforms.uColorSecondary.value.lerp(targetSecondary, 0.12);
+      uniforms.uColorBase.value.lerp(targetBase, 0.12);
+      uniforms.uColorCore.value.lerp(targetCore, 0.12);
+      uniforms.uColorRim.value.lerp(targetRim, 0.12);
+      uniforms.uColorStar.value.lerp(targetStar, 0.12);
 
       uniforms.uSpeed.value += (config.speed - uniforms.uSpeed.value) * 0.08;
       uniforms.uWaveAmp.value += (config.waveAmp - uniforms.uWaveAmp.value) * 0.08;
@@ -509,7 +573,7 @@ export default function SignalScene({ state, energy, bands, topicShape = 0, redu
       uniforms.uLowBand.value = smoothLow;
       uniforms.uMidBand.value = smoothMid;
       uniforms.uHighBand.value = smoothHigh;
-      uniforms.uTopicShape.value += ((topicShapeRef.current || 0) - uniforms.uTopicShape.value) * 0.12;
+      uniforms.uTopicShape.value = topicShapeRef.current || 0;
 
       if (!reducedMotion) {
         t += dt;
@@ -560,7 +624,7 @@ export default function SignalScene({ state, energy, bands, topicShape = 0, redu
   return (
     <div
       ref={mountRef}
-      className="h-full w-full rounded-full overflow-hidden select-none outline-none"
+      className="h-full w-full select-none outline-none"
       style={{ WebkitTapHighlightColor: 'transparent' }}
       aria-hidden="true"
     />

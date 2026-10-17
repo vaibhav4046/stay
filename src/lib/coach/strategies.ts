@@ -168,11 +168,24 @@ export function detectTaskLanguage(text: string): 'hi' | 'es' | 'fr' | 'de' | 'e
   return 'en';
 }
 
+export function deJargonChaoticTask(raw: string): string {
+  const trimmed = raw.trim().replace(/\.$/, '');
+  if (!/\b(brain is|completely fried|tabs open|idk|don't know where to start|can't even move|so stuck on|ugh|uhh)\b/i.test(trimmed)) {
+    return trimmed;
+  }
+  return trimmed
+    .replace(/^(?:ugh+|uh+|um+|honestly|literally|like|wait|okay|so|\s|,)+/gi, '')
+    .replace(/\b(?:my\s+brain\s+is\s+(?:completely\s+)?(?:fried|cooked|mush)(?:\s+right\s+now)?|i\s+have\s+(?:like\s+)?(?:\d+|ten)\s+tabs\s+open|i\s+am\s+so\s+stuck\s+on)\b[,;\s]*/gi, '')
+    .replace(/[,;\s]*(?:and\s+i\s+can'?t\s+even\s+move|idk\s+where\s+to\s+start|and\s+i'?m\s+just\s+doomscrolling.*|i\s+need\s+an?\s+ice\s+cream\s+reward\s+after.*)$/gi, '')
+    .replace(/^(?:and|but|like|\s|,)+/gi, '')
+    .trim() || trimmed;
+}
+
 export function buildDeterministicFirstStep(
   taskText: string,
   strategyKey: StrategyKey
 ): string {
-  const cleaned = taskText.trim().replace(/\.$/, '');
+  const cleaned = deJargonChaoticTask(taskText);
   const lang = detectTaskLanguage(cleaned);
 
   if (lang === 'hi') {
