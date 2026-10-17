@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AudioSpectrumBands, VoiceVisualState } from '@/types/domain';
 
 const SignalScene = dynamic(() => import('./SignalScene'), {
@@ -22,16 +22,24 @@ export const STATE_LABELS: Record<VoiceVisualState, string> = {
 };
 
 const FALLBACK_COLOR: Record<VoiceVisualState, { primary: string; secondary: string; glow: string }> = {
-  idle: { primary: '#006A67', secondary: '#004D40', glow: '#38B2AC' },
-  connecting: { primary: '#64748B', secondary: '#334155', glow: '#94A3B8' },
-  listening: { primary: '#028090', secondary: '#005F5B', glow: '#00F5D4' },
-  thinking: { primary: '#4338CA', secondary: '#312E81', glow: '#818CF8' },
-  speaking: { primary: '#008080', secondary: '#005F5B', glow: '#70E000' },
-  interrupted: { primary: '#B45309', secondary: '#78350F', glow: '#FBBF24' },
-  backchannel: { primary: '#059669', secondary: '#064E3B', glow: '#34D399' },
-  saving: { primary: '#4B5563', secondary: '#1F2937', glow: '#9CA3AF' },
+  idle: { primary: '#006A67', secondary: '#003D3B', glow: '#5EEAD4' },
+  connecting: { primary: '#475569', secondary: '#1E293B', glow: '#94A3B8' },
+  listening: { primary: '#0284C7', secondary: '#0C4A6E', glow: '#38BDF8' },
+  thinking: { primary: '#6D28D9', secondary: '#2E1065', glow: '#C4B5FD' },
+  speaking: { primary: '#059669', secondary: '#064E3B', glow: '#6EE7B7' },
+  interrupted: { primary: '#D97706', secondary: '#78350F', glow: '#FDE68A' },
+  backchannel: { primary: '#0D9488', secondary: '#134E4A', glow: '#5EEAD4' },
+  saving: { primary: '#4F46E5', secondary: '#1E1B4B', glow: '#A5B4FC' },
   complete: { primary: '#16A34A', secondary: '#14532D', glow: '#86EFAC' },
   error: { primary: '#DC2626', secondary: '#7F1D1D', glow: '#FCA5A5' },
+};
+
+export const SHAPE_PALETTES: Record<number, { primary: string; secondary: string; glow: string; accent: string }> = {
+  0: { primary: '#006A67', secondary: '#003634', glow: '#5EEAD4', accent: '#E0F2FE' },
+  1: { primary: '#E11D48', secondary: '#881337', glow: '#FDA4AF', accent: '#FBBF24' }, // Ice Cream Cone & Swirl (Strawberry & Waffle Gold)
+  2: { primary: '#0071E3', secondary: '#1E3A8A', glow: '#7DD3FC', accent: '#E0F2FE' }, // Crystalline Letterform Gem (Apple Sapphire Prism)
+  3: { primary: '#7C3AED', secondary: '#3B0764', glow: '#E879F9', accent: '#F5D0FE' }, // Creative Harmonic Rose (Silk Amethyst & Rose)
+  4: { primary: '#0D9488', secondary: '#115E59', glow: '#5EEAD4', accent: '#FDE68A' }, // 8-Petal Botanical Lotus (Serene Jade & Lotus Gold)
 };
 
 function hasWebGL(): boolean {
@@ -43,101 +51,436 @@ function hasWebGL(): boolean {
   }
 }
 
-const SHAPE_PALETTES: Record<number, { primary: string; secondary: string; glow: string }> = {
-  1: { primary: '#E11D48', secondary: '#881337', glow: '#FDA4AF' }, // Ice Cream / Sweet Reward (Strawberry Rose & Vanilla Cream)
-  2: { primary: '#2563EB', secondary: '#1E3A8A', glow: '#60A5FA' }, // Crystalline Letterforms / Docs / Taxes (Sapphire Prism)
-  3: { primary: '#9333EA', secondary: '#4C1D95', glow: '#E879F9' }, // Creative Ribbon / Music / Art (Magenta & Violet Vortex)
-  4: { primary: '#0D9488', secondary: '#115E59', glow: '#5EEAD4' }, // Lotus Somatic Calm / Overwhelm Rescue (Jade & Golden Lotus)
-};
+/**
+ * Evaluates exact 2D polar/parametric coordinates (cx=60, cy=60) for angle theta in [0, 2*PI)
+ * for each of the 5 morphologies so vertex-to-vertex spring interpolation is 100% smooth and artifact-free.
+ * Note: theta = -PI/2 is top (12 o'clock), theta = PI/2 is bottom (6 o'clock).
+ */
+export function evaluateParametricShapePoint(
+  shape: number,
+  theta: number,
+  time: number,
+  energy: number,
+  layerScale = 1.0
+): [number, number] {
+  const cx = 60;
+  const cy = 60;
+  const breath = Math.sin(time * 1.6) * 0.8 + energy * 3.2;
 
-function getSvgClipPathElement(topicShape: number, radius: number) {
-  if (topicShape === 1) {
-    // Mode 1: Ice Cream Cone + Triple Swirl Scoop Silhouette
-    return (
-      <path d="M 60,18 C 72,18 82,25 84,35 C 93,37 98,46 95,55 C 92,62 85,65 81,67 L 60,106 L 39,67 C 35,65 28,62 25,55 C 22,46 27,37 36,35 C 38,25 48,18 60,18 Z" />
-    );
+  if (shape === 1) {
+    // Mode 1: Sculpted Ice Cream Cone & Triple Soft-Serve Scoop
+    // Normalize angle relative to top (-PI/2)
+    const sinT = Math.sin(theta);
+    const cosT = Math.cos(theta);
+    if (sinT > 0.12) {
+      // Lower hemisphere (sinT > 0.12 -> bottom at theta = PI/2): crisp V-shaped waffle cone
+      // Map sinT from [0.12..1.0] to a linear cone taper toward the bottom tip (60, 105)
+      const tCone = Math.min(1, Math.max(0, (sinT - 0.12) / 0.88));
+      const halfWidth = 28 * (1 - tCone * 0.92) * layerScale;
+      const x = cx + Math.sign(cosT) * Math.pow(Math.abs(cosT), 0.75) * halfWidth;
+      const y = cy + (8 + tCone * 38) * layerScale + breath * 0.25;
+      return [x, y];
+    } else {
+      // Upper hemisphere: 3-tier sculpted soft-serve scoop dome with side cheek scallops
+      const cheekScallop = 4.2 * Math.pow(Math.abs(cosT), 1.8) * Math.exp(-Math.pow(sinT + 0.05, 2) * 18);
+      const topCrown = 3.5 * Math.exp(-Math.pow(cosT, 2) * 12) * (sinT < -0.5 ? 1 : 0);
+      const swirlWave = Math.sin(theta * 6 + time * 2.2) * (0.6 + energy * 1.2);
+      const r = (34 + cheekScallop + topCrown + swirlWave + breath * 0.4) * layerScale;
+      const x = cx + cosT * r;
+      const y = cy - 4 * layerScale + sinT * r * 0.95;
+      return [x, y];
+    }
   }
-  if (topicShape === 2) {
-    // Mode 2: Crystalline Octagonal Diamond / Prism Letterform Silhouette
-    return (
-      <polygon points="60,14 86,24 104,50 96,82 60,106 24,82 16,50 34,24" />
-    );
+
+  if (shape === 2) {
+    // Mode 2: Precision Chamfered Octagonal Crystalline Gem
+    // Exact mathematical polygonal distance for an 8-faceted gem: r(theta) = R / cos((theta mod (PI/4)) - PI/8)
+    const n = 8;
+    const sector = (2 * Math.PI) / n;
+    const modTheta = ((theta % sector) + sector) % sector;
+    const polyFactor = Math.cos(sector / 2) / Math.cos(modTheta - sector / 2);
+    // Slight vertical elongation for classic emerald/diamond cut
+    const r = (38.5 * polyFactor + breath * 0.35) * layerScale;
+    const x = cx + Math.cos(theta) * r * 0.96;
+    const y = cy + Math.sin(theta) * r * 1.04;
+    return [x, y];
   }
-  if (topicShape === 3) {
-    // Mode 3: 5-Lobe Harmonic Creative Star / Infinity Wave Silhouette
-    return (
-      <path d="M 60,14 C 71,14 76,27 86,31 C 96,35 106,45 102,57 C 98,68 88,73 86,84 C 84,95 72,105 60,100 C 48,105 36,95 34,84 C 32,73 22,68 18,57 C 14,45 24,35 34,31 C 44,27 49,14 60,14 Z" />
-    );
+
+  if (shape === 3) {
+    // Mode 3: 5-Fold Harmonic Rose / Apple Silk Star Sculpture
+    const lobes = 5;
+    const rose = 0.5 + 0.5 * Math.cos(lobes * (theta + Math.PI / 2) - time * 0.45);
+    const smoothStar = Math.pow(rose, 0.72);
+    const harmonic = Math.sin(theta * 10 + time * 1.8) * (0.8 + energy * 1.5);
+    const r = (29 + 14.5 * smoothStar + harmonic + breath * 0.5) * layerScale;
+    return [cx + Math.cos(theta) * r, cy + Math.sin(theta) * r];
   }
-  if (topicShape === 4) {
-    // Mode 4: Sacred 8-Petal Meditative Lotus Blossom Silhouette
-    return (
-      <path d="M 60,12 C 69,22 75,26 85,24 C 86,35 92,41 103,47 C 96,57 96,65 102,75 C 91,79 86,86 84,97 C 73,93 67,96 60,106 C 53,96 47,93 36,97 C 34,86 29,79 18,75 C 24,65 24,57 17,47 C 28,41 34,35 35,24 C 45,26 51,22 60,12 Z" />
-    );
+
+  if (shape === 4) {
+    // Mode 4: Sacred 8-Petal Botanical Lotus Blossom
+    const petals = 8;
+    const petalWave = Math.abs(Math.cos((petals / 2) * theta + time * 0.25));
+    // Pointed botanical lotus arch: sharp tip at petal peak, smooth valley between petals
+    const pointedArch = Math.pow(petalWave, 0.58);
+    const calmBreath = Math.sin(time * 1.1) * 1.2;
+    const r = (30 + 13.5 * pointedArch + calmBreath + energy * 2.5) * layerScale;
+    return [cx + Math.cos(theta) * r, cy + Math.sin(theta) * r];
   }
-  return <circle cx="60" cy="60" r={radius} />;
+
+  // Mode 0: Default Apple Siri / Fluid Harmonic Silk Sphere
+  const wave1 = Math.sin(theta * 3 + time * 2.0) * (1.2 + energy * 3.0);
+  const wave2 = Math.cos(theta * 4 - time * 1.5) * (0.8 + energy * 2.0);
+  const r = (41.5 + wave1 + wave2 + breath) * layerScale;
+  return [cx + Math.cos(theta) * r, cy + Math.sin(theta) * r];
 }
 
-function getSvgInteriorHologram(topicShape: number, glow: string) {
-  if (topicShape === 1) {
-    // Ice Cream Waffle Grid & Scoop Swirl Lines
-    return (
-      <g stroke="#FFFFFF" strokeOpacity="0.65" fill="none" strokeWidth="1.3">
-        <path d="M 41,66 L 79,66 L 60,104 Z" fill="rgba(251, 191, 36, 0.25)" />
-        <line x1="46" y1="66" x2="66" y2="92" />
-        <line x1="56" y1="66" x2="72" y2="82" />
-        <line x1="74" y1="66" x2="54" y2="92" />
-        <line x1="64" y1="66" x2="48" y2="82" />
-        <path d="M 34,52 Q 60,38 86,52" strokeWidth="2" stroke={glow} />
-        <path d="M 40,38 Q 60,24 80,38" strokeWidth="1.8" stroke="#FFFFFF" />
-        <circle cx="60" cy="24" r="4.5" fill="#FB7185" stroke="#FFFFFF" strokeWidth="1.2" />
-      </g>
-    );
+function pointsToSmoothSvgPath(pts: Array<[number, number]>): string {
+  const n = pts.length;
+  if (n === 0) return '';
+  let d = `M ${pts[0][0].toFixed(2)},${pts[0][1].toFixed(2)}`;
+  for (let i = 1; i < n; i++) {
+    d += ` L ${pts[i][0].toFixed(2)},${pts[i][1].toFixed(2)}`;
   }
-  if (topicShape === 2) {
-    // Crystalline Document / Letterform Geometric Lattice & Lines
-    return (
-      <g stroke="#FFFFFF" strokeOpacity="0.7" fill="none" strokeWidth="1.2">
-        <polygon points="60,20 82,30 94,52 86,78 60,98 34,78 26,52 38,30" stroke={glow} strokeOpacity="0.8" />
-        <rect x="42" y="36" width="36" height="44" rx="3" fill="rgba(255,255,255,0.12)" stroke="#FFFFFF" strokeWidth="1.5" />
-        <line x1="48" y1="45" x2="72" y2="45" strokeWidth="2" />
-        <line x1="48" y1="53" x2="72" y2="53" strokeWidth="1.5" />
-        <line x1="48" y1="61" x2="66" y2="61" strokeWidth="1.5" />
-        <line x1="48" y1="69" x2="62" y2="69" strokeWidth="1.5" />
-      </g>
-    );
-  }
-  if (topicShape === 3) {
-    // Dual Harmonic Spiral Ribbons & Musical/Creative Waveform
-    return (
-      <g fill="none" stroke="#FFFFFF" strokeOpacity="0.75">
-        <path d="M 28,60 C 40,32 52,88 60,60 C 68,32 80,88 92,60" strokeWidth="2.2" stroke={glow} />
-        <path d="M 28,60 C 40,88 52,32 60,60 C 68,88 80,32 92,60" strokeWidth="1.6" stroke="#FFFFFF" strokeDasharray="3 2" />
-        <circle cx="60" cy="60" r="18" stroke={glow} strokeOpacity="0.5" strokeWidth="1.2" />
-        <circle cx="60" cy="60" r="29" stroke="#FFFFFF" strokeOpacity="0.35" strokeWidth="1" />
-      </g>
-    );
-  }
-  if (topicShape === 4) {
-    // Sacred Concentric Somatic Lotus Ripples & Mandalas
-    return (
-      <g fill="none" stroke="#FFFFFF" strokeOpacity="0.75">
-        <circle cx="60" cy="60" r="10" stroke="#FDE68A" strokeWidth="1.8" fill="rgba(253, 230, 138, 0.2)" />
-        <circle cx="60" cy="60" r="20" stroke={glow} strokeWidth="1.5" strokeDasharray="4 3" />
-        <circle cx="60" cy="60" r="30" stroke="#FFFFFF" strokeWidth="1.3" strokeOpacity="0.6" />
-        <circle cx="60" cy="60" r="39" stroke={glow} strokeWidth="1.1" strokeOpacity="0.45" />
-        <path d="M 60,30 C 68,45 68,75 60,90 C 52,75 52,45 60,30 Z" stroke="#FFFFFF" strokeOpacity="0.5" />
-        <path d="M 30,60 C 45,52 75,52 90,60 C 75,68 45,68 30,60 Z" stroke="#FFFFFF" strokeOpacity="0.5" />
-      </g>
-    );
-  }
-  return null;
+  d += ' Z';
+  return d;
 }
 
 /**
- * ChatGPT Voice Wavy Liquid Orb SVG Fallback with Marvel 'Eternity' Cosmic Interior
- * and Distinct Topic-Morphing Silhouettes (Modes 0-4).
+ * 60fps Spring-Physics Parametric Vector Sculpture Overlay.
+ * Renders razor-sharp, liquid-smooth morphing silk contours and topic emblems
+ * that smoothly interpolate every vertex with critically-damped spring dynamics.
  */
+function ParametricMorphSculpture({
+  state,
+  energy = 0,
+  bands,
+  topicShape = 0,
+  isOverlay = false,
+}: {
+  state: VoiceVisualState;
+  energy?: number;
+  bands?: AudioSpectrumBands;
+  topicShape?: number;
+  isOverlay?: boolean;
+}) {
+  const outerPathRef = useRef<SVGPathElement>(null);
+  const midPathRef = useRef<SVGPathElement>(null);
+  const innerPathRef = useRef<SVGPathElement>(null);
+  const clipPathRef = useRef<SVGPathElement>(null);
+
+  const shapeRef = useRef(topicShape);
+  const energyRef = useRef(energy);
+  const bandsRef = useRef(bands);
+  shapeRef.current = topicShape;
+  energyRef.current = energy;
+  bandsRef.current = bands;
+
+  const baseCol = FALLBACK_COLOR[state] || FALLBACK_COLOR.idle;
+  const col = (topicShape > 0 && SHAPE_PALETTES[topicShape]) || {
+    ...baseCol,
+    accent: '#FFFFFF',
+  };
+
+  useEffect(() => {
+    const N = 120;
+    const thetas = Array.from({ length: N }, (_, i) => -Math.PI / 2 + (i * 2 * Math.PI) / N);
+
+    // Initialize current & velocity arrays for 3 harmonic silk contour layers
+    const curOuter: Array<[number, number]> = thetas.map((th) =>
+      evaluateParametricShapePoint(shapeRef.current, th, 0, 0, 1.0)
+    );
+    const velOuter: Array<[number, number]> = thetas.map(() => [0, 0]);
+
+    const curMid: Array<[number, number]> = thetas.map((th) =>
+      evaluateParametricShapePoint(shapeRef.current, th, 0, 0, 0.84)
+    );
+    const velMid: Array<[number, number]> = thetas.map(() => [0, 0]);
+
+    const curInner: Array<[number, number]> = thetas.map((th) =>
+      evaluateParametricShapePoint(shapeRef.current, th, 0, 0, 0.66)
+    );
+    const velInner: Array<[number, number]> = thetas.map(() => [0, 0]);
+
+    let raf = 0;
+    let t = 0;
+    let lastTime = performance.now();
+
+    const stiffness = 0.14;
+    const damping = 0.78;
+
+    const tick = (now: number) => {
+      const dt = Math.min((now - lastTime) / 1000, 0.05);
+      lastTime = now;
+      t += dt;
+
+      const curShape = shapeRef.current;
+      const curEnergy = energyRef.current + (bandsRef.current?.low || 0) * 0.5;
+
+      for (let i = 0; i < N; i++) {
+        const th = thetas[i];
+
+        const [tx1, ty1] = evaluateParametricShapePoint(curShape, th, t, curEnergy, 1.0);
+        velOuter[i][0] = (velOuter[i][0] + (tx1 - curOuter[i][0]) * stiffness) * damping;
+        velOuter[i][1] = (velOuter[i][1] + (ty1 - curOuter[i][1]) * stiffness) * damping;
+        curOuter[i][0] += velOuter[i][0];
+        curOuter[i][1] += velOuter[i][1];
+
+        const [tx2, ty2] = evaluateParametricShapePoint(curShape, th + 0.08 * Math.sin(t), t * 1.1, curEnergy, 0.84);
+        velMid[i][0] = (velMid[i][0] + (tx2 - curMid[i][0]) * stiffness * 0.9) * damping;
+        velMid[i][1] = (velMid[i][1] + (ty2 - curMid[i][1]) * stiffness * 0.9) * damping;
+        curMid[i][0] += velMid[i][0];
+        curMid[i][1] += velMid[i][1];
+
+        const [tx3, ty3] = evaluateParametricShapePoint(curShape, th - 0.08 * Math.cos(t), t * 0.9, curEnergy, 0.66);
+        velInner[i][0] = (velInner[i][0] + (tx3 - curInner[i][0]) * stiffness * 0.85) * damping;
+        velInner[i][1] = (velInner[i][1] + (ty3 - curInner[i][1]) * stiffness * 0.85) * damping;
+        curInner[i][0] += velInner[i][0];
+        curInner[i][1] += velInner[i][1];
+      }
+
+      const outerD = pointsToSmoothSvgPath(curOuter);
+      if (outerPathRef.current) outerPathRef.current.setAttribute('d', outerD);
+      if (clipPathRef.current) clipPathRef.current.setAttribute('d', outerD);
+      if (midPathRef.current) midPathRef.current.setAttribute('d', pointsToSmoothSvgPath(curMid));
+      if (innerPathRef.current) innerPathRef.current.setAttribute('d', pointsToSmoothSvgPath(curInner));
+
+      raf = requestAnimationFrame(tick);
+    };
+
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const gradId = `apple-orb-${state}-${topicShape}-${isOverlay ? 'ov' : 'fb'}`;
+
+  return (
+    <svg
+      viewBox="0 0 120 120"
+      className="h-full w-full overflow-visible select-none pointer-events-none"
+      aria-hidden="true"
+      data-testid={isOverlay ? 'signal-parametric-overlay' : 'signal-fallback'}
+      data-topic-shape={topicShape}
+    >
+      <defs>
+        <radialGradient id={`halo-${gradId}`} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor={col.glow} stopOpacity={isOverlay ? '0.28' : '0.55'} />
+          <stop offset="55%" stopColor={col.primary} stopOpacity={isOverlay ? '0.1' : '0.22'} />
+          <stop offset="100%" stopColor={col.secondary} stopOpacity="0" />
+        </radialGradient>
+
+        <radialGradient id={`body-${gradId}`} cx="38%" cy="28%" r="74%">
+          <stop offset="0%" stopColor={col.glow} stopOpacity="0.96" />
+          <stop offset="48%" stopColor={col.primary} stopOpacity="0.95" />
+          <stop offset="100%" stopColor={col.secondary} stopOpacity="0.98" />
+        </radialGradient>
+
+        <linearGradient id={`silk-stroke-${gradId}`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.92" />
+          <stop offset="50%" stopColor={col.glow} stopOpacity="0.85" />
+          <stop offset="100%" stopColor={col.accent} stopOpacity="0.9" />
+        </linearGradient>
+
+        <linearGradient id={`waffle-${gradId}`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#FDE68A" stopOpacity="0.92" />
+          <stop offset="50%" stopColor="#F59E0B" stopOpacity="0.88" />
+          <stop offset="100%" stopColor="#B45309" stopOpacity="0.94" />
+        </linearGradient>
+
+        <clipPath id={`clip-${gradId}`}>
+          <path ref={clipPathRef} d="M 60,18 A 42,42 0 1,1 59.9,18 Z" />
+        </clipPath>
+      </defs>
+
+      {/* Ambient Halo */}
+      {!isOverlay && <circle cx="60" cy="60" r="56" fill={`url(#halo-${gradId})`} />}
+
+      {/* Fallback Solid Body when WebGL is inactive */}
+      {!isOverlay && (
+        <g clipPath={`url(#clip-${gradId})`}>
+          <rect x="4" y="4" width="112" height="112" fill={`url(#body-${gradId})`} />
+          <ellipse cx="48" cy="36" rx="22" ry="12" fill="#FFFFFF" fillOpacity="0.28" transform="rotate(-18 48 36)" />
+        </g>
+      )}
+
+      {/* Smooth 60fps Spring-Interpolated Parametric Silk Contours */}
+      <path
+        ref={innerPathRef}
+        fill={isOverlay ? 'none' : col.glow}
+        fillOpacity={isOverlay ? 0 : 0.14}
+        stroke={`url(#silk-stroke-${gradId})`}
+        strokeWidth="0.9"
+        strokeOpacity="0.45"
+      />
+      <path
+        ref={midPathRef}
+        fill="none"
+        stroke={`url(#silk-stroke-${gradId})`}
+        strokeWidth="1.25"
+        strokeOpacity="0.65"
+      />
+      <path
+        ref={outerPathRef}
+        fill="none"
+        stroke={`url(#silk-stroke-${gradId})`}
+        strokeWidth="2.0"
+        strokeOpacity="0.92"
+      />
+
+      {/* Smoothly Transitioning Precision Vector Geometry Details for Modes 1-4 */}
+      {/* Mode 1: Sculpted Ice Cream Waffle Cone Lattice, Soft-Serve Swirl & Glossy Cherry */}
+      <g
+        style={{
+          opacity: topicShape === 1 ? 1 : 0,
+          transform: topicShape === 1 ? 'scale(1)' : 'scale(0.84)',
+          transformOrigin: '60px 60px',
+          transition: 'opacity 520ms cubic-bezier(0.22, 1, 0.36, 1), transform 520ms cubic-bezier(0.22, 1, 0.36, 1)',
+        }}
+      >
+        {/* Golden Waffle Cone Facet */}
+        <path
+          d="M 38,65 Q 60,71 82,65 L 60,104 Z"
+          fill={`url(#waffle-${gradId})`}
+          fillOpacity="0.82"
+          stroke="#FEF3C7"
+          strokeWidth="1.2"
+        />
+        {/* Crisp Waffle Lattice Lines */}
+        <g stroke="#78350F" strokeOpacity="0.55" strokeWidth="1.0">
+          <line x1="44" y1="67" x2="65" y2="94" />
+          <line x1="53" y1="68" x2="70" y2="85" />
+          <line x1="63" y1="68" x2="75" y2="76" />
+          <line x1="76" y1="67" x2="55" y2="94" />
+          <line x1="67" y1="68" x2="50" y2="85" />
+          <line x1="57" y1="68" x2="45" y2="76" />
+        </g>
+        {/* Triple Soft-Serve Cream Swirl Ribbons */}
+        <path
+          d="M 33,63 C 33,52 46,50 60,51 C 74,52 87,52 87,63 C 79,68 41,68 33,63 Z"
+          fill="#FFF1F2"
+          fillOpacity="0.88"
+          stroke="#FDA4AF"
+          strokeWidth="1.2"
+        />
+        <path
+          d="M 39,51 C 39,40 50,38 60,39 C 70,40 81,40 81,51"
+          fill="#FFE4E6"
+          fillOpacity="0.85"
+          stroke="#FB7185"
+          strokeWidth="1.2"
+        />
+        <path
+          d="M 46,39 C 48,28 55,24 60,21 C 65,24 72,28 74,39"
+          fill="#FECDD3"
+          fillOpacity="0.9"
+          stroke="#FFFFFF"
+          strokeWidth="1.2"
+        />
+        {/* Top Cherry & Stem */}
+        <circle cx="60" cy="19" r="4.8" fill="#E11D48" stroke="#FFFFFF" strokeWidth="1.2" />
+        <path d="M 60,15 C 63,9 69,8 72,11" fill="none" stroke="#FECDD3" strokeWidth="1.3" strokeLinecap="round" />
+      </g>
+
+      {/* Mode 2: Precision Crystalline Gem Facets & Luminous Typographic Page */}
+      <g
+        style={{
+          opacity: topicShape === 2 ? 1 : 0,
+          transform: topicShape === 2 ? 'scale(1)' : 'scale(0.84)',
+          transformOrigin: '60px 60px',
+          transition: 'opacity 520ms cubic-bezier(0.22, 1, 0.36, 1), transform 520ms cubic-bezier(0.22, 1, 0.36, 1)',
+        }}
+        fill="none"
+      >
+        {/* Inner Cut-Sapphire Octagon Crown & Facet Rays */}
+        <polygon
+          points="60,27 81,36 90,60 81,84 60,93 39,84 30,60 39,36"
+          stroke="#E0F2FE"
+          strokeWidth="1.3"
+          strokeOpacity="0.85"
+          fill="rgba(255,255,255,0.08)"
+        />
+        {/* Corner Facet Struts */}
+        <g stroke="#7DD3FC" strokeWidth="0.9" strokeOpacity="0.65">
+          <line x1="60" y1="19" x2="60" y2="27" />
+          <line x1="60" y1="93" x2="60" y2="101" />
+          <line x1="21" y1="60" x2="30" y2="60" />
+          <line x1="90" y1="60" x2="99" y2="60" />
+          <line x1="33" y1="31" x2="39" y2="36" />
+          <line x1="87" y1="31" x2="81" y2="36" />
+          <line x1="33" y1="89" x2="39" y2="84" />
+          <line x1="87" y1="89" x2="81" y2="84" />
+        </g>
+        {/* Sculpted Glass Document & Precision Letterform Bars */}
+        <rect
+          x="44"
+          y="39"
+          width="32"
+          height="42"
+          rx="4"
+          fill="rgba(255, 255, 255, 0.16)"
+          stroke="#FFFFFF"
+          strokeWidth="1.4"
+        />
+        <line x1="50" y1="48" x2="70" y2="48" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" />
+        <line x1="50" y1="56" x2="70" y2="56" stroke="#BAE6FD" strokeWidth="1.7" strokeLinecap="round" />
+        <line x1="50" y1="64" x2="65" y2="64" stroke="#BAE6FD" strokeWidth="1.7" strokeLinecap="round" />
+        <line x1="50" y1="72" x2="60" y2="72" stroke="#7DD3FC" strokeWidth="1.7" strokeLinecap="round" />
+      </g>
+
+      {/* Mode 3: 5-Fold Harmonic Rose & Apple Silk Spirograph */}
+      <g
+        style={{
+          opacity: topicShape === 3 ? 1 : 0,
+          transform: topicShape === 3 ? 'scale(1)' : 'scale(0.84)',
+          transformOrigin: '60px 60px',
+          transition: 'opacity 520ms cubic-bezier(0.22, 1, 0.36, 1), transform 520ms cubic-bezier(0.22, 1, 0.36, 1)',
+        }}
+        fill="none"
+      >
+        {[0, 72, 144, 216, 288].map((deg) => (
+          <ellipse
+            key={deg}
+            cx="60"
+            cy="44"
+            rx="11"
+            ry="22"
+            transform={`rotate(${deg} 60 60)`}
+            stroke="#F5D0FE"
+            strokeWidth="1.2"
+            strokeOpacity="0.72"
+            fill="rgba(232, 121, 249, 0.1)"
+          />
+        ))}
+        <circle cx="60" cy="60" r="9" fill="#FFFFFF" fillOpacity="0.85" stroke="#E879F9" strokeWidth="1.5" />
+      </g>
+
+      {/* Mode 4: Sacred 8-Petal Botanical Lotus Crown & Golden Stamen Core */}
+      <g
+        style={{
+          opacity: topicShape === 4 ? 1 : 0,
+          transform: topicShape === 4 ? 'scale(1)' : 'scale(0.84)',
+          transformOrigin: '60px 60px',
+          transition: 'opacity 520ms cubic-bezier(0.22, 1, 0.36, 1), transform 520ms cubic-bezier(0.22, 1, 0.36, 1)',
+        }}
+        fill="none"
+      >
+        {[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => (
+          <path
+            key={deg}
+            d="M 60,24 C 69,36 69,50 60,60 C 51,50 51,36 60,24 Z"
+            transform={`rotate(${deg} 60 60)`}
+            fill="rgba(94, 234, 212, 0.14)"
+            stroke="#CCFBF1"
+            strokeWidth="1.2"
+            strokeOpacity="0.82"
+          />
+        ))}
+        <circle cx="60" cy="60" r="11" fill="rgba(253, 230, 138, 0.32)" stroke="#FDE68A" strokeWidth="1.6" />
+        <circle cx="60" cy="60" r="4.5" fill="#FEF08A" />
+      </g>
+    </svg>
+  );
+}
+
 export function SignalFallbackSvg({
   state,
   energy = 0,
@@ -149,176 +492,87 @@ export function SignalFallbackSvg({
   bands?: AudioSpectrumBands;
   topicShape?: number;
 }) {
-  const baseCol = FALLBACK_COLOR[state] || FALLBACK_COLOR.idle;
-  const col = (topicShape > 0 && SHAPE_PALETTES[topicShape]) || baseCol;
-  const lowEnergy = bands ? bands.low : energy;
-  const highEnergy = bands ? bands.high : energy;
-  const radius = 43 + lowEnergy * 5;
-  const glowRadius = 55 + energy * 8 + highEnergy * 4;
-  const waveShift = energy * 6 + lowEnergy * 3;
-  const clipId = `orb-clip-${state}-${topicShape}`;
-
   return (
-    <svg
-      viewBox="0 0 120 120"
-      className="h-full w-full transition-transform duration-500"
-      aria-hidden="true"
-      data-testid="signal-fallback"
-      data-topic-shape={topicShape}
-    >
-      <defs>
-        {/* Ambient Halo */}
-        <radialGradient id={`halo-${clipId}`} cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor={col.glow} stopOpacity="0.65" />
-          <stop offset="60%" stopColor={col.primary} stopOpacity="0.22" />
-          <stop offset="100%" stopColor={col.secondary} stopOpacity="0" />
-        </radialGradient>
-
-        {/* Dynamic Topic-Morphing Silhouette Clip Path */}
-        <clipPath id={clipId}>
-          {getSvgClipPathElement(topicShape, radius)}
-        </clipPath>
-
-        {/* Upper Cosmic Universe Gradient (Eternity) */}
-        <radialGradient id={`cosmic-${clipId}`} cx="40%" cy="30%" r="75%">
-          <stop offset="0%" stopColor={col.glow} stopOpacity="0.92" />
-          <stop offset="45%" stopColor={col.primary} stopOpacity="1" />
-          <stop offset="100%" stopColor={col.secondary} stopOpacity="1" />
-        </radialGradient>
-
-        {/* Lower ChatGPT Luminous Cream / Pearl Liquid Gradient */}
-        <linearGradient id={`cream-liquid-${clipId}`} x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.95" />
-          <stop offset="35%" stopColor="#F0FDFA" stopOpacity="0.92" />
-          <stop offset="100%" stopColor="#CCFBF1" stopOpacity="0.85" />
-        </linearGradient>
-
-        {/* Inner Radiant Core Singularity */}
-        <radialGradient id={`core-singularity-${clipId}`} cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.85" />
-          <stop offset="40%" stopColor={col.glow} stopOpacity="0.55" />
-          <stop offset="100%" stopColor={col.glow} stopOpacity="0" />
-        </radialGradient>
-
-        {/* Specular Surface Glint */}
-        <linearGradient id={`glint-${clipId}`} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.65" />
-          <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
-        </linearGradient>
-
-        {/* Wave Crest Starlight Ribbon */}
-        <linearGradient id={`crest-${clipId}`} x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.8" />
-          <stop offset="50%" stopColor={col.glow} stopOpacity="1" />
-          <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.8" />
-        </linearGradient>
-      </defs>
-
-      {/* Outer Glow Aura Bloom */}
-      <circle cx="60" cy="60" r={glowRadius} fill={`url(#halo-${clipId})`} />
-
-      {/* Morphing Orb Enclosure with Clipped Fluid Wave, Hologram & Eternity Cosmos */}
-      <g clipPath={`url(#${clipId})`}>
-        {/* Upper Cosmic Nebula Background */}
-        <rect x="8" y="8" width="104" height="104" fill={`url(#cosmic-${clipId})`} />
-
-        {/* Eternity Celestial Stardust Points */}
-        <circle cx="45" cy="38" r="1.1" fill="#FFFFFF" opacity="0.9" />
-        <circle cx="72" cy="42" r="0.8" fill="#FFFFFF" opacity="0.8" />
-        <circle cx="56" cy="30" r="0.9" fill="#E0F2FE" opacity="0.85" />
-        <circle cx="38" cy="52" r="0.7" fill="#FFFFFF" opacity="0.75" />
-        <circle cx="78" cy="56" r="1.0" fill="#E0F2FE" opacity="0.8" />
-        <circle cx="64" cy="48" r="1.3" fill="#FFFFFF" opacity="0.95" />
-
-        {/* Inner Radiant Star Singularity */}
-        <circle cx="60" cy="56" r="30" fill={`url(#core-singularity-${clipId})`} />
-
-        {/* Lower Fluid: ChatGPT Undulating Wave Horizon */}
-        <path
-          d={`M 10,${64 - waveShift} C 32,${54 - waveShift} 46,${72 + waveShift} 60,${64 - waveShift * 0.5} C 74,${54 - waveShift * 0.5} 88,${72 + waveShift} 110,${64 - waveShift} L 110,112 L 10,112 Z`}
-          fill={`url(#cream-liquid-${clipId})`}
-        />
-
-        {/* Glowing Horizon Seam Ribbon */}
-        <path
-          d={`M 10,${64 - waveShift} C 32,${54 - waveShift} 46,${72 + waveShift} 60,${64 - waveShift * 0.5} C 74,${54 - waveShift * 0.5} 88,${72 + waveShift} 110,${64 - waveShift}`}
-          fill="none"
-          stroke={`url(#crest-${clipId})`}
-          strokeWidth="1.8"
-          opacity="0.9"
-        />
-
-        {/* Topic-Specific Geometric Hologram Inside the Orb */}
-        {getSvgInteriorHologram(topicShape, col.glow)}
-      </g>
-
-      {/* Surface Specular Highlight */}
-      <ellipse
-        cx="48"
-        cy="42"
-        rx={radius * 0.36}
-        ry={radius * 0.2}
-        fill={`url(#glint-${clipId})`}
-        transform="rotate(-28 48 42)"
-      />
-    </svg>
+    <ParametricMorphSculpture
+      state={state}
+      energy={energy}
+      bands={bands}
+      topicShape={topicShape}
+      isOverlay={false}
+    />
   );
 }
 
 export function Signal({
   state,
-  energy,
+  energy = 0,
   bands,
   topicShape = 0,
+  size = 240,
   hideLabel = false,
   className = '',
 }: {
   state: VoiceVisualState;
-  energy: number;
+  energy?: number;
   bands?: AudioSpectrumBands;
   topicShape?: number;
+  size?: number;
   hideLabel?: boolean;
   className?: string;
 }) {
-  const [mounted, setMounted] = useState(false);
-  const [supportsWebGL, setSupportsWebGL] = useState(false);
+  const [webglOk, setWebglOk] = useState(true);
   const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-    setSupportsWebGL(hasWebGL());
+    setWebglOk(hasWebGL());
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
     setReducedMotion(mq.matches);
-    const onChange = () => setReducedMotion(mq.matches);
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
+    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
   }, []);
 
-  const onUnsupported = useCallback(() => setSupportsWebGL(false), []);
+  const handleUnsupported = useCallback(() => setWebglOk(false), []);
+
+  const inlineStyle = className ? undefined : { width: size, height: size };
 
   return (
     <div
-      className={`relative select-none ${className}`}
+      className={`flex flex-col items-center gap-2 select-none ${className}`}
       data-signal-state={state}
       data-topic-shape={topicShape}
-      style={{ WebkitTapHighlightColor: 'transparent' }}
     >
-      <div className="aspect-square w-full select-none outline-none">
-        {mounted && supportsWebGL ? (
-          <SignalScene
-            state={state}
-            energy={energy}
-            bands={bands}
-            topicShape={topicShape}
-            reducedMotion={reducedMotion}
-            onUnsupported={onUnsupported}
-          />
+      <div
+        className="relative flex items-center justify-center w-full h-full select-none outline-none"
+        style={{ ...inlineStyle, WebkitTapHighlightColor: 'transparent' }}
+      >
+        {webglOk ? (
+          <>
+            <SignalScene
+              state={state}
+              energy={energy}
+              bands={bands}
+              topicShape={topicShape}
+              reducedMotion={reducedMotion}
+              onUnsupported={handleUnsupported}
+            />
+            {/* Synchronized 60fps Spring-Physics Parametric Silk Vector Sculpture */}
+            <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+              <ParametricMorphSculpture
+                state={state}
+                energy={energy}
+                bands={bands}
+                topicShape={topicShape}
+                isOverlay={true}
+              />
+            </div>
+          </>
         ) : (
           <SignalFallbackSvg state={state} energy={energy} bands={bands} topicShape={topicShape} />
         )}
       </div>
       {!hideLabel && (
-        <p className="meta text-center mt-1" role="status" aria-live="polite" data-testid="signal-state-label">
+        <p className="meta text-center" aria-live="polite">
           {STATE_LABELS[state]}
         </p>
       )}

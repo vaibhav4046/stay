@@ -345,6 +345,23 @@ test.describe('Stay — Multi-User Concurrency, Executive Engine & Session Isola
     await expect(page.getByTestId('orb-panel-reality')).toBeVisible();
     await expect(page.getByTestId('orb-panel-reality')).toContainText('Dread: ~180m');
 
+    // Switch to 24/7 Autonomous Agent Auto-Drafted Work tab
+    await page.getByTestId('orb-exec-artifact').click();
+    await expect(page.getByTestId('orb-panel-artifact')).toBeVisible();
+    await expect(page.getByTestId('orb-artifact-editor')).toHaveValue(/Subject: Quick update/i);
+
+    // Switch to Live Personal ADHD Brain Study tab
+    await page.getByTestId('orb-exec-clinical').click();
+    await expect(page.getByTestId('orb-panel-clinical')).toBeVisible();
+    await expect(page.getByTestId('orb-panel-clinical')).toContainText('Mesoaccumbens Dopamine Drive');
+
+    // Open full 1775-2024 ADHD Clinical Research & Personal Brain Study modal
+    await page.getByTestId('orb-science-btn').click();
+    await expect(page.getByTestId('orb-science-modal')).toBeVisible();
+    await expect(page.getByTestId('orb-science-modal')).toContainText('1775');
+    await expect(page.getByTestId('orb-science-modal')).toContainText('Weikard');
+    await page.getByTestId('orb-science-modal').getByRole('button', { name: 'Close' }).click();
+
     // Switch to 3 Angles in Orb card and apply Angle 0
     await page.getByTestId('orb-exec-brainstorm').click();
     await expect(page.getByTestId('orb-panel-brainstorm')).toBeVisible();

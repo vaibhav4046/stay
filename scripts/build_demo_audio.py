@@ -1,7 +1,5 @@
 import asyncio
 import json
-import math
-import os
 import subprocess
 import wave
 from pathlib import Path
@@ -16,17 +14,17 @@ OUT_DIR.mkdir(parents=True, exist_ok=True)
 STAY_VOICE = "en-GB-SoniaNeural"   # Warm, calm British female voice ("Anna" persona)
 USER_VOICE = "en-US-AndrewNeural"  # Natural, relatable user voice ("Vaibhav")
 
-# 3-Act Script (~175s - 180s total with natural pauses)
+# 3-Act Apple Keynote Script (~178s total with natural pauses)
 TURNS = [
-    # --- ACT 1: STAY LIVING ORB INTRO & LIVE SHAPE MORPH DEMO (0:00 - 0:32) ---
+    # --- ACT 1: STAY LIVING SCULPTURE INTRO & SMOOTH 60FPS SPRING-PHYSICS MORPHING (0:00 - 0:34) ---
     {
         "id": "01_stay_intro_1",
         "speaker": "stay",
         "voice": STAY_VOICE,
         "rate": "-3%",
         "action": "act1_orb_intro",
-        "caption": "Hi, I am Stay — Voice-First ADHD Task Initiation & Living Visual Companion.",
-        "text": "Hi, I am Stay. I am a voice-first point-of-performance companion built for the exact second ADHD executive freeze hits.",
+        "caption": "Stay · 24/7 Living Voice-First ADHD Companion & Autonomous Task Engine",
+        "text": "Hi, I am Stay. I am a twenty-four-seven living voice companion and autonomous executive agent built for the exact moment ADHD freeze hits.",
         "pause_after": 0.8,
     },
     {
@@ -35,19 +33,19 @@ TURNS = [
         "voice": STAY_VOICE,
         "rate": "-3%",
         "action": "act1_orb_morph_showcase",
-        "caption": "Living Shape Morphing: 🌊 Fluid Wave → 🪷 8-Petal Lotus → ✒️ Letterform Gem → 🍦 Ice Cream Swirl → 🎨 Creative Star.",
-        "text": "Instead of overwhelming task lists that trigger guilt, I listen to messy, unfiltered thoughts and physically transform my geometry in real time—shifting into calming lotus petals, crystalline letterforms, or an ice cream cone reward to anchor your attention.",
-        "pause_after": 1.0,
+        "caption": "60fps Spring-Physics Parametric Sculpture · Lotus → Letterform Gem → Ice Cream Cone → Creative Star",
+        "text": "As you speak, my sixty-frame-per-second spring-physics sculpture smoothly transforms in real time—flowing from an eight-petal botanical lotus, to a faceted sapphire letterform gem, to a sculpted ice cream cone reward.",
+        "pause_after": 0.9,
     },
 
-    # --- ACT 2: REALISTIC CHAOTIC ADHD USER — DE-JARGONING, HOOK & HANDS-FREE COMMANDS (0:32 - 2:14) ---
+    # --- ACT 2: CHAOTIC ADHD USER, 24/7 AUTONOMOUS AGENT DRAFTING, BRAIN STUDY & VOICE COMMANDS (0:34 - 2:16) ---
     {
         "id": "03_user_hello",
         "speaker": "user",
         "voice": USER_VOICE,
         "rate": "+2%",
         "action": "act2_user_wake",
-        "caption": "Hi Stay... ugh, are you there?",
+        "caption": "User Wake · 'Hi Stay... ugh, are you there?'",
         "text": "Hi Stay... ugh, are you there?",
         "pause_after": 0.5,
     },
@@ -57,9 +55,9 @@ TURNS = [
         "voice": STAY_VOICE,
         "rate": "-2%",
         "action": "act2_stay_greet",
-        "caption": "Hi! I'm right here with you. Dump whatever is in your head—no need to organize it.",
+        "caption": "Zero-Friction Intake · 'Dump whatever is in your head—no need to organize it.'",
         "text": "Hi! I'm right here with you. Take a slow breath and dump whatever is bouncing around in your head—you don't have to organize it for me.",
-        "pause_after": 0.7,
+        "pause_after": 0.6,
     },
     {
         "id": "05_user_chaotic_dump",
@@ -67,7 +65,7 @@ TURNS = [
         "voice": USER_VOICE,
         "rate": "+5%",
         "action": "act2_chaotic_brain_dump",
-        "caption": "Uhh my brain is completely fried, I have like 10 tabs open, landlord emails, VAT taxes... idk where to start.",
+        "caption": "Unfiltered ADHD Brain-Dump · 10 Tabs Open · Landlord Lease Letter · Overdue Q3 VAT Taxes",
         "text": "Honestly, uhh, my brain is completely fried right now. I have like ten tabs open, my landlord is asking for a lease letter, my quarterly VAT taxes are overdue, and I'm just doomscrolling because I don't even know where to start.",
         "pause_after": 0.7,
     },
@@ -75,10 +73,10 @@ TURNS = [
         "id": "06_stay_hook_and_lotus",
         "speaker": "stay",
         "voice": STAY_VOICE,
-        "rate": "-3%",
-        "action": "act2_lotus_to_letterform_reality",
-        "caption": "Auto-Morph: 🪷 8-Petal Lotus Calm → ✒️ Crystalline Letterform Gem · 180m Dread shrunk to 45s Micro-Entry.",
-        "text": "Pause right there—you don't need to fix all ten tabs today. Watch my orb open into an eight-petal lotus first to slow your breathing down, and now crystallize into a letterform gem. I stripped out the noise and isolated one target: your landlord and tax letter. Your brain predicts three hours of misery, but breaking inertia takes just forty-five seconds.",
+        "rate": "-2%",
+        "action": "act2_lotus_to_artifact_and_clinical",
+        "caption": "24/7 Autonomous Agent Pre-Drafts Landlord & VAT Email + Live Personal ADHD Brain Study",
+        "text": "Pause right there—I've got you. Watch my sculpture bloom into a calming lotus and crystallize into a letterform gem. Instead of just giving advice, my twenty-four-seven agent already pre-drafted your landlord and VAT reply right here, shrinking three hours of dread into forty-five seconds, while mapping your live dopamine and working-memory load.",
         "pause_after": 0.8,
     },
     {
@@ -87,9 +85,9 @@ TURNS = [
         "voice": USER_VOICE,
         "rate": "+2%",
         "action": "act2_select_angle_and_ice_cream",
-        "caption": "Wait, 45 seconds for 3 messy bullets? I can do that! Remind me I get ice cream after.",
-        "text": "Wait, forty-five seconds just to type three terrible, messy bullets? Okay, I can actually do that. Let's pick that angle—and hey, remind me I can grab ice cream right after I finish!",
-        "pause_after": 0.7,
+        "caption": "Dopamine Reward Anchor · 'You already drafted the email?! Remind me I get ice cream after!'",
+        "text": "Wait, you already pre-drafted the email for me and shrunk it to forty-five seconds?! Okay, I can actually do this! Hey, remind me I can grab ice cream right after I finish.",
+        "pause_after": 0.6,
     },
     {
         "id": "08_stay_ice_cream_morph",
@@ -97,8 +95,8 @@ TURNS = [
         "voice": STAY_VOICE,
         "rate": "-3%",
         "action": "act2_ice_cream_and_memory_extract",
-        "caption": "Orb Morphs into 🍦 Ice Cream Cone & Swirl · Dopamine Reward Saved to Cognitive Memory.",
-        "text": "Look at my shape—I just morphed into a strawberry ice cream cone with a waffle base so your brain can see the reward waiting for you! And I automatically saved that reward to your cognitive memory.",
+        "caption": "Real-Time Smooth Morph → Sculpted Ice Cream Cone & Soft-Serve Swirl · Saved to Memory",
+        "text": "Watch my sculpture smoothly transform into a strawberry soft-serve ice cream cone with a golden waffle base so your brain can see the reward waiting for you! I've also saved that reward to your permanent cognitive memory.",
         "pause_after": 0.8,
     },
     {
@@ -107,18 +105,18 @@ TURNS = [
         "voice": USER_VOICE,
         "rate": "+0%",
         "action": "act2_voice_cmd_memory_and_history",
-        "caption": "No way—show me memory, and then show me chat history!",
-        "text": "No way—show me memory, and then show me chat history!",
-        "pause_after": 0.7,
+        "caption": "Hands-Free AGI Voice Commands · 'Show me memory, and then show me chat history!'",
+        "text": "That transformation is so smooth! Show me memory, and then show me chat history!",
+        "pause_after": 0.6,
     },
     {
         "id": "10_stay_memory_shown",
         "speaker": "stay",
         "voice": STAY_VOICE,
         "rate": "-2%",
-        "action": "act2_close_modals_and_path",
-        "caption": "100% Hands-Free Voice Control: Cognitive Memory → Session History → 3-Phase Action Path.",
-        "text": "Here is your persistent cognitive memory and your past session history, opened completely hands-free by voice. Now check out your three-phase action path right below.",
+        "action": "act2_close_modals_and_science",
+        "caption": "Cognitive Memory · Session History · 1775–2024 ADHD Clinical Neuroscience Encyclopedia",
+        "text": "Here is your persistent cognitive memory, your session history, and our complete clinical ADHD research engine spanning from seventeen-seventy-five to modern neuroimaging—all controlled by voice.",
         "pause_after": 0.8,
     },
     {
@@ -127,9 +125,9 @@ TURNS = [
         "voice": USER_VOICE,
         "rate": "+0%",
         "action": "act2_multilingual_and_timer",
-        "caption": "Switch to Spanish, and start 20 minutes!",
-        "text": "That is so clean. Switch to Spanish, and start 20 minutes!",
-        "pause_after": 0.7,
+        "caption": "32-Language Live Voice Switch · 'Switch to Spanish, and start 20 minutes!'",
+        "text": "Switch to Spanish, and start 20 minutes!",
+        "pause_after": 0.6,
     },
     {
         "id": "12_stay_spanish_timer",
@@ -137,21 +135,21 @@ TURNS = [
         "voice": STAY_VOICE,
         "rate": "-2%",
         "action": "act2_timer_running",
-        "caption": "¡Claro que sí! 32-Language Live Switch + 20-Minute Focus Sprint Started.",
-        "text": "Claro que sí. I've switched to Spanish across our thirty-two language engine and started your twenty-minute focus sprint. Just write three messy bullets—I'm staying right here with you.",
-        "pause_after": 1.1,
+        "caption": "¡Claro que sí! 32-Language Engine Active · 20-Minute Focus Sprint Running",
+        "text": "Claro que sí. I've switched to Spanish across our thirty-two language engine and started your twenty-minute focus sprint. Your pre-drafted reply is ready—I'm staying right here with you.",
+        "pause_after": 1.0,
     },
 
-    # --- ACT 3: FULL SVG ARCHITECTURE DIAGRAMS, UNIVERSAL-3 PRO & CLOSING (2:14 - 3:00) ---
+    # --- ACT 3: APPLE KEYNOTE ARCHITECTURE BENTO & CLOSING (2:16 - 3:00) ---
     {
         "id": "13_stay_arch_1",
         "speaker": "stay",
         "voice": STAY_VOICE,
         "rate": "-3%",
         "action": "act3_architecture_reports",
-        "caption": "System Architecture SVG: AssemblyAI Universal-3 Pro (24kHz Single-WebSocket) + Groq 120B.",
-        "text": "Here is the engineering behind what you just saw. Stay streams raw twenty-four kilohertz PCM audio over a single full-duplex WebSocket to AssemblyAI's Universal-Three Pro Voice Agent API—delivering sub-second turn-taking, live barge-in, ADHD keyterm boosting, and thirty-two language detection without stitching separate pipelines.",
-        "pause_after": 0.9,
+        "caption": "Architecture · AssemblyAI Universal-3 Pro (24kHz Single-WebSocket) + Groq gpt-oss-120b",
+        "text": "Under the hood, Stay streams twenty-four kilohertz PCM audio over a single full-duplex WebSocket to AssemblyAI's Universal-Three Pro Voice Agent API—delivering sub-second turn-taking, live barge-in, ADHD keyterm boosting, and thirty-two language detection.",
+        "pause_after": 0.8,
     },
     {
         "id": "14_stay_arch_2",
@@ -159,9 +157,9 @@ TURNS = [
         "voice": STAY_VOICE,
         "rate": "-3%",
         "action": "act3_orb_diagnostic_and_safety",
-        "caption": "Groq openai/gpt-oss-120b · Deterministic Safety Gates · 60fps GLSL & SVG Shape-Morphing Engine.",
-        "text": "For chaotic brain-dump extraction and time-blindness math, Stay pairs AssemblyAI with Groq's ultra-fast GPT-OSS one-twenty-B model, protected by deterministic pre-LLM crisis and medication safety gates, and one-click clinician PDF exports.",
-        "pause_after": 0.9,
+        "caption": "24/7 Autonomous Task Drafting · Longitudinal ADHD Phenotyping · Pre-LLM Safety Gates · Clinician PDF",
+        "text": "Paired with Groq's ultra-fast GPT-OSS one-twenty-B model, Stay autonomously drafts user work, tracks longitudinal executive-function phenotypes, enforces deterministic pre-LLM crisis and medication safety gates, and exports clinician-ready PDF reports.",
+        "pause_after": 0.8,
     },
     {
         "id": "15_stay_outro",
@@ -169,8 +167,8 @@ TURNS = [
         "voice": STAY_VOICE,
         "rate": "-4%",
         "action": "act3_closing_card",
-        "caption": "STAY — Voice-First ADHD Task Initiation · stay-two-swart.vercel.app · github.com/vaibhav4046/stay",
-        "text": "Available today on Web, Desktop, and Mobile PWA, with full open-source code on GitHub. Stay—helping any mind move from chaos to started, in sixty seconds.",
+        "caption": "STAY — Voice-First ADHD Companion · stay-two-swart.vercel.app · github.com/vaibhav4046/stay",
+        "text": "Available today on Web, Desktop, and Mobile PWA, with full open-source code on GitHub. Stay—helping every ADHD mind move from chaos to started, in sixty seconds.",
         "pause_after": 2.0,
     },
 ]

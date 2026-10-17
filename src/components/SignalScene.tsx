@@ -14,127 +14,123 @@ interface Props {
 }
 
 interface CosmicPaletteConfig {
-  primary: number;    // Upper wave nebula primary hue
-  secondary: number;  // Upper wave deep space / abyss hue
-  base: number;       // Lower fluid luminous creamy pearl hue
-  core: number;       // Inner singularity intensity flare hue
-  rim: number;        // Glass Fresnel boundary hue
-  star: number;       // Twinkling celestial starlight hue
-  speed: number;      // Fluid wave tempo
-  waveAmp: number;    // Wave surge amplitude
+  primary: number;    // Upper luminous glass primary hue
+  secondary: number;  // Deep subsurface core hue
+  base: number;       // Lower translucent silk pearl hue
+  core: number;       // Inner radiant bloom hue
+  rim: number;        // Apple VisionOS Fresnel specular rim hue
+  star: number;       // Highlight sheen hue
+  speed: number;      // Fluid tempo
+  waveAmp: number;    // Harmonic amplitude
 }
 
-/**
- * ChatGPT Voice-Style Undulating Fluid Wave Orb with Marvel 'Eternity' Cosmic Interior.
- * Combines the iconic dual-phase liquid horizon of ChatGPT AVM with deep cosmic intensity:
- * volumetric nebula, 3D twinkling stardust, and a blazing internal singularity core.
- */
 const COSMIC_PALETTES: Record<VoiceVisualState, CosmicPaletteConfig> = {
   idle: {
-    primary: 0x006a67,   // Deep oceanic teal
-    secondary: 0x002826, // Cosmic midnight abyss
-    base: 0xf0fdfa,      // Luminous pearl white
-    core: 0x00f5d4,      // Electric cyan singularity
-    rim: 0x5eead4,       // Mint aurora sheen
-    star: 0xffffff,      // Pure starlight
-    speed: 0.8,
-    waveAmp: 0.08,
-  },
-  connecting: {
-    primary: 0x475569,   // Celestial slate
-    secondary: 0x0f172a, // Deep interstellar void
-    base: 0xf8fafc,      // Moonlit silver pearl
-    core: 0x94a3b8,      // Pulsing silver core
-    rim: 0xcbd5e1,       // Silver reflection
-    star: 0xe2e8f0,
-    speed: 1.2,
-    waveAmp: 0.10,
-  },
-  listening: {
-    primary: 0x0284c7,   // Electric oceanic cyan
-    secondary: 0x003d3a, // Deep abyss teal
-    base: 0xf0fdfa,      // Luminous cream ivory
-    core: 0x00f5d4,      // Radiant cyan singularity flare
-    rim: 0x38bdf8,       // Vivid turquoise rim
-    star: 0xe0f2fe,
-    speed: 1.1,
-    waveAmp: 0.14,
-  },
-  thinking: {
-    primary: 0x7c3aed,   // Ultraviolet galactic nebula
-    secondary: 0x1e1b4b, // Infinity deep cosmic purple
-    base: 0xfaf5ff,      // Soft lavender pearl
-    core: 0xc084fc,      // Radiant pulsar singularity
-    rim: 0xa855f7,       // Ethereal amethyst rim
-    star: 0xf3e8ff,
-    speed: 1.7,
-    waveAmp: 0.16,
-  },
-  speaking: {
-    primary: 0x059669,   // Living aurora emerald
-    secondary: 0x022c22, // Deep celestial forest void
-    base: 0xfefce8,      // Warm golden creamy pearl
-    core: 0x34d399,      // Radiant emerald star core
-    rim: 0x6ee7b7,       // Mint prismatic rim
-    star: 0xffffff,
-    speed: 1.35,
-    waveAmp: 0.18,
-  },
-  backchannel: {
-    primary: 0x10b981,   // Attuned mint emerald
-    secondary: 0x064e3b, // Deep jade void
-    base: 0xf0fdf4,      // Fresh pearl
-    core: 0x6ee7b7,      // Soft emerald pulse
-    rim: 0xa7f3d0,       // Gentle mint halo
-    star: 0xffffff,
-    speed: 1.15,
-    waveAmp: 0.12,
-  },
-  interrupted: {
-    primary: 0xd97706,   // Warm celestial amber
-    secondary: 0x431407, // Deep cosmic ember void
-    base: 0xfffbeb,      // Warm cream pearl
-    core: 0xfbbf24,      // Golden starlight flare
-    rim: 0xfde68a,       // Amber glint
-    star: 0xfef3c7,
-    speed: 0.7,
-    waveAmp: 0.09,
-  },
-  saving: {
-    primary: 0x4f46e5,   // Twilight indigo nebula
-    secondary: 0x1e1b4b, // Deep space
-    base: 0xf8fafc,      // Silver pearl
-    core: 0x818cf8,      // Starlight beacon
-    rim: 0xc7d2fe,       // Ethereal sheen
-    star: 0xffffff,
-    speed: 1.1,
-    waveAmp: 0.08,
-  },
-  complete: {
-    primary: 0x10b981,   // Triumphant aurora emerald
-    secondary: 0x022c22, // Deep cosmic void
-    base: 0xecfdf5,      // Brilliant gold-tinted pearl
-    core: 0x4ade80,      // Solar accomplishment flare
-    rim: 0x86efac,       // Radiant mint rim
+    primary: 0x006a67,
+    secondary: 0x003331,
+    base: 0x99f6e4,
+    core: 0x2dd4bf,
+    rim: 0xccfbf1,
     star: 0xffffff,
     speed: 0.75,
+    waveAmp: 0.06,
+  },
+  connecting: {
+    primary: 0x475569,
+    secondary: 0x1e293b,
+    base: 0xcbd5e1,
+    core: 0x94a3b8,
+    rim: 0xf1f5f9,
+    star: 0xffffff,
+    speed: 1.0,
+    waveAmp: 0.08,
+  },
+  listening: {
+    primary: 0x0284c7,
+    secondary: 0x0c4a6e,
+    base: 0x7dd3fc,
+    core: 0x38bdf8,
+    rim: 0xe0f2fe,
+    star: 0xffffff,
+    speed: 1.05,
+    waveAmp: 0.11,
+  },
+  thinking: {
+    primary: 0x6d28d9,
+    secondary: 0x2e1065,
+    base: 0xd8b4fe,
+    core: 0xc084fc,
+    rim: 0xf3e8ff,
+    star: 0xffffff,
+    speed: 1.4,
+    waveAmp: 0.12,
+  },
+  speaking: {
+    primary: 0x059669,
+    secondary: 0x064e3b,
+    base: 0x6ee7b7,
+    core: 0x34d399,
+    rim: 0xd1fae5,
+    star: 0xffffff,
+    speed: 1.25,
+    waveAmp: 0.14,
+  },
+  backchannel: {
+    primary: 0x0d9488,
+    secondary: 0x115e59,
+    base: 0x99f6e4,
+    core: 0x5eead4,
+    rim: 0xccfbf1,
+    star: 0xffffff,
+    speed: 1.0,
     waveAmp: 0.09,
   },
-  error: {
-    primary: 0xdc2626,   // Deep nebula ruby
-    secondary: 0x450a0a, // Abyssal crimson void
-    base: 0xfef2f2,      // Blush pearl
-    core: 0xf87171,      // Ember singularity
-    rim: 0xfca5a5,       // Rose glint
-    star: 0xffe4e6,
-    speed: 0.6,
+  interrupted: {
+    primary: 0xd97706,
+    secondary: 0x78350f,
+    base: 0xfde68a,
+    core: 0xfbbf24,
+    rim: 0xfef3c7,
+    star: 0xffffff,
+    speed: 0.7,
     waveAmp: 0.07,
+  },
+  saving: {
+    primary: 0x4f46e5,
+    secondary: 0x1e1b4b,
+    base: 0xc7d2fe,
+    core: 0x818cf8,
+    rim: 0xe0e7ff,
+    star: 0xffffff,
+    speed: 0.95,
+    waveAmp: 0.07,
+  },
+  complete: {
+    primary: 0x10b981,
+    secondary: 0x064e3b,
+    base: 0xa7f3d0,
+    core: 0x4ade80,
+    rim: 0xd1fae5,
+    star: 0xffffff,
+    speed: 0.7,
+    waveAmp: 0.07,
+  },
+  error: {
+    primary: 0xdc2626,
+    secondary: 0x7f1d1d,
+    base: 0xfca5a5,
+    core: 0xf87171,
+    rim: 0xfee2e2,
+    star: 0xffffff,
+    speed: 0.6,
+    waveAmp: 0.06,
   },
 };
 
 const VERTEX_SHADER = `
   varying vec3 vNormal;
   varying vec3 vPosition;
+  varying vec3 vUnitDir;
   varying vec3 vViewPosition;
   varying vec2 vUv;
 
@@ -143,72 +139,91 @@ const VERTEX_SHADER = `
   uniform float uLowBand;
   uniform float uMidBand;
   uniform float uHighBand;
-  uniform float uTopicShape;
+  uniform float uW0;
+  uniform float uW1;
+  uniform float uW2;
+  uniform float uW3;
+  uniform float uW4;
   uniform float uReducedMotion;
+
+  // Evaluates clean, sculpted 3D parametric position for a given unit direction d
+  vec3 evaluateSculptedPos(vec3 d, float baseRadius) {
+    float angleXY = atan(d.y, d.x);
+    float angleXZ = atan(d.z, d.x);
+    float xyLen = length(d.xy);
+
+    // 0: Smooth Apple Siri Harmonic Silk Sphere
+    float r0 = 1.0 + 0.025 * sin(d.x * 3.0 + uTime * 1.6) * cos(d.y * 3.0 - uTime * 1.3);
+    vec3 p0 = d * (baseRadius * r0);
+
+    // 1: Sculpted Ice Cream Cone & Soft-Serve Swirl Dome
+    vec3 p1 = d * baseRadius;
+    if (d.y < -0.08) {
+      // Taper lower hemisphere into a crisp V-cone toward the bottom vertex
+      float tCone = clamp((-0.08 - d.y) / 0.92, 0.0, 1.0);
+      float taper = mix(0.84, 0.08, pow(tCone, 0.88));
+      p1.x *= taper;
+      p1.z *= taper;
+      p1.y = baseRadius * (-0.08 - tCone * 1.12);
+    } else {
+      // Sculpted 3-tier soft-serve scoop dome
+      float h = clamp((d.y + 0.08) / 1.08, 0.0, 1.0);
+      float tierScallop = 0.08 * cos(h * 9.42) + 0.03 * sin(angleXZ * 4.0 + h * 6.0 - uTime * 2.0);
+      float widthProfile = mix(0.95, 0.55, pow(h, 1.35)) + tierScallop * (1.0 - h * 0.5);
+      p1.x = d.x * baseRadius * widthProfile / max(length(d.xz), 0.28);
+      p1.z = d.z * baseRadius * widthProfile / max(length(d.xz), 0.28);
+      // Smooth blend near pole
+      p1.xz = mix(d.xz * baseRadius * (0.98 + tierScallop), p1.xz, smoothstep(0.0, 0.45, length(d.xz)));
+      p1.y = baseRadius * (-0.08 + h * 1.08);
+    }
+
+    // 2: Precision Chamfered Octagonal Crystalline Gem
+    float l1 = (abs(d.x) + abs(d.y) + abs(d.z));
+    float lInf = max(max(abs(d.x), abs(d.y)), abs(d.z));
+    float crystalR = mix(1.0, 1.18 / max(mix(l1 * 0.66, lInf, 0.42), 0.65), 0.58);
+    vec3 p2 = d * (baseRadius * crystalR);
+    p2.y *= 1.06;
+
+    // 3: 5-Fold Harmonic Rose / Apple Silk Star Sculpture
+    float rose5 = 0.5 + 0.5 * cos(angleXY * 5.0 - uTime * 0.6);
+    float r3 = 0.84 + 0.28 * pow(rose5, 0.78) * pow(xyLen, 0.65);
+    vec3 p3 = d * (baseRadius * r3);
+
+    // 4: Sacred 8-Petal Botanical Lotus Blossom
+    float lotus8 = abs(cos(angleXY * 4.0 + uTime * 0.3));
+    float r4 = 0.85 + 0.26 * pow(lotus8, 0.62) * pow(xyLen, 0.65);
+    vec3 p4 = d * (baseRadius * r4);
+
+    return uW0 * p0 + uW1 * p1 + uW2 * p2 + uW3 * p3 + uW4 * p4;
+  }
 
   void main() {
     vUv = uv;
-    vNormal = normalize(normalMatrix * normal);
+    float baseR = length(position);
+    vec3 d = normalize(position);
+    vUnitDir = d;
 
-    // Low band (0-700 Hz: vowels/formants) triggers organic radial swell
-    float vowelSwell = uReducedMotion > 0.5 ? 0.0 : uLowBand * 0.085 * sin(position.y * 3.5 + uTime * 4.5);
-    // Mid band (700-1500 Hz: transitions/consonants) triggers lip-sync vertical mouth-like contour
-    float mouthContour = uReducedMotion > 0.5 ? 0.0 : uMidBand * 0.065 * cos(position.x * 4.2 - uTime * 5.2);
-    // High band (1500+ Hz: sibilants/plosives) triggers acoustic surface ripple
-    float sibilantRipple = uReducedMotion > 0.5 ? 0.0 : uHighBand * 0.05 * sin(position.y * 14.0 + uTime * 16.0);
+    vec3 sculpted = evaluateSculptedPos(d, baseR);
 
-    vec3 pos = position;
-    float r = length(pos);
-    vec3 dir = normalize(pos);
-    float angleXY = atan(pos.y, pos.x);
-    float angleXZ = atan(pos.z, pos.x);
-
-    if (uReducedMotion < 0.5) {
-      // Mode 1: Ice Cream Cone + Swirl Scoop Geometry
-      if (uTopicShape > 0.5 && uTopicShape < 1.5) {
-        if (pos.y < -0.05) {
-          // Taper lower hemisphere into a pointed waffle cone
-          float coneFactor = clamp((pos.y + 1.45) / 1.4, 0.14, 1.0);
-          pos.x *= coneFactor * 0.88;
-          pos.z *= coneFactor * 0.88;
-          pos.y *= 1.16;
-          // Waffle cone diamond ridges
-          pos += dir * 0.035 * sin(pos.y * 18.0 + angleXZ * 8.0);
-        } else {
-          // Upper soft-serve triple swirl scoop dome
-          float swirl = 0.16 * sin(angleXZ * 3.0 + pos.y * 5.0 - uTime * 3.0);
-          float scoopBulge = 0.14 * sin(pos.y * 3.8);
-          pos.x *= 1.08 + scoopBulge;
-          pos.z *= 1.08 + scoopBulge;
-          pos += dir * swirl;
-        }
-      }
-      // Mode 2: Crystalline Octahedral Gem / Faceted Letterform Geometry
-      else if (uTopicShape > 1.5 && uTopicShape < 2.5) {
-        // Octahedral L1 norm blend + sharp harmonic facets
-        float l1 = (abs(dir.x) + abs(dir.y) + abs(dir.z)) / 1.55;
-        pos = mix(pos, dir * (1.45 / max(l1, 0.65)), 0.52);
-        float facet = 0.09 * cos(pos.x * 7.5) * cos(pos.y * 7.5) * cos(pos.z * 7.5 + uTime * 2.4);
-        pos += dir * facet;
-      }
-      // Mode 3: 5-Lobe Creative Star / Infinity Wave Geometry
-      else if (uTopicShape > 2.5 && uTopicShape < 3.5) {
-        float starLobes = 0.24 * cos(angleXY * 5.0 - uTime * 2.2) * (1.0 - abs(dir.z) * 0.45);
-        float spiralTwist = 0.11 * sin(pos.y * 6.0 + angleXZ * 2.0 - uTime * 3.5);
-        pos += dir * (starLobes + spiralTwist);
-      }
-      // Mode 4: Sacred 8-Petal Meditative Lotus Blossom Geometry
-      else if (uTopicShape > 3.5) {
-        float lotusPetals = 0.22 * abs(cos(angleXY * 4.0 + uTime * 0.8)) * (1.0 - abs(dir.z) * 0.4);
-        float calmRings = 0.08 * cos(length(pos.xy) * 9.0 - uTime * 2.2);
-        pos += dir * (lotusPetals + calmRings);
-      }
+    // Compute smooth analytical finite-difference normal on the unit sphere so lighting is never distorted
+    vec3 tangent = normalize(abs(d.y) > 0.99 ? cross(d, vec3(1.0, 0.0, 0.0)) : cross(d, vec3(0.0, 1.0, 0.0)));
+    vec3 bitangent = normalize(cross(d, tangent));
+    float eps = 0.025;
+    vec3 dT = normalize(d + tangent * eps);
+    vec3 dB = normalize(d + bitangent * eps);
+    vec3 pT = evaluateSculptedPos(dT, baseR);
+    vec3 pB = evaluateSculptedPos(dB, baseR);
+    vec3 calcNormal = normalize(cross(pB - sculpted, pT - sculpted));
+    if (dot(calcNormal, d) < 0.0) {
+      calcNormal = -calcNormal;
     }
 
-    // Subtle organic surface breathing
-    float breath = uReducedMotion > 0.5 ? 0.0 : sin(uTime * 1.2) * 0.02;
-    vec3 displaced = pos * (1.0 + breath + vowelSwell + mouthContour + sibilantRipple);
+    // Gentle acoustic voice breathing
+    float breath = uReducedMotion > 0.5 ? 0.0 : sin(uTime * 1.4) * 0.018;
+    float voicePulse = uReducedMotion > 0.5 ? 0.0 : (uEnergy * 0.06 + uLowBand * 0.045) * sin(d.y * 3.0 + uTime * 3.5);
+    vec3 displaced = sculpted * (1.0 + breath + voicePulse);
 
+    vNormal = normalize(normalMatrix * mix(d, calcNormal, 0.72));
     vPosition = displaced;
     vec4 mvPosition = modelViewMatrix * vec4(displaced, 1.0);
     vViewPosition = -mvPosition.xyz;
@@ -221,6 +236,7 @@ const FRAGMENT_SHADER = `
 
   varying vec3 vNormal;
   varying vec3 vPosition;
+  varying vec3 vUnitDir;
   varying vec3 vViewPosition;
   varying vec2 vUv;
 
@@ -229,10 +245,13 @@ const FRAGMENT_SHADER = `
   uniform float uLowBand;
   uniform float uMidBand;
   uniform float uHighBand;
-  uniform float uTopicShape;
+  uniform float uW0;
+  uniform float uW1;
+  uniform float uW2;
+  uniform float uW3;
+  uniform float uW4;
   uniform float uSpeed;
   uniform float uWaveAmp;
-  uniform float uReducedMotion;
 
   uniform vec3 uColorPrimary;
   uniform vec3 uColorSecondary;
@@ -241,137 +260,69 @@ const FRAGMENT_SHADER = `
   uniform vec3 uColorRim;
   uniform vec3 uColorStar;
 
-  // Cross-platform hash function without sine (Dave Hoskins)
-  float hash31(vec3 p) {
-    vec3 q = fract(p * vec3(443.8975, 397.2973, 491.1871));
-    q += dot(q, q.yzx + 19.19);
-    return fract((q.x + q.y) * q.z);
-  }
-
-  // 3D procedural continuous value noise
-  float noise3D(vec3 p) {
-    vec3 i = floor(p);
-    vec3 f = fract(p);
-    vec3 u = f * f * (3.0 - 2.0 * f);
-
-    return mix(
-      mix(mix(hash31(i + vec3(0.0, 0.0, 0.0)), hash31(i + vec3(1.0, 0.0, 0.0)), u.x),
-          mix(hash31(i + vec3(0.0, 1.0, 0.0)), hash31(i + vec3(1.0, 1.0, 0.0)), u.x), u.y),
-      mix(mix(hash31(i + vec3(0.0, 0.0, 1.0)), hash31(i + vec3(1.0, 0.0, 1.0)), u.x),
-          mix(hash31(i + vec3(0.0, 1.0, 1.0)), hash31(i + vec3(1.0, 1.0, 1.0)), u.x), u.y),
-      u.z
-    );
-  }
-
-  // 3-octave Fractional Brownian Motion for cosmic nebula
-  float fbm(vec3 p) {
-    float v = 0.0;
-    v += 0.5000 * noise3D(p); p *= 2.02;
-    v += 0.2500 * noise3D(p); p *= 2.03;
-    v += 0.1250 * noise3D(p);
-    return v;
-  }
-
   void main() {
-    vec3 pos = vPosition / 1.45; // Normalized to unit sphere coordinates
-    float x = pos.x;
-    float y = pos.y;
-    float z = pos.z;
-    float rDist = length(pos);
-
-    // 1. ChatGPT-Style Fluid Wavy Interface
-    float t = uTime * uSpeed;
-    float tilt = x * 0.14; // Subtle natural diagonal slope
-
-    // Primary undulating liquid swell driven by energy and mid-band frequencies
-    float wave1 = sin(x * 3.1 + t * 2.0) * (uWaveAmp + uEnergy * 0.26 + uMidBand * 0.18);
-    // Secondary counter-wave for rich fluid viscosity
-    float wave2 = cos(x * 4.6 - z * 2.4 - t * 1.5) * (uWaveAmp * 0.65 + uEnergy * 0.16 + uMidBand * 0.12);
-
-    // Fast acoustic harmonic ripples when voice energy arrives, modulated by high band sibilants
-    float harmonics = 0.0;
-    if (uReducedMotion < 0.5) {
-      harmonics = (uEnergy + uHighBand * 1.3) * (
-        0.08 * sin(x * 9.2 + t * 7.5) * cos(z * 5.5 - t * 5.0) +
-        0.05 * sin(x * 16.0 - t * 12.0)
-      );
-    }
-
-    float waveHorizon = tilt + wave1 + wave2 + harmonics;
-    float distToWave = y - waveHorizon;
-
-    // Fluid phase mixing factor (smooth transition between upper nebula & lower creamy pearl)
-    float waveMask = smoothstep(-0.045, 0.045, distToWave);
-
-    // Luminous starlight wave crest ribbon along the fluid interface
-    float crestGlow = exp(-distToWave * distToWave * 160.0) * (0.6 + uEnergy * 1.5 + uHighBand * 1.2);
-
-    // 2. Marvel 'Eternity' Cosmic Interior ("Carrying Intensity Inside")
-    // Central radiant singularity star core swells with low-band vowel energy
-    float coreSingularity = 1.0 / (1.0 + rDist * rDist * max(1.8, (4.2 - uLowBand * 2.5)));
-    coreSingularity *= (1.3 + uEnergy * 2.7 + uLowBand * 2.0);
-
-    // Swirling volumetric celestial nebula clouds with mid-band turbulence
-    vec3 nebulaCoords = pos * 2.2 + vec3(sin(uTime * 0.32), cos(uTime * 0.26), sin(uTime * 0.38)) * (0.35 + uMidBand * 0.25);
-    float nebulaDensity = fbm(nebulaCoords);
-
-    // 3D Twinkling Stardust & Celestial Stars (Eternity starry silhouette)
-    // Sibilants & high frequencies trigger starlight sparkle bursts
-    vec3 starGrid = pos * 24.0;
-    vec3 starCell = floor(starGrid);
-    float starRand = hash31(starCell);
-    float isStar = step(0.92, starRand);
-    float twinkle = sin(starRand * 628.3 + uTime * (3.0 + uEnergy * 5.5 + uHighBand * 8.0)) * 0.5 + 0.5;
-    float starGlint = isStar * pow(twinkle, 3.5) * (0.8 + uEnergy * 1.8 + uHighBand * 2.8);
-
-    // Chromatic dispersion along the wave horizon (iridescent prismatic edge)
-    float crestR = exp(-pow(distToWave - 0.012, 2.0) * 160.0);
-    float crestG = exp(-pow(distToWave, 2.0) * 160.0);
-    float crestB = exp(-pow(distToWave + 0.012, 2.0) * 160.0);
-    vec3 chromaticCrest = vec3(crestR, crestG, crestB) * (0.6 + uEnergy * 1.4 + uHighBand * 1.6);
-
-    // 3. Fluid Color Compositing
-    // Upper Fluid: Cosmic Universe / Nebula (Eternity)
-    vec3 topFluid = mix(uColorSecondary, uColorPrimary, nebulaDensity * 1.35);
-    topFluid += uColorCore * coreSingularity * 0.7;
-    topFluid += uColorStar * starGlint * 1.6;
-
-    // Lower Fluid: ChatGPT Signature Luminous Ivory/Cream Pearl
-    vec3 bottomFluid = uColorBase;
-    bottomFluid = mix(bottomFluid, uColorPrimary, 0.22 * (1.0 - rDist));
-    bottomFluid += uColorCore * coreSingularity * 0.45;
-    bottomFluid += uColorStar * starGlint * 0.4;
-
-    // Blend the two fluid phases across the undulating wave horizon
-    vec3 interiorColor = mix(bottomFluid, topFluid, waveMask);
-
-    // Add the glowing wave crest starlight ribbon
-    interiorColor += chromaticCrest * mix(uColorStar, uColorPrimary, 0.35);
-
-    // 4. Outer Glass Enclosure & Fresnel Specular Sheen
+    vec3 d = normalize(vUnitDir);
     vec3 N = normalize(vNormal);
     vec3 V = normalize(vViewPosition);
     float NdotV = max(dot(N, V), 0.0);
-    float fresnel = pow(1.0 - NdotV, 2.6);
 
-    // Dual specular key lights
-    vec3 L1 = normalize(vec3(2.5, 3.8, 3.5));
+    // Smooth Apple Siri / VisionOS Iridescent Silk Gradient (NO harsh horizontal bleach cut!)
+    float t = uTime * uSpeed;
+    float silkWave = 0.5 + 0.5 * sin(d.y * 2.4 + d.x * 1.6 + sin(d.z * 2.2 + t * 1.1));
+    float verticalGrad = smoothstep(-0.85, 0.85, d.y + 0.12 * sin(d.x * 3.0 + t * 1.4));
+
+    vec3 baseGradient = mix(uColorBase, uColorPrimary, verticalGrad);
+    baseGradient = mix(baseGradient, uColorSecondary, (1.0 - silkWave) * 0.42);
+
+    // Mode 1 Special Shading: Golden Toasted Waffle Cone Base + Creamy Strawberry Soft-Serve Top
+    if (uW1 > 0.01) {
+      float coneMask = 1.0 - smoothstep(-0.14, 0.02, d.y);
+      float angleXZ = atan(d.z, d.x);
+      float lattice = 0.5 + 0.5 * sin(angleXZ * 10.0 + d.y * 16.0) * sin(angleXZ * 10.0 - d.y * 16.0);
+      vec3 waffleColor = mix(vec3(0.78, 0.45, 0.08), vec3(0.98, 0.82, 0.42), lattice);
+
+      float swirlBand = 0.5 + 0.5 * sin(angleXZ * 3.0 + d.y * 7.0 - t * 1.6);
+      vec3 scoopColor = mix(vec3(0.96, 0.32, 0.52), vec3(1.0, 0.92, 0.95), swirlBand * 0.78);
+      // Ruby cherry accent at top crown
+      float cherryMask = smoothstep(0.84, 0.94, d.y);
+      scoopColor = mix(scoopColor, vec3(0.88, 0.08, 0.24), cherryMask);
+
+      vec3 iceCreamCol = mix(scoopColor, waffleColor, coneMask);
+      baseGradient = mix(baseGradient, iceCreamCol, uW1 * 0.9);
+    }
+
+    // Mode 2 Special Shading: Cut-Sapphire Crystal Prism Sheen
+    if (uW2 > 0.01) {
+      float facetBand = 0.5 + 0.5 * cos((abs(d.x) + abs(d.y) + abs(d.z)) * 10.0 - t * 1.2);
+      vec3 crystalCol = mix(vec3(0.06, 0.32, 0.78), vec3(0.68, 0.91, 1.0), facetBand * 0.65);
+      baseGradient = mix(baseGradient, crystalCol, uW2 * 0.65);
+    }
+
+    // Mode 4 Special Shading: Warm Golden Lotus Stamen Core + Translucent Jade Petals
+    if (uW4 > 0.01) {
+      float centerGlow = exp(-dot(d.xy, d.xy) * 5.5);
+      vec3 lotusCore = vec3(0.99, 0.91, 0.52);
+      baseGradient = mix(baseGradient, lotusCore, uW4 * centerGlow * 0.65);
+    }
+
+    // Studio Three-Point Specular & Subsurface Lighting (Apple Industrial Design Look)
+    vec3 L1 = normalize(vec3(2.2, 3.4, 3.8));
     vec3 H1 = normalize(L1 + V);
-    float spec1 = pow(max(dot(N, H1), 0.0), 40.0) * 0.85;
+    float diff1 = max(dot(N, L1), 0.0);
+    float spec1 = pow(max(dot(N, H1), 0.0), 48.0) * 0.75;
 
-    vec3 L2 = normalize(vec3(-2.5, -2.0, 2.0));
+    vec3 L2 = normalize(vec3(-2.6, -1.8, 2.4));
     vec3 H2 = normalize(L2 + V);
-    float spec2 = pow(max(dot(N, H2), 0.0), 24.0) * 0.35;
+    float spec2 = pow(max(dot(N, H2), 0.0), 24.0) * 0.32;
 
-    vec3 finalColor = interiorColor;
-    // Core radiant bloom from within
-    finalColor += uColorCore * coreSingularity * (0.28 + uEnergy * 0.55);
-    // Outer glass Fresnel rim
-    finalColor += uColorRim * fresnel * (1.4 + uEnergy * 0.8);
-    // Specular reflections
-    finalColor += vec3(1.0) * (spec1 + spec2);
+    float fresnel = pow(1.0 - NdotV, 2.4);
 
-    gl_FragColor = vec4(finalColor, 0.95 + fresnel * 0.05);
+    vec3 finalColor = baseGradient * (0.76 + 0.28 * diff1);
+    finalColor += uColorCore * (0.22 + uEnergy * 0.45) * (1.0 - fresnel * 0.5);
+    finalColor += uColorRim * fresnel * (0.95 + uEnergy * 0.5);
+    finalColor += uColorStar * (spec1 + spec2);
+
+    gl_FragColor = vec4(finalColor, 0.94 + fresnel * 0.06);
   }
 `;
 
@@ -390,7 +341,6 @@ export default function SignalScene({ state, energy, bands, topicShape = 0, redu
     const mount = mountRef.current;
     if (!mount) return;
 
-    // Ensure any existing canvas is cleared before attaching a new WebGL renderer
     while (mount.firstChild) {
       mount.removeChild(mount.firstChild);
     }
@@ -412,7 +362,7 @@ export default function SignalScene({ state, energy, bands, topicShape = 0, redu
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(w, h);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.15;
+    renderer.toneMappingExposure = 1.08;
     renderer.domElement.style.outline = 'none';
     renderer.domElement.style.userSelect = 'none';
     (renderer.domElement.style as unknown as { webkitTapHighlightColor: string }).webkitTapHighlightColor = 'transparent';
@@ -420,10 +370,10 @@ export default function SignalScene({ state, energy, bands, topicShape = 0, redu
     mount.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(38, w / h, 0.1, 100);
+    const camera = new THREE.PerspectiveCamera(36, w / h, 0.1, 100);
     camera.position.set(0, 0, 5.8);
 
-    // 1. Soft Ambient Bloom Halo (behind the orb)
+    // 1. Soft Ambient Bloom Halo
     const auraGeo = new THREE.PlaneGeometry(4.2, 4.2);
     const canvas = document.createElement('canvas');
     canvas.width = 128;
@@ -431,9 +381,8 @@ export default function SignalScene({ state, energy, bands, topicShape = 0, redu
     const ctx = canvas.getContext('2d');
     if (ctx) {
       const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 56);
-      grad.addColorStop(0, 'rgba(0, 245, 212, 0.6)');
-      grad.addColorStop(0.38, 'rgba(0, 106, 103, 0.25)');
-      grad.addColorStop(0.72, 'rgba(0, 50, 48, 0.05)');
+      grad.addColorStop(0, 'rgba(45, 212, 191, 0.5)');
+      grad.addColorStop(0.45, 'rgba(0, 106, 103, 0.2)');
       grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, 128, 128);
@@ -442,7 +391,7 @@ export default function SignalScene({ state, energy, bands, topicShape = 0, redu
     const auraMat = new THREE.MeshBasicMaterial({
       map: auraTexture,
       transparent: true,
-      opacity: 0.55,
+      opacity: 0.48,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     });
@@ -450,11 +399,12 @@ export default function SignalScene({ state, energy, bands, topicShape = 0, redu
     auraMesh.position.set(0, 0, -0.6);
     scene.add(auraMesh);
 
-    // 2. High-precision 3D Cosmic Liquid Sphere
-    const sphereRadius = 1.45;
+    // 2. High-precision 3D Parametric Glass Sculpture
+    const sphereRadius = 1.42;
     const sphereGeo = new THREE.SphereGeometry(sphereRadius, 96, 96);
 
     const initialConfig = COSMIC_PALETTES[stateRef.current] || COSMIC_PALETTES.idle;
+    const initShape = topicShapeRef.current || 0;
 
     const uniforms = {
       uTime: { value: 0 },
@@ -462,7 +412,11 @@ export default function SignalScene({ state, energy, bands, topicShape = 0, redu
       uLowBand: { value: 0 },
       uMidBand: { value: 0 },
       uHighBand: { value: 0 },
-      uTopicShape: { value: topicShapeRef.current },
+      uW0: { value: initShape === 0 ? 1 : 0 },
+      uW1: { value: initShape === 1 ? 1 : 0 },
+      uW2: { value: initShape === 2 ? 1 : 0 },
+      uW3: { value: initShape === 3 ? 1 : 0 },
+      uW4: { value: initShape === 4 ? 1 : 0 },
       uSpeed: { value: initialConfig.speed },
       uWaveAmp: { value: initialConfig.waveAmp },
       uReducedMotion: { value: reducedMotion ? 1.0 : 0.0 },
@@ -489,6 +443,13 @@ export default function SignalScene({ state, energy, bands, topicShape = 0, redu
     let smoothLow = 0;
     let smoothMid = 0;
     let smoothHigh = 0;
+    const weights = [
+      initShape === 0 ? 1 : 0,
+      initShape === 1 ? 1 : 0,
+      initShape === 2 ? 1 : 0,
+      initShape === 3 ? 1 : 0,
+      initShape === 4 ? 1 : 0,
+    ];
     let t = 0;
     let raf = 0;
     const clock = new THREE.Clock();
@@ -502,56 +463,68 @@ export default function SignalScene({ state, energy, bands, topicShape = 0, redu
 
     const TOPIC_PALETTE_OVERRIDES: Record<number, Partial<CosmicPaletteConfig>> = {
       1: {
-        // Ice Cream / Sweet Reward: Strawberry Rose + Warm Vanilla Waffle Gold
         primary: 0xe11d48,
-        secondary: 0x4c0519,
-        base: 0xfef3c7,
+        secondary: 0x881337,
+        base: 0xfde68a,
         core: 0xfb7185,
-        rim: 0xfda4af,
+        rim: 0xffe4e6,
       },
       2: {
-        // Crystalline Letterforms / Docs / Taxes: Sapphire Crystal Prism
-        primary: 0x2563eb,
-        secondary: 0x0f172a,
-        base: 0xe0f2fe,
+        primary: 0x0071e3,
+        secondary: 0x1e3a8a,
+        base: 0x7dd3fc,
         core: 0x38bdf8,
-        rim: 0x93c5fd,
+        rim: 0xe0f2fe,
       },
       3: {
-        // Creative Ribbon / Music / Art: Electric Magenta & Amethyst Vortex
-        primary: 0x9333ea,
-        secondary: 0x2e1065,
-        base: 0xfdf4ff,
+        primary: 0x7c3aed,
+        secondary: 0x3b0764,
+        base: 0xf0abfc,
         core: 0xe879f9,
-        rim: 0xf0abfc,
+        rim: 0xfdf4ff,
       },
       4: {
-        // Therapeutic Lotus Calm / Overwhelm Rescue: Serene Jade & Warm Lotus Gold
         primary: 0x0d9488,
-        secondary: 0x042f2e,
-        base: 0xf0fdfa,
+        secondary: 0x115e59,
+        base: 0x99f6e4,
         core: 0x5eead4,
-        rim: 0x99f6e4,
+        rim: 0xccfbf1,
       },
     };
 
     const render = () => {
       const dt = Math.min(clock.getDelta(), 0.05);
+      const activeShape = topicShapeRef.current || 0;
       const baseConfig = COSMIC_PALETTES[stateRef.current] || COSMIC_PALETTES.idle;
-      const shapeOverride = (topicShapeRef.current && TOPIC_PALETTE_OVERRIDES[topicShapeRef.current]) || {};
+      const shapeOverride = (activeShape && TOPIC_PALETTE_OVERRIDES[activeShape]) || {};
       const config = { ...baseConfig, ...shapeOverride };
-      smoothEnergy += (energyRef.current - smoothEnergy) * 0.18;
+      smoothEnergy += (energyRef.current - smoothEnergy) * 0.16;
+
+      // Smoothly interpolate the 5 shape blend weights (critically-damped transition over ~750ms)
+      const morphRate = 1 - Math.exp(-dt * 6.0);
+      let weightSum = 0;
+      for (let i = 0; i < 5; i++) {
+        const targetW = activeShape === i ? 1.0 : 0.0;
+        weights[i] += (targetW - weights[i]) * morphRate;
+        weightSum += weights[i];
+      }
+      if (weightSum > 0.0001) {
+        uniforms.uW0.value = weights[0] / weightSum;
+        uniforms.uW1.value = weights[1] / weightSum;
+        uniforms.uW2.value = weights[2] / weightSum;
+        uniforms.uW3.value = weights[3] / weightSum;
+        uniforms.uW4.value = weights[4] / weightSum;
+      }
 
       const curBands = bandsRef.current;
       const targetLow = curBands ? curBands.low : smoothEnergy * 0.85;
       const targetMid = curBands ? curBands.mid : smoothEnergy * 0.65;
       const targetHigh = curBands ? curBands.high : smoothEnergy * 0.45;
 
-      smoothLow += (targetLow - smoothLow) * 0.22;
-      smoothMid += (targetMid - smoothMid) * 0.22;
-      smoothHigh += (targetHigh - smoothHigh) * 0.25;
+      smoothLow += (targetLow - smoothLow) * 0.2;
+      smoothMid += (targetMid - smoothMid) * 0.2;
+      smoothHigh += (targetHigh - smoothHigh) * 0.22;
 
-      // Color targets
       targetPrimary.setHex(config.primary);
       targetSecondary.setHex(config.secondary);
       targetBase.setHex(config.base);
@@ -559,13 +532,12 @@ export default function SignalScene({ state, energy, bands, topicShape = 0, redu
       targetRim.setHex(config.rim);
       targetStar.setHex(config.star);
 
-      // Smooth color interpolation
-      uniforms.uColorPrimary.value.lerp(targetPrimary, 0.12);
-      uniforms.uColorSecondary.value.lerp(targetSecondary, 0.12);
-      uniforms.uColorBase.value.lerp(targetBase, 0.12);
-      uniforms.uColorCore.value.lerp(targetCore, 0.12);
-      uniforms.uColorRim.value.lerp(targetRim, 0.12);
-      uniforms.uColorStar.value.lerp(targetStar, 0.12);
+      uniforms.uColorPrimary.value.lerp(targetPrimary, 0.1);
+      uniforms.uColorSecondary.value.lerp(targetSecondary, 0.1);
+      uniforms.uColorBase.value.lerp(targetBase, 0.1);
+      uniforms.uColorCore.value.lerp(targetCore, 0.1);
+      uniforms.uColorRim.value.lerp(targetRim, 0.1);
+      uniforms.uColorStar.value.lerp(targetStar, 0.1);
 
       uniforms.uSpeed.value += (config.speed - uniforms.uSpeed.value) * 0.08;
       uniforms.uWaveAmp.value += (config.waveAmp - uniforms.uWaveAmp.value) * 0.08;
@@ -573,21 +545,20 @@ export default function SignalScene({ state, energy, bands, topicShape = 0, redu
       uniforms.uLowBand.value = smoothLow;
       uniforms.uMidBand.value = smoothMid;
       uniforms.uHighBand.value = smoothHigh;
-      uniforms.uTopicShape.value = topicShapeRef.current || 0;
 
       if (!reducedMotion) {
         t += dt;
         uniforms.uTime.value = t;
 
-        // Subtle gentle rotation to give 3D celestial depth
-        orbMesh.rotation.y = t * 0.12;
-        orbMesh.rotation.z = Math.sin(t * 0.2) * 0.06;
+        // Keep orientation steady and front-facing when morphed so silhouette aligns with parametric vector overlay
+        const rotDecay = activeShape === 0 ? 1.0 : 0.18;
+        orbMesh.rotation.y = Math.sin(t * 0.35) * 0.12 * rotDecay;
+        orbMesh.rotation.z = Math.sin(t * 0.25) * 0.04 * rotDecay;
 
-        // Aura bloom response
         auraMat.color.lerp(targetRim, 0.08);
-        const auraScale = 1 + Math.sin(t * 1.2) * 0.05 + (smoothEnergy + smoothLow * 0.5) * 0.35;
+        const auraScale = 1 + Math.sin(t * 1.2) * 0.04 + (smoothEnergy + smoothLow * 0.5) * 0.3;
         auraMesh.scale.set(auraScale, auraScale, 1);
-        auraMat.opacity = 0.45 + smoothEnergy * 0.4;
+        auraMat.opacity = 0.42 + smoothEnergy * 0.35;
       } else {
         uniforms.uTime.value = clock.getElapsedTime() * 0.4;
       }

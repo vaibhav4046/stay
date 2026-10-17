@@ -33,7 +33,7 @@ async function injectSubtitleAndOverlayHelper(page: any) {
           50% { transform: scaleY(1); }
         }
         @keyframes stayCardSlideIn {
-          from { opacity: 0; transform: translateY(10px) scale(0.98); }
+          from { opacity: 0; transform: translateY(10px) scale(0.985); }
           to { opacity: 1; transform: translateY(0) scale(1); }
         }
       `;
@@ -56,81 +56,83 @@ async function injectSubtitleAndOverlayHelper(page: any) {
       gap: 6px;
       pointer-events: none;
       width: 92%;
-      max-width: 1020px;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 1000px;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
     `;
     hud.innerHTML = `
-      <!-- Top Context / Artifact Telemetry Strip -->
+      <!-- Sleek Apple Keynote Frosted Alabaster Context Capsule -->
       <div id="stay-demo-caption-strip" style="
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        background: rgba(15, 23, 42, 0.9);
-        backdrop-filter: blur(12px);
-        color: #38bdf8;
+        background: rgba(255, 255, 255, 0.88);
+        backdrop-filter: saturate(180%) blur(24px);
+        -webkit-backdrop-filter: saturate(180%) blur(24px);
+        color: #1d1d1f;
         padding: 4px 14px;
         border-radius: 9999px;
-        border: 1px solid rgba(56, 189, 248, 0.35);
-        font-size: 12px;
-        font-weight: 700;
-        letter-spacing: 0.03em;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        font-size: 11.5px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
       ">
-        <span style="width:7px;height:7px;border-radius:999px;background:#34d399;display:inline-block;"></span>
-        <span id="stay-demo-caption-text">LIVE DEMO · STAY VOICE-FIRST ADHD COMPANION</span>
+        <span style="width:7px;height:7px;border-radius:999px;background:#006A67;display:inline-block;"></span>
+        <span id="stay-demo-caption-text">Stay · 24/7 Living Voice-First ADHD Companion</span>
       </div>
 
-      <!-- Broadcast Subtitle Box -->
+      <!-- Apple TV+ / Apple Keynote Translucent Graphite Cinema Subtitle Bar -->
       <div id="stay-demo-pill" style="
         position: relative;
         overflow: hidden;
         display: flex;
         align-items: center;
         gap: 14px;
-        background: rgba(9, 13, 22, 0.92);
-        backdrop-filter: blur(20px);
-        color: #f8fafc;
-        padding: 13px 24px;
-        border-radius: 20px;
-        border: 1.5px solid rgba(56, 189, 248, 0.45);
-        box-shadow: 0 24px 48px rgba(0, 0, 0, 0.55);
-        font-size: 16.5px;
+        background: rgba(28, 28, 30, 0.86);
+        backdrop-filter: saturate(180%) blur(28px);
+        -webkit-backdrop-filter: saturate(180%) blur(28px);
+        color: #f5f5f7;
+        padding: 12px 22px;
+        border-radius: 22px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.22);
+        font-size: 15.5px;
         line-height: 1.42;
+        letter-spacing: -0.01em;
         text-align: left;
         width: 100%;
-        transition: border-color 0.25s ease;
       ">
         <div id="stay-demo-badge" style="
           display: inline-flex;
           align-items: center;
-          gap: 8px;
-          padding: 6px 13px;
-          border-radius: 12px;
-          font-size: 11.5px;
-          font-weight: 800;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-          background: rgba(14, 165, 233, 0.2);
-          color: #38bdf8;
-          border: 1px solid rgba(56, 189, 248, 0.45);
+          gap: 7px;
+          padding: 5px 12px;
+          border-radius: 9999px;
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: 0.02em;
+          background: rgba(255, 255, 255, 0.14);
+          color: #ffffff;
+          border: 1px solid rgba(255, 255, 255, 0.18);
           white-space: nowrap;
           flex-shrink: 0;
         ">
-          <svg width="16" height="14" viewBox="0 0 16 14" fill="currentColor">
+          <svg width="14" height="12" viewBox="0 0 16 14" fill="currentColor">
             <rect x="1" y="3" width="2" height="8" rx="1" style="transform-origin:center;animation:stayWavePulse 0.6s infinite ease-in-out;" />
             <rect x="5" y="1" width="2" height="12" rx="1" style="transform-origin:center;animation:stayWavePulse 0.45s infinite ease-in-out 0.1s;" />
             <rect x="9" y="2" width="2" height="10" rx="1" style="transform-origin:center;animation:stayWavePulse 0.55s infinite ease-in-out 0.2s;" />
             <rect x="13" y="4" width="2" height="6" rx="1" style="transform-origin:center;animation:stayWavePulse 0.5s infinite ease-in-out 0.15s;" />
           </svg>
-          <span id="stay-demo-speaker-label">✨ STAY AI</span>
+          <span id="stay-demo-speaker-label">Stay</span>
         </div>
-        <span id="stay-demo-text" style="font-weight: 500; color: #f8fafc; flex: 1;">Hi, I am Stay.</span>
+        <span id="stay-demo-text" style="font-weight: 500; color: #f5f5f7; flex: 1;">Hi, I am Stay.</span>
         <div id="stay-demo-progress" style="
           position: absolute;
           bottom: 0;
           left: 0;
-          height: 3px;
-          background: linear-gradient(90deg, #38bdf8, #34d399, #a78bfa);
+          height: 2.5px;
+          background: linear-gradient(90deg, #5EEAD4, #ffffff);
           width: 0%;
         "></div>
       </div>
@@ -171,17 +173,15 @@ async function setSubtitle(
       }
 
       if (spk === 'user') {
-        speakerLabel.textContent = '🎙️ VAIBHAV (ADHD USER)';
-        badge.style.background = 'rgba(245, 158, 11, 0.22)';
-        badge.style.color = '#fbbf24';
-        badge.style.borderColor = 'rgba(245, 158, 11, 0.5)';
-        pill.style.borderColor = 'rgba(245, 158, 11, 0.5)';
+        speakerLabel.textContent = 'Vaibhav';
+        badge.style.background = 'rgba(255, 255, 255, 0.92)';
+        badge.style.color = '#1d1d1f';
+        badge.style.borderColor = 'rgba(255, 255, 255, 0.95)';
       } else {
-        speakerLabel.textContent = '✨ STAY COMPANION';
-        badge.style.background = 'rgba(14, 165, 233, 0.22)';
-        badge.style.color = '#38bdf8';
-        badge.style.borderColor = 'rgba(14, 165, 233, 0.5)';
-        pill.style.borderColor = 'rgba(56, 189, 248, 0.5)';
+        speakerLabel.textContent = 'Stay';
+        badge.style.background = 'rgba(13, 148, 136, 0.38)';
+        badge.style.color = '#f0fdfa';
+        badge.style.borderColor = 'rgba(94, 234, 212, 0.45)';
       }
       textEl.textContent = txt;
 
@@ -215,57 +215,60 @@ async function showMorphSvgArtifactCard(page: any) {
     card.id = 'stay-svg-card';
     card.style.cssText = `
       position: fixed;
-      top: 72px;
+      top: 76px;
       right: 24px;
       z-index: 999995;
-      width: 350px;
-      background: rgba(15, 23, 42, 0.93);
-      backdrop-filter: blur(16px);
-      color: #f8fafc;
-      border-radius: 18px;
-      padding: 16px 18px;
-      border: 1px solid rgba(56, 189, 248, 0.4);
-      box-shadow: 0 20px 45px rgba(0,0,0,0.55);
-      font-family: system-ui, -apple-system, sans-serif;
-      animation: stayCardSlideIn 0.3s ease-out;
+      width: 345px;
+      background: rgba(255, 255, 255, 0.90);
+      backdrop-filter: saturate(180%) blur(28px);
+      -webkit-backdrop-filter: saturate(180%) blur(28px);
+      color: #1d1d1f;
+      border-radius: 24px;
+      padding: 18px 20px;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.08);
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', sans-serif;
+      animation: stayCardSlideIn 0.35s cubic-bezier(0.22, 1, 0.36, 1);
     `;
     card.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-        <span style="font-size:10.5px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#38bdf8;">
-          SVG + GLSL Real-Time Morph Engine
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <span style="font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#006A67;">
+          Spring-Physics Parametric Engine
         </span>
-        <span style="font-size:11px;font-family:monospace;color:#34d399;">60 FPS</span>
+        <span style="font-size:10.5px;font-weight:600;color:#6e6e73;background:rgba(0,0,0,0.04);padding:2px 8px;border-radius:999px;">60 FPS · 120 Vertices</span>
       </div>
-      <div style="font-size:14px;font-weight:700;margin-bottom:10px;color:#ffffff;">
-        Topic-Reactive Silhouette Geometry
+      <div style="font-size:15px;font-weight:700;margin-bottom:12px;color:#1d1d1f;letter-spacing:-0.015em;">
+        Real-Time Topic Geometry
       </div>
-      <svg viewBox="0 0 320 92" width="100%" height="92" style="background:rgba(30,41,59,0.65);border-radius:12px;border:1px solid rgba(148,163,184,0.2);">
-        <!-- 1. Lotus -->
-        <g transform="translate(42, 40)">
-          <circle r="22" fill="rgba(20,184,166,0.2)" stroke="#2dd4bf" stroke-width="1.6" stroke-dasharray="3 2"/>
-          <path d="M0,-20 C6,-12 6,12 0,20 C-6,12 -6,-12 0,-20 Z" fill="rgba(45,212,191,0.35)" stroke="#5eead4" stroke-width="1.2"/>
-          <path d="M-20,0 C-12,-6 12,-6 20,0 C12,6 -12,6 -20,0 Z" fill="rgba(45,212,191,0.35)" stroke="#5eead4" stroke-width="1.2"/>
-          <text x="0" y="36" text-anchor="middle" fill="#99f6e4" font-size="9.5" font-weight="700">🪷 Lotus</text>
+      <svg viewBox="0 0 310 92" width="100%" height="92" style="background:#F7F6F2;border-radius:16px;border:1px solid rgba(0,0,0,0.06);">
+        <!-- 1. 8-Petal Botanical Lotus -->
+        <g transform="translate(40, 40)">
+          <circle r="21" fill="rgba(13,148,136,0.10)" stroke="#0D9488" stroke-width="1.4"/>
+          <path d="M0,-19 C6,-10 6,10 0,19 C-6,10 -6,-10 0,-19 Z" fill="rgba(13,148,136,0.22)" stroke="#0F766E" stroke-width="1.2"/>
+          <path d="M-19,0 C-10,-6 10,-6 19,0 C10,6 -10,6 -19,0 Z" fill="rgba(13,148,136,0.22)" stroke="#0F766E" stroke-width="1.2"/>
+          <circle r="4" fill="#F59E0B"/>
+          <text x="0" y="36" text-anchor="middle" fill="#1d1d1f" font-size="9.5" font-weight="600">🪷 Lotus</text>
         </g>
-        <!-- 2. Letterform Gem -->
-        <g transform="translate(118, 40)">
-          <polygon points="0,-22 16,-16 22,0 16,16 0,22 -16,16 -22,0 -16,-16" fill="rgba(59,130,246,0.25)" stroke="#60a5fa" stroke-width="1.6"/>
-          <line x1="-10" y1="-6" x2="10" y2="-6" stroke="#bfdbfe" stroke-width="1.5"/>
-          <line x1="-10" y1="0" x2="6" y2="0" stroke="#bfdbfe" stroke-width="1.5"/>
-          <line x1="-10" y1="6" x2="10" y2="6" stroke="#bfdbfe" stroke-width="1.5"/>
-          <text x="0" y="36" text-anchor="middle" fill="#bfdbfe" font-size="9.5" font-weight="700">✒️ Gem</text>
+        <!-- 2. Crystalline Letterform Gem -->
+        <g transform="translate(115, 40)">
+          <polygon points="0,-21 15,-15 21,0 15,15 0,21 -15,15 -21,0 -15,-15" fill="rgba(0,113,227,0.12)" stroke="#0071E3" stroke-width="1.5"/>
+          <rect x="-9" y="-11" width="18" height="22" rx="2.5" fill="#ffffff" stroke="#0071E3" stroke-width="1.1"/>
+          <line x1="-5" y1="-5" x2="5" y2="-5" stroke="#0071E3" stroke-width="1.3"/>
+          <line x1="-5" y1="0" x2="3" y2="0" stroke="#0071E3" stroke-width="1.3"/>
+          <line x1="-5" y1="5" x2="5" y2="5" stroke="#0071E3" stroke-width="1.3"/>
+          <text x="0" y="36" text-anchor="middle" fill="#1d1d1f" font-size="9.5" font-weight="600">✒️ Gem</text>
         </g>
-        <!-- 3. Ice Cream Cone -->
-        <g transform="translate(196, 40)">
-          <path d="M-14,-2 L0,21 L14,-2 Z" fill="rgba(245,158,11,0.4)" stroke="#fbbf24" stroke-width="1.5"/>
-          <circle cx="0" cy="-7" r="12" fill="rgba(244,114,182,0.45)" stroke="#f472b6" stroke-width="1.6"/>
-          <circle cx="0" cy="-19" r="4" fill="#fb7185"/>
-          <text x="0" y="36" text-anchor="middle" fill="#fbcfe8" font-size="9.5" font-weight="700">🍦 Reward</text>
+        <!-- 3. Ice Cream Cone & Swirl -->
+        <g transform="translate(192, 40)">
+          <path d="M-12,-1 L0,20 L12,-1 Z" fill="#F59E0B" stroke="#B45309" stroke-width="1.3"/>
+          <circle cx="0" cy="-7" r="11" fill="#FB7185" stroke="#E11D48" stroke-width="1.4"/>
+          <circle cx="0" cy="-18" r="3.5" fill="#E11D48"/>
+          <text x="0" y="36" text-anchor="middle" fill="#1d1d1f" font-size="9.5" font-weight="600">🍦 Cone</text>
         </g>
-        <!-- 4. Creative Star -->
-        <g transform="translate(274, 40)">
-          <polygon points="0,-22 6,-7 21,-7 9,3 14,19 0,10 -14,19 -9,3 -21,-7 -6,-7" fill="rgba(168,85,247,0.3)" stroke="#c084fc" stroke-width="1.5"/>
-          <text x="0" y="36" text-anchor="middle" fill="#e9d5ff" font-size="9.5" font-weight="700">🎨 Star</text>
+        <!-- 4. 5-Fold Creative Star -->
+        <g transform="translate(268, 40)">
+          <polygon points="0,-21 5,-7 20,-7 8,2 13,18 0,9 -13,18 -8,2 -20,-7 -5,-7" fill="rgba(124,58,237,0.16)" stroke="#7C3AED" stroke-width="1.4"/>
+          <text x="0" y="36" text-anchor="middle" fill="#1d1d1f" font-size="9.5" font-weight="600">🎨 Star</text>
         </g>
       </svg>
     `;
@@ -282,50 +285,42 @@ async function showChaosToClaritySvgCard(page: any) {
     card.id = 'stay-svg-card';
     card.style.cssText = `
       position: fixed;
-      top: 72px;
+      top: 76px;
       right: 24px;
       z-index: 999995;
-      width: 375px;
-      background: rgba(15, 23, 42, 0.94);
-      backdrop-filter: blur(16px);
-      color: #f8fafc;
-      border-radius: 18px;
-      padding: 16px 18px;
-      border: 1px solid rgba(45, 212, 191, 0.45);
-      box-shadow: 0 20px 45px rgba(0,0,0,0.55);
-      font-family: system-ui, -apple-system, sans-serif;
-      animation: stayCardSlideIn 0.3s ease-out;
+      width: 360px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: saturate(180%) blur(28px);
+      -webkit-backdrop-filter: saturate(180%) blur(28px);
+      color: #1d1d1f;
+      border-radius: 24px;
+      padding: 18px 20px;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.08);
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', sans-serif;
+      animation: stayCardSlideIn 0.35s cubic-bezier(0.22, 1, 0.36, 1);
     `;
     card.innerHTML = `
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-        <span style="font-size:10.5px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#2dd4bf;">
-          ADHD Chaos-to-Clarity NLU Engine
+        <span style="font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#006A67;">
+          24/7 Autonomous ADHD Pipeline
         </span>
-        <span style="font-size:11px;font-family:monospace;color:#fbbf24;">De-Jargoned Live</span>
+        <span style="font-size:10.5px;font-weight:600;color:#0071E3;background:rgba(0,113,227,0.08);padding:2px 8px;border-radius:999px;">Live Execution</span>
       </div>
-      <svg viewBox="0 0 340 165" width="100%" height="165" style="display:block;">
-        <!-- Box 1: Chaotic Input -->
-        <rect x="4" y="4" width="332" height="44" rx="10" fill="rgba(239,68,68,0.14)" stroke="rgba(248,113,113,0.45)" stroke-width="1.2"/>
-        <text x="14" y="21" fill="#fca5a5" font-size="10" font-weight="800">1. RAW UNORGANIZED ADHD BRAIN-DUMP</text>
-        <text x="14" y="37" fill="#f1f5f9" font-size="10.5" font-family="monospace">"uhh brain is fried, 10 tabs, landlord + VAT taxes..."</text>
-
-        <!-- Arrow 1 -->
-        <path d="M170,49 L170,62" stroke="#38bdf8" stroke-width="2"/>
-        <polygon points="165,59 175,59 170,65" fill="#38bdf8"/>
-
-        <!-- Box 2: De-Jargoning + Orb Grounding -->
-        <rect x="4" y="66" width="332" height="42" rx="10" fill="rgba(14,165,233,0.15)" stroke="rgba(56,189,248,0.45)" stroke-width="1.2"/>
-        <text x="14" y="83" fill="#7dd3fc" font-size="10" font-weight="800">2. PANIC FILTER + VISUAL GROUNDING</text>
-        <text x="14" y="99" fill="#f1f5f9" font-size="10.5">🪷 Auto-Lotus Calm → ✒️ Target: Landlord &amp; VAT Letter</text>
-
-        <!-- Arrow 2 -->
-        <path d="M170,109 L170,121" stroke="#34d399" stroke-width="2"/>
-        <polygon points="165,118 175,118 170,124" fill="#34d399"/>
-
-        <!-- Box 3: Time Reality Compression -->
-        <rect x="4" y="125" width="332" height="36" rx="10" fill="rgba(16,185,129,0.16)" stroke="rgba(52,211,153,0.5)" stroke-width="1.2"/>
-        <text x="14" y="147" fill="#6ee7b7" font-size="11.5" font-weight="800">⏱️ 180m Dread → 45s Micro-Entry (86% Momentum)</text>
-      </svg>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="background:#F7F6F2;border-radius:14px;padding:10px 12px;border:1px solid rgba(0,0,0,0.06);">
+          <div style="font-size:10px;font-weight:700;color:#86868b;text-transform:uppercase;">1. Raw Chaotic Brain-Dump</div>
+          <div style="font-size:12px;font-weight:500;color:#1d1d1f;margin-top:2px;">"uhh brain is fried, 10 tabs, landlord + VAT taxes..."</div>
+        </div>
+        <div style="background:rgba(0,113,227,0.06);border-radius:14px;padding:10px 12px;border:1px solid rgba(0,113,227,0.15);">
+          <div style="font-size:10px;font-weight:700;color:#0071E3;text-transform:uppercase;">2. Autonomous Agent Pre-Draft</div>
+          <div style="font-size:12px;font-weight:600;color:#1d1d1f;margin-top:2px;">✨ Drafted Landlord &amp; Q3 VAT Reply + 3 Micro-Checkboxes</div>
+        </div>
+        <div style="background:rgba(0,106,103,0.07);border-radius:14px;padding:10px 12px;border:1px solid rgba(0,106,103,0.18);">
+          <div style="font-size:10px;font-weight:700;color:#006A67;text-transform:uppercase;">3. Longitudinal Brain Study</div>
+          <div style="font-size:12px;font-weight:600;color:#1d1d1f;margin-top:2px;">🧬 180m Dread → 45s Entry · Working Memory 7 → 1 Slot</div>
+        </div>
+      </div>
     `;
     document.body.appendChild(card);
   });
@@ -343,70 +338,71 @@ async function showArchitectureOverlay(page: any) {
       top: 68px;
       right: 28px;
       z-index: 999998;
-      width: 470px;
-      background: rgba(11, 17, 30, 0.95);
-      backdrop-filter: blur(22px);
-      color: #f8fafc;
-      border-radius: 22px;
-      padding: 20px 22px;
-      border: 1.5px solid rgba(56, 189, 248, 0.45);
-      box-shadow: 0 25px 55px -12px rgba(0,0,0,0.68);
-      font-family: system-ui, -apple-system, sans-serif;
-      animation: stayCardSlideIn 0.3s ease-out;
+      width: 475px;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: saturate(180%) blur(30px);
+      -webkit-backdrop-filter: saturate(180%) blur(30px);
+      color: #1d1d1f;
+      border-radius: 28px;
+      padding: 22px 24px;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      box-shadow: 0 28px 70px rgba(0, 0, 0, 0.12);
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', sans-serif;
+      animation: stayCardSlideIn 0.35s cubic-bezier(0.22, 1, 0.36, 1);
     `;
     card.innerHTML = `
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-        <span style="font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#38bdf8;background:rgba(56,189,248,0.14);padding:4px 10px;border-radius:999px;border:1px solid rgba(56,189,248,0.35);">
-          Full-Duplex System Architecture SVG
+        <span style="font-size:10.5px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#006A67;background:rgba(0,106,103,0.08);padding:4px 10px;border-radius:999px;">
+          Apple-Grade Full-Duplex System Architecture
         </span>
-        <span style="font-family:monospace;font-size:12px;color:#34d399;font-weight:700;">24kHz PCM · &lt;1s Latency</span>
+        <span style="font-size:11.5px;color:#1d1d1f;font-weight:600;">24kHz PCM · &lt;1s Turn Latency</span>
       </div>
 
-      <!-- Interactive SVG Architecture Diagram -->
-      <svg viewBox="0 0 426 155" width="100%" height="155" style="background:rgba(15,23,42,0.8);border-radius:14px;border:1px solid rgba(148,163,184,0.2);margin-bottom:12px;">
-        <!-- Node 1: User Mic & Orb -->
-        <rect x="10" y="16" width="112" height="54" rx="10" fill="rgba(14,165,233,0.18)" stroke="#38bdf8" stroke-width="1.5"/>
-        <text x="66" y="38" text-anchor="middle" fill="#e0f2fe" font-size="10.5" font-weight="800">🎙️ Browser Worklet</text>
-        <text x="66" y="54" text-anchor="middle" fill="#7dd3fc" font-size="9.5">24kHz PCM + Barge-In</text>
+      <!-- Precision Apple Keynote Architecture Vector Diagram -->
+      <svg viewBox="0 0 426 152" width="100%" height="152" style="background:#F7F6F2;border-radius:18px;border:1px solid rgba(0,0,0,0.06);margin-bottom:12px;">
+        <!-- Node 1: Browser AudioWorklet -->
+        <rect x="10" y="14" width="112" height="54" rx="12" fill="#ffffff" stroke="rgba(0,0,0,0.12)" stroke-width="1.2"/>
+        <text x="66" y="36" text-anchor="middle" fill="#1d1d1f" font-size="10.5" font-weight="700">🎙️ AudioWorklet</text>
+        <text x="66" y="52" text-anchor="middle" fill="#6e6e73" font-size="9.2">24kHz PCM · Barge-In</text>
 
         <!-- Bi-directional arrow 1 -->
-        <line x1="122" y1="43" x2="154" y2="43" stroke="#38bdf8" stroke-width="2"/>
-        <polygon points="150,39 157,43 150,47" fill="#38bdf8"/>
-        <polygon points="126,39 119,43 126,47" fill="#38bdf8"/>
+        <line x1="122" y1="41" x2="154" y2="41" stroke="#006A67" stroke-width="1.8"/>
+        <polygon points="150,37 157,41 150,45" fill="#006A67"/>
+        <polygon points="126,37 119,41 126,45" fill="#006A67"/>
 
         <!-- Node 2: AssemblyAI Universal-3 Pro -->
-        <rect x="157" y="12" width="132" height="62" rx="10" fill="rgba(16,185,129,0.18)" stroke="#34d399" stroke-width="1.6"/>
-        <text x="223" y="33" text-anchor="middle" fill="#d1fae5" font-size="10.5" font-weight="800">AssemblyAI</text>
-        <text x="223" y="47" text-anchor="middle" fill="#6ee7b7" font-size="10" font-weight="700">Universal-3 Pro</text>
-        <text x="223" y="62" text-anchor="middle" fill="#a7f3d0" font-size="8.8">32 Langs · Keyterm Boost</text>
+        <rect x="157" y="10" width="132" height="62" rx="12" fill="#006A67" stroke="#00524F" stroke-width="1.2"/>
+        <text x="223" y="31" text-anchor="middle" fill="#ffffff" font-size="10.5" font-weight="700">AssemblyAI</text>
+        <text x="223" y="45" text-anchor="middle" fill="#99F6E4" font-size="10" font-weight="600">Universal-3 Pro</text>
+        <text x="223" y="59" text-anchor="middle" fill="#E6FFFA" font-size="8.8">32 Langs · Keyterm Boost</text>
 
         <!-- Arrow to Groq -->
-        <line x1="289" y1="43" x2="316" y2="43" stroke="#a78bfa" stroke-width="2"/>
-        <polygon points="312,39 319,43 312,47" fill="#a78bfa"/>
+        <line x1="289" y1="41" x2="316" y2="41" stroke="#0071E3" stroke-width="1.8"/>
+        <polygon points="312,37 319,41 312,45" fill="#0071E3"/>
 
         <!-- Node 3: Groq 120B -->
-        <rect x="319" y="16" width="97" height="54" rx="10" fill="rgba(139,92,246,0.2)" stroke="#a78bfa" stroke-width="1.5"/>
-        <text x="367" y="36" text-anchor="middle" fill="#ede9fe" font-size="10.5" font-weight="800">⚡ Groq 120B</text>
-        <text x="367" y="52" text-anchor="middle" fill="#ddd6fe" font-size="9">gpt-oss-120b</text>
+        <rect x="319" y="14" width="97" height="54" rx="12" fill="#ffffff" stroke="#0071E3" stroke-width="1.4"/>
+        <text x="367" y="35" text-anchor="middle" fill="#0071E3" font-size="10.5" font-weight="700">⚡ Groq 120B</text>
+        <text x="367" y="50" text-anchor="middle" fill="#6e6e73" font-size="9">gpt-oss-120b</text>
 
-        <!-- Bottom Layer: Deterministic Safety + GLSL/SVG Orb + Clinician PDF -->
-        <rect x="10" y="92" width="195" height="48" rx="10" fill="rgba(244,63,94,0.15)" stroke="#fb7185" stroke-width="1.3"/>
-        <text x="107" y="112" text-anchor="middle" fill="#ffe4e6" font-size="10" font-weight="800">🛡️ Pre-LLM Hard Safety Gate</text>
-        <text x="107" y="128" text-anchor="middle" fill="#fda4af" font-size="9">Crisis (999/111) &amp; Rx Dosing Guard</text>
+        <!-- Bottom Layer: 24/7 Agent + 1775-2024 Clinical Engine + Pre-LLM Safety -->
+        <rect x="10" y="88" width="198" height="50" rx="12" fill="#ffffff" stroke="rgba(0,0,0,0.1)" stroke-width="1.2"/>
+        <text x="109" y="109" text-anchor="middle" fill="#1d1d1f" font-size="10" font-weight="700">🛡️ Pre-LLM Safety &amp; 24/7 Agent</text>
+        <text x="109" y="125" text-anchor="middle" fill="#6e6e73" font-size="9">999/111 Crisis Gate · Auto-Draft Work</text>
 
-        <rect x="219" y="92" width="197" height="48" rx="10" fill="rgba(245,158,11,0.15)" stroke="#fbbf24" stroke-width="1.3"/>
-        <text x="317" y="112" text-anchor="middle" fill="#fef3c7" font-size="10" font-weight="800">🪷 60fps GLSL/SVG + PDF Export</text>
-        <text x="317" y="128" text-anchor="middle" fill="#fde68a" font-size="9">5 Morph Geometries · Clinician Report</text>
+        <rect x="218" y="88" width="198" height="50" rx="12" fill="#ffffff" stroke="rgba(0,0,0,0.1)" stroke-width="1.2"/>
+        <text x="317" y="109" text-anchor="middle" fill="#1d1d1f" font-size="10" font-weight="700">🧬 1775–2024 Clinical &amp; 60fps Orb</text>
+        <text x="317" y="125" text-anchor="middle" fill="#6e6e73" font-size="9">ADHD Phenotyping · Clinician PDF</text>
       </svg>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;color:#cbd5e1;">
-        <div style="background:rgba(30,41,59,0.75);padding:8px 10px;border-radius:10px;border:1px solid rgba(148,163,184,0.15);">
-          <strong style="color:#38bdf8;display:block;">🎙️ Single-Socket Speech-to-Speech</strong>
-          Zero stitched STT→LLM→TTS lag
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11.5px;color:#1d1d1f;">
+        <div style="background:#F7F6F2;padding:9px 11px;border-radius:12px;border:1px solid rgba(0,0,0,0.06);">
+          <strong style="color:#006A67;display:block;">🎙️ Single-Socket Speech-to-Speech</strong>
+          <span style="color:#6e6e73;">Zero stitched STT→LLM→TTS lag</span>
         </div>
-        <div style="background:rgba(30,41,59,0.75);padding:8px 10px;border-radius:10px;border:1px solid rgba(148,163,184,0.15);">
-          <strong style="color:#34d399;display:block;">🧠 Persistent Cognitive Memory</strong>
-          Remembers triggers, rewards &amp; wins
+        <div style="background:#F7F6F2;padding:9px 11px;border-radius:12px;border:1px solid rgba(0,0,0,0.06);">
+          <strong style="color:#0071E3;display:block;">🧠 Longitudinal Brain Study</strong>
+          <span style="color:#6e6e73;">Tracks triggers, dopamine &amp; wins</span>
         </div>
       </div>
     `;
@@ -427,60 +423,57 @@ async function showClosingBrandCard(page: any) {
       position: fixed;
       inset: 0;
       z-index: 999990;
-      background: radial-gradient(circle at center, rgba(15, 23, 42, 0.92) 0%, rgba(7, 10, 18, 0.98) 100%);
-      backdrop-filter: blur(20px);
+      background: radial-gradient(120% 100% at 50% 0%, #FFFFFF 0%, #F7F6F2 60%, #EFECE6 100%);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       padding: 36px;
-      color: #f8fafc;
-      font-family: system-ui, -apple-system, sans-serif;
+      color: #1d1d1f;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', sans-serif;
       text-align: center;
+      animation: stayCardSlideIn 0.4s cubic-bezier(0.22, 1, 0.36, 1);
     `;
     modal.innerHTML = `
-      <!-- Morphed SVG Emblem Row -->
-      <div style="display:flex;align-items:center;gap:18px;margin-bottom:20px;">
-        <div style="width:68px;height:68px;border-radius:20px;background:rgba(20,184,166,0.16);border:1.5px solid #2dd4bf;display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 0 30px rgba(45,212,191,0.3);">🪷</div>
-        <div style="width:84px;height:84px;border-radius:999px;background:radial-gradient(circle at 35% 30%, #67e8f9, #0284c7 55%, #1e1b4b 100%);box-shadow:0 0 55px rgba(56, 189, 248, 0.6), inset 0 0 22px rgba(255,255,255,0.65);display:flex;align-items:center;justify-content:center;">
-          <div style="width:64px;height:64px;border-radius:999px;border:1.5px solid rgba(255,255,255,0.5);"></div>
+      <!-- Apple Keynote Sculpted Emblem Row -->
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:22px;">
+        <div style="width:64px;height:64px;border-radius:20px;background:#ffffff;border:1px solid rgba(0,0,0,0.08);display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 12px 32px rgba(0,0,0,0.06);">🪷</div>
+        <div style="width:82px;height:82px;border-radius:999px;background:radial-gradient(circle at 35% 30%, #5EEAD4, #006A67 62%, #003634 100%);box-shadow:0 18px 45px rgba(0, 106, 103, 0.28), inset 0 0 18px rgba(255,255,255,0.65);display:flex;align-items:center;justify-content:center;">
+          <div style="width:62px;height:62px;border-radius:999px;border:1.5px solid rgba(255,255,255,0.55);"></div>
         </div>
-        <div style="width:68px;height:68px;border-radius:20px;background:rgba(244,114,182,0.16);border:1.5px solid #f472b6;display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 0 30px rgba(244,114,182,0.3);">🍦</div>
+        <div style="width:64px;height:64px;border-radius:20px;background:#ffffff;border:1px solid rgba(0,0,0,0.08);display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 12px 32px rgba(0,0,0,0.06);">🍦</div>
       </div>
 
-      <span style="font-size:12px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:#38bdf8;margin-bottom:8px;">
-        Voice-First Point-of-Performance ADHD Companion
+      <span style="font-size:11.5px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#006A67;margin-bottom:8px;">
+        24/7 Living Voice-First ADHD Companion &amp; Autonomous Agent
       </span>
-      <h1 style="font-size:42px;font-weight:800;margin:0 0 10px 0;letter-spacing:-0.02em;color:#ffffff;">
-        STAY — From Chaotic Freeze to Started in 60 Seconds
+      <h1 style="font-size:42px;font-weight:700;margin:0 0 12px 0;letter-spacing:-0.03em;color:#1d1d1f;">
+        Stay. From Freeze to Started in 60 Seconds.
       </h1>
-      <p style="font-size:16.5px;color:#cbd5e1;max-width:720px;margin:0 0 24px 0;line-height:1.5;">
-        Powered by <strong>AssemblyAI Universal-3 Pro</strong> (32 Languages · Single-Socket 24kHz Speech-to-Speech) &amp; <strong>Groq gpt-oss-120b</strong> · Deterministic Safety · Topic-Reactive SVG &amp; GLSL Shape Morphing
+      <p style="font-size:16px;color:#6e6e73;max-width:740px;margin:0 0 26px 0;line-height:1.5;">
+        Powered by <strong style="color:#1d1d1f;">AssemblyAI Universal-3 Pro</strong> (32 Languages · 24kHz Single-WebSocket) &amp; <strong style="color:#1d1d1f;">Groq gpt-oss-120b</strong> · 60fps Spring-Physics Parametric Sculpture · 1775–2024 Clinical Neuroscience
       </p>
 
-      <!-- Platform Availability SVG Pills -->
-      <div style="display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-bottom:24px;">
-        <div style="display:flex;align-items:center;gap:10px;background:rgba(30,41,59,0.9);border:1px solid rgba(56,189,248,0.35);padding:10px 18px;border-radius:14px;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-          <span style="font-weight:700;font-size:14px;">Web App (Live Now)</span>
+      <!-- Apple Bento Pills -->
+      <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:24px;">
+        <div style="background:#ffffff;border:1px solid rgba(0,0,0,0.08);padding:10px 18px;border-radius:999px;font-weight:600;font-size:13.5px;color:#1d1d1f;box-shadow:0 4px 14px rgba(0,0,0,0.04);">
+          🌐 Web &amp; Desktop Body-Double
         </div>
-        <div style="display:flex;align-items:center;gap:10px;background:rgba(30,41,59,0.9);border:1px solid rgba(52,211,153,0.35);padding:10px 18px;border-radius:14px;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-          <span style="font-weight:700;font-size:14px;">iOS &amp; Android Installable PWA</span>
+        <div style="background:#ffffff;border:1px solid rgba(0,0,0,0.08);padding:10px 18px;border-radius:999px;font-weight:600;font-size:13.5px;color:#1d1d1f;box-shadow:0 4px 14px rgba(0,0,0,0.04);">
+          📱 iOS &amp; Android Installable PWA
         </div>
-        <div style="display:flex;align-items:center;gap:10px;background:rgba(30,41,59,0.9);border:1px solid rgba(167,139,250,0.35);padding:10px 18px;border-radius:14px;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-          <span style="font-weight:700;font-size:14px;">Desktop Body-Double Mode</span>
+        <div style="background:#ffffff;border:1px solid rgba(0,0,0,0.08);padding:10px 18px;border-radius:999px;font-weight:600;font-size:13.5px;color:#1d1d1f;box-shadow:0 4px 14px rgba(0,0,0,0.04);">
+          📄 Clinician PDF &amp; Hard Safety Gates
         </div>
       </div>
 
-      <!-- Links & GitHub Repository -->
-      <div style="display:flex;flex-wrap:wrap;gap:18px;justify-content:center;">
-        <div style="background:rgba(14,165,233,0.2);border:1.5px solid #38bdf8;padding:12px 24px;border-radius:14px;font-family:monospace;font-size:15px;font-weight:700;color:#e0f2fe;">
-          🌐 https://stay-two-swart.vercel.app
+      <!-- Links -->
+      <div style="display:flex;flex-wrap:wrap;gap:14px;justify-content:center;">
+        <div style="background:#006A67;color:#ffffff;padding:12px 24px;border-radius:999px;font-size:14.5px;font-weight:600;box-shadow:0 8px 24px rgba(0,106,103,0.22);">
+          stay-two-swart.vercel.app
         </div>
-        <div style="background:rgba(16,185,129,0.2);border:1.5px solid #34d399;padding:12px 24px;border-radius:14px;font-family:monospace;font-size:15px;font-weight:700;color:#d1fae5;">
-          💻 github.com/vaibhav4046/stay
+        <div style="background:#1d1d1f;color:#ffffff;padding:12px 24px;border-radius:999px;font-size:14.5px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,0.14);">
+          github.com/vaibhav4046/stay
         </div>
       </div>
     `;
@@ -502,16 +495,16 @@ async function runAction(page: any, action: string) {
       await injectSubtitleAndOverlayHelper(page);
       await clickShapeBtn(page, 0);
     } else if (action === 'act1_orb_morph_showcase') {
-      // Show SVG Morph Engine Diagram & visibly cycle the Orb through Lotus -> Letterform Gem -> Ice Cream Cone -> Creative Star
+      // Show Apple Bento Morph Card & smoothly cycle the 60fps Spring-Physics Sculpture through Lotus -> Letterform Gem -> Ice Cream Cone -> Creative Star
       await showMorphSvgArtifactCard(page);
-      await sleep(900);
-      await clickShapeBtn(page, 4); // 🪷 8-Petal Lotus
-      await sleep(3200);
+      await sleep(800);
+      await clickShapeBtn(page, 4); // 🪷 8-Petal Botanical Lotus
+      await sleep(3000);
       await clickShapeBtn(page, 2); // ✒️ Crystalline Letterform Gem
-      await sleep(3200);
-      await clickShapeBtn(page, 1); // 🍦 Ice Cream Swirl
-      await sleep(3200);
-      await clickShapeBtn(page, 3); // 🎨 5-Lobe Creative Star
+      await sleep(3000);
+      await clickShapeBtn(page, 1); // 🍦 Ice Cream Cone & Swirl
+      await sleep(3000);
+      await clickShapeBtn(page, 3); // 🎨 5-Fold Creative Star
     } else if (action === 'act2_user_wake') {
       await clearSideCards(page);
       await clickShapeBtn(page, 0);
@@ -522,10 +515,8 @@ async function runAction(page: any, action: string) {
       }
       await page.evaluate(() => window.scrollTo(0, 0));
     } else if (action === 'act2_stay_greet') {
-      // Gentle Lotus pulse to invite messy brain-dump
       await clickShapeBtn(page, 4);
     } else if (action === 'act2_chaotic_brain_dump') {
-      // Chaotic, unorganized ADHD brain-dump!
       const input = page.getByTestId('task-input');
       const chaoticText =
         "Ugh honestly my brain is completely fried right now, I have like 10 tabs open, landlord lease letter and overdue VAT taxes, idk where to start";
@@ -534,36 +525,37 @@ async function runAction(page: any, action: string) {
       await sleep(2200);
       await input.press('Enter');
       await page.evaluate(() => window.scrollTo(0, 0));
-    } else if (action === 'act2_lotus_to_letterform_reality') {
-      // Show Chaos-to-Clarity SVG diagram, morph Lotus -> Letterform Gem, then open 3 Angles
+    } else if (action === 'act2_lotus_to_artifact_and_clinical') {
+      // Show Apple Bento pipeline card, morph Lotus -> Letterform Gem, then showcase 24/7 Auto-Drafted Work tab and Live Brain Study tab!
       await showChaosToClaritySvgCard(page);
-      await clickShapeBtn(page, 4); // 🪷 Lotus first to calm breathing
-      await sleep(3800);
+      await clickShapeBtn(page, 4); // 🪷 Lotus first
+      await sleep(2600);
       await clickShapeBtn(page, 2); // ✒️ Crystalline Letterform Gem
-      await sleep(3500);
-      const brainstormBtn = page.getByTestId('orb-exec-brainstorm');
-      if (await brainstormBtn.count()) {
-        await brainstormBtn.click();
+      await sleep(2200);
+      const artifactBtn = page.getByTestId('orb-exec-artifact');
+      if (await artifactBtn.count()) {
+        await artifactBtn.click();
+      }
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await sleep(3400);
+      const clinicalBtn = page.getByTestId('orb-exec-clinical');
+      if (await clinicalBtn.count()) {
+        await clinicalBtn.click();
       }
       await page.evaluate(() => window.scrollTo(0, 0));
     } else if (action === 'act2_select_angle_and_ice_cream') {
-      // Select Angle 0 ("The 3-Bullet Draft") and type ice cream reward
-      const angle0 = page.getByTestId('orb-angle-0');
-      if (await angle0.count()) {
-        await angle0.click();
-      }
-      await sleep(1000);
-      // Collapse 3 Angles tab so the Living Orb stays front and center for the Ice Cream morph!
-      const brainstormBtn = page.getByTestId('orb-exec-brainstorm');
-      if (await brainstormBtn.count()) {
-        await brainstormBtn.click();
+      // Collapse bottom tab so the centerpiece Sculpture is front-and-center for the Ice Cream Cone morph!
+      const clinicalBtn = page.getByTestId('orb-exec-clinical');
+      if (await clinicalBtn.count()) {
+        await clinicalBtn.click();
       }
       await page.evaluate(() => window.scrollTo(0, 0));
+      await sleep(800);
       const input = page.getByTestId('task-input');
-      await input.fill('I want ice cream as a reward after finishing these 3 bullets');
+      await input.fill('I want ice cream as a reward after sending this pre-drafted email');
       await page.evaluate(() => window.scrollTo(0, 0));
     } else if (action === 'act2_ice_cream_and_memory_extract') {
-      // Visibly morph into 🍦 Ice Cream Cone & Swirl right at the top of the screen and save memory
+      // Smoothly morph into 🍦 Sculpted Ice Cream Cone & Swirl right at the top of the viewport!
       await clickShapeBtn(page, 1);
       await page.evaluate(() => window.scrollTo(0, 0));
       await sleep(1800);
@@ -577,21 +569,27 @@ async function runAction(page: any, action: string) {
       const input = page.getByTestId('task-input');
       await input.fill('show me memory');
       await input.press('Enter');
-    } else if (action === 'act2_close_modals_and_path') {
-      await sleep(2500);
+    } else if (action === 'act2_close_modals_and_science') {
+      await sleep(2200);
       const input = page.getByTestId('task-input');
       await input.fill('close panel');
       await input.press('Enter');
-      await sleep(600);
+      await sleep(500);
       await input.fill('show me chat history');
       await input.press('Enter');
-      await sleep(2500);
+      await sleep(2200);
       await input.fill('close panel');
       await input.press('Enter');
       await sleep(500);
-      const pathBtn = page.getByTestId('orb-exec-path');
-      if (await pathBtn.count()) {
-        await pathBtn.click();
+      // Open the 1775-2024 ADHD Clinical Research & Personal Brain Study modal!
+      const scienceBtn = page.getByTestId('orb-science-btn');
+      if (await scienceBtn.count()) {
+        await scienceBtn.click();
+      }
+      await sleep(2600);
+      const closeModalBtn = page.getByTestId('orb-science-modal').getByRole('button', { name: 'Close' });
+      if (await closeModalBtn.count()) {
+        await closeModalBtn.click();
       }
       await page.evaluate(() => window.scrollTo(0, 0));
     } else if (action === 'act2_multilingual_and_timer') {
@@ -680,7 +678,6 @@ async function main() {
 
     const page = await context.newPage();
 
-    // Pre-seed onboarding & realistic session history BEFORE starting our timeline clock
     await page.goto('http://localhost:3000/app/today');
     await page.evaluate(() => {
       localStorage.setItem(
@@ -709,7 +706,7 @@ async function main() {
             {
               id: 'mem-2',
               category: 'coping_strategy',
-              text: 'Breaks freeze with 45-second 3-bullet messy drafts + lotus grounding',
+              text: 'Breaks freeze when Stay pre-drafts correspondence + 45s entry',
               createdAt: new Date().toISOString(),
             },
           ],
@@ -737,7 +734,7 @@ async function main() {
             taskText: 'Reply to landlord about lease renewal',
             barrierType: 'overwhelm',
             strategyKey: 'task_shrinking',
-            firstStep: 'Write 3 messy bullet points in a blank reply',
+            firstStep: 'Review Stay pre-drafted email and click send',
             plannedMinutes: 20,
             actualSeconds: 1200,
             outcome: 'started',
@@ -800,48 +797,52 @@ async function main() {
     await context.close();
     await browser.close();
 
-    const webmPath = await videoObj?.path();
-    console.log('Recorded raw WebM video at:', webmPath);
-
-    if (webmPath && fs.existsSync(webmPath)) {
-      const ffmpegExe =
-        'C:\\Users\\lalwa\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\imageio_ffmpeg\\binaries\\ffmpeg-win-x86_64-v7.1.exe';
-      const outPublicMp4 = path.resolve(__dirname, '../public/stay-hackathon-demo.mp4');
-      console.log('Muxing video + dual-voice & therapeutic BGM audio into MP4...');
-      execFileSync(
-        ffmpegExe,
-        [
-          '-y',
-          '-i',
-          webmPath,
-          '-i',
-          timeline.master_wav,
-          '-c:v',
-          'libx264',
-          '-preset',
-          'fast',
-          '-crf',
-          '21',
-          '-pix_fmt',
-          'yuv420p',
-          '-c:a',
-          'aac',
-          '-b:a',
-          '192k',
-          '-shortest',
-          outPublicMp4,
-        ],
-        { stdio: 'inherit' }
-      );
-      console.log('Successfully created final demo video:', outPublicMp4);
+    const rawWebmPath = await videoObj?.path();
+    if (!rawWebmPath || !fs.existsSync(rawWebmPath)) {
+      throw new Error('Playwright video file was not generated');
     }
+
+    console.log(`Raw Playwright video recorded: ${rawWebmPath}`);
+    const outMp4 = path.resolve(__dirname, '../public/stay-hackathon-demo.mp4');
+
+    const ffmpegPath = execFileSync('python', [
+      '-c',
+      'import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_exe().strip())',
+    ])
+      .toString()
+      .trim();
+
+    console.log('Muxing video + therapeutic BGM & voiceover into H.264 MP4...');
+    execFileSync(
+      ffmpegPath,
+      [
+        '-y',
+        '-i',
+        rawWebmPath,
+        '-i',
+        timeline.master_wav,
+        '-c:v',
+        'libx264',
+        '-preset',
+        'fast',
+        '-crf',
+        '20',
+        '-pix_fmt',
+        'yuv420p',
+        '-c:a',
+        'aac',
+        '-b:a',
+        '192k',
+        '-shortest',
+        outMp4,
+      ],
+      { stdio: 'inherit' }
+    );
+
+    console.log(`SUCCESS! Final Apple Keynote demo video written to: ${outMp4}`);
   } finally {
-    if (serverProc && serverProc.pid) {
-      try {
-        execFileSync('taskkill', ['/pid', String(serverProc.pid), '/T', '/F'], { stdio: 'ignore' });
-      } catch {
-        // ignore
-      }
+    if (serverProc) {
+      serverProc.kill();
     }
   }
 }

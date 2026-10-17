@@ -39,3 +39,54 @@ describe('Topic Shape Classifier', () => {
     expect(detectTopicShape('Testing 1 2 3')).toBe(0);
   });
 });
+
+import { evaluateParametricShapePoint } from '@/components/Signal';
+import {
+  generateLiveAgenticArtifact,
+  analyzeUserAdhdPhenotype,
+  ADHD_CLINICAL_ENCYCLOPEDIA,
+} from '@/lib/coach/adhdClinicalEngine';
+
+describe('Smooth Parametric Shape Sculpture & 24/7 Living ADHD Clinical Engine', () => {
+  it('evaluates smooth, non-NaN parametric control points across all 5 topic shapes and layer scales', () => {
+    for (const shapeId of [0, 1, 2, 3, 4]) {
+      for (const layerScale of [1.0, 0.82, 0.64]) {
+        const ptTop = evaluateParametricShapePoint(shapeId, -Math.PI / 2, 1.0, 0.35, layerScale);
+        const ptBottom = evaluateParametricShapePoint(shapeId, Math.PI / 2, 1.0, 0.35, layerScale);
+        expect(Number.isFinite(ptTop[0])).toBe(true);
+        expect(Number.isFinite(ptTop[1])).toBe(true);
+        expect(Number.isFinite(ptBottom[0])).toBe(true);
+        expect(Number.isFinite(ptBottom[1])).toBe(true);
+      }
+    }
+  });
+
+  it('autonomously drafts editable correspondence, tax triage worksheets, or document skeletons (24/7 Living Agent)', () => {
+    const landlordArtifact = generateLiveAgenticArtifact(
+      "uhh my brain is fried and I haven't replied to my landlord or touched my tax paperwork"
+    );
+    expect(landlordArtifact.artifactType).toContain('Correspondence');
+    expect(landlordArtifact.agentStatus).toContain('Stay Autonomous Agent');
+    expect(landlordArtifact.draftContent).toContain('Subject: Quick update — Lease letter');
+    expect(landlordArtifact.checklist.length).toBe(3);
+
+    const writingArtifact = generateLiveAgenticArtifact('Write conference proposal abstract');
+    expect(writingArtifact.draftContent).toContain('Core Problem');
+    expect(writingArtifact.checklist.length).toBe(3);
+  });
+
+  it('analyzes personal ADHD phenotype (Dopamine, Working Memory, Prefrontal Axis) and exposes 1775-2024 clinical history', () => {
+    const profile = analyzeUserAdhdPhenotype(
+      'I need to reply to my landlord email',
+      4,
+      6
+    );
+    expect(profile.phenotypeTitle).toBeTruthy();
+    expect(profile.tonicDopamineAfter).toBeGreaterThan(profile.tonicDopamineBefore);
+    expect(profile.workingMemoryLoadAfter).toBeLessThan(profile.workingMemoryLoadBefore);
+    expect(ADHD_CLINICAL_ENCYCLOPEDIA.length).toBeGreaterThanOrEqual(7);
+    expect(ADHD_CLINICAL_ENCYCLOPEDIA[0].eraOrYear).toContain('1775');
+  });
+});
+
+
