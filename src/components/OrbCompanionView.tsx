@@ -24,6 +24,7 @@ interface OrbCompanionViewProps {
   onOpenTraining: () => void;
   onOpenGrounding: () => void;
   onOpenAuth: () => void;
+  onOpenVoiceSelector?: () => void;
   onToggleQuietMode: () => void;
   quietMode: boolean;
   onSwitchToWorkspace: () => void;
@@ -55,6 +56,7 @@ export function OrbCompanionView({
   onOpenTraining,
   onOpenGrounding,
   onOpenAuth,
+  onOpenVoiceSelector,
   onToggleQuietMode,
   quietMode,
   onSwitchToWorkspace,
@@ -63,6 +65,10 @@ export function OrbCompanionView({
 }: OrbCompanionViewProps) {
   const [typedMessage, setTypedMessage] = useState('');
   const [showOutcomeDialog, setShowOutcomeDialog] = useState(false);
+
+  const currentLang =
+    voice.supportedLanguages.find((l) => l.code === voice.selectedLanguage) ||
+    voice.supportedLanguages[0];
 
   const getStatusText = () => {
     if (quietMode) return 'Quiet Mode Active (Text Only)';
@@ -118,45 +124,32 @@ export function OrbCompanionView({
             <span className="font-medium hidden sm:inline">Ground Me</span>
           </button>
 
-          {/* Named Voice Persona Selector */}
-          <div className="relative">
-            <select
-              value={voice.selectedVoice}
-              onChange={(e) => voice.setSelectedVoice(e.target.value)}
-              className="chip text-[0.78rem] flex items-center gap-1 border border-line bg-surface hover:bg-line transition-colors cursor-pointer appearance-none pr-5 pl-2.5 py-1 text-ink font-medium rounded-full"
-              title="Voice Persona (Anna, Oliver, Amanda, Charles, Rachel, Josh)"
-              aria-label="Select Voice Persona"
-            >
-              {voice.availableVoices.map((v) => (
-                <option key={v.id} value={v.id}>
-                  🎙️ {v.name} ({v.gender === 'female' ? 'Female' : 'Male'} · {v.accent === 'British' ? 'UK' : 'US'})
-                </option>
-              ))}
-            </select>
-            <span className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-[0.6rem] text-ink-3">
-              ▼
-            </span>
-          </div>
+          {/* Named Voice Persona Pill (Tap to view personas or speak 'switch to Oliver') */}
+          <button
+            type="button"
+            onClick={onOpenVoiceSelector}
+            className="chip text-[0.78rem] flex items-center gap-1.5 border border-line bg-surface hover:bg-line transition-colors rounded-full px-2.5 py-1 text-ink font-medium"
+            title="Voice Persona (Click to browse or say 'change voice to Oliver')"
+            aria-label="Change Voice Persona"
+          >
+            <span>🎙️</span>
+            <span className="capitalize">{voice.selectedVoice}</span>
+          </button>
 
-          {/* Multilingual Speech Language Selector */}
-          <div className="relative">
-            <select
-              value={voice.selectedLanguage}
-              onChange={(e) => voice.setSelectedLanguage(e.target.value)}
-              className="chip text-[0.78rem] flex items-center gap-1 border border-line bg-surface hover:bg-line transition-colors cursor-pointer appearance-none pr-5 pl-2.5 py-1 text-ink font-medium rounded-full"
-              title="Voice & Speech Language (Auto-detects Hindi, Spanish, French, etc.)"
-              aria-label="Select Voice Language"
-            >
-              {voice.supportedLanguages.map((l) => (
-                <option key={l.code} value={l.code}>
-                  {l.flag} {l.label}
-                </option>
-              ))}
-            </select>
-            <span className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-[0.6rem] text-ink-3">
-              ▼
-            </span>
-          </div>
+          {/* Multilingual 32-Language Status Pill */}
+          <button
+            type="button"
+            onClick={() => {
+              const next = voice.selectedLanguage === 'auto' ? 'en-GB' : 'auto';
+              voice.setSelectedLanguage(next);
+            }}
+            className="chip text-[0.78rem] flex items-center gap-1.5 border border-line bg-surface hover:bg-line transition-colors rounded-full px-2.5 py-1 text-ink font-medium"
+            title={`Language: ${currentLang?.label || 'Universal Auto'} (Say 'switch to Spanish', 'speak Hindi', or tap to toggle Auto)`}
+            aria-label="Toggle language auto detection"
+          >
+            <span>{currentLang?.flag || '🌐'}</span>
+            <span>{currentLang?.code === 'auto' ? 'Auto (32L)' : currentLang?.label}</span>
+          </button>
         </div>
 
         {/* Center / Right Control Chips */}

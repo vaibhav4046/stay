@@ -491,6 +491,7 @@ export function CoachWorkspace({
           sessionCount={sessions.length}
           onOpenTraining={() => setShowTrainingPanel(true)}
           onOpenGrounding={() => setShowGroundingPanel(true)}
+          onOpenVoiceSelector={() => setShowVoiceModal(true)}
           onOpenAuth={() => setShowAuthModal(true)}
           onToggleQuietMode={() => {
             if (!quietMode) voice.disconnectVoiceSession();

@@ -91,11 +91,14 @@ export function detectTopicShape(text: string): number {
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
-  let binary = '';
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i]);
+  const CHUNK_SZ = 0x8000;
+  const chunks: string[] = [];
+  for (let i = 0; i < bytes.length; i += CHUNK_SZ) {
+    chunks.push(
+      String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK_SZ) as unknown as number[])
+    );
   }
-  return window.btoa(binary);
+  return window.btoa(chunks.join(''));
 }
 
 function base64ToInt16Array(base64: string): Int16Array {
@@ -107,41 +110,117 @@ function base64ToInt16Array(base64: string): Int16Array {
   return new Int16Array(bytes.buffer);
 }
 
-export const SUPPORTED_LANGUAGES = [
-  { code: 'auto', label: 'Auto Detect', flag: '🌐' },
-  { code: 'en-US', label: 'English', flag: '🇬🇧' },
-  { code: 'hi-IN', label: 'हिन्दी', flag: '🇮🇳' },
-  { code: 'es-ES', label: 'Español', flag: '🇪🇸' },
-  { code: 'fr-FR', label: 'Français', flag: '🇫🇷' },
-  { code: 'de-DE', label: 'Deutsch', flag: '🇩🇪' },
-  { code: 'ja-JP', label: '日本語', flag: '🇯🇵' },
-  { code: 'zh-CN', label: '中文', flag: '🇨🇳' },
-  { code: 'ar-SA', label: 'العربية', flag: '🇸🇦' },
-] as const;
+export interface SupportedLanguage {
+  code: string;
+  label: string;
+  flag: string;
+  nativeName: string;
+}
+
+export const SUPPORTED_LANGUAGES: SupportedLanguage[] = [
+  { code: 'auto', label: 'Auto Detect', flag: '🌐', nativeName: 'Universal Auto' },
+  { code: 'en-GB', label: 'English', flag: '🇬🇧', nativeName: 'English' },
+  { code: 'hi-IN', label: 'Hindi', flag: '🇮🇳', nativeName: 'हिन्दी' },
+  { code: 'es-ES', label: 'Spanish', flag: '🇪🇸', nativeName: 'Español' },
+  { code: 'fr-FR', label: 'French', flag: '🇫🇷', nativeName: 'Français' },
+  { code: 'de-DE', label: 'German', flag: '🇩🇪', nativeName: 'Deutsch' },
+  { code: 'it-IT', label: 'Italian', flag: '🇮🇹', nativeName: 'Italiano' },
+  { code: 'pt-PT', label: 'Portuguese', flag: '🇵🇹', nativeName: 'Português' },
+  { code: 'ja-JP', label: 'Japanese', flag: '🇯🇵', nativeName: '日本語' },
+  { code: 'zh-CN', label: 'Chinese', flag: '🇨🇳', nativeName: '中文' },
+  { code: 'ko-KR', label: 'Korean', flag: '🇰🇷', nativeName: '한국어' },
+  { code: 'nl-NL', label: 'Dutch', flag: '🇳🇱', nativeName: 'Nederlands' },
+  { code: 'ru-RU', label: 'Russian', flag: '🇷🇺', nativeName: 'Русский' },
+  { code: 'tr-TR', label: 'Turkish', flag: '🇹🇷', nativeName: 'Türkçe' },
+  { code: 'pl-PL', label: 'Polish', flag: '🇵🇱', nativeName: 'Polski' },
+  { code: 'ar-SA', label: 'Arabic', flag: '🇸🇦', nativeName: 'العربية' },
+  { code: 'sv-SE', label: 'Swedish', flag: '🇸🇪', nativeName: 'Svenska' },
+  { code: 'no-NO', label: 'Norwegian', flag: '🇳🇴', nativeName: 'Norsk' },
+  { code: 'da-DK', label: 'Danish', flag: '🇩🇰', nativeName: 'Dansk' },
+  { code: 'fi-FI', label: 'Finnish', flag: '🇫🇮', nativeName: 'Suomi' },
+  { code: 'el-GR', label: 'Greek', flag: '🇬🇷', nativeName: 'Ελληνικά' },
+  { code: 'cs-CZ', label: 'Czech', flag: '🇨🇿', nativeName: 'Čeština' },
+  { code: 'ro-RO', label: 'Romanian', flag: '🇷🇴', nativeName: 'Română' },
+  { code: 'hu-HU', label: 'Hungarian', flag: '🇭🇺', nativeName: 'Magyar' },
+  { code: 'uk-UA', label: 'Ukrainian', flag: '🇺🇦', nativeName: 'Українська' },
+  { code: 'vi-VN', label: 'Vietnamese', flag: '🇻🇳', nativeName: 'Tiếng Việt' },
+  { code: 'th-TH', label: 'Thai', flag: '🇹🇭', nativeName: 'ไทย' },
+  { code: 'id-ID', label: 'Indonesian', flag: '🇮🇩', nativeName: 'Bahasa Indonesia' },
+  { code: 'ms-MY', label: 'Malay', flag: '🇲🇾', nativeName: 'Bahasa Melayu' },
+  { code: 'he-IL', label: 'Hebrew', flag: '🇮🇱', nativeName: 'עברית' },
+  { code: 'bn-BD', label: 'Bengali', flag: '🇧🇩', nativeName: 'বাংলা' },
+  { code: 'ta-IN', label: 'Tamil', flag: '🇮🇳', nativeName: 'தமிழ்' },
+  { code: 'te-IN', label: 'Telugu', flag: '🇮🇳', nativeName: 'తెలుగు' },
+];
 
 export function detectTextLanguage(text: string, manualPreference?: string): string {
   if (manualPreference && manualPreference !== 'auto') {
     return manualPreference;
   }
-  // 1. Non-Latin scripts
-  if (/[\u0900-\u097F]/.test(text)) return 'hi-IN'; // Devanagari / Hindi
+  // 1. Non-Latin Unicode script classification
+  if (/[\u0900-\u097F]/.test(text)) return 'hi-IN'; // Devanagari (Hindi)
+  if (/[\u0980-\u09FF]/.test(text)) return 'bn-BD'; // Bengali
+  if (/[\u0B80-\u0BFF]/.test(text)) return 'ta-IN'; // Tamil
+  if (/[\u0C00-\u0C7F]/.test(text)) return 'te-IN'; // Telugu
   if (/[\u0600-\u06FF]/.test(text)) return 'ar-SA'; // Arabic
+  if (/[\u0590-\u05FF]/.test(text)) return 'he-IL'; // Hebrew
   if (/[\u3040-\u30FF]/.test(text)) return 'ja-JP'; // Japanese Kana
-  if (/[\u4E00-\u9FFF]/.test(text)) return 'zh-CN'; // CJK / Chinese
-
-  // 2. German
-  if (/[äöüß]/i.test(text) || /\b(ich|du|er|sie|es|wir|ihr|der|die|das|und|nicht|ein|eine|mit|für|machen)\b/i.test(text)) {
-    return 'de-DE';
+  if (/[\uAC00-\uD7AF\u1100-\u11FF]/.test(text)) return 'ko-KR'; // Korean Hangul
+  if (/[\u4E00-\u9FFF]/.test(text)) return 'zh-CN'; // CJK Unified Ideographs (Chinese)
+  if (/[\u0370-\u03FF]/.test(text)) return 'el-GR'; // Greek
+  if (/[\u0E00-\u0E7F]/.test(text)) return 'th-TH'; // Thai
+  if (/[\u0400-\u04FF]/.test(text)) {
+    return /[іїєґIЇЄҐ]/.test(text) ? 'uk-UA' : 'ru-RU'; // Cyrillic (Ukrainian vs Russian)
   }
 
-  // 3. French
-  if (/[œæçèêëîïôûù]/i.test(text) || /\b(je|tu|il|elle|nous|vous|ils|le|la|les|un|une|des|du|dans|pour|avec|est|sur|veux|faire|mon|mémoire)\b/i.test(text)) {
-    return 'fr-FR';
+  // 2. High-confidence Western Latin & unique phonetic scripts
+  if (/[đĐăằắẳẵặơờớởỡợưừứửữựầấẩẫậềếểễệồốổỗộảạẻẹỉịỏọủụỳỷỹỵ]/i.test(text)) {
+    return 'vi-VN'; // Vietnamese unique characters
   }
-
-  // 4. Spanish
-  if (/[¿¡ñáíóú]/i.test(text) || /\b(el|la|los|las|un|una|de|en|por|para|con|como|tarea|hacer|empezar|quiero|puedo|esta)\b/i.test(text)) {
-    return 'es-ES';
+  if (/[¿¡ñ]/i.test(text) || /\b(?:el|la|los|las|un|una|de|en|por|para|con|como|tarea|hacer|empezar|quiero|puedo|esta)\b/i.test(text)) {
+    return 'es-ES'; // Spanish
+  }
+  if (/[ãõ]/i.test(text) || /\b(?:para|com|não|uma|fazer|como|você|isso|estou|começar)\b/i.test(text)) {
+    return 'pt-PT'; // Portuguese
+  }
+  if (/[œæ]/i.test(text) || /\b(?:je|tu|il|elle|nous|vous|ils|le|la|les|un|une|des|du|dans|pour|avec|est|sur|veux|faire|mon|mémoire)\b/i.test(text)) {
+    return 'fr-FR'; // French
+  }
+  if (/[äöüß]/i.test(text) || /\b(?:ich|du|er|sie|es|wir|ihr|der|die|das|und|nicht|ein|eine|mit|für|machen)\b/i.test(text)) {
+    return 'de-DE'; // German
+  }
+  if (/\b(?:il|lo|la|gli|le|per|con|non|sono|fare|questo|come|ciao|anche|grazie)\b/i.test(text)) {
+    return 'it-IT'; // Italian
+  }
+  if (/[ěščřžďťň]/i.test(text)) {
+    return 'cs-CZ'; // Czech
+  }
+  if (/[őű]/i.test(text) || /\b(?:nem|hogy|egy|van|volt|vagyok|lesz)\b/i.test(text)) {
+    return 'hu-HU'; // Hungarian
+  }
+  if (/[ąćęłńóśźż]/i.test(text) || /\b(?:nie|się|jest|jak|ale|dla)\b/i.test(text)) {
+    return 'pl-PL'; // Polish
+  }
+  if (/[çğıöşü]/i.test(text) || /\b(?:bir|ve|için|çok|değil|ile)\b/i.test(text)) {
+    return 'tr-TR'; // Turkish
+  }
+  if (/[ăâîșț]/i.test(text) || /\b(?:este|pentru|sunt|care|cum)\b/i.test(text)) {
+    return 'ro-RO'; // Romanian
+  }
+  if (/\b(?:het|een|niet|voor|zijn|hebben|over|maar|doen)\b/i.test(text)) {
+    return 'nl-NL'; // Dutch
+  }
+  if (/[å]/i.test(text) || /\b(?:jag|och|inte|att|som|på)\b/i.test(text)) {
+    return 'sv-SE'; // Swedish
+  }
+  if (/[æø]/i.test(text)) {
+    return 'no-NO'; // Norwegian / Danish
+  }
+  if (/\b(?:ja|on|ei|hän|oli|ovat|mutta|kun|että)\b/i.test(text)) {
+    return 'fi-FI'; // Finnish
+  }
+  if (/\b(?:yang|tidak|ini|itu|untuk|bisa|saya|ada|akan|dengan)\b/i.test(text)) {
+    return 'id-ID'; // Indonesian / Malay
   }
 
   return 'en-GB';
@@ -199,6 +278,40 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
               voice: valid,
               format: { encoding: 'audio/pcm', sample_rate: 24000 },
             },
+          },
+        })
+      );
+    }
+  }, []);
+
+  const setSelectedLanguage = useCallback((lang: string) => {
+    setSelectedLanguageState(lang);
+    selectedLanguageRef.current = lang;
+    if (speechRecRef.current) {
+      try {
+        speechRecRef.current.lang =
+          lang !== 'auto'
+            ? lang
+            : typeof navigator !== 'undefined' && navigator.language
+            ? navigator.language
+            : 'en-GB';
+      } catch {
+        // ignore
+      }
+    }
+    const ws = wsRef.current;
+    if (ws && ws.readyState === WebSocket.OPEN && sessionReadyRef.current) {
+      const langMatch = SUPPORTED_LANGUAGES.find((l) => l.code === lang);
+      const label = langMatch ? langMatch.label : lang;
+      const instruction =
+        lang === 'auto'
+          ? 'Universal auto language detection active. Seamlessly match whatever language or mix the user speaks in real-time.'
+          : `User has switched primary spoken language to ${label} (${lang}). Respond immediately and naturally in ${label}.`;
+      ws.send(
+        JSON.stringify({
+          type: 'session.update',
+          session: {
+            instructions: instruction,
           },
         })
       );
@@ -645,6 +758,9 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         } else if (cmd.type === 'change_voice') {
           setSelectedVoice(cmd.voiceId);
           playEarcon('chime');
+        } else if (cmd.type === 'change_language') {
+          setSelectedLanguage(cmd.langCode);
+          playEarcon('chime');
         } else if (cmd.type === 'open_voice_menu') {
           optionsRef.current.onChangeVoiceRequested?.();
         } else if (cmd.type === 'show_memory') {
@@ -900,9 +1016,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     setVisualState('connecting');
 
     try {
-      // 1. Request microphone with hardware echo cancellation, noise suppression, and auto gain
+      // 1. Request microphone with hardware echo cancellation, noise suppression, single-channel isolation, and auto gain
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
+          channelCount: 1,
+          sampleRate: { ideal: 24000 },
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
@@ -953,7 +1071,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 You sound and feel like ChatGPT Voice: natural conversational pacing, casual contractions ("yeah", "I'm", "totally", "let's"), warm emotional validation, and genuine empathy.
 You are sitting right beside the user as a trusted friend helping them through task paralysis.
 Rules:
-- MULTILINGUAL CONVERSATION: You are fully multilingual. If the user speaks in Hindi, Spanish, French, German, Japanese, Chinese, Arabic, Portuguese, Hinglish, Spanglish, or any other language, seamlessly detect it and respond in THAT SAME LANGUAGE with natural conversational warmth and native authentic phrasing.
+- MULTILINGUAL CONVERSATION: You are fully multilingual across 32 languages. If the user speaks in Hindi, Spanish, French, German, Japanese, Chinese, Arabic, Portuguese, Hinglish, Spanglish, or any other language, seamlessly detect it and respond in THAT SAME LANGUAGE with natural conversational warmth and native authentic phrasing.
 - Speak naturally, gently, and warmly. Use spontaneous conversational backchannels ("Yeah, I totally hear you", "Ugh, that sounds exhausting", "Let's take all the pressure off").
 - Never sound robotic, preachy, or clinical. Never lecture on ADHD psychology or symptoms.
 - Keep spoken replies under 30 words so the conversation flows back and forth quickly without long monologues.
@@ -970,9 +1088,46 @@ ${memoryPrompt}
 
 ${adaptivePrompt}`;
 
-        const greeting = memory.name
-          ? `Hey ${memory.name}! I'm right here with you. What's on your mind today? Let's make the first step ridiculously light.`
-          : "Hey! I'm Stay, sitting right here with you. What's one thing hanging over your head right now? We'll make the first move ridiculously easy.";
+        const lastSession = memory.recentSessionsSummary && memory.recentSessionsSummary[0];
+        let greeting = '';
+        if (memory.name && lastSession?.task) {
+          greeting = `Hey ${memory.name}! Welcome back. Last time we worked on "${lastSession.task}". How did that go, or what's one tiny thing we should tackle today?`;
+        } else if (memory.name) {
+          greeting = `Hey ${memory.name}! I'm right here with you. What's on your mind today? Let's make the first step ridiculously light.`;
+        } else if (lastSession?.task) {
+          greeting = `Welcome back! Last time we were working on "${lastSession.task}". Want to keep that momentum going, or pick something fresh?`;
+        } else {
+          greeting = "Hey! I'm Stay, sitting right here with you. What's one thing hanging over your head right now? We'll make the first move ridiculously easy.";
+        }
+
+        // Native keyterms vocabulary boosting for low-latency ADHD terminology recognition
+        try {
+          socket.send(
+            JSON.stringify({
+              type: 'UpdateConfiguration',
+              keyterms: [
+                'ADHD',
+                'executive dysfunction',
+                'body double',
+                'timebox',
+                'reframing',
+                'Stay',
+                'Oliver',
+                'Anna',
+                'Amanda',
+                'Charles',
+                'Rachel',
+                'Josh',
+                'grounding',
+                'dopamine',
+                'paralysis',
+                'procrastination',
+              ],
+            })
+          );
+        } catch {
+          // ignore if provider does not support frame
+        }
 
         socket.send(
           JSON.stringify({
@@ -980,6 +1135,16 @@ ${adaptivePrompt}`;
             session: {
               system_prompt: warmHumanPrompt,
               greeting,
+              keyterms: [
+                'ADHD',
+                'Stay',
+                'body double',
+                'timebox',
+                'grounding',
+                'dopamine',
+                'paralysis',
+                'procrastination',
+              ],
               output: {
                 type: 'audio',
                 voice: selectedVoiceRef.current || 'anna',
@@ -1102,6 +1267,9 @@ ${adaptivePrompt}`;
             if (cmd.type === 'change_voice') {
               setSelectedVoice(cmd.voiceId);
               playEarcon('chime');
+            } else if (cmd.type === 'change_language') {
+              setSelectedLanguage(cmd.langCode);
+              playEarcon('chime');
             } else if (cmd.type === 'open_voice_menu') {
               optionsRef.current.onChangeVoiceRequested?.();
             } else if (cmd.type === 'show_memory') {
@@ -1193,6 +1361,9 @@ ${adaptivePrompt}`;
               } else if (cmd.type === 'change_voice') {
                 setSelectedVoice(cmd.voiceId);
                 playEarcon('chime');
+              } else if (cmd.type === 'change_language') {
+                setSelectedLanguage(cmd.langCode);
+                playEarcon('chime');
               } else if (cmd.type === 'open_voice_menu') {
                 optionsRef.current.onChangeVoiceRequested?.();
               } else if (cmd.type === 'show_memory') {
@@ -1205,6 +1376,24 @@ ${adaptivePrompt}`;
                 optionsRef.current.onToggleQuietModeRequested?.();
               } else if (cmd.type === 'clear_chat') {
                 optionsRef.current.onClearChatRequested?.();
+              }
+            } else if (selectedLanguageRef.current === 'auto' && text.length > 3) {
+              // Real-time multilingual adaptation: If user naturally speaks another language, adapt provider instructions on the fly
+              const autoLang = detectTextLanguage(text, 'auto');
+              if (autoLang !== 'en-GB') {
+                const langMatch = SUPPORTED_LANGUAGES.find((l) => l.code === autoLang);
+                const label = langMatch ? langMatch.label : autoLang;
+                const ws = wsRef.current;
+                if (ws && ws.readyState === WebSocket.OPEN && sessionReadyRef.current) {
+                  ws.send(
+                    JSON.stringify({
+                      type: 'session.update',
+                      session: {
+                        instructions: `User is speaking in ${label} (${autoLang}). Seamlessly respond in ${label} with warm ADHD body-doubling support.`,
+                      },
+                    })
+                  );
+                }
               }
             }
 
@@ -1442,23 +1631,6 @@ ${adaptivePrompt}`;
       disconnectVoiceSession();
     };
   }, [disconnectVoiceSession]);
-
-  const setSelectedLanguage = useCallback((lang: string) => {
-    setSelectedLanguageState(lang);
-    selectedLanguageRef.current = lang;
-    if (speechRecRef.current) {
-      try {
-        speechRecRef.current.lang =
-          lang !== 'auto'
-            ? lang
-            : typeof navigator !== 'undefined' && navigator.language
-            ? navigator.language
-            : 'en-US';
-      } catch {
-        // ignore
-      }
-    }
-  }, []);
 
   return {
     visualState,

@@ -16,6 +16,7 @@ export type VoiceCommandAction =
   | { type: 'open_grounding' }
   | { type: 'change_voice'; voiceId: string }
   | { type: 'open_voice_menu' }
+  | { type: 'change_language'; langCode: string; langName: string }
   | { type: 'toggle_quiet_mode' }
   | { type: 'clear_chat' }
   | null;
@@ -83,6 +84,89 @@ export function detectVoiceCommand(text: string): VoiceCommandAction {
   }
   if (/\b(?:change voice|switch voice|voice settings|select voice|choose voice)\b/i.test(clean)) {
     return { type: 'open_voice_menu' };
+  }
+
+  // 7. Change Language ("switch to Spanish", "speak Hindi", "habla español", "parle français", "auto detect language")
+  if (/\b(?:auto\s+(?:detect\s+)?language|detect\s+language(?:\s+automatically)?|auto\s+language)\b/i.test(clean)) {
+    return { type: 'change_language', langCode: 'auto', langName: 'Auto Detect' };
+  }
+  if (/\b(?:switch\s+to\s+spanish|speak\s+(?:in\s+)?spanish|cambiar\s+a\s+español|habla\s+(?:en\s+)?español)\b/i.test(clean)) {
+    return { type: 'change_language', langCode: 'es-ES', langName: 'Spanish' };
+  }
+  if (/\b(?:switch\s+to\s+hindi|speak\s+(?:in\s+)?hindi|हिन्दी\s*में\s*बोलो|hindi\s+me\s+(?:baat\s+karo|bolo))\b/i.test(clean)) {
+    return { type: 'change_language', langCode: 'hi-IN', langName: 'Hindi' };
+  }
+  if (/\b(?:switch\s+to\s+french|speak\s+(?:in\s+)?french|parle\s+(?:en\s+)?français|changer\s+en\s+français)\b/i.test(clean)) {
+    return { type: 'change_language', langCode: 'fr-FR', langName: 'French' };
+  }
+  if (/\b(?:switch\s+to\s+german|speak\s+(?:in\s+)?german|sprich\s+deutsch|auf\s+deutsch)\b/i.test(clean)) {
+    return { type: 'change_language', langCode: 'de-DE', langName: 'German' };
+  }
+  if (/\b(?:switch\s+to\s+japanese|speak\s+(?:in\s+)?japanese|日本語で話して|nihongo)\b/i.test(clean)) {
+    return { type: 'change_language', langCode: 'ja-JP', langName: 'Japanese' };
+  }
+  if (/\b(?:switch\s+to\s+chinese|speak\s+(?:in\s+)?chinese|说中文|普通话)\b/i.test(clean)) {
+    return { type: 'change_language', langCode: 'zh-CN', langName: 'Chinese' };
+  }
+  if (/\b(?:switch\s+to\s+italian|speak\s+(?:in\s+)?italian|parla\s+italiano)\b/i.test(clean)) {
+    return { type: 'change_language', langCode: 'it-IT', langName: 'Italian' };
+  }
+  if (/\b(?:switch\s+to\s+portuguese|speak\s+(?:in\s+)?portuguese|fale\s+português)\b/i.test(clean)) {
+    return { type: 'change_language', langCode: 'pt-PT', langName: 'Portuguese' };
+  }
+  if (/\b(?:switch\s+to\s+russian|speak\s+(?:in\s+)?russian|говори\s+по-русски)\b/i.test(clean)) {
+    return { type: 'change_language', langCode: 'ru-RU', langName: 'Russian' };
+  }
+  if (/\b(?:switch\s+to\s+arabic|speak\s+(?:in\s+)?arabic|تكلم\s+بالعربية)\b/i.test(clean)) {
+    return { type: 'change_language', langCode: 'ar-SA', langName: 'Arabic' };
+  }
+  if (/\b(?:switch\s+to\s+korean|speak\s+(?:in\s+)?korean|한국어로\s*말해줘)\b/i.test(clean)) {
+    return { type: 'change_language', langCode: 'ko-KR', langName: 'Korean' };
+  }
+  if (/\b(?:switch\s+to\s+english|speak\s+(?:in\s+)?english|default\s+language)\b/i.test(clean)) {
+    return { type: 'change_language', langCode: 'en-GB', langName: 'English' };
+  }
+  const generalLangMatch = clean.match(/\b(?:switch|change|set)\s+(?:the\s+)?language\s+(?:to\s+)?([a-z]+)\b/i);
+  if (generalLangMatch && generalLangMatch[1]) {
+    const raw = generalLangMatch[1].toLowerCase();
+    const map: Record<string, [string, string]> = {
+      spanish: ['es-ES', 'Spanish'],
+      hindi: ['hi-IN', 'Hindi'],
+      french: ['fr-FR', 'French'],
+      german: ['de-DE', 'German'],
+      italian: ['it-IT', 'Italian'],
+      portuguese: ['pt-PT', 'Portuguese'],
+      japanese: ['ja-JP', 'Japanese'],
+      chinese: ['zh-CN', 'Chinese'],
+      korean: ['ko-KR', 'Korean'],
+      dutch: ['nl-NL', 'Dutch'],
+      russian: ['ru-RU', 'Russian'],
+      turkish: ['tr-TR', 'Turkish'],
+      polish: ['pl-PL', 'Polish'],
+      arabic: ['ar-SA', 'Arabic'],
+      swedish: ['sv-SE', 'Swedish'],
+      norwegian: ['no-NO', 'Norwegian'],
+      danish: ['da-DK', 'Danish'],
+      finnish: ['fi-FI', 'Finnish'],
+      greek: ['el-GR', 'Greek'],
+      czech: ['cs-CZ', 'Czech'],
+      romanian: ['ro-RO', 'Romanian'],
+      hungarian: ['hu-HU', 'Hungarian'],
+      ukrainian: ['uk-UA', 'Ukrainian'],
+      vietnamese: ['vi-VN', 'Vietnamese'],
+      thai: ['th-TH', 'Thai'],
+      indonesian: ['id-ID', 'Indonesian'],
+      malay: ['ms-MY', 'Malay'],
+      hebrew: ['he-IL', 'Hebrew'],
+      bengali: ['bn-BD', 'Bengali'],
+      tamil: ['ta-IN', 'Tamil'],
+      telugu: ['te-IN', 'Telugu'],
+      english: ['en-GB', 'English'],
+      auto: ['auto', 'Auto Detect'],
+    };
+    if (map[raw]) {
+      return { type: 'change_language', langCode: map[raw][0], langName: map[raw][1] };
+    }
   }
 
   // 7. Toggle Quiet Mode ("quiet mode", "turn on quiet mode", "text only mode")
