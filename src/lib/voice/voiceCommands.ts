@@ -14,6 +14,10 @@ export type VoiceCommandAction =
   | { type: 'show_memory' }
   | { type: 'show_history' }
   | { type: 'open_grounding' }
+  | { type: 'open_training' }
+  | { type: 'close_modals' }
+  | { type: 'switch_view'; mode: 'orb' | 'grid' }
+  | { type: 'navigate'; path: string; label: string }
   | { type: 'change_voice'; voiceId: string }
   | { type: 'open_voice_menu' }
   | { type: 'change_language'; langCode: string; langName: string }
@@ -49,18 +53,18 @@ export function detectVoiceCommand(text: string): VoiceCommandAction {
     return { type: 'resume_listening' };
   }
 
-  // 3. Show Memory ("show me the memory", "open memory", "what do you remember about me")
+  // 3. Show Memory ("show me memory", "show me the memory", "open memory", "what do you remember about me")
   if (
-    /\b(?:show\s+(?:me\s+)?(?:the\s+|my\s+)?memory|open\s+(?:the\s+|my\s+)?memory|view\s+memory|what\s+do\s+you\s+remember(?:\s+about\s+me)?|inspect\s+memory)\b/i.test(
+    /\b(?:(?:show|open|view|inspect)\s+(?:me\s+)?(?:the\s+|my\s+|your\s+)?(?:cognitive\s+)?memories|(?:show|open|view|inspect)\s+(?:me\s+)?(?:the\s+|my\s+|your\s+)?(?:cognitive\s+)?memory|what\s+do\s+you\s+(?:remember|know)(?:\s+about\s+me)?|memory\s+panel)\b/i.test(
       clean
     )
   ) {
     return { type: 'show_memory' };
   }
 
-  // 4. Show History / Chat ("show history", "open history", "show chat history", "past sessions", "recent tasks")
+  // 4. Show History / Chat ("show history", "show me chat history", "open history", "past sessions", "recent tasks")
   if (
-    /\b(?:show\s+(?:chat\s+)?history|open\s+(?:chat\s+)?history|view\s+history|past\s+sessions|recent\s+tasks|show\s+sessions)\b/i.test(
+    /\b(?:(?:show|open|view|inspect)\s+(?:me\s+)?(?:the\s+|my\s+)?(?:chat\s+|session\s+|conversation\s+)?history|chat\s+history|session\s+history|past\s+sessions|recent\s+tasks|show\s+sessions)\b/i.test(
       clean
     )
   ) {
@@ -69,11 +73,71 @@ export function detectVoiceCommand(text: string): VoiceCommandAction {
 
   // 5. Grounding / Somatic ("stay ground me", "open grounding", "help me breathe", "box breathing", "calm down")
   if (
-    /\b(?:(?:stay\s+)?ground\s+me|open\s+grounding|help\s+me\s+breathe|box\s+breathing|take\s+a\s+breath|calm\s+down)\b/i.test(
+    /\b(?:(?:stay\s+)?ground\s+me|open\s+grounding|help\s+me\s+breathe|box\s+breathing|take\s+a\s+breath|calm\s+down|somatic\s+grounding|therapeutic\s+breathing)\b/i.test(
       clean
     )
   ) {
     return { type: 'open_grounding' };
+  }
+
+  // 5b. Open Self-Improvement / Model Training ("open model", "show training", "calibrate stay")
+  if (
+    /\b(?:(?:open|show|view)\s+(?:the\s+|my\s+)?(?:model|training|calibration)(?:\s+training)?|self\s+improvement|model\s+settings|calibrate\s+stay)\b/i.test(
+      clean
+    )
+  ) {
+    return { type: 'open_training' };
+  }
+
+  // 5c. Close Modals ("close panel", "close modal", "close memory", "close history", "dismiss")
+  if (
+    /\b(?:close\s+(?:the\s+)?(?:panel|modal|window|memory|history|grounding|model|menu)|hide\s+panel|dismiss\s+modal)\b/i.test(
+      clean
+    )
+  ) {
+    return { type: 'close_modals' };
+  }
+
+  // 5d. Switch View ("switch to grid", "grid view", "workspace view", "switch to orb", "living orb", "orb view")
+  if (/\b(?:(?:switch|go|change)\s+to\s+(?:grid|workspace)(?:\s+(?:view|mode))?|grid\s+(?:view|mode)|workspace\s+(?:view|mode))\b/i.test(clean)) {
+    return { type: 'switch_view', mode: 'grid' };
+  }
+  if (/\b(?:(?:switch|go|change)\s+to\s+(?:living\s+)?orb(?:\s+(?:view|mode))?|orb\s+(?:view|mode)|living\s+orb)\b/i.test(clean)) {
+    return { type: 'switch_view', mode: 'orb' };
+  }
+
+  // 5e. Full Voice Navigation ("go to settings", "go to reports", "go to treatment", "go to demo", "go to history page")
+  if (/\b(?:(?:go|navigate|take\s+me)\s+to\s+(?:the\s+)?settings(?:\s+page)?|open\s+settings(?:\s+page)?)\b/i.test(clean)) {
+    return { type: 'navigate', path: '/app/settings', label: 'Settings' };
+  }
+  if (
+    /\b(?:(?:go|navigate|take\s+me)\s+to\s+(?:the\s+)?(?:clinician\s+|clinical\s+)?reports?(?:\s+page)?|open\s+(?:the\s+)?(?:clinician\s+|clinical\s+|pdf\s+)?reports?(?:\s+page)?|show\s+(?:me\s+)?(?:the\s+)?(?:clinician|clinical)\s+reports?)\b/i.test(
+      clean
+    )
+  ) {
+    return { type: 'navigate', path: '/app/reports', label: 'Clinician Report' };
+  }
+  if (
+    /\b(?:(?:go|navigate|take\s+me)\s+to\s+(?:the\s+)?(?:treatment|check-in|checkin)(?:\s+page)?|open\s+(?:the\s+)?(?:treatment|check-in|checkin)(?:\s+page)?|daily\s+check-in)\b/i.test(
+      clean
+    )
+  ) {
+    return { type: 'navigate', path: '/app/treatment', label: 'Treatment Context' };
+  }
+  if (/\b(?:(?:go|navigate|take\s+me)\s+to\s+(?:the\s+)?history(?:\s+page)?|open\s+history\s+page)\b/i.test(clean)) {
+    return { type: 'navigate', path: '/app/history', label: 'Session History' };
+  }
+  if (/\b(?:(?:go|navigate|take\s+me)\s+to\s+(?:the\s+)?today(?:\s+page)?|open\s+today(?:\s+page)?)\b/i.test(clean)) {
+    return { type: 'navigate', path: '/app/today', label: 'Today' };
+  }
+  if (/\b(?:(?:go|navigate|take\s+me)\s+to\s+(?:the\s+)?(?:orb\s+)?diagnostic|open\s+(?:orb\s+)?diagnostic)\b/i.test(clean)) {
+    return { type: 'navigate', path: '/demo/orb-diagnostic', label: 'Orb Diagnostic' };
+  }
+  if (/\b(?:(?:go|navigate|take\s+me)\s+to\s+(?:the\s+)?demo(?:\s+page)?|open\s+demo(?:\s+page)?)\b/i.test(clean)) {
+    return { type: 'navigate', path: '/demo', label: 'Demo' };
+  }
+  if (/\b(?:(?:go|navigate|take\s+me)\s+(?:to\s+)?home(?:\s+page)?|landing\s+page)\b/i.test(clean)) {
+    return { type: 'navigate', path: '/', label: 'Home' };
   }
 
   // 6. Change Voice ("change voice to oliver", "switch to male voice", "change voice to anna", "switch voice")

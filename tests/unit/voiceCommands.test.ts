@@ -38,10 +38,55 @@ describe('Hands-Free Voice Command Parser', () => {
 
   it('detects memory and history inspection commands', () => {
     expect(parseVoiceCommand('Show me the memory')).toEqual({ type: 'show_memory' });
+    expect(parseVoiceCommand('show me memory')).toEqual({ type: 'show_memory' });
     expect(parseVoiceCommand('open memory')).toEqual({ type: 'show_memory' });
     expect(parseVoiceCommand('what do you remember about me')).toEqual({ type: 'show_memory' });
     expect(parseVoiceCommand('Show history')).toEqual({ type: 'show_history' });
+    expect(parseVoiceCommand('show me chat history')).toEqual({ type: 'show_history' });
     expect(parseVoiceCommand('open chat history')).toEqual({ type: 'show_history' });
+    expect(parseVoiceCommand('chat history')).toEqual({ type: 'show_history' });
+  });
+
+  it('detects navigation, modal close, training, and view switching commands', () => {
+    expect(parseVoiceCommand('go to settings')).toEqual({
+      type: 'navigate',
+      path: '/app/settings',
+      label: 'Settings',
+    });
+    expect(parseVoiceCommand('open clinical report')).toEqual({
+      type: 'navigate',
+      path: '/app/reports',
+      label: 'Clinician Report',
+    });
+    expect(parseVoiceCommand('take me to treatment page')).toEqual({
+      type: 'navigate',
+      path: '/app/treatment',
+      label: 'Treatment Context',
+    });
+    expect(parseVoiceCommand('go to history page')).toEqual({
+      type: 'navigate',
+      path: '/app/history',
+      label: 'Session History',
+    });
+    expect(parseVoiceCommand('open orb diagnostic')).toEqual({
+      type: 'navigate',
+      path: '/demo/orb-diagnostic',
+      label: 'Orb Diagnostic',
+    });
+    expect(parseVoiceCommand('switch to grid view')).toEqual({
+      type: 'switch_view',
+      mode: 'grid',
+    });
+    expect(parseVoiceCommand('switch to orb mode')).toEqual({
+      type: 'switch_view',
+      mode: 'orb',
+    });
+    expect(parseVoiceCommand('open model training')).toEqual({
+      type: 'open_training',
+    });
+    expect(parseVoiceCommand('close panel')).toEqual({
+      type: 'close_modals',
+    });
   });
 
   it('detects grounding, voice switching, quiet mode, and clear chat commands', () => {

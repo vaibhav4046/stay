@@ -4,7 +4,8 @@ import { useMemo, useState } from 'react';
 import { Signal } from '@/components/Signal';
 import type { CoachPlanProposal, SessionOutcome, BarrierType } from '@/types/domain';
 import { BARRIER_DEFINITIONS } from '@/lib/coach/strategies';
-import type { UseVoiceAgentReturn } from '@/lib/voice/useVoiceAgent';
+import { detectTopicShape, TOPIC_SHAPE_LABELS, type UseVoiceAgentReturn } from '@/lib/voice/useVoiceAgent';
+import { detectVoiceCommand } from '@/lib/voice/voiceCommands';
 import {
   calculateTaskReality,
   brainstormStarterAngles,
@@ -290,11 +291,21 @@ export function OrbCompanionView({
           </div>
         </button>
 
-        {/* Status text subtitle */}
-        <div className="mt-4 text-center">
+        {/* Status text subtitle & Morph Resonance Pill */}
+        <div className="mt-4 text-center flex flex-col items-center gap-1.5">
+          {voice.topicShape > 0 && TOPIC_SHAPE_LABELS[voice.topicShape] && (
+            <span
+              data-testid="orb-morph-badge"
+              data-topic-shape={voice.topicShape}
+              className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 border border-accent/25 px-3 py-0.5 text-xs font-medium text-accent animate-fadeIn"
+            >
+              <span>{TOPIC_SHAPE_LABELS[voice.topicShape].icon}</span>
+              <span>{TOPIC_SHAPE_LABELS[voice.topicShape].label}</span>
+            </span>
+          )}
           <p className="text-sm font-medium text-ink transition-colors">{getStatusText()}</p>
-          <p className="text-[0.78rem] text-ink-3 mt-1">
-            Voice commands: &ldquo;Stay pause&rdquo; · &ldquo;Hey Stay&rdquo; · &ldquo;Start 20m&rdquo; · &ldquo;Show history&rdquo; · &ldquo;Change voice&rdquo;
+          <p className="text-[0.78rem] text-ink-3">
+            Voice commands: &ldquo;Show me memory&rdquo; · &ldquo;Show chat history&rdquo; · &ldquo;Go to settings&rdquo; · &ldquo;Start 20m&rdquo; · &ldquo;Change voice&rdquo;
           </p>
         </div>
 
@@ -511,10 +522,13 @@ export function OrbCompanionView({
             const clean = typedMessage.trim();
             if (!clean) return;
             setTypedMessage('');
-            if (onTaskSubmit) {
-              onTaskSubmit(clean);
-            } else {
-              onTaskTextChange(clean);
+            const cmd = detectVoiceCommand(clean);
+            if (!cmd) {
+              if (onTaskSubmit) {
+                onTaskSubmit(clean);
+              } else {
+                onTaskTextChange(clean);
+              }
             }
             voice.sendUserTextMessage(clean);
           }}
@@ -549,7 +563,16 @@ export function OrbCompanionView({
                 : 'Type task or press Spacebar to talk...'
             }
             value={typedMessage}
-            onChange={(e) => setTypedMessage(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value;
+              setTypedMessage(val);
+              if (val.trim().length > 2) {
+                const shape = detectTopicShape(val);
+                if (shape > 0) {
+                  voice.setTopicShape(shape);
+                }
+              }
+            }}
           />
 
           <button

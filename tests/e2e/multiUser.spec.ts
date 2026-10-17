@@ -360,4 +360,55 @@ test.describe('Stay — Multi-User Concurrency, Executive Engine & Session Isola
     await page.getByTestId('start-halo-timer').click();
     await expect(page.getByRole('button', { name: 'Log Done' })).toBeVisible();
   });
+
+  test('AGI Voice Commands & Topic-Reactive Orb Morphing: memory, chat history, close panel, live shape morphing (ice cream, therapeutic, letters), and route navigation', async ({
+    page,
+  }) => {
+    await page.goto('/app/today');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+
+    await page.getByTestId('care-self_managing').click();
+    await page.getByTestId('onboarding-ack').click();
+    await page.getByTestId('onboarding-done').click();
+
+    const input = page.getByTestId('task-input');
+
+    // 1. Live Topic Shape Morphing on typing ("ice cream" -> Mode 1 Reward Swirl)
+    await input.fill('I want some ice cream as a reward');
+    await expect(page.getByTestId('orb-morph-badge')).toHaveAttribute('data-topic-shape', '1');
+    await expect(page.getByTestId('orb-morph-badge')).toContainText('Reward Swirl');
+
+    // 2. Live Topic Shape Morphing ("therapeutic calm" -> Mode 4 Therapeutic Lotus Calm)
+    await input.fill('Give me a therapeutic calm breathing moment');
+    await expect(page.getByTestId('orb-morph-badge')).toHaveAttribute('data-topic-shape', '4');
+    await expect(page.getByTestId('orb-morph-badge')).toContainText('Therapeutic Lotus Calm');
+
+    // 3. Live Topic Shape Morphing ("write letters" -> Mode 2 Crystalline Letterforms)
+    await input.fill('Write letters and tax paperwork');
+    await expect(page.getByTestId('orb-morph-badge')).toHaveAttribute('data-topic-shape', '2');
+    await expect(page.getByTestId('orb-morph-badge')).toContainText('Crystalline Letterforms');
+
+    // 4. Voice Command: "show me memory" opens Cognitive Memory panel WITHOUT triggering task decomposition
+    await input.fill('show me memory');
+    await input.press('Enter');
+    await expect(page.locator('body')).toContainText('Voice command: Displaying user memory');
+    await expect(page.getByTestId('orb-first-step')).toHaveCount(0);
+
+    // 5. Voice Command: "close panel" closes open modals
+    await input.fill('close panel');
+    await input.press('Enter');
+    await expect(page.locator('body')).toContainText('Voice command: Closed panels');
+
+    // 6. Voice Command: "show me chat history" opens Session History modal
+    await input.fill('show me chat history');
+    await input.press('Enter');
+    await expect(page.locator('body')).toContainText('Voice command: Displaying session history');
+
+    // 7. Voice Command: "go to settings" navigates to /app/settings
+    await page.keyboard.press('Escape');
+    await input.fill('go to settings');
+    await input.press('Enter');
+    await expect(page).toHaveURL(/\/app\/settings/);
+  });
 });

@@ -53,6 +53,10 @@ export interface UseVoiceAgentOptions {
   onVoiceCommandDetected?: (command: VoiceCommandAction) => void;
   onShowMemoryRequested?: () => void;
   onShowHistoryRequested?: () => void;
+  onOpenTrainingRequested?: () => void;
+  onCloseModalsRequested?: () => void;
+  onSwitchViewRequested?: (mode: 'orb' | 'grid') => void;
+  onNavigateRequested?: (path: string, label: string) => void;
   onGroundingRequested?: () => void;
   onChangeVoiceRequested?: (voiceId?: string) => void;
   onToggleQuietModeRequested?: () => void;
@@ -76,10 +80,18 @@ export const AVAILABLE_VOICES: AvailableVoice[] = [
   { id: 'josh', name: 'Josh', gender: 'male', accent: 'American', description: 'Crisp, attentive American male voice' },
 ];
 
+export const TOPIC_SHAPE_LABELS: Record<number, { icon: string; label: string }> = {
+  0: { icon: '🌊', label: 'Fluid Resonance' },
+  1: { icon: '🍦', label: 'Reward Swirl' },
+  2: { icon: '✒️', label: 'Crystalline Letterforms' },
+  3: { icon: '🎨', label: 'Creative Ribbon' },
+  4: { icon: '🪷', label: 'Therapeutic Lotus Calm' },
+};
+
 export function detectTopicShape(text: string): number {
   const clean = text.toLowerCase();
-  // 1. Calming Concentric Ripples / Somatic Grounding / Breathing / Overwhelm (Mode 4)
-  if (/\b(?:breath|breathe|breathing|calm|ground|grounding|overwhelm(?:ed|ing)?|anxious|anxiety|panic|relax|slow|meditate|meditation|peace|rest)\b/i.test(clean)) {
+  // 1. Calming Concentric Ripples / Somatic Grounding / Breathing / Therapeutic / Overwhelm (Mode 4)
+  if (/\b(?:breath|breathe|breathing|calm|calming|therapeutic|therapy|soothe|soothing|gentle|zen|mindful|mindfulness|serene|ground|grounding|overwhelm(?:ed|ing)?|anxious|anxiety|panic|relax|slow|meditate|meditation|peace|rest)\b/i.test(clean)) {
     return 4;
   }
   // 2. Dual Fluid Spiral Ribbons / Creative / Music / Brainstorming / Art (Mode 3)
@@ -91,7 +103,7 @@ export function detectTopicShape(text: string): number {
     return 1;
   }
   // 4. Structured Geometric Facets / Letters / Writing / Docs / Taxes / Code / Paperwork (Mode 2)
-  if (/\b(?:letter|email|write|writing|doc|document|form|tax|taxes|paper|paperwork|report|text|code|coding|draft|essay|spreadsheet|work|file)\b/i.test(clean)) {
+  if (/\b(?:letter|letters|alphabet|word|words|email|write|writing|doc|document|form|tax|taxes|paper|paperwork|report|text|code|coding|draft|essay|spreadsheet|work|file)\b/i.test(clean)) {
     return 2;
   }
   return 0; // Standard organic liquid wave
@@ -780,38 +792,82 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       const cmd = detectVoiceCommand(clean);
       if (cmd) {
         optionsRef.current.onVoiceCommandDetected?.(cmd);
+        setTranscripts((prev) => [
+          ...prev,
+          {
+            id: `msg-${Date.now()}`,
+            role: 'user',
+            text: clean,
+            timestamp: new Date().toISOString(),
+          },
+        ]);
         if (cmd.type === 'pause_listening') {
           handsFreePausedRef.current = true;
           setIsHandsFreePaused(true);
           setVisualState('idle');
           playEarcon('pause');
+          return true;
         } else if (cmd.type === 'resume_listening') {
           handsFreePausedRef.current = false;
           setIsHandsFreePaused(false);
           setVisualState('listening');
           playEarcon('resume');
+          return true;
         } else if (cmd.type === 'start_timer') {
           optionsRef.current.onStartTimerRequested?.(cmd.minutes, clean);
           playEarcon('chime');
+          return true;
+        } else if (cmd.type === 'stop_timer') {
+          playEarcon('pause');
+          return true;
         } else if (cmd.type === 'record_outcome') {
           optionsRef.current.onOutcomeRecorded?.(cmd.outcome);
           playEarcon('chime');
+          return true;
         } else if (cmd.type === 'change_voice') {
           setSelectedVoice(cmd.voiceId);
           playEarcon('chime');
+          return true;
         } else if (cmd.type === 'change_language') {
           setSelectedLanguage(cmd.langCode);
           playEarcon('chime');
+          return true;
         } else if (cmd.type === 'open_voice_menu') {
           optionsRef.current.onChangeVoiceRequested?.();
+          playEarcon('chime');
+          return true;
         } else if (cmd.type === 'show_memory') {
           optionsRef.current.onShowMemoryRequested?.();
+          playEarcon('chime');
+          return true;
         } else if (cmd.type === 'show_history') {
           optionsRef.current.onShowHistoryRequested?.();
+          playEarcon('chime');
+          return true;
+        } else if (cmd.type === 'open_training') {
+          optionsRef.current.onOpenTrainingRequested?.();
+          playEarcon('chime');
+          return true;
+        } else if (cmd.type === 'close_modals') {
+          optionsRef.current.onCloseModalsRequested?.();
+          playEarcon('pause');
+          return true;
+        } else if (cmd.type === 'switch_view') {
+          optionsRef.current.onSwitchViewRequested?.(cmd.mode);
+          playEarcon('chime');
+          return true;
+        } else if (cmd.type === 'navigate') {
+          optionsRef.current.onNavigateRequested?.(cmd.path, cmd.label);
+          playEarcon('chime');
+          return true;
         } else if (cmd.type === 'open_grounding') {
           optionsRef.current.onGroundingRequested?.();
+          playEarcon('chime');
+          return true;
         } else if (cmd.type === 'toggle_quiet_mode') {
           optionsRef.current.onToggleQuietModeRequested?.();
+          playEarcon('chime');
+          return true;
         } else if (cmd.type === 'calculate_time') {
           playEarcon('chime');
           const calculation = calculateTaskReality(clean);
@@ -860,6 +916,8 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           return true;
         } else if (cmd.type === 'clear_chat') {
           optionsRef.current.onClearChatRequested?.();
+          setTranscripts([]);
+          return true;
         }
       }
 
@@ -1459,12 +1517,21 @@ ${adaptivePrompt}`;
               optionsRef.current.onShowMemoryRequested?.();
             } else if (cmd.type === 'show_history') {
               optionsRef.current.onShowHistoryRequested?.();
+            } else if (cmd.type === 'open_training') {
+              optionsRef.current.onOpenTrainingRequested?.();
+            } else if (cmd.type === 'close_modals') {
+              optionsRef.current.onCloseModalsRequested?.();
+            } else if (cmd.type === 'switch_view') {
+              optionsRef.current.onSwitchViewRequested?.(cmd.mode);
+            } else if (cmd.type === 'navigate') {
+              optionsRef.current.onNavigateRequested?.(cmd.path, cmd.label);
             } else if (cmd.type === 'open_grounding') {
               optionsRef.current.onGroundingRequested?.();
             } else if (cmd.type === 'toggle_quiet_mode') {
               optionsRef.current.onToggleQuietModeRequested?.();
             } else if (cmd.type === 'clear_chat') {
               optionsRef.current.onClearChatRequested?.();
+              setTranscripts([]);
             }
           }
 
@@ -1538,25 +1605,58 @@ ${adaptivePrompt}`;
               if (cmd.type === 'start_timer') {
                 optionsRef.current.onStartTimerRequested?.(cmd.minutes, text);
                 playEarcon('chime');
+                return;
+              } else if (cmd.type === 'stop_timer') {
+                playEarcon('pause');
+                return;
               } else if (cmd.type === 'record_outcome') {
                 optionsRef.current.onOutcomeRecorded?.(cmd.outcome);
                 playEarcon('chime');
+                return;
               } else if (cmd.type === 'change_voice') {
                 setSelectedVoice(cmd.voiceId);
                 playEarcon('chime');
+                return;
               } else if (cmd.type === 'change_language') {
                 setSelectedLanguage(cmd.langCode);
                 playEarcon('chime');
+                return;
               } else if (cmd.type === 'open_voice_menu') {
                 optionsRef.current.onChangeVoiceRequested?.();
+                playEarcon('chime');
+                return;
               } else if (cmd.type === 'show_memory') {
                 optionsRef.current.onShowMemoryRequested?.();
+                playEarcon('chime');
+                return;
               } else if (cmd.type === 'show_history') {
                 optionsRef.current.onShowHistoryRequested?.();
+                playEarcon('chime');
+                return;
+              } else if (cmd.type === 'open_training') {
+                optionsRef.current.onOpenTrainingRequested?.();
+                playEarcon('chime');
+                return;
+              } else if (cmd.type === 'close_modals') {
+                optionsRef.current.onCloseModalsRequested?.();
+                playEarcon('pause');
+                return;
+              } else if (cmd.type === 'switch_view') {
+                optionsRef.current.onSwitchViewRequested?.(cmd.mode);
+                playEarcon('chime');
+                return;
+              } else if (cmd.type === 'navigate') {
+                optionsRef.current.onNavigateRequested?.(cmd.path, cmd.label);
+                playEarcon('chime');
+                return;
               } else if (cmd.type === 'open_grounding') {
                 optionsRef.current.onGroundingRequested?.();
+                playEarcon('chime');
+                return;
               } else if (cmd.type === 'toggle_quiet_mode') {
                 optionsRef.current.onToggleQuietModeRequested?.();
+                playEarcon('chime');
+                return;
               } else if (cmd.type === 'calculate_time') {
                 playEarcon('chime');
                 const calculation = calculateTaskReality(text);
@@ -1605,6 +1705,8 @@ ${adaptivePrompt}`;
                 return;
               } else if (cmd.type === 'clear_chat') {
                 optionsRef.current.onClearChatRequested?.();
+                setTranscripts([]);
+                return;
               }
             } else if (selectedLanguageRef.current === 'auto' && text.length > 3) {
               // Real-time multilingual adaptation: If user naturally speaks another language, adapt provider instructions on the fly

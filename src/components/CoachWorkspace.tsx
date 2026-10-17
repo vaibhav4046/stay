@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import type {
   BarrierType,
   CareContext,
@@ -59,10 +60,8 @@ function formatClock(totalSeconds: number) {
 function softChime() {
   try {
     const ctx = new AudioContext();
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.type = 'sine';
-    o.frequency.value = 660;
+    const o = new OscillatorNode(ctx, { type: 'sine', frequency: 660 });
+    const g = new GainNode(ctx);
     g.gain.setValueAtTime(0.0001, ctx.currentTime);
     g.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + 0.05);
     g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.2);
@@ -92,6 +91,7 @@ export function CoachWorkspace({
   onLogSession: (rec: Omit<CoachSessionRecord, 'id' | 'userId' | 'createdAt'>) => Promise<unknown>;
   isDemo: boolean;
 }) {
+  const router = useRouter();
   const { openCrisisPanel } = useCrisisPanel();
   const [step, setStep] = useState<Step>('capture');
   const [taskText, setTaskText] = useState('');
@@ -220,6 +220,27 @@ export function CoachWorkspace({
       setShowHistoryModal(true);
       setActionReceipt('Voice command: Displaying session history');
     },
+    onOpenTrainingRequested: () => {
+      setShowTrainingPanel(true);
+      setActionReceipt('Voice command: Opening adaptive model training');
+    },
+    onCloseModalsRequested: () => {
+      setShowMemoryPanel(false);
+      setShowHistoryModal(false);
+      setShowTrainingPanel(false);
+      setShowVoiceModal(false);
+      setShowGroundingPanel(false);
+      setShowAuthModal(false);
+      setActionReceipt('Voice command: Closed panels');
+    },
+    onSwitchViewRequested: (mode) => {
+      setViewMode(mode);
+      setActionReceipt(`Voice command: Switched to ${mode === 'orb' ? 'Living Orb' : 'Grid'} view`);
+    },
+    onNavigateRequested: (path, label) => {
+      setActionReceipt(`Voice command: Navigating to ${label}`);
+      router.push(path);
+    },
     onGroundingRequested: () => {
       setShowGroundingPanel(true);
       setActionReceipt('Voice command: Starting grounding session');
@@ -263,12 +284,31 @@ export function CoachWorkspace({
       } else if (cmd.type === 'show_history') {
         setShowHistoryModal(true);
         setActionReceipt('Voice command: Displaying session history');
+      } else if (cmd.type === 'open_training') {
+        setShowTrainingPanel(true);
+        setActionReceipt('Voice command: Opening adaptive model training');
+      } else if (cmd.type === 'close_modals') {
+        setShowMemoryPanel(false);
+        setShowHistoryModal(false);
+        setShowTrainingPanel(false);
+        setShowVoiceModal(false);
+        setShowGroundingPanel(false);
+        setShowAuthModal(false);
+        setActionReceipt('Voice command: Closed panels');
+      } else if (cmd.type === 'switch_view') {
+        setViewMode(cmd.mode);
+        setActionReceipt(`Voice command: Switched to ${cmd.mode === 'orb' ? 'Living Orb' : 'Grid'} view`);
+      } else if (cmd.type === 'navigate') {
+        setActionReceipt(`Voice command: Navigating to ${cmd.label}`);
       } else if (cmd.type === 'open_grounding') {
         setShowGroundingPanel(true);
         setActionReceipt('Voice command: Starting grounding session');
       } else if (cmd.type === 'change_voice') {
         voice.setSelectedVoice(cmd.voiceId);
         setActionReceipt(`Voice command: Switched voice to ${cmd.voiceId}`);
+      } else if (cmd.type === 'change_language') {
+        voice.setSelectedLanguage(cmd.langCode);
+        setActionReceipt(`Voice command: Language set to ${cmd.langCode}`);
       } else if (cmd.type === 'open_voice_menu') {
         setShowVoiceModal(true);
         setActionReceipt('Voice command: Opening voice persona selector');

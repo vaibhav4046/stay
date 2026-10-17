@@ -24,11 +24,13 @@ describe('Topic Shape Classifier', () => {
     expect(detectTopicShape('Playing my guitar')).toBe(3);
   });
 
-  it('detects breathing, somatic grounding, and overwhelm as shape 4 (concentric calming ripples)', () => {
+  it('detects breathing, somatic grounding, therapeutic, and overwhelm as shape 4 (concentric calming ripples)', () => {
     expect(detectTopicShape('Help me breathe, I feel anxious')).toBe(4);
     expect(detectTopicShape('I am completely overwhelmed right now')).toBe(4);
     expect(detectTopicShape('Let us meditate and calm down')).toBe(4);
     expect(detectTopicShape('Somatic ground me')).toBe(4);
+    expect(detectTopicShape('Make it feel therapeutic and soothing')).toBe(4);
+    expect(detectTopicShape('Gentle zen mindfulness')).toBe(4);
   });
 
   it('defaults to 0 (organic fluid wave) for neutral or unclassified speech', () => {
