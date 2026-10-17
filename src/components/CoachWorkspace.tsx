@@ -483,6 +483,12 @@ export function CoachWorkspace({
             }
             void requestPlan(null, undefined, t);
           }}
+          onSelectFirstStep={(newStep, angleName) => {
+            if (plan) {
+              setPlan({ ...plan, firstStep: newStep });
+              setActionReceipt(`Selected starter angle: ${angleName}`);
+            }
+          }}
           plan={plan}
           running={running}
           remaining={remaining}

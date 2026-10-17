@@ -1,16 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Signal } from '@/components/Signal';
 import type { CoachPlanProposal, SessionOutcome, BarrierType } from '@/types/domain';
 import { BARRIER_DEFINITIONS } from '@/lib/coach/strategies';
 import type { UseVoiceAgentReturn } from '@/lib/voice/useVoiceAgent';
+import {
+  calculateTaskReality,
+  brainstormStarterAngles,
+  synthesizeTaskPath,
+} from '@/lib/coach/executiveEngine';
 
 interface OrbCompanionViewProps {
   voice: UseVoiceAgentReturn;
   taskText: string;
   onTaskTextChange: (t: string) => void;
   onTaskSubmit?: (t: string) => void;
+  onSelectFirstStep?: (newStep: string, angleName: string) => void;
   plan: CoachPlanProposal | null;
   running: boolean;
   remaining: number;
@@ -43,6 +49,7 @@ export function OrbCompanionView({
   taskText,
   onTaskTextChange,
   onTaskSubmit,
+  onSelectFirstStep,
   plan,
   running,
   remaining,
@@ -65,6 +72,10 @@ export function OrbCompanionView({
 }: OrbCompanionViewProps) {
   const [typedMessage, setTypedMessage] = useState('');
   const [showOutcomeDialog, setShowOutcomeDialog] = useState(false);
+  const [orbExecTab, setOrbExecTab] = useState<'reality' | 'brainstorm' | 'path' | null>('reality');
+  const execReality = useMemo(() => calculateTaskReality(plan?.taskText || taskText || 'Current task'), [plan?.taskText, taskText]);
+  const execBrainstorm = useMemo(() => brainstormStarterAngles(plan?.taskText || taskText || 'Current task'), [plan?.taskText, taskText]);
+  const execPath = useMemo(() => synthesizeTaskPath(plan?.taskText || taskText || 'Current task'), [plan?.taskText, taskText]);
 
   const currentLang =
     voice.supportedLanguages.find((l) => l.code === voice.selectedLanguage) ||
@@ -327,9 +338,85 @@ export function OrbCompanionView({
               <span className="text-xs font-mono text-ink-3">{timerMinutes}m sprint</span>
             </div>
 
-            <p className="mt-2 text-[0.95rem] font-medium text-ink leading-snug">
+            <p className="mt-2 text-[0.95rem] font-medium text-ink leading-snug" data-testid="orb-first-step">
               {plan.firstStep}
             </p>
+
+            {/* Compact Executive Engine Pills (Calculate · Brainstorm · Path) */}
+            <div className="mt-3 flex flex-wrap gap-1.5 border-t border-line pt-3">
+              <button
+                type="button"
+                onClick={() => setOrbExecTab(orbExecTab === 'reality' ? null : 'reality')}
+                aria-pressed={orbExecTab === 'reality'}
+                className="chip text-[0.72rem] py-0.5 px-2"
+                data-testid="orb-exec-reality"
+              >
+                ⏱️ Reality (~{execReality.perceivedMinutes}m → {execReality.microEntrySeconds}s)
+              </button>
+              <button
+                type="button"
+                onClick={() => setOrbExecTab(orbExecTab === 'brainstorm' ? null : 'brainstorm')}
+                aria-pressed={orbExecTab === 'brainstorm'}
+                className="chip text-[0.72rem] py-0.5 px-2"
+                data-testid="orb-exec-brainstorm"
+              >
+                💡 3 Angles
+              </button>
+              <button
+                type="button"
+                onClick={() => setOrbExecTab(orbExecTab === 'path' ? null : 'path')}
+                aria-pressed={orbExecTab === 'path'}
+                className="chip text-[0.72rem] py-0.5 px-2"
+                data-testid="orb-exec-path"
+              >
+                🧭 3-Phase Path
+              </button>
+            </div>
+
+            {orbExecTab === 'reality' && (
+              <div className="mt-2.5 rounded-xl bg-surface-recessed p-2.5 text-[0.76rem] text-ink-2" data-testid="orb-panel-reality">
+                <div className="flex items-center justify-between font-mono text-xs text-ink font-semibold mb-1">
+                  <span>Dread: ~{execReality.perceivedMinutes}m</span>
+                  <span className="text-accent">Entry: {execReality.microEntrySeconds}s</span>
+                  <span className="text-emerald-700 dark:text-emerald-400">{execReality.inertiaBreakRate}% momentum</span>
+                </div>
+                <p className="leading-snug">{execReality.neuroInsight}</p>
+              </div>
+            )}
+
+            {orbExecTab === 'brainstorm' && (
+              <div className="mt-2.5 grid gap-1.5" data-testid="orb-panel-brainstorm">
+                {execBrainstorm.angles.map((angle, idx) => (
+                  <button
+                    key={angle.id}
+                    type="button"
+                    onClick={() => onSelectFirstStep?.(angle.prompt, angle.name)}
+                    className="text-left rounded-lg border border-line bg-surface-recessed p-2 hover:border-accent transition-colors"
+                    data-testid={`orb-angle-${idx}`}
+                  >
+                    <div className="flex items-center justify-between text-[0.78rem] font-semibold text-ink">
+                      <span>{angle.name}</span>
+                      <span className="font-mono text-[0.68rem] text-accent">~{angle.timeSeconds}s</span>
+                    </div>
+                    <p className="text-[0.74rem] text-ink-2 leading-snug mt-0.5">{angle.prompt}</p>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {orbExecTab === 'path' && (
+              <div className="mt-2.5 space-y-1.5" data-testid="orb-panel-path">
+                {execPath.phases.map((p) => (
+                  <div key={p.phase} className="rounded-lg bg-surface-recessed p-2 text-[0.76rem]">
+                    <div className="flex items-center justify-between font-semibold text-ink">
+                      <span>Phase {p.phase}: {p.name}</span>
+                      <span className="font-mono text-[0.7rem] text-accent">{p.durationMinutes}m</span>
+                    </div>
+                    <p className="text-ink-2 leading-snug mt-0.5">{p.action}</p>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div className="mt-4 flex items-center gap-2">
               <button
@@ -351,6 +438,29 @@ export function OrbCompanionView({
                 Smaller
               </button>
             </div>
+          </div>
+        )}
+
+        {/* Zero-Friction Starter Prompts when Idle */}
+        {!plan && !running && (
+          <div className="mt-4 flex flex-wrap justify-center gap-1.5 max-w-md">
+            {[
+              { label: '⚡ Reply to landlord', text: 'Reply to landlord about lease renewal' },
+              { label: '📄 File quarterly taxes', text: 'Submit overdue quarterly VAT tax report' },
+              { label: '✍️ Write proposal abstract', text: 'Write conference proposal abstract' },
+            ].map((chip) => (
+              <button
+                key={chip.label}
+                type="button"
+                onClick={() => {
+                  onTaskSubmit?.(chip.text);
+                  voice.sendUserTextMessage(chip.text);
+                }}
+                className="chip text-[0.75rem] py-1 px-2.5 bg-surface/80 hover:bg-surface transition-colors"
+              >
+                {chip.label}
+              </button>
+            ))}
           </div>
         )}
 

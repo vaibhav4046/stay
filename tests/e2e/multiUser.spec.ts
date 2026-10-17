@@ -325,4 +325,39 @@ test.describe('Stay — Multi-User Concurrency, Executive Engine & Session Isola
       await desktopContext.close();
     }
   });
+
+  test('Living Voice Orb mode: one-tap starter prompt, Orb Executive Engine (Reality/Angles/Path), and Halo Sprint timer', async ({
+    page,
+  }) => {
+    await page.goto('/app/today');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+
+    await page.getByTestId('care-self_managing').click();
+    await page.getByTestId('onboarding-ack').click();
+    await page.getByTestId('onboarding-done').click();
+
+    // Stay in default Living Voice Orb mode — click the zero-friction starter prompt
+    await page.getByRole('button', { name: /Write proposal abstract/i }).click();
+
+    // Floating ADHD First-Step Card appears with Executive Engine pills
+    await expect(page.getByTestId('orb-first-step')).toBeVisible();
+    await expect(page.getByTestId('orb-panel-reality')).toBeVisible();
+    await expect(page.getByTestId('orb-panel-reality')).toContainText('Dread: ~240m');
+
+    // Switch to 3 Angles in Orb card and apply Angle 0
+    await page.getByTestId('orb-exec-brainstorm').click();
+    await expect(page.getByTestId('orb-panel-brainstorm')).toBeVisible();
+    await page.getByTestId('orb-angle-0').click();
+    await expect(page.getByTestId('orb-first-step')).toContainText('write 3 terrible, messy bullet points');
+
+    // Switch to 3-Phase Path in Orb card
+    await page.getByTestId('orb-exec-path').click();
+    await expect(page.getByTestId('orb-panel-path')).toBeVisible();
+    await expect(page.getByTestId('orb-panel-path')).toContainText('Phase 1');
+
+    // Start Halo Timer directly in Orb mode
+    await page.getByTestId('start-halo-timer').click();
+    await expect(page.getByRole('button', { name: 'Log Done' })).toBeVisible();
+  });
 });
