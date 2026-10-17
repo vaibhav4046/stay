@@ -63,6 +63,46 @@ function base64ToInt16Array(base64: string): Int16Array {
   return new Int16Array(bytes.buffer);
 }
 
+export const SUPPORTED_LANGUAGES = [
+  { code: 'auto', label: 'Auto Detect', flag: '🌐' },
+  { code: 'en-US', label: 'English', flag: '🇬🇧' },
+  { code: 'hi-IN', label: 'हिन्दी', flag: '🇮🇳' },
+  { code: 'es-ES', label: 'Español', flag: '🇪🇸' },
+  { code: 'fr-FR', label: 'Français', flag: '🇫🇷' },
+  { code: 'de-DE', label: 'Deutsch', flag: '🇩🇪' },
+  { code: 'ja-JP', label: '日本語', flag: '🇯🇵' },
+  { code: 'zh-CN', label: '中文', flag: '🇨🇳' },
+  { code: 'ar-SA', label: 'العربية', flag: '🇸🇦' },
+] as const;
+
+export function detectTextLanguage(text: string, manualPreference?: string): string {
+  if (manualPreference && manualPreference !== 'auto') {
+    return manualPreference;
+  }
+  // 1. Non-Latin scripts
+  if (/[\u0900-\u097F]/.test(text)) return 'hi-IN'; // Devanagari / Hindi
+  if (/[\u0600-\u06FF]/.test(text)) return 'ar-SA'; // Arabic
+  if (/[\u3040-\u30FF]/.test(text)) return 'ja-JP'; // Japanese Kana
+  if (/[\u4E00-\u9FFF]/.test(text)) return 'zh-CN'; // CJK / Chinese
+
+  // 2. German
+  if (/[äöüß]/i.test(text) || /\b(ich|du|er|sie|es|wir|ihr|der|die|das|und|nicht|ein|eine|mit|für|machen)\b/i.test(text)) {
+    return 'de-DE';
+  }
+
+  // 3. French
+  if (/[œæçèêëîïôûù]/i.test(text) || /\b(je|tu|il|elle|nous|vous|ils|le|la|les|un|une|des|du|dans|pour|avec|est|sur|veux|faire|mon|mémoire)\b/i.test(text)) {
+    return 'fr-FR';
+  }
+
+  // 4. Spanish
+  if (/[¿¡ñáíóú]/i.test(text) || /\b(el|la|los|las|un|una|de|en|por|para|con|como|tarea|hacer|empezar|quiero|puedo|esta)\b/i.test(text)) {
+    return 'es-ES';
+  }
+
+  return 'en-GB';
+}
+
 export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const [visualState, setVisualState] = useState<VoiceVisualState>('idle');
   const [isConnected, setIsConnected] = useState(false);
@@ -78,6 +118,8 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [streamingAnalysis, setStreamingAnalysis] = useState<RealtimeStreamingAnalysis | null>(null);
   const [isHandsFreePaused, setIsHandsFreePaused] = useState(false);
+  const [selectedLanguage, setSelectedLanguageState] = useState<string>('auto');
+  const selectedLanguageRef = useRef<string>('auto');
   const [userMemory, setUserMemory] = useState<UserMemoryProfile>(() => {
     try {
       return loadUserMemory();
@@ -230,21 +272,25 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       try {
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'en-GB';
+        const detectedLang = detectTextLanguage(text, selectedLanguageRef.current);
+        utterance.lang = detectedLang;
         const voices = window.speechSynthesis.getVoices();
-        const gbVoice = voices.find(
-          (v) =>
-            v.lang === 'en-GB' ||
-            (v.lang.startsWith('en') &&
-              (v.name.includes('UK') ||
-                v.name.includes('British') ||
-                v.name.includes('Natural') ||
-                v.name.includes('Google') ||
-                v.name.includes('Samantha') ||
-                v.name.includes('Victoria')))
-        );
-        if (gbVoice) {
-          utterance.voice = gbVoice;
+        const langPrefix = detectedLang.split('-')[0].toLowerCase();
+        const matchedVoice =
+          voices.find((v) => v.lang.toLowerCase().startsWith(langPrefix)) ||
+          voices.find(
+            (v) =>
+              v.lang === 'en-GB' ||
+              (v.lang.startsWith('en') &&
+                (v.name.includes('UK') ||
+                  v.name.includes('British') ||
+                  v.name.includes('Natural') ||
+                  v.name.includes('Google') ||
+                  v.name.includes('Samantha') ||
+                  v.name.includes('Victoria')))
+          );
+        if (matchedVoice) {
+          utterance.voice = matchedVoice;
         }
         utterance.rate = 1.0;
         utterance.pitch = 1.0;
@@ -304,11 +350,9 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
     const source = ctx.createBufferSource();
     source.buffer = audioBuffer;
+    source.connect(ctx.destination);
     if (analyserRef.current) {
       source.connect(analyserRef.current);
-      analyserRef.current.connect(ctx.destination);
-    } else {
-      source.connect(ctx.destination);
     }
 
     const startAt = Math.max(ctx.currentTime + 0.015, nextPlaybackTimeRef.current);
@@ -622,7 +666,12 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       speechRecRef.current = rec;
       rec.continuous = true;
       rec.interimResults = true;
-      rec.lang = 'en-US';
+      rec.lang =
+        selectedLanguageRef.current && selectedLanguageRef.current !== 'auto'
+          ? selectedLanguageRef.current
+          : typeof navigator !== 'undefined' && navigator.language
+          ? navigator.language
+          : 'en-US';
 
       rec.onstart = () => {
         sessionReadyRef.current = true;
@@ -718,11 +767,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     setVisualState('connecting');
 
     try {
-      // 1. Request microphone with echoCancellation enabled, noiseSuppression disabled per AssemblyAI docs
+      // 1. Request microphone with hardware echo cancellation, noise suppression, and auto gain
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
-          noiseSuppression: false,
+          noiseSuppression: true,
           autoGainControl: true,
         },
       });
@@ -771,6 +820,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 You sound and feel like ChatGPT Voice: natural conversational pacing, casual contractions ("yeah", "I'm", "totally", "let's"), warm emotional validation, and genuine empathy.
 You are sitting right beside the user as a trusted friend helping them through task paralysis.
 Rules:
+- MULTILINGUAL CONVERSATION: You are fully multilingual. If the user speaks in Hindi, Spanish, French, German, Japanese, Chinese, Arabic, Portuguese, Hinglish, Spanglish, or any other language, seamlessly detect it and respond in THAT SAME LANGUAGE with natural conversational warmth and native authentic phrasing.
 - Speak naturally, gently, and warmly. Use spontaneous conversational backchannels ("Yeah, I totally hear you", "Ugh, that sounds exhausting", "Let's take all the pressure off").
 - Never sound robotic, preachy, or clinical. Never lecture on ADHD psychology or symptoms.
 - Keep spoken replies under 30 words so the conversation flows back and forth quickly without long monologues.
@@ -1224,6 +1274,23 @@ ${adaptivePrompt}`;
     };
   }, [disconnectVoiceSession]);
 
+  const setSelectedLanguage = useCallback((lang: string) => {
+    setSelectedLanguageState(lang);
+    selectedLanguageRef.current = lang;
+    if (speechRecRef.current) {
+      try {
+        speechRecRef.current.lang =
+          lang !== 'auto'
+            ? lang
+            : typeof navigator !== 'undefined' && navigator.language
+            ? navigator.language
+            : 'en-US';
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
+
   return {
     visualState,
     setVisualState,
@@ -1236,6 +1303,9 @@ ${adaptivePrompt}`;
     streamingAnalysis,
     isHandsFreePaused,
     toggleHandsFreeMute,
+    selectedLanguage,
+    setSelectedLanguage,
+    supportedLanguages: SUPPORTED_LANGUAGES,
     userMemory,
     refreshUserMemory: () => setUserMemory(loadUserMemory()),
     playEarcon,

@@ -178,11 +178,13 @@ export function Signal({
   state,
   energy,
   bands,
+  hideLabel = false,
   className = '',
 }: {
   state: VoiceVisualState;
   energy: number;
   bands?: AudioSpectrumBands;
+  hideLabel?: boolean;
   className?: string;
 }) {
   const [mode, setMode] = useState<'pending' | 'webgl' | 'svg'>('pending');
@@ -200,17 +202,23 @@ export function Signal({
   const onUnsupported = useCallback(() => setMode('svg'), []);
 
   return (
-    <div className={`relative ${className}`} data-signal-state={state}>
-      <div className="aspect-square w-full">
+    <div
+      className={`relative select-none ${className}`}
+      data-signal-state={state}
+      style={{ WebkitTapHighlightColor: 'transparent' }}
+    >
+      <div className="aspect-square w-full rounded-full overflow-hidden select-none outline-none">
         {mode === 'webgl' ? (
           <SignalScene state={state} energy={energy} bands={bands} reducedMotion={reducedMotion} onUnsupported={onUnsupported} />
         ) : (
           <SignalFallbackSvg state={state} energy={energy} bands={bands} />
         )}
       </div>
-      <p className="meta text-center mt-1" role="status" aria-live="polite" data-testid="signal-state-label">
-        {STATE_LABELS[state]}
-      </p>
+      {!hideLabel && (
+        <p className="meta text-center mt-1" role="status" aria-live="polite" data-testid="signal-state-label">
+          {STATE_LABELS[state]}
+        </p>
+      )}
     </div>
   );
 }

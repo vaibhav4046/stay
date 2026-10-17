@@ -113,6 +113,26 @@ export function OrbCompanionView({
             <span>🌿</span>
             <span className="font-medium hidden sm:inline">Ground Me</span>
           </button>
+
+          {/* Multilingual Speech Language Selector */}
+          <div className="relative">
+            <select
+              value={voice.selectedLanguage}
+              onChange={(e) => voice.setSelectedLanguage(e.target.value)}
+              className="chip text-[0.78rem] flex items-center gap-1 border border-line bg-surface hover:bg-line transition-colors cursor-pointer appearance-none pr-5 pl-2.5 py-1 text-ink font-medium rounded-full"
+              title="Voice & Speech Language (Auto-detects Hindi, Spanish, French, etc.)"
+              aria-label="Select Voice Language"
+            >
+              {voice.supportedLanguages.map((l) => (
+                <option key={l.code} value={l.code}>
+                  {l.flag} {l.label}
+                </option>
+              ))}
+            </select>
+            <span className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-[0.6rem] text-ink-3">
+              ▼
+            </span>
+          </div>
         </div>
 
         {/* Center / Right Control Chips */}
@@ -182,7 +202,8 @@ export function OrbCompanionView({
         </div>
 
         {/* The 3D GLSL Marvel Eternity Wave Orb */}
-        <div
+        <button
+          type="button"
           onClick={() => {
             if (!voice.isConnected) {
               voice.startVoiceSession();
@@ -190,8 +211,9 @@ export function OrbCompanionView({
               voice.toggleHandsFreeMute();
             }
           }}
-          className="relative cursor-pointer group transition-transform duration-300 hover:scale-[1.02] active:scale-[0.98]"
-          title={
+          className="relative mx-auto flex items-center justify-center w-[260px] sm:w-[320px] h-[260px] sm:h-[320px] rounded-full cursor-pointer group outline-none focus:outline-none focus-visible:ring-4 focus-visible:ring-accent/40 transition-transform duration-300 hover:scale-[1.02] active:scale-[0.98] select-none border-0 bg-transparent p-0"
+          style={{ WebkitTapHighlightColor: 'transparent', outline: 'none' }}
+          aria-label={
             !voice.isConnected
               ? 'Click to wake Stay'
               : voice.isHandsFreePaused
@@ -203,21 +225,25 @@ export function OrbCompanionView({
             state={quietMode ? 'idle' : voice.visualState}
             energy={voice.audioEnergy}
             bands={voice.audioBands}
-            className="w-[260px] sm:w-[320px] h-[260px] sm:h-[320px] mx-auto filter drop-shadow-2xl"
+            hideLabel
+            className="w-full h-full rounded-full overflow-hidden filter drop-shadow-2xl"
           />
 
           {/* Living Pulsing Rings around the Orb */}
           {voice.isConnected && !voice.isHandsFreePaused && (
-            <div className="absolute inset-0 rounded-full border border-accent/20 animate-ping pointer-events-none" />
+            <div className="absolute inset-0 rounded-full border-2 border-accent/30 animate-ping pointer-events-none" />
           )}
+
+          {/* Ambient outer circular halo boundary */}
+          <div className="absolute -inset-2 rounded-full border border-accent/15 pointer-events-none" />
 
           {/* Center Play/Pause Overlay indicator on hover */}
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-            <span className="rounded-full bg-black/60 text-white px-3 py-1 text-xs font-semibold backdrop-blur-xs">
+            <span className="rounded-full bg-black/60 text-white px-3 py-1.5 text-xs font-semibold backdrop-blur-xs shadow-md">
               {!voice.isConnected ? 'Wake Voice' : voice.isHandsFreePaused ? 'Resume' : 'Pause'}
             </span>
           </div>
-        </div>
+        </button>
 
         {/* Status text subtitle */}
         <div className="mt-4 text-center">

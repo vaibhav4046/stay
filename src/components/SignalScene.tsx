@@ -355,6 +355,12 @@ export default function SignalScene({ state, energy, bands, reducedMotion, onUns
     renderer.setSize(w, h);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.15;
+    renderer.domElement.style.borderRadius = '50%';
+    renderer.domElement.style.overflow = 'hidden';
+    renderer.domElement.style.outline = 'none';
+    renderer.domElement.style.userSelect = 'none';
+    (renderer.domElement.style as unknown as { webkitTapHighlightColor: string }).webkitTapHighlightColor = 'transparent';
+    renderer.domElement.style.touchAction = 'none';
     mount.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
@@ -362,16 +368,16 @@ export default function SignalScene({ state, energy, bands, reducedMotion, onUns
     camera.position.set(0, 0, 5.8);
 
     // 1. Soft Ambient Bloom Halo (behind the orb)
-    const auraGeo = new THREE.PlaneGeometry(5.4, 5.4);
+    const auraGeo = new THREE.PlaneGeometry(4.2, 4.2);
     const canvas = document.createElement('canvas');
     canvas.width = 128;
     canvas.height = 128;
     const ctx = canvas.getContext('2d');
     if (ctx) {
-      const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+      const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 56);
       grad.addColorStop(0, 'rgba(0, 245, 212, 0.6)');
       grad.addColorStop(0.38, 'rgba(0, 106, 103, 0.25)');
-      grad.addColorStop(0.72, 'rgba(0, 50, 48, 0.08)');
+      grad.addColorStop(0.72, 'rgba(0, 50, 48, 0.05)');
       grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, 128, 128);
@@ -520,5 +526,12 @@ export default function SignalScene({ state, energy, bands, reducedMotion, onUns
     };
   }, [reducedMotion, onUnsupported]);
 
-  return <div ref={mountRef} className="h-full w-full select-none" aria-hidden="true" />;
+  return (
+    <div
+      ref={mountRef}
+      className="h-full w-full rounded-full overflow-hidden select-none outline-none"
+      style={{ WebkitTapHighlightColor: 'transparent' }}
+      aria-hidden="true"
+    />
+  );
 }

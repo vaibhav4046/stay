@@ -116,6 +116,7 @@ ${input.userMemoryPrompt ? `${input.userMemoryPrompt}\n\n` : ''}Return ONLY a va
   "safetyFlag": "none"
 }
 Hard rules:
+- MULTILINGUAL CONVERSATION: Detect the language and script of the user's task description (e.g. Hindi, Hinglish, Spanish, French, German, Japanese, Mandarin, Arabic, Portuguese, etc.). If the task is in a non-English language or mixed vernacular, write ALL string fields ("spokenResponse", "firstStep", "whyThisFits", "checkinPrompt") in that EXACT SAME language with natural, warm conversational fluency.
 - Never diagnose ADHD or any medical condition.
 - Never give medication or dosing advice.
 - Do not wrap the JSON in markdown fences.`;

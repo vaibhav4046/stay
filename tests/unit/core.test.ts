@@ -166,4 +166,31 @@ describe('patterns', () => {
     expect(testBands.low).toBeGreaterThan(testBands.high);
     expect(testBands.overall).toBeLessThanOrEqual(1.0);
   });
+
+  it('detects multilingual text scripts and verifies supported languages', async () => {
+    const { detectTextLanguage, SUPPORTED_LANGUAGES } = await import('@/lib/voice/useVoiceAgent');
+    expect(SUPPORTED_LANGUAGES.length).toBeGreaterThanOrEqual(8);
+    expect(SUPPORTED_LANGUAGES.some((l) => l.code === 'hi-IN')).toBe(true);
+    expect(SUPPORTED_LANGUAGES.some((l) => l.code === 'es-ES')).toBe(true);
+
+    // Hindi (Devanagari)
+    expect(detectTextLanguage('मुझे यह काम शुरू करना है')).toBe('hi-IN');
+    // Spanish
+    expect(detectTextLanguage('¿Cómo puedo empezar esta tarea?')).toBe('es-ES');
+    // French
+    expect(detectTextLanguage('Je veux préparer mon mémoire')).toBe('fr-FR');
+    // German
+    expect(detectTextLanguage('Ich möchte die Steuererklärung machen')).toBe('de-DE');
+    // Arabic
+    expect(detectTextLanguage('أريد أن أبدأ في كتابة التقرير')).toBe('ar-SA');
+    // Japanese
+    expect(detectTextLanguage('レポートの作成を始めたいです')).toBe('ja-JP');
+    // Chinese
+    expect(detectTextLanguage('我想开始写总结报告')).toBe('zh-CN');
+    // English default
+    expect(detectTextLanguage('Clean the kitchen')).toBe('en-GB');
+
+    // Manual preference override
+    expect(detectTextLanguage('Clean the kitchen', 'es-ES')).toBe('es-ES');
+  });
 });
