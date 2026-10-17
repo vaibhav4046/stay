@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseVoiceCommand } from '@/lib/voice/voiceCommands';
+import { parseVoiceCommand, parseMultiIntentUtterance } from '@/lib/voice/voiceCommands';
 
 describe('Hands-Free Voice Command Parser', () => {
   it('detects pause listening commands', () => {
@@ -160,6 +160,63 @@ describe('Hands-Free Voice Command Parser', () => {
       type: 'web_research',
       query: 'adhd dopamine',
     });
+    expect(parseVoiceCommand('morph into a rocket')).toEqual({
+      type: 'synthesize_billion_shape',
+      concept: 'rocket',
+    });
+    expect(parseVoiceCommand('become a dragon')).toEqual({
+      type: 'synthesize_billion_shape',
+      concept: 'dragon',
+    });
+  });
+
+  it('broadly understands "play the game" and conversational game requests', () => {
+    expect(parseVoiceCommand('I said to play the game')).toEqual({
+      type: 'start_game',
+      game: 'simon',
+      difficulty: undefined,
+    });
+    expect(parseVoiceCommand('play the game')).toEqual({
+      type: 'start_game',
+      game: 'simon',
+      difficulty: undefined,
+    });
+    expect(parseVoiceCommand("let's play a game")).toEqual({
+      type: 'start_game',
+      game: 'simon',
+      difficulty: undefined,
+    });
+  });
+});
+
+describe('Multi-Intent & Conversational Context Parser', () => {
+  it('decomposes simultaneous game command, difficulty, shape morph, and task context in one breath', () => {
+    const text =
+      "I'm overwhelmed by my landlord email and quarterly taxes, let's play the game on hard and turn into a rocket ship";
+    const result = parseMultiIntentUtterance(text);
+
+    expect(result.isMultiContext).toBe(true);
+    expect(result.commands.length).toBeGreaterThanOrEqual(2);
+    expect(result.commands).toEqual(
+      expect.arrayContaining([
+        { type: 'start_game', game: 'simon', difficulty: 'hard' },
+        { type: 'synthesize_billion_shape', concept: 'rocket ship' },
+      ])
+    );
+    expect(result.conversationalContext).toContain('landlord email');
+    expect(result.conversationalContext).not.toContain('play the game');
+  });
+
+  it('extracts multi-intent commands when user requests memory and timer together', () => {
+    const text = 'Show me memory and start 15 minutes timer';
+    const result = parseMultiIntentUtterance(text);
+
+    expect(result.commands).toEqual(
+      expect.arrayContaining([
+        { type: 'show_memory' },
+        { type: 'start_timer', minutes: 15 },
+      ])
+    );
   });
 });
 

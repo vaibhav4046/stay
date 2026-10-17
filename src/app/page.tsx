@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
 import { HeroInteractiveWalkthrough } from '@/components/HeroInteractiveWalkthrough';
+import { StayVideoCardsShowcase } from '@/components/StayVideoCardsShowcase';
 
 const STEPS = [
   { n: '1', title: "Say what you're stuck on", body: 'Speak naturally, or type if you are somewhere quiet.' },
@@ -36,6 +37,9 @@ export default function Home() {
           </div>
           <HeroInteractiveWalkthrough />
         </section>
+
+        {/* Real Product Video & Feature Showcase */}
+        <StayVideoCardsShowcase />
 
         <section className="mx-auto max-w-6xl px-5 sm:px-8" aria-labelledby="how-title">
           <h2 id="how-title" className="section-title">How it works</h2>

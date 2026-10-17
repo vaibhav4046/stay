@@ -500,5 +500,62 @@ test.describe('Stay — Multi-User Concurrency, Executive Engine & Session Isola
     await expect(page.getByTestId('research-result-title')).toBeVisible();
     await expect(page.getByTestId('research-read-aloud-btn')).toBeVisible();
   });
+
+  test('Multi-Intent Human Speech, 1-Billion-Shape AI Morphology, Intelligent ChatGPT Canvas & Cinema Video Cards', async ({
+    page,
+  }) => {
+    // 1. Visit Landing Page and verify Cinema Video Cards Bento Grid
+    await page.goto('/');
+    await expect(page.getByTestId('stay-video-cards-showcase')).toBeVisible();
+    await expect(page.getByTestId('video-card-0')).toBeVisible();
+    await expect(page.getByTestId('video-card-1')).toBeVisible();
+    await expect(page.getByTestId('video-card-2')).toBeVisible();
+    await expect(page.getByTestId('video-card-3')).toBeVisible();
+    await expect(page.locator('[data-testid="video-card-0"] video')).toBeVisible();
+
+    // 2. Navigate to real Companion session
+    await page.goto('/app/today');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+
+    await page.getByTestId('care-self_managing').click();
+    await page.getByTestId('onboarding-ack').click();
+    await page.getByTestId('onboarding-done').click();
+
+    const input = page.getByTestId('task-input');
+
+    // 3. Test 1-Billion-Shape AI Synthesizer Bar & Quick Morph Pills
+    await expect(page.getByTestId('billion-shape-synthesizer')).toBeVisible();
+    await page.getByTestId('billion-shape-pill-rocket').click();
+    await expect(page.getByTestId('orb-morph-badge')).toHaveAttribute('data-topic-shape', '8');
+    await expect(page.getByTestId('generative-shape-label')).toContainText('Aerospace Rocket Thruster');
+
+    await page.getByTestId('billion-shape-pill-butterfly').click();
+    await expect(page.getByTestId('generative-shape-label')).toContainText('Butterfly');
+
+    await page.getByTestId('billion-shape-random').click();
+    await expect(page.getByTestId('orb-morph-badge')).toHaveAttribute('data-topic-shape', '8');
+
+    // Custom generative shape input
+    await page.getByTestId('billion-shape-input').fill('phoenix flame');
+    await page.getByTestId('billion-shape-input').press('Enter');
+    await expect(page.getByTestId('orb-morph-badge')).toHaveAttribute('data-topic-shape', '8');
+
+    // 4. Test Multi-Intent Human Speech (Game + Difficulty + Shape + Real-World Life Overwhelm)
+    const complexUtterance =
+      "I'm overwhelmed by my landlord email and quarterly taxes, let's play the game on hard and turn into a rocket ship";
+    await input.fill(complexUtterance);
+    await input.press('Enter');
+
+    // Verifies Game launched
+    await expect(page.getByTestId('orb-cognitive-games-arena')).toBeVisible();
+    await expect(page.getByTestId('game-diff-hard')).toHaveAttribute('aria-pressed', 'true');
+
+    // Verifies Intelligent ChatGPT Visual Decomposition Canvas
+    await expect(page.getByTestId('intelligent-chatgpt-canvas')).toBeVisible();
+    await expect(page.getByTestId('canvas-action-receipts')).toBeVisible();
+    await expect(page.getByTestId('canvas-context')).toContainText('landlord email');
+    await expect(page.getByTestId('canvas-steps')).toBeVisible();
+  });
 });
 

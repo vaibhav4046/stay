@@ -35,7 +35,16 @@ import {
   buildMemorySystemPrompt,
   type UserMemoryProfile,
 } from '@/lib/coach/userMemory';
-import { detectVoiceCommand, type VoiceCommandAction } from '@/lib/voice/voiceCommands';
+import {
+  detectVoiceCommand,
+  parseMultiIntentUtterance,
+  type VoiceCommandAction,
+} from '@/lib/voice/voiceCommands';
+import {
+  synthesizeGenerativeShape,
+  buildProceduralBillionShape,
+  type GenerativeShapeSpec,
+} from '@/lib/voice/generativeShapeEngine';
 import {
   buildUniversal3ProConfig,
   shouldTransmitPcmFrame,
@@ -97,13 +106,14 @@ export const TOPIC_SHAPE_LABELS: Record<number, { icon: string; label: string }>
   5: { icon: '🎮', label: 'ADHD Game Arena' },
   6: { icon: '🌐', label: 'Knowledge & Research Globe' },
   7: { icon: '⏳', label: 'Focus Hourglass Vortex' },
+  8: { icon: '✨', label: '1B AI Synthesized Morphology' },
 };
 
 export function detectTopicShape(text: string): number {
   const clean = text.toLowerCase();
   // 5. Interactive ADHD Cognitive Game Arena (Mode 5)
   if (
-    /\b(?:play\s+(?:a\s+|an\s+|the\s+)?(?:orb\s+|memory\s+|puzzle\s+|cognitive\s+|adhd\s+)*game|orb\s+game|simon\s+pulse|impulse\s+shield|word\s+rally|game\s+mode|mujhe\s+game\s+khelna\s+hai|geim\s+hago\s+sipeo)\b/i.test(clean) ||
+    /\b(?:play(?:\s+with\s+me)?\s+(?:a\s+|an\s+|the\s+|some\s+)?(?:orb\s+|memory\s+|puzzle\s+|cognitive\s+|adhd\s+|focus\s+)*(?:game|games|simon|pulse|impulse|word\s+rally)|let'?s\s+play\b|play\s+game\b|play\s+the\s+game\b|start\s+(?:the\s+)?game\b|orb\s+game|simon\s+pulse|impulse\s+shield|word\s+rally|game\s+mode|mujhe\s+game\s+khelna\s+hai|geim\s+hago\s+sipeo)\b/i.test(clean) ||
     /(?:गेम\s*खेल|게임\s*하)/.test(clean)
   ) {
     return 5;
@@ -133,6 +143,11 @@ export function detectTopicShape(text: string): number {
   // 4. Structured Geometric Facets / Letters / Writing / Docs / Taxes / Code / Paperwork (Mode 2)
   if (/\b(?:letter|letters|alphabet|word|words|email|emails|inbox|write|writing|doc|document|form|forms|tax|taxes|vat|hmrc|irs|bill|bills|rent|landlord|paper|paperwork|report|text|code|coding|draft|essay|spreadsheet|work|file)\b/i.test(clean)) {
     return 2;
+  }
+  // 8. Check 1-Billion-Shape AI Semantic & Procedural Synthesizer (Rocket, Heart, Butterfly, Dragon, Lightning, DNA, Crown, Cat, Dog, Galaxy, etc.)
+  const genSpec = synthesizeGenerativeShape(clean);
+  if (genSpec && genSpec.legacyTopicShape === 8) {
+    return 8;
   }
   return 0; // Standard organic liquid wave
 }
@@ -346,9 +361,25 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   });
   const selectedVoiceRef = useRef<string>(selectedVoice);
   const [topicShape, setTopicShape] = useState<number>(0);
+  const [generativeShape, setGenerativeShape] = useState<GenerativeShapeSpec | null>(null);
   const [orbColorTheme, setOrbColorTheme] = useState<OrbColorTheme>('default');
   const [activeGame, setActiveGame] = useState<'simon' | 'gonogo' | 'wordrally'>('simon');
   const [gameDifficulty, setGameDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
+
+  const synthesizeShapeByConcept = useCallback((conceptOrSeed: string | number) => {
+    if (typeof conceptOrSeed === 'number') {
+      const spec = buildProceduralBillionShape(conceptOrSeed);
+      setGenerativeShape(spec);
+      setTopicShape(8);
+      return spec;
+    }
+    const spec =
+      synthesizeGenerativeShape(conceptOrSeed) ||
+      buildProceduralBillionShape(conceptOrSeed, conceptOrSeed);
+    setGenerativeShape(spec);
+    setTopicShape(8);
+    return spec;
+  }, []);
 
   const setSelectedVoice = useCallback((voiceId: string) => {
     const valid = AVAILABLE_VOICES.find((v) => v.id === voiceId) ? voiceId : 'anna';
@@ -877,14 +908,19 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         setUserMemory(updatedMemory);
       }
 
-      // 3. Detect topic-reactive dynamic shape
+      // 3. Detect topic-reactive dynamic shape & 1-Billion-Shape AI synthesis
+      const genSpec = synthesizeGenerativeShape(clean);
       const topic = detectTopicShape(clean);
-      setTopicShape(topic);
+      if (genSpec && topic === 8) {
+        setGenerativeShape(genSpec);
+        setTopicShape(8);
+      } else {
+        setTopicShape(topic);
+      }
 
-      // 4. Check text-based voice command
-      const cmd = detectVoiceCommand(clean);
-      if (cmd) {
-        optionsRef.current.onVoiceCommandDetected?.(cmd);
+      // 4. Multi-Intent Human Conversational Parser (executes simultaneous commands + task context)
+      const multi = parseMultiIntentUtterance(clean);
+      if (multi.commands.length > 0) {
         setTranscripts((prev) => [
           ...prev,
           {
@@ -894,209 +930,203 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
             timestamp: new Date().toISOString(),
           },
         ]);
-        if (cmd.type === 'pause_listening') {
-          handsFreePausedRef.current = true;
-          setIsHandsFreePaused(true);
-          setVisualState('idle');
-          playEarcon('pause');
-          return true;
-        } else if (cmd.type === 'resume_listening') {
-          handsFreePausedRef.current = false;
-          setIsHandsFreePaused(false);
-          setVisualState('listening');
-          playEarcon('resume');
-          return true;
-        } else if (cmd.type === 'start_timer') {
-          optionsRef.current.onStartTimerRequested?.(cmd.minutes, clean);
-          playEarcon('chime');
-          return true;
-        } else if (cmd.type === 'stop_timer') {
-          playEarcon('pause');
-          return true;
-        } else if (cmd.type === 'record_outcome') {
-          optionsRef.current.onOutcomeRecorded?.(cmd.outcome);
-          playEarcon('chime');
-          return true;
-        } else if (cmd.type === 'change_voice') {
-          setSelectedVoice(cmd.voiceId);
-          playEarcon('chime');
-          return true;
-        } else if (cmd.type === 'change_language') {
-          setSelectedLanguage(cmd.langCode);
-          playEarcon('chime');
-          return true;
-        } else if (cmd.type === 'open_voice_menu') {
-          optionsRef.current.onChangeVoiceRequested?.();
-          playEarcon('chime');
-          return true;
-        } else if (cmd.type === 'show_memory') {
-          optionsRef.current.onShowMemoryRequested?.();
-          playEarcon('chime');
-          return true;
-        } else if (cmd.type === 'show_history') {
-          optionsRef.current.onShowHistoryRequested?.();
-          playEarcon('chime');
-          return true;
-        } else if (cmd.type === 'open_training') {
-          optionsRef.current.onOpenTrainingRequested?.();
-          playEarcon('chime');
-          return true;
-        } else if (cmd.type === 'close_modals') {
-          optionsRef.current.onCloseModalsRequested?.();
-          playEarcon('pause');
-          return true;
-        } else if (cmd.type === 'switch_view') {
-          optionsRef.current.onSwitchViewRequested?.(cmd.mode);
-          playEarcon('chime');
-          return true;
-        } else if (cmd.type === 'navigate') {
-          optionsRef.current.onNavigateRequested?.(cmd.path, cmd.label);
-          playEarcon('chime');
-          return true;
-        } else if (cmd.type === 'open_grounding') {
-          optionsRef.current.onGroundingRequested?.();
-          playEarcon('chime');
-          return true;
-        } else if (cmd.type === 'toggle_quiet_mode') {
-          optionsRef.current.onToggleQuietModeRequested?.();
-          playEarcon('chime');
-          return true;
-        } else if (cmd.type === 'start_game') {
-          playEarcon('chime');
-          setTopicShape(5);
-          setActiveGame(cmd.game);
-          if (cmd.difficulty) setGameDifficulty(cmd.difficulty);
-          const gameTitle =
-            cmd.game === 'gonogo'
-              ? 'Prefrontal Impulse Shield'
-              : cmd.game === 'wordrally'
-              ? 'Dopamine Word Rally'
-              : 'Harmonic Simon Pulse';
-          const replyText = cmd.difficulty
-            ? `🎮 Orb morphed into ${gameTitle} on ${cmd.difficulty.toUpperCase()} difficulty! Watch the Orb and let's play together.`
-            : `🎮 Orb transformed into our ADHD Cognitive Game Arena (${gameTitle})! What difficulty would you like — Easy, Medium, or Hard?`;
+
+        const executedReplies: string[] = [];
+        let shouldReturnEarly = !multi.conversationalContext;
+
+        for (const cmd of multi.commands) {
+          optionsRef.current.onVoiceCommandDetected?.(cmd);
+
+          if (cmd.type === 'pause_listening') {
+            handsFreePausedRef.current = true;
+            setIsHandsFreePaused(true);
+            setVisualState('idle');
+            playEarcon('pause');
+            return true;
+          } else if (cmd.type === 'resume_listening') {
+            handsFreePausedRef.current = false;
+            setIsHandsFreePaused(false);
+            setVisualState('listening');
+            playEarcon('resume');
+            return true;
+          } else if (cmd.type === 'start_timer') {
+            optionsRef.current.onStartTimerRequested?.(cmd.minutes, clean);
+            playEarcon('chime');
+            executedReplies.push(`⏱️ Started your ${cmd.minutes}-minute focus sprint.`);
+          } else if (cmd.type === 'stop_timer') {
+            playEarcon('pause');
+            return true;
+          } else if (cmd.type === 'record_outcome') {
+            optionsRef.current.onOutcomeRecorded?.(cmd.outcome);
+            playEarcon('chime');
+            return true;
+          } else if (cmd.type === 'change_voice') {
+            setSelectedVoice(cmd.voiceId);
+            playEarcon('chime');
+            executedReplies.push(`🎙️ Switched voice persona to ${cmd.voiceId}.`);
+          } else if (cmd.type === 'change_language') {
+            setSelectedLanguage(cmd.langCode);
+            playEarcon('chime');
+            executedReplies.push(`🌐 Switched language to ${cmd.langName}.`);
+          } else if (cmd.type === 'open_voice_menu') {
+            optionsRef.current.onChangeVoiceRequested?.();
+            playEarcon('chime');
+            return true;
+          } else if (cmd.type === 'show_memory') {
+            optionsRef.current.onShowMemoryRequested?.();
+            playEarcon('chime');
+            return true;
+          } else if (cmd.type === 'show_history') {
+            optionsRef.current.onShowHistoryRequested?.();
+            playEarcon('chime');
+            return true;
+          } else if (cmd.type === 'open_training') {
+            optionsRef.current.onOpenTrainingRequested?.();
+            playEarcon('chime');
+            return true;
+          } else if (cmd.type === 'close_modals') {
+            optionsRef.current.onCloseModalsRequested?.();
+            playEarcon('pause');
+            return true;
+          } else if (cmd.type === 'switch_view') {
+            optionsRef.current.onSwitchViewRequested?.(cmd.mode);
+            playEarcon('chime');
+            return true;
+          } else if (cmd.type === 'navigate') {
+            optionsRef.current.onNavigateRequested?.(cmd.path, cmd.label);
+            playEarcon('chime');
+            return true;
+          } else if (cmd.type === 'open_grounding') {
+            optionsRef.current.onGroundingRequested?.();
+            playEarcon('chime');
+            return true;
+          } else if (cmd.type === 'toggle_quiet_mode') {
+            optionsRef.current.onToggleQuietModeRequested?.();
+            playEarcon('chime');
+            return true;
+          } else if (cmd.type === 'start_game') {
+            playEarcon('chime');
+            setTopicShape(5);
+            setActiveGame(cmd.game);
+            if (cmd.difficulty) setGameDifficulty(cmd.difficulty);
+            const gameTitle =
+              cmd.game === 'gonogo'
+                ? 'Prefrontal Impulse Shield'
+                : cmd.game === 'wordrally'
+                ? 'Dopamine Word Rally'
+                : 'Harmonic Simon Pulse';
+            executedReplies.push(
+              cmd.difficulty
+                ? `🎮 Orb morphed into ${gameTitle} on ${cmd.difficulty.toUpperCase()} difficulty! Watch the Orb and let's play together.`
+                : `🎮 Orb transformed into our ADHD Cognitive Game Arena (${gameTitle})! What difficulty would you like — Easy, Medium, or Hard?`
+            );
+          } else if (cmd.type === 'set_game_difficulty') {
+            playEarcon('chime');
+            setTopicShape(5);
+            setGameDifficulty(cmd.difficulty);
+            executedReplies.push(
+              `🎯 Game difficulty locked to ${cmd.difficulty.toUpperCase()}! Let's play together right inside the Orb.`
+            );
+          } else if (cmd.type === 'change_orb_color') {
+            playEarcon('chime');
+            setOrbColorTheme(cmd.colorTheme);
+            executedReplies.push(`🎨 Orb color gradient transformed to ${cmd.colorTheme.toUpperCase()} theme.`);
+          } else if (cmd.type === 'change_orb_shape') {
+            playEarcon('chime');
+            setTopicShape(cmd.shapeId);
+            executedReplies.push(`✨ Orb smoothly morphed into ${cmd.shapeLabel}!`);
+          } else if (cmd.type === 'synthesize_billion_shape') {
+            playEarcon('chime');
+            const synthesized =
+              synthesizeGenerativeShape(cmd.concept) ||
+              buildProceduralBillionShape(cmd.concept, cmd.concept);
+            setGenerativeShape(synthesized);
+            // Keep topicShape 5 if start_game was also triggered in the same sentence, otherwise set 8
+            if (!multi.commands.some((c) => c.type === 'start_game')) {
+              setTopicShape(8);
+            }
+            executedReplies.push(
+              `${synthesized.icon} Synthesized ${synthesized.label} (${synthesized.formulaSignature})!`
+            );
+          } else if (cmd.type === 'web_research') {
+            playEarcon('chime');
+            setTopicShape(6);
+            optionsRef.current.onWebResearchRequested?.(cmd.query);
+            executedReplies.push(
+              `🌐 Researching "${cmd.query}" across live encyclopedic and clinical sources now...`
+            );
+          } else if (cmd.type === 'calculate_time') {
+            playEarcon('chime');
+            const calculation = calculateTaskReality(clean);
+            executedReplies.push(
+              `⏱️ ${calculation.spokenSummary}\n\n• Perceived time: ~${calculation.perceivedMinutes} min\n• Micro-entry move: ${calculation.microEntrySeconds}s\n• Recommended block: ${calculation.recommendedSprintMinutes} min\n• Momentum rate: ${calculation.inertiaBreakRate}%`
+            );
+            shouldReturnEarly = true;
+          } else if (cmd.type === 'brainstorm_angles') {
+            playEarcon('chime');
+            const brainstorm = brainstormStarterAngles(clean);
+            executedReplies.push(
+              `💡 3 Starter Angles for "${clean}":\n\n` +
+                brainstorm.angles
+                  .map((a, i) => `${i + 1}. **${a.name}** (~${a.timeSeconds}s)\n${a.prompt}`)
+                  .join('\n\n')
+            );
+            shouldReturnEarly = true;
+          } else if (cmd.type === 'synthesize_path') {
+            playEarcon('chime');
+            const path = synthesizeTaskPath(clean);
+            executedReplies.push(
+              `🧭 3-Phase Action Path for "${clean}" (${path.totalSprintMinutes}m total):\n\n` +
+                path.phases
+                  .map((p) => `Phase ${p.phase} · **${p.name}** (${p.durationMinutes}m)\n${p.action}`)
+                  .join('\n\n')
+            );
+            shouldReturnEarly = true;
+          } else if (cmd.type === 'clear_chat') {
+            optionsRef.current.onClearChatRequested?.();
+            setTranscripts([]);
+            return true;
+          }
+        }
+
+        // If the user ALSO spoke about a real-world task/context in the same breath, address both like a human!
+        if (!shouldReturnEarly && multi.conversationalContext) {
+          const instantLocalPlan = buildDeterministicCoachPlan({ taskText: clean });
+          const localizedSpoken = buildLocalizedStayResponse(clean, effectiveLang, instantLocalPlan);
+          const combinedReply =
+            executedReplies.length > 0
+              ? `${executedReplies.join(' ')} — And I hear you on your task too: ${localizedSpoken}`
+              : localizedSpoken;
+          const optimisticPlan: CoachPlanProposal = {
+            ...instantLocalPlan,
+            spokenResponse: combinedReply,
+          };
+          optionsRef.current.onPlanProposed?.(optimisticPlan);
           setTranscripts((prev) => [
             ...prev,
             {
-              id: `game-${Date.now()}`,
+              id: `multi-${Date.now()}`,
               role: 'agent',
-              text: replyText,
+              text: combinedReply,
               timestamp: new Date().toISOString(),
             },
           ]);
-          speakDeterministicBoundary(replyText, effectiveLang);
+          speakDeterministicBoundary(combinedReply, effectiveLang);
           return true;
-        } else if (cmd.type === 'set_game_difficulty') {
-          playEarcon('chime');
-          setTopicShape(5);
-          setGameDifficulty(cmd.difficulty);
-          const replyText = `🎯 Game difficulty locked to ${cmd.difficulty.toUpperCase()}! Let's play together right inside the Orb.`;
+        }
+
+        if (executedReplies.length > 0) {
+          const combined = executedReplies.join(' ');
           setTranscripts((prev) => [
             ...prev,
             {
-              id: `diff-${Date.now()}`,
+              id: `cmd-${Date.now()}`,
               role: 'agent',
-              text: replyText,
+              text: combined,
               timestamp: new Date().toISOString(),
             },
           ]);
-          speakDeterministicBoundary(replyText, effectiveLang);
-          return true;
-        } else if (cmd.type === 'change_orb_color') {
-          playEarcon('chime');
-          setOrbColorTheme(cmd.colorTheme);
-          const replyText = `🎨 Orb color gradient transformed to ${cmd.colorTheme.toUpperCase()} theme.`;
-          setTranscripts((prev) => [
-            ...prev,
-            {
-              id: `color-${Date.now()}`,
-              role: 'agent',
-              text: replyText,
-              timestamp: new Date().toISOString(),
-            },
-          ]);
-          speakDeterministicBoundary(replyText, effectiveLang);
-          return true;
-        } else if (cmd.type === 'change_orb_shape') {
-          playEarcon('chime');
-          setTopicShape(cmd.shapeId);
-          const replyText = `✨ Orb smoothly morphed into ${cmd.shapeLabel}!`;
-          setTranscripts((prev) => [
-            ...prev,
-            {
-              id: `shape-${Date.now()}`,
-              role: 'agent',
-              text: replyText,
-              timestamp: new Date().toISOString(),
-            },
-          ]);
-          speakDeterministicBoundary(replyText, effectiveLang);
-          return true;
-        } else if (cmd.type === 'web_research') {
-          playEarcon('chime');
-          setTopicShape(6);
-          optionsRef.current.onWebResearchRequested?.(cmd.query);
-          const replyText = `🌐 Researching "${cmd.query}" across live encyclopedic and clinical sources now...`;
-          setTranscripts((prev) => [
-            ...prev,
-            {
-              id: `res-${Date.now()}`,
-              role: 'agent',
-              text: replyText,
-              timestamp: new Date().toISOString(),
-            },
-          ]);
-          speakDeterministicBoundary(replyText, effectiveLang);
-          return true;
-        } else if (cmd.type === 'calculate_time') {
-          playEarcon('chime');
-          const calculation = calculateTaskReality(clean);
-          setTranscripts((prev) => [
-            ...prev,
-            {
-              id: `reality-${Date.now()}`,
-              role: 'agent',
-              text: `⏱️ ${calculation.spokenSummary}\n\n• Perceived time: ~${calculation.perceivedMinutes} min\n• Micro-entry move: ${calculation.microEntrySeconds}s\n• Recommended block: ${calculation.recommendedSprintMinutes} min\n• Momentum rate: ${calculation.inertiaBreakRate}%`,
-              timestamp: new Date().toISOString(),
-            },
-          ]);
-          speakDeterministicBoundary(calculation.spokenSummary, effectiveLang);
-          return true;
-        } else if (cmd.type === 'brainstorm_angles') {
-          playEarcon('chime');
-          const brainstorm = brainstormStarterAngles(clean);
-          const formatted = `💡 3 Starter Angles for "${clean}":\n\n` +
-            brainstorm.angles.map((a, i) => `${i + 1}. **${a.name}** (~${a.timeSeconds}s)\n${a.prompt}`).join('\n\n');
-          setTranscripts((prev) => [
-            ...prev,
-            {
-              id: `brainstorm-${Date.now()}`,
-              role: 'agent',
-              text: formatted,
-              timestamp: new Date().toISOString(),
-            },
-          ]);
-          speakDeterministicBoundary(brainstorm.spokenSummary, effectiveLang);
-          return true;
-        } else if (cmd.type === 'synthesize_path') {
-          playEarcon('chime');
-          const path = synthesizeTaskPath(clean);
-          const formatted = `🧭 3-Phase Action Path for "${clean}" (${path.totalSprintMinutes}m total):\n\n` +
-            path.phases.map((p) => `Phase ${p.phase} · **${p.name}** (${p.durationMinutes}m)\n${p.action}`).join('\n\n');
-          setTranscripts((prev) => [
-            ...prev,
-            {
-              id: `path-${Date.now()}`,
-              role: 'agent',
-              text: formatted,
-              timestamp: new Date().toISOString(),
-            },
-          ]);
-          speakDeterministicBoundary(path.spokenSummary, effectiveLang);
-          return true;
-        } else if (cmd.type === 'clear_chat') {
-          optionsRef.current.onClearChatRequested?.();
-          setTranscripts([]);
+          speakDeterministicBoundary(combined, effectiveLang);
           return true;
         }
       }
@@ -1623,8 +1653,14 @@ ${adaptivePrompt}`;
           if (text.length > 4) {
             const analysis = analyzeStreamingUtterance(text);
             setStreamingAnalysis(analysis);
+            const genSpec = synthesizeGenerativeShape(text);
             const topic = detectTopicShape(text);
-            if (topic > 0) setTopicShape(topic);
+            if (genSpec && topic === 8) {
+              setGenerativeShape(genSpec);
+              setTopicShape(8);
+            } else if (topic > 0) {
+              setTopicShape(topic);
+            }
           }
 
           if (backchannelTimerRef.current) {
@@ -1680,6 +1716,23 @@ ${adaptivePrompt}`;
               optionsRef.current.onGroundingRequested?.();
             } else if (cmd.type === 'toggle_quiet_mode') {
               optionsRef.current.onToggleQuietModeRequested?.();
+            } else if (cmd.type === 'start_game') {
+              setTopicShape(5);
+              setActiveGame(cmd.game);
+              if (cmd.difficulty) setGameDifficulty(cmd.difficulty);
+            } else if (cmd.type === 'set_game_difficulty') {
+              setTopicShape(5);
+              setGameDifficulty(cmd.difficulty);
+            } else if (cmd.type === 'change_orb_color') {
+              setOrbColorTheme(cmd.colorTheme);
+            } else if (cmd.type === 'change_orb_shape') {
+              setTopicShape(cmd.shapeId);
+            } else if (cmd.type === 'synthesize_billion_shape') {
+              const s =
+                synthesizeGenerativeShape(cmd.concept) ||
+                buildProceduralBillionShape(cmd.concept, cmd.concept);
+              setGenerativeShape(s);
+              setTopicShape(8);
             } else if (cmd.type === 'clear_chat') {
               optionsRef.current.onClearChatRequested?.();
               setTranscripts([]);
@@ -1730,134 +1783,168 @@ ${adaptivePrompt}`;
               setUserMemory(updatedMemory);
             }
 
-            // Topic shape detection on finalized turn
+            // Topic shape & 1-Billion-Shape AI detection on finalized turn
+            const genSpec = synthesizeGenerativeShape(text);
             const topic = detectTopicShape(text);
-            setTopicShape(topic);
+            if (genSpec && topic === 8) {
+              setGenerativeShape(genSpec);
+              setTopicShape(8);
+            } else {
+              setTopicShape(topic);
+            }
 
-            // Hands-free voice command execution on finalized user turn
-            const cmd = detectVoiceCommand(text);
-            if (cmd) {
-              optionsRef.current.onVoiceCommandDetected?.(cmd);
-              if (cmd.type === 'pause_listening') {
-                handsFreePausedRef.current = true;
-                setIsHandsFreePaused(true);
-                setVisualState('idle');
-                stopPlaybackQueue();
-                playEarcon('pause');
-                return;
+            // Multi-intent & hands-free voice command execution on finalized user turn
+            const multi = parseMultiIntentUtterance(text);
+            if (multi.commands.length > 0) {
+              for (const cmd of multi.commands) {
+                optionsRef.current.onVoiceCommandDetected?.(cmd);
+                if (cmd.type === 'pause_listening') {
+                  handsFreePausedRef.current = true;
+                  setIsHandsFreePaused(true);
+                  setVisualState('idle');
+                  stopPlaybackQueue();
+                  playEarcon('pause');
+                  return;
+                }
+                if (cmd.type === 'resume_listening') {
+                  handsFreePausedRef.current = false;
+                  setIsHandsFreePaused(false);
+                  setVisualState('listening');
+                  playEarcon('resume');
+                  return;
+                }
+                if (cmd.type === 'start_timer') {
+                  optionsRef.current.onStartTimerRequested?.(cmd.minutes, text);
+                  playEarcon('chime');
+                } else if (cmd.type === 'stop_timer') {
+                  playEarcon('pause');
+                } else if (cmd.type === 'record_outcome') {
+                  optionsRef.current.onOutcomeRecorded?.(cmd.outcome);
+                  playEarcon('chime');
+                } else if (cmd.type === 'change_voice') {
+                  setSelectedVoice(cmd.voiceId);
+                  playEarcon('chime');
+                } else if (cmd.type === 'change_language') {
+                  setSelectedLanguage(cmd.langCode);
+                  playEarcon('chime');
+                } else if (cmd.type === 'open_voice_menu') {
+                  optionsRef.current.onChangeVoiceRequested?.();
+                  playEarcon('chime');
+                } else if (cmd.type === 'show_memory') {
+                  optionsRef.current.onShowMemoryRequested?.();
+                  playEarcon('chime');
+                } else if (cmd.type === 'show_history') {
+                  optionsRef.current.onShowHistoryRequested?.();
+                  playEarcon('chime');
+                } else if (cmd.type === 'open_training') {
+                  optionsRef.current.onOpenTrainingRequested?.();
+                  playEarcon('chime');
+                } else if (cmd.type === 'close_modals') {
+                  optionsRef.current.onCloseModalsRequested?.();
+                  playEarcon('pause');
+                } else if (cmd.type === 'switch_view') {
+                  optionsRef.current.onSwitchViewRequested?.(cmd.mode);
+                  playEarcon('chime');
+                } else if (cmd.type === 'navigate') {
+                  optionsRef.current.onNavigateRequested?.(cmd.path, cmd.label);
+                  playEarcon('chime');
+                } else if (cmd.type === 'open_grounding') {
+                  optionsRef.current.onGroundingRequested?.();
+                  playEarcon('chime');
+                } else if (cmd.type === 'toggle_quiet_mode') {
+                  optionsRef.current.onToggleQuietModeRequested?.();
+                  playEarcon('chime');
+                } else if (cmd.type === 'start_game') {
+                  playEarcon('chime');
+                  setTopicShape(5);
+                  setActiveGame(cmd.game);
+                  if (cmd.difficulty) setGameDifficulty(cmd.difficulty);
+                } else if (cmd.type === 'set_game_difficulty') {
+                  playEarcon('chime');
+                  setTopicShape(5);
+                  setGameDifficulty(cmd.difficulty);
+                } else if (cmd.type === 'change_orb_color') {
+                  playEarcon('chime');
+                  setOrbColorTheme(cmd.colorTheme);
+                } else if (cmd.type === 'change_orb_shape') {
+                  playEarcon('chime');
+                  setTopicShape(cmd.shapeId);
+                } else if (cmd.type === 'synthesize_billion_shape') {
+                  playEarcon('chime');
+                  const synthesized =
+                    synthesizeGenerativeShape(cmd.concept) ||
+                    buildProceduralBillionShape(cmd.concept, cmd.concept);
+                  setGenerativeShape(synthesized);
+                  if (!multi.commands.some((c) => c.type === 'start_game')) {
+                    setTopicShape(8);
+                  }
+                } else if (cmd.type === 'web_research') {
+                  playEarcon('chime');
+                  setTopicShape(6);
+                  optionsRef.current.onWebResearchRequested?.(cmd.query);
+                } else if (cmd.type === 'calculate_time') {
+                  playEarcon('chime');
+                  const calculation = calculateTaskReality(text);
+                  setTranscripts((prev) => [
+                    ...prev,
+                    {
+                      id: `reality-${Date.now()}`,
+                      role: 'agent',
+                      text: `⏱️ ${calculation.spokenSummary}\n\n• Perceived time: ~${calculation.perceivedMinutes} min\n• Micro-entry move: ${calculation.microEntrySeconds}s\n• Recommended block: ${calculation.recommendedSprintMinutes} min\n• Momentum rate: ${calculation.inertiaBreakRate}%`,
+                      timestamp: new Date().toISOString(),
+                    },
+                  ]);
+                  speakDeterministicBoundary(calculation.spokenSummary);
+                  return;
+                } else if (cmd.type === 'brainstorm_angles') {
+                  playEarcon('chime');
+                  const brainstorm = brainstormStarterAngles(text);
+                  const formatted =
+                    `💡 3 Starter Angles for "${text}":\n\n` +
+                    brainstorm.angles
+                      .map((a, i) => `${i + 1}. **${a.name}** (~${a.timeSeconds}s)\n${a.prompt}`)
+                      .join('\n\n');
+                  setTranscripts((prev) => [
+                    ...prev,
+                    {
+                      id: `brainstorm-${Date.now()}`,
+                      role: 'agent',
+                      text: formatted,
+                      timestamp: new Date().toISOString(),
+                    },
+                  ]);
+                  speakDeterministicBoundary(brainstorm.spokenSummary);
+                  return;
+                } else if (cmd.type === 'synthesize_path') {
+                  playEarcon('chime');
+                  const path = synthesizeTaskPath(text);
+                  const formatted =
+                    `🧭 3-Phase Action Path for "${text}" (${path.totalSprintMinutes}m total):\n\n` +
+                    path.phases
+                      .map((p) => `Phase ${p.phase} · **${p.name}** (${p.durationMinutes}m)\n${p.action}`)
+                      .join('\n\n');
+                  setTranscripts((prev) => [
+                    ...prev,
+                    {
+                      id: `path-${Date.now()}`,
+                      role: 'agent',
+                      text: formatted,
+                      timestamp: new Date().toISOString(),
+                    },
+                  ]);
+                  speakDeterministicBoundary(path.spokenSummary);
+                  return;
+                } else if (cmd.type === 'clear_chat') {
+                  optionsRef.current.onClearChatRequested?.();
+                  setTranscripts([]);
+                  return;
+                }
               }
-              if (cmd.type === 'resume_listening') {
-                handsFreePausedRef.current = false;
-                setIsHandsFreePaused(false);
-                setVisualState('listening');
-                playEarcon('resume');
-                return;
-              }
-              if (cmd.type === 'start_timer') {
-                optionsRef.current.onStartTimerRequested?.(cmd.minutes, text);
-                playEarcon('chime');
-                return;
-              } else if (cmd.type === 'stop_timer') {
-                playEarcon('pause');
-                return;
-              } else if (cmd.type === 'record_outcome') {
-                optionsRef.current.onOutcomeRecorded?.(cmd.outcome);
-                playEarcon('chime');
-                return;
-              } else if (cmd.type === 'change_voice') {
-                setSelectedVoice(cmd.voiceId);
-                playEarcon('chime');
-                return;
-              } else if (cmd.type === 'change_language') {
-                setSelectedLanguage(cmd.langCode);
-                playEarcon('chime');
-                return;
-              } else if (cmd.type === 'open_voice_menu') {
-                optionsRef.current.onChangeVoiceRequested?.();
-                playEarcon('chime');
-                return;
-              } else if (cmd.type === 'show_memory') {
-                optionsRef.current.onShowMemoryRequested?.();
-                playEarcon('chime');
-                return;
-              } else if (cmd.type === 'show_history') {
-                optionsRef.current.onShowHistoryRequested?.();
-                playEarcon('chime');
-                return;
-              } else if (cmd.type === 'open_training') {
-                optionsRef.current.onOpenTrainingRequested?.();
-                playEarcon('chime');
-                return;
-              } else if (cmd.type === 'close_modals') {
-                optionsRef.current.onCloseModalsRequested?.();
-                playEarcon('pause');
-                return;
-              } else if (cmd.type === 'switch_view') {
-                optionsRef.current.onSwitchViewRequested?.(cmd.mode);
-                playEarcon('chime');
-                return;
-              } else if (cmd.type === 'navigate') {
-                optionsRef.current.onNavigateRequested?.(cmd.path, cmd.label);
-                playEarcon('chime');
-                return;
-              } else if (cmd.type === 'open_grounding') {
-                optionsRef.current.onGroundingRequested?.();
-                playEarcon('chime');
-                return;
-              } else if (cmd.type === 'toggle_quiet_mode') {
-                optionsRef.current.onToggleQuietModeRequested?.();
-                playEarcon('chime');
-                return;
-              } else if (cmd.type === 'calculate_time') {
-                playEarcon('chime');
-                const calculation = calculateTaskReality(text);
-                setTranscripts((prev) => [
-                  ...prev,
-                  {
-                    id: `reality-${Date.now()}`,
-                    role: 'agent',
-                    text: `⏱️ ${calculation.spokenSummary}\n\n• Perceived time: ~${calculation.perceivedMinutes} min\n• Micro-entry move: ${calculation.microEntrySeconds}s\n• Recommended block: ${calculation.recommendedSprintMinutes} min\n• Momentum rate: ${calculation.inertiaBreakRate}%`,
-                    timestamp: new Date().toISOString(),
-                  },
-                ]);
-                speakDeterministicBoundary(calculation.spokenSummary);
-                return;
-              } else if (cmd.type === 'brainstorm_angles') {
-                playEarcon('chime');
-                const brainstorm = brainstormStarterAngles(text);
-                const formatted = `💡 3 Starter Angles for "${text}":\n\n` +
-                  brainstorm.angles.map((a, i) => `${i + 1}. **${a.name}** (~${a.timeSeconds}s)\n${a.prompt}`).join('\n\n');
-                setTranscripts((prev) => [
-                  ...prev,
-                  {
-                    id: `brainstorm-${Date.now()}`,
-                    role: 'agent',
-                    text: formatted,
-                    timestamp: new Date().toISOString(),
-                  },
-                ]);
-                speakDeterministicBoundary(brainstorm.spokenSummary);
-                return;
-              } else if (cmd.type === 'synthesize_path') {
-                playEarcon('chime');
-                const path = synthesizeTaskPath(text);
-                const formatted = `🧭 3-Phase Action Path for "${text}" (${path.totalSprintMinutes}m total):\n\n` +
-                  path.phases.map((p) => `Phase ${p.phase} · **${p.name}** (${p.durationMinutes}m)\n${p.action}`).join('\n\n');
-                setTranscripts((prev) => [
-                  ...prev,
-                  {
-                    id: `path-${Date.now()}`,
-                    role: 'agent',
-                    text: formatted,
-                    timestamp: new Date().toISOString(),
-                  },
-                ]);
-                speakDeterministicBoundary(path.spokenSummary);
-                return;
-              } else if (cmd.type === 'clear_chat') {
-                optionsRef.current.onClearChatRequested?.();
-                setTranscripts([]);
-                return;
+
+              // If user also expressed task/emotional context, propose plan right away
+              if (multi.conversationalContext) {
+                const instantPlan = buildDeterministicCoachPlan({ taskText: text });
+                optionsRef.current.onPlanProposed?.(instantPlan);
               }
             } else if (selectedLanguageRef.current === 'auto' && text.length > 3) {
               // Real-time multilingual adaptation: If user naturally speaks another language, adapt provider instructions on the fly
@@ -2135,6 +2222,9 @@ ${adaptivePrompt}`;
     availableVoices: AVAILABLE_VOICES,
     topicShape,
     setTopicShape,
+    generativeShape,
+    setGenerativeShape,
+    synthesizeShapeByConcept,
     orbColorTheme,
     setOrbColorTheme,
     activeGame,

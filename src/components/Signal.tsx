@@ -3,6 +3,10 @@
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AudioSpectrumBands, VoiceVisualState } from '@/types/domain';
+import {
+  evaluateGenerativeSuperformulaPoint,
+  type GenerativeShapeSpec,
+} from '@/lib/voice/generativeShapeEngine';
 
 const SignalScene = dynamic(() => import('./SignalScene'), {
   ssr: false,
@@ -64,7 +68,8 @@ function hasWebGL(): boolean {
 
 /**
  * Evaluates exact 2D polar/parametric coordinates (cx=60, cy=60) for angle theta in [0, 2*PI)
- * for each of the 8 morphologies so vertex-to-vertex spring interpolation is 100% smooth and artifact-free.
+ * for each of the 8 core morphologies + 1-Billion Gielis Superformula AI shapes so vertex-to-vertex
+ * spring interpolation is 100% smooth and artifact-free.
  * Note: theta = -PI/2 is top (12 o'clock), theta = PI/2 is bottom (6 o'clock).
  */
 export function evaluateParametricShapePoint(
@@ -72,8 +77,12 @@ export function evaluateParametricShapePoint(
   theta: number,
   time: number,
   energy: number,
-  layerScale = 1.0
+  layerScale = 1.0,
+  generativeShape?: GenerativeShapeSpec | null
 ): [number, number] {
+  if (shape === 8 && generativeShape) {
+    return evaluateGenerativeSuperformulaPoint(generativeShape, theta, time, energy, layerScale);
+  }
   const cx = 60;
   const cy = 60;
   const breath = Math.sin(time * 1.6) * 0.8 + energy * 3.2;
@@ -182,6 +191,7 @@ function ParametricMorphSculpture({
   bands,
   topicShape = 0,
   colorTheme = 'default',
+  generativeShape = null,
   isOverlay = false,
 }: {
   state: VoiceVisualState;
@@ -189,6 +199,7 @@ function ParametricMorphSculpture({
   bands?: AudioSpectrumBands;
   topicShape?: number;
   colorTheme?: string;
+  generativeShape?: GenerativeShapeSpec | null;
   isOverlay?: boolean;
 }) {
   const outerPathRef = useRef<SVGPathElement>(null);
@@ -199,13 +210,16 @@ function ParametricMorphSculpture({
   const shapeRef = useRef(topicShape);
   const energyRef = useRef(energy);
   const bandsRef = useRef(bands);
+  const genShapeRef = useRef(generativeShape);
   shapeRef.current = topicShape;
   energyRef.current = energy;
   bandsRef.current = bands;
+  genShapeRef.current = generativeShape;
 
   const baseCol = FALLBACK_COLOR[state] || FALLBACK_COLOR.idle;
   const col =
     (colorTheme !== 'default' && COLOR_THEME_PALETTES[colorTheme]) ||
+    (topicShape === 8 && generativeShape && generativeShape.palette) ||
     (topicShape > 0 && SHAPE_PALETTES[topicShape]) || {
       ...baseCol,
       accent: '#FFFFFF',
@@ -217,17 +231,17 @@ function ParametricMorphSculpture({
 
     // Initialize current & velocity arrays for 3 harmonic silk contour layers
     const curOuter: Array<[number, number]> = thetas.map((th) =>
-      evaluateParametricShapePoint(shapeRef.current, th, 0, 0, 1.0)
+      evaluateParametricShapePoint(shapeRef.current, th, 0, 0, 1.0, genShapeRef.current)
     );
     const velOuter: Array<[number, number]> = thetas.map(() => [0, 0]);
 
     const curMid: Array<[number, number]> = thetas.map((th) =>
-      evaluateParametricShapePoint(shapeRef.current, th, 0, 0, 0.84)
+      evaluateParametricShapePoint(shapeRef.current, th, 0, 0, 0.84, genShapeRef.current)
     );
     const velMid: Array<[number, number]> = thetas.map(() => [0, 0]);
 
     const curInner: Array<[number, number]> = thetas.map((th) =>
-      evaluateParametricShapePoint(shapeRef.current, th, 0, 0, 0.66)
+      evaluateParametricShapePoint(shapeRef.current, th, 0, 0, 0.66, genShapeRef.current)
     );
     const velInner: Array<[number, number]> = thetas.map(() => [0, 0]);
 
@@ -244,24 +258,25 @@ function ParametricMorphSculpture({
       t += dt;
 
       const curShape = shapeRef.current;
+      const curGen = genShapeRef.current;
       const curEnergy = energyRef.current + (bandsRef.current?.low || 0) * 0.5;
 
       for (let i = 0; i < N; i++) {
         const th = thetas[i];
 
-        const [tx1, ty1] = evaluateParametricShapePoint(curShape, th, t, curEnergy, 1.0);
+        const [tx1, ty1] = evaluateParametricShapePoint(curShape, th, t, curEnergy, 1.0, curGen);
         velOuter[i][0] = (velOuter[i][0] + (tx1 - curOuter[i][0]) * stiffness) * damping;
         velOuter[i][1] = (velOuter[i][1] + (ty1 - curOuter[i][1]) * stiffness) * damping;
         curOuter[i][0] += velOuter[i][0];
         curOuter[i][1] += velOuter[i][1];
 
-        const [tx2, ty2] = evaluateParametricShapePoint(curShape, th + 0.08 * Math.sin(t), t * 1.1, curEnergy, 0.84);
+        const [tx2, ty2] = evaluateParametricShapePoint(curShape, th + 0.08 * Math.sin(t), t * 1.1, curEnergy, 0.84, curGen);
         velMid[i][0] = (velMid[i][0] + (tx2 - curMid[i][0]) * stiffness * 0.9) * damping;
         velMid[i][1] = (velMid[i][1] + (ty2 - curMid[i][1]) * stiffness * 0.9) * damping;
         curMid[i][0] += velMid[i][0];
         curMid[i][1] += velMid[i][1];
 
-        const [tx3, ty3] = evaluateParametricShapePoint(curShape, th - 0.08 * Math.cos(t), t * 0.9, curEnergy, 0.66);
+        const [tx3, ty3] = evaluateParametricShapePoint(curShape, th - 0.08 * Math.cos(t), t * 0.9, curEnergy, 0.66, curGen);
         velInner[i][0] = (velInner[i][0] + (tx3 - curInner[i][0]) * stiffness * 0.85) * damping;
         velInner[i][1] = (velInner[i][1] + (ty3 - curInner[i][1]) * stiffness * 0.85) * damping;
         curInner[i][0] += velInner[i][0];
@@ -290,6 +305,7 @@ function ParametricMorphSculpture({
       aria-hidden="true"
       data-testid={isOverlay ? 'signal-parametric-overlay' : 'signal-fallback'}
       data-topic-shape={topicShape}
+      data-generative-id={generativeShape?.catalogId || 0}
     >
       <defs>
         <radialGradient id={`halo-${gradId}`} cx="50%" cy="50%" r="50%">
@@ -356,7 +372,7 @@ function ParametricMorphSculpture({
         strokeOpacity="0.92"
       />
 
-      {/* Smoothly Transitioning Precision Vector Geometry Details for Modes 1-4 */}
+      {/* Smoothly Transitioning Precision Vector Geometry Details for Modes 1-8 */}
       {/* Mode 1: Sculpted Ice Cream Waffle Cone Lattice, Soft-Serve Swirl & Glossy Cherry */}
       <g
         style={{
@@ -566,6 +582,32 @@ function ParametricMorphSculpture({
         />
         <circle cx="60" cy="60" r="3.5" fill="#FDE68A" />
       </g>
+
+      {/* Mode 8: 1-Billion-Shape AI Synthesized Gielis Superformula + Vector Sculpture */}
+      <g
+        data-testid="generative-svg-emblem"
+        style={{
+          opacity: topicShape === 8 && generativeShape ? 1 : 0,
+          transform: topicShape === 8 && generativeShape ? 'scale(1)' : 'scale(0.84)',
+          transformOrigin: '60px 60px',
+          transition: 'opacity 480ms cubic-bezier(0.22, 1, 0.36, 1), transform 480ms cubic-bezier(0.22, 1, 0.36, 1)',
+        }}
+      >
+        {generativeShape?.svgElements.map((el, idx) => (
+          <path
+            key={idx}
+            d={el.d}
+            fill={el.fill || 'none'}
+            fillOpacity={el.fillOpacity}
+            stroke={el.stroke || '#FFFFFF'}
+            strokeWidth={el.strokeWidth ?? 1.5}
+            strokeOpacity={el.strokeOpacity ?? 0.9}
+            transform={el.transform}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        ))}
+      </g>
     </svg>
   );
 }
@@ -576,12 +618,14 @@ export function SignalFallbackSvg({
   bands,
   topicShape = 0,
   colorTheme = 'default',
+  generativeShape = null,
 }: {
   state: VoiceVisualState;
   energy?: number;
   bands?: AudioSpectrumBands;
   topicShape?: number;
   colorTheme?: string;
+  generativeShape?: GenerativeShapeSpec | null;
 }) {
   return (
     <ParametricMorphSculpture
@@ -590,6 +634,7 @@ export function SignalFallbackSvg({
       bands={bands}
       topicShape={topicShape}
       colorTheme={colorTheme}
+      generativeShape={generativeShape}
       isOverlay={false}
     />
   );
@@ -601,6 +646,7 @@ export function Signal({
   bands,
   topicShape = 0,
   colorTheme = 'default',
+  generativeShape = null,
   size = 240,
   hideLabel = false,
   className = '',
@@ -610,6 +656,7 @@ export function Signal({
   bands?: AudioSpectrumBands;
   topicShape?: number;
   colorTheme?: string;
+  generativeShape?: GenerativeShapeSpec | null;
   size?: number;
   hideLabel?: boolean;
   className?: string;
@@ -636,6 +683,7 @@ export function Signal({
       data-signal-state={state}
       data-topic-shape={topicShape}
       data-color-theme={colorTheme}
+      data-generative-shape={generativeShape?.conceptKey || ''}
     >
       <div
         className="relative flex items-center justify-center w-full h-full select-none outline-none"
@@ -647,7 +695,7 @@ export function Signal({
               state={state}
               energy={energy}
               bands={bands}
-              topicShape={topicShape}
+              topicShape={topicShape === 8 ? 3 : topicShape}
               reducedMotion={reducedMotion}
               onUnsupported={handleUnsupported}
             />
@@ -659,6 +707,7 @@ export function Signal({
                 bands={bands}
                 topicShape={topicShape}
                 colorTheme={colorTheme}
+                generativeShape={generativeShape}
                 isOverlay={true}
               />
             </div>
@@ -670,6 +719,7 @@ export function Signal({
             bands={bands}
             topicShape={topicShape}
             colorTheme={colorTheme}
+            generativeShape={generativeShape}
           />
         )}
       </div>

@@ -28,10 +28,17 @@ export type VoiceCommandAction =
   | { type: 'set_game_difficulty'; difficulty: 'easy' | 'medium' | 'hard' }
   | { type: 'change_orb_color'; colorTheme: 'default' | 'aurora' | 'sunset' | 'ocean' | 'cyber' | 'emerald' }
   | { type: 'change_orb_shape'; shapeId: number; shapeLabel: string }
+  | { type: 'synthesize_billion_shape'; concept: string }
   | { type: 'web_research'; query: string }
   | { type: 'toggle_quiet_mode' }
   | { type: 'clear_chat' }
   | null;
+
+export interface MultiIntentParseResult {
+  commands: NonNullable<VoiceCommandAction>[];
+  conversationalContext: string | null;
+  isMultiContext: boolean;
+}
 
 /**
  * Evaluates live streaming or finalized user speech for immediate voice commands.
@@ -332,12 +339,47 @@ export function detectVoiceCommand(text: string): VoiceCommandAction {
     return { type: 'synthesize_path' };
   }
 
-  // 16. Interactive Orb Cognitive Games ("I want to play a game", "let's play a game", "play simon", "play impulse shield", "play word rally", Hindi/Korean/Spanish)
+  // 16. Interactive Orb Cognitive Games ("play a game", "play the game", "play game", "let's play", "start the game", "play simon", "impulse shield", "word rally", Hindi/Korean/Spanish)
+  const gameDetected = detectGameCommandFromText(clean);
+  if (gameDetected) {
+    return gameDetected;
+  }
+
+  // 17. Set Game Difficulty ("difficulty easy", "easy difficulty", "hard mode", "make it easy")
   if (
-    /\b(?:(?:i\s+want\s+to\s+|let'?s\s+|can\s+we\s+|start\s+(?:a\s+)?)?play\s+(?:a\s+|an\s+|the\s+)?(?:orb\s+|adhd\s+|cognitive\s+)?(?:game|games|simon|pulse|impulse(?:\s+shield)?|go\s+no\s+go|word\s+rally|word\s+chain)|orb\s+game|game\s+mode|mujhe\s+game\s+khelna\s+hai|game\s+khelo|geim\s+hago\s+sipeo|quiero\s+jugar)\b/i.test(
+    /\b(?:(?:set\s+|change\s+)?difficulty\s+(?:to\s+)?(easy|medium|hard)|(easy|medium|hard)\s+(?:difficulty|mode|level)|make\s+it\s+(easy|medium|hard))\b/i.test(
+      clean
+    )
+  ) {
+    const diff = /\bhard\b/i.test(clean) ? 'hard' : /\beasy\b/i.test(clean) ? 'easy' : 'medium';
+    return { type: 'set_game_difficulty', difficulty: diff };
+  }
+
+  // 18. Change Orb Color / Gradient ("change orb color to aurora", "sunset gradient", "color ocean", "color cyber", "color emerald")
+  const colorCmd = detectColorCommandFromText(clean);
+  if (colorCmd) return colorCmd;
+
+  // 19. Direct Orb Shape Morphing (Core 8 modes OR 1-Billion-Shape AI Synthesized Morphology)
+  const shapeCmd = detectShapeCommandFromText(clean);
+  if (shapeCmd) return shapeCmd;
+
+  // 20. Live Web & Clinical Research ("search web for...", "research...", "search google for...", "look up...")
+  const researchMatch = clean.match(
+    /\b(?:search\s+(?:the\s+)?(?:web|internet|google)\s+(?:for|about)\s+|research\s+(?:about|on|topic)?\s*|find\s+articles?\s+(?:on|about)\s+)(.{3,90})$/i
+  );
+  if (researchMatch && researchMatch[1]) {
+    return { type: 'web_research', query: researchMatch[1].trim() };
+  }
+
+  return null;
+}
+
+function detectGameCommandFromText(clean: string): Extract<VoiceCommandAction, { type: 'start_game' }> | null {
+  if (
+    /\b(?:(?:i\s+want\s+to\s+|i\s+said\s+(?:to\s+)?|let'?s\s+|can\s+we\s+|we\s+can\s+|start\s+(?:a\s+|the\s+)?)?play(?:\s+with\s+me)?(?:\s+(?:a\s+|an\s+|the\s+|some\s+)?(?:orb\s+|adhd\s+|cognitive\s+|focus\s+|memory\s+)*(?:game|games|simon(?:\s+pulse)?|pulse|impulse(?:\s+shield)?|go\s+no\s+go|word\s+rally|word\s+chain))|let'?s\s+play\b|play\s+game\b|play\s+the\s+game\b|start\s+(?:the\s+)?game\b|open\s+(?:the\s+)?game\b|launch\s+(?:the\s+)?game\b|orb\s+game|game\s+mode|simon\s+pulse|impulse\s+shield|word\s+rally|mujhe\s+game\s+khelna\s+hai|game\s+khelo|khelte\s+hain|geim\s+hago\s+sipeo|quiero\s+jugar|jugar\s+un\s+juego)\b/i.test(
       clean
     ) ||
-    /(?:गेम\s*खेल|खेलना\s*है|게임\s*하|게임\s*시작)/.test(clean)
+    /(?:गेम\s*खेल|खेलना\s*है|खेलते\s*हैं|게임\s*하|게임\s*시작)/.test(clean)
   ) {
     const difficulty: 'easy' | 'medium' | 'hard' | undefined = /\b(?:hard|expert|fast)\b/i.test(clean)
       ? 'hard'
@@ -355,18 +397,10 @@ export function detectVoiceCommand(text: string): VoiceCommandAction {
     }
     return { type: 'start_game', game: 'simon', difficulty };
   }
+  return null;
+}
 
-  // 17. Set Game Difficulty ("difficulty easy", "easy difficulty", "hard mode", "make it easy")
-  if (
-    /\b(?:(?:set\s+|change\s+)?difficulty\s+(?:to\s+)?(easy|medium|hard)|(easy|medium|hard)\s+(?:difficulty|mode|level)|make\s+it\s+(easy|medium|hard))\b/i.test(
-      clean
-    )
-  ) {
-    const diff = /\bhard\b/i.test(clean) ? 'hard' : /\beasy\b/i.test(clean) ? 'easy' : 'medium';
-    return { type: 'set_game_difficulty', difficulty: diff };
-  }
-
-  // 18. Change Orb Color / Gradient ("change orb color to aurora", "sunset gradient", "color ocean", "color cyber", "color emerald")
+function detectColorCommandFromText(clean: string): Extract<VoiceCommandAction, { type: 'change_orb_color' }> | null {
   const colorMatch = clean.match(
     /\b(?:(?:change|set|make|switch)\s+(?:the\s+)?(?:orb\s+)?(?:color|colour|gradient|theme)\s+(?:to\s+)?|(?:orb\s+)?(?:color|colour|gradient)\s+)(aurora|sunset|ocean|cyber|emerald|default|teal|rose|purple|blue|gold)\b|\b(aurora|sunset|ocean|cyber|emerald)\s+(?:color|colour|gradient|theme)\b/i
   );
@@ -387,13 +421,18 @@ export function detectVoiceCommand(text: string): VoiceCommandAction {
     };
     return { type: 'change_orb_color', colorTheme: map[raw] || 'aurora' };
   }
+  return null;
+}
 
-  // 19. Direct Orb Shape Morphing ("change shape to ice cream", "morph into lotus", "shape gem", "shape star", "shape hourglass", "shape globe")
-  const shapeMatch = clean.match(
-    /\b(?:(?:change|set|morph|transform|switch)\s+(?:the\s+)?(?:orb\s+)?(?:shape\s+)?(?:to|into)\s+|(?:orb\s+)?shape\s+|shapify\s+)(fluid|wave|sphere|ice\s*cream|cone|swirl|letter|gem|crystal|star|rose|creative|lotus|calm|flower|game|arena|globe|research|hourglass|timer|vortex)\b/i
+function detectShapeCommandFromText(
+  clean: string
+): Extract<VoiceCommandAction, { type: 'change_orb_shape' } | { type: 'synthesize_billion_shape' }> | null {
+  // 1. Core 8 shapes
+  const coreShapeMatch = clean.match(
+    /\b(?:(?:change|set|morph|transform|turn|switch)\s+(?:the\s+)?(?:orb\s+)?(?:shape\s+)?(?:to|into)\s+(?:a\s+|an\s+|the\s+)?|(?:orb\s+)?shape\s+|shapify\s+)(fluid|wave|sphere|ice\s*cream|cone|swirl|letter|gem|crystal|star|rose|creative|lotus|calm|flower|game|arena|globe|research|hourglass|timer|vortex)\b/i
   );
-  if (shapeMatch && shapeMatch[1]) {
-    const raw = shapeMatch[1].toLowerCase();
+  if (coreShapeMatch && coreShapeMatch[1]) {
+    const raw = coreShapeMatch[1].toLowerCase();
     if (/ice\s*cream|cone|swirl/.test(raw)) return { type: 'change_orb_shape', shapeId: 1, shapeLabel: 'Ice Cream Swirl' };
     if (/letter|gem|crystal/.test(raw)) return { type: 'change_orb_shape', shapeId: 2, shapeLabel: 'Crystalline Letterforms' };
     if (/star|rose|creative/.test(raw)) return { type: 'change_orb_shape', shapeId: 3, shapeLabel: 'Creative Harmonic Star' };
@@ -404,16 +443,135 @@ export function detectVoiceCommand(text: string): VoiceCommandAction {
     return { type: 'change_orb_shape', shapeId: 0, shapeLabel: 'Fluid Resonance' };
   }
 
-  // 20. Live Web & Clinical Research ("search web for...", "research...", "search google for...", "look up...")
-  const researchMatch = clean.match(
-    /\b(?:search\s+(?:the\s+)?(?:web|internet|google)\s+(?:for|about)\s+|research\s+(?:about|on|topic)?\s*|find\s+articles?\s+(?:on|about)\s+)(.{3,90})$/i
+  // 2. Any of 1 Billion AI-Synthesized Shapes ("turn into a rocket ship", "become a dragon", "morph into a butterfly", "shape heart", "transform into dragon", "make shape of DNA helix")
+  const billionMatch = clean.match(
+    /\b(?:(?:change|set|morph|transform|turn|switch|sculpt|become)\s+(?:the\s+)?(?:orb\s+)?(?:shape\s+)?(?:(?:to|into)\s+)?(?:a\s+|an\s+|the\s+)?|shapify\s+(?:into\s+)?(?:a\s+|an\s+)?|(?:make|create|synthesize)\s+(?:a\s+|an\s+|the\s+)?(?:orb\s+)?shape\s+(?:of\s+)?(?:a\s+|an\s+)?)([a-z0-9][a-z0-9\s-]{1,26}?)(?=\s+(?:and|while|because|then|also|with|for|on|in|to\s+help|so\s+i)\b|[,.!?]|$)/i
   );
-  if (researchMatch && researchMatch[1]) {
-    return { type: 'web_research', query: researchMatch[1].trim() };
+  if (billionMatch && billionMatch[1]) {
+    const target = billionMatch[1].trim();
+    if (
+      !/^(?:grid|workspace|orb|spanish|hindi|french|german|korean|japanese|english|male|female|anna|oliver|easy|medium|hard|quiet)$/i.test(
+        target
+      )
+    ) {
+      return { type: 'synthesize_billion_shape', concept: target };
+    }
   }
-
   return null;
 }
 
+/**
+ * Multi-Intent Human Conversational Parser (`parseMultiIntentUtterance`).
+ *
+ * When a user speaks naturally in the real world with multiple things at once — e.g.:
+ * "I said to play the game on hard and turn into a rocket ship while helping me with my landlord email"
+ * — this extracts ALL simultaneous commands AND preserves the conversational/task context so Stay
+ * responds like a real human companion and executes every part together.
+ */
+export function parseMultiIntentUtterance(text: string): MultiIntentParseResult {
+  const clean = text.trim();
+  if (!clean || clean.length < 3) {
+    return { commands: [], conversationalContext: null, isMultiContext: false };
+  }
+  const lower = clean.toLowerCase();
+  const commands: NonNullable<VoiceCommandAction>[] = [];
+
+  // 1. Check Game launch
+  const gameCmd = detectGameCommandFromText(lower);
+  if (gameCmd) {
+    commands.push(gameCmd);
+  }
+
+  // 2. Check Game difficulty (if not already captured or explicit)
+  if (
+    /\b(?:(?:set\s+|change\s+)?difficulty\s+(?:to\s+)?(easy|medium|hard)|(easy|medium|hard)\s+(?:difficulty|mode|level)|make\s+it\s+(easy|medium|hard)|on\s+(easy|medium|hard))\b/i.test(
+      lower
+    )
+  ) {
+    const diff = /\bhard\b/i.test(lower) ? 'hard' : /\beasy\b/i.test(lower) ? 'easy' : 'medium';
+    if (!gameCmd) {
+      commands.push({ type: 'set_game_difficulty', difficulty: diff });
+    }
+  }
+
+  // 3. Check Orb shape morph (core or 1-Billion AI shape)
+  const shapeCmd = detectShapeCommandFromText(lower);
+  if (shapeCmd) {
+    commands.push(shapeCmd);
+  }
+
+  // 4. Check Orb color
+  const colorCmd = detectColorCommandFromText(lower);
+  if (colorCmd) {
+    commands.push(colorCmd);
+  }
+
+  // 5. Check Timer
+  const timerMatch = lower.match(
+    /\b(?:start|set|do|run)\s+(?:a\s+)?(?:(?:the\s+)?timer\s+(?:for\s+)?)?(\d{1,2})\s*(?:min|minute|minutes)(?:\s+timer|\s+block|\s+sprint)?\b/i
+  );
+  if (timerMatch && timerMatch[1]) {
+    const mins = parseInt(timerMatch[1], 10);
+    if (mins >= 1 && mins <= 60) {
+      commands.push({ type: 'start_timer', minutes: mins });
+    }
+  } else if (/\b(?:start timer|start the timer|begin timer|start focus timer)\b/i.test(lower)) {
+    commands.push({ type: 'start_timer', minutes: 20 });
+  }
+
+  // 6. Check Memory & History inspection
+  if (/\b(?:show|open|view|inspect)\s+(?:me\s+)?(?:the\s+)?memory\b/i.test(lower) || /\b(?:what\s+do\s+you\s+remember)\b/i.test(lower)) {
+    commands.push({ type: 'show_memory' });
+  }
+  if (/\b(?:show|open|view)\s+(?:me\s+)?(?:the\s+)?(?:chat\s+)?history\b/i.test(lower)) {
+    commands.push({ type: 'show_history' });
+  }
+
+  // 7. Check Grounding
+  if (/\b(?:ground\s+me|help\s+me\s+breathe|breathing\s+exercise)\b/i.test(lower)) {
+    commands.push({ type: 'open_grounding' });
+  }
+
+  // 8. Check primary single command if none of the above matched
+  if (commands.length === 0) {
+    const single = detectVoiceCommand(clean);
+    if (single) {
+      commands.push(single);
+    }
+  }
+
+  // 9. Determine if the utterance ALSO carries real-world task/emotional context alongside commands
+  const hasTaskOrEmotionalContext =
+    /\b(?:help\s+me\s+with|working\s+on|stuck\s+on|overwhelmed|stressed|anxious|brain\s+is\s+fried|landlord|email|emails|tax|taxes|vat|report|presentation|homework|study|exam|project|code|coding|proposal|essay|cleaning|dishes|laundry|deadline|boss|client|invoice|paperwork|tabs\s+open|can'?t\s+focus|procrastinating)\b/i.test(
+      lower
+    ) ||
+    (commands.length > 0 && clean.split(/\s+/).length >= 9);
+
+  // Strip command clauses to isolate the conversational/task context cleanly
+  const stripped = clean
+    .replace(/\b(?:let'?s\s+|i\s+said\s+to\s+|please\s+)?(?:play|start|launch)\s+(?:the\s+|an?\s+)?(?:simon|gonogo|wordrally|adhd|focus|impulse|cognitive\s+)?game(?:\s+arena)?(?:\s+on\s+(?:easy|medium|hard))?\b/gi, '')
+    .replace(/\b(?:turn|morph|transform|switch|become|change)\s+(?:the\s+orb\s+)?(?:shape\s+)?(?:to|into)?\s+(?:a\s+|an\s+|the\s+)?[a-z0-9\s-]{2,26}?(?=\s+(?:and|while|with|for|then)|[,.!?]|$)/gi, '')
+    .replace(/\b(?:start|set|run)\s+(?:a\s+)?(?:the\s+)?(?:\d{1,2}\s*(?:min|minute|minutes)|timer)(?:\s+(?:timer|block|sprint))?\b/gi, '')
+    .replace(/\b(?:show|open)\s+(?:me\s+)?(?:the\s+)?(?:memory|history)\b/gi, '')
+    .replace(/\b(?:and\s+also|and\s+then|while\s+helping\s+me\s+with|helping\s+me\s+with|and|while)\b/gi, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/^[,.!?\s]+|[,.!?\s]+$/g, '')
+    .trim();
+
+  const conversationalContext =
+    stripped.length >= 8 && hasTaskOrEmotionalContext
+      ? stripped
+      : hasTaskOrEmotionalContext
+      ? clean
+      : null;
+
+  return {
+    commands,
+    conversationalContext,
+    isMultiContext: commands.length > 1 || (commands.length >= 1 && Boolean(conversationalContext)),
+  };
+}
+
 export const parseVoiceCommand = detectVoiceCommand;
+
 

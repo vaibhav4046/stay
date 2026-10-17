@@ -7,7 +7,8 @@ import { OrbCognitiveGames } from '@/components/OrbCognitiveGames';
 import type { CoachPlanProposal, SessionOutcome, BarrierType } from '@/types/domain';
 import { BARRIER_DEFINITIONS } from '@/lib/coach/strategies';
 import { detectTopicShape, TOPIC_SHAPE_LABELS, type UseVoiceAgentReturn, type OrbColorTheme } from '@/lib/voice/useVoiceAgent';
-import { detectVoiceCommand } from '@/lib/voice/voiceCommands';
+import { parseMultiIntentUtterance, type MultiIntentParseResult } from '@/lib/voice/voiceCommands';
+import { IntelligentTaskCanvas } from '@/components/IntelligentTaskCanvas';
 import {
   calculateTaskReality,
   brainstormStarterAngles,
@@ -78,6 +79,23 @@ export function OrbCompanionView({
   userEmail,
 }: OrbCompanionViewProps) {
   const [typedMessage, setTypedMessage] = useState('');
+  const [lastIntent, setLastIntent] = useState<(MultiIntentParseResult & { utterance: string }) | null>(null);
+  const [customShapePrompt, setCustomShapePrompt] = useState('');
+
+  // One router for typed text + chips: fire every command, and if real-world
+  // context rides along ("stressed about landlord... let's play"), plan it too.
+  const routeUtterance = (text: string) => {
+    const multi = parseMultiIntentUtterance(text);
+    setLastIntent({ ...multi, utterance: text });
+    if (multi.commands.length === 0 || multi.conversationalContext) {
+      const taskPart = multi.conversationalContext || text;
+      if (onTaskSubmit) onTaskSubmit(taskPart);
+      else onTaskTextChange(taskPart);
+    }
+    const shape = detectTopicShape(text);
+    if (shape > 0 && shape !== 8) voice.setTopicShape(shape);
+    voice.sendUserTextMessage(text);
+  };
   const [showOutcomeDialog, setShowOutcomeDialog] = useState(false);
   const [showScienceDrawer, setShowScienceDrawer] = useState(false);
   const [orbExecTab, setOrbExecTab] = useState<
@@ -425,6 +443,7 @@ export function OrbCompanionView({
             energy={voice.audioEnergy}
             bands={voice.audioBands}
             topicShape={voice.topicShape}
+            generativeShape={voice.generativeShape}
             colorTheme={voice.orbColorTheme}
             hideLabel
             className="w-full h-full"
@@ -439,7 +458,20 @@ export function OrbCompanionView({
 
         {/* Apple Segmented Morphology Dock & Shapify Color Sandbox */}
         <div className="mt-3 text-center flex flex-col items-center gap-2 w-full">
-          {voice.topicShape > 0 && TOPIC_SHAPE_LABELS[voice.topicShape] && (
+          {voice.topicShape === 8 && voice.generativeShape ? (
+            <span
+              data-testid="orb-morph-badge"
+              data-topic-shape={8}
+              data-catalog-id={voice.generativeShape.catalogId}
+              className="inline-flex items-center gap-1.5 rounded-full bg-white/90 backdrop-blur-xl border border-black/[0.08] px-3.5 py-1 text-xs font-semibold text-ink shadow-xs transition-all"
+            >
+              <span>{voice.generativeShape.icon}</span>
+              <span data-testid="generative-shape-label">{voice.generativeShape.label}</span>
+              <span className="font-mono text-[0.62rem] text-ink-2">
+                #{voice.generativeShape.catalogId.toLocaleString()} / 1B
+              </span>
+            </span>
+          ) : voice.topicShape > 0 && TOPIC_SHAPE_LABELS[voice.topicShape] && (
             <span
               data-testid="orb-morph-badge"
               data-topic-shape={voice.topicShape}
@@ -518,6 +550,56 @@ export function OrbCompanionView({
               </button>
             ))}
           </div>
+
+          <form
+            data-testid="billion-shape-synthesizer"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const c = customShapePrompt.trim();
+              if (!c) return;
+              voice.synthesizeShapeByConcept(c);
+              setCustomShapePrompt('');
+            }}
+            className="inline-flex flex-wrap items-center justify-center gap-1 rounded-full bg-white/70 backdrop-blur-md px-2 py-1 border border-black/[0.05]"
+          >
+            {[
+              { k: 'rocket', i: '🚀' },
+              { k: 'heart', i: '💖' },
+              { k: 'butterfly', i: '🦋' },
+              { k: 'dragon', i: '🐉' },
+              { k: 'dna', i: '🧬' },
+              { k: 'lightning', i: '⚡' },
+            ].map((s) => (
+              <button
+                key={s.k}
+                type="button"
+                data-testid={`billion-shape-pill-${s.k}`}
+                onClick={() => voice.synthesizeShapeByConcept(s.k)}
+                className="h-7 w-7 rounded-full hover:bg-black/[0.06] transition-colors text-sm"
+                title={`Morph into ${s.k}`}
+                aria-label={`Morph into ${s.k}`}
+              >
+                {s.i}
+              </button>
+            ))}
+            <button
+              type="button"
+              data-testid="billion-shape-random"
+              onClick={() => voice.synthesizeShapeByConcept(Math.floor(Math.random() * 1_000_000_000) + 1)}
+              className="h-7 rounded-full px-2 hover:bg-black/[0.06] text-[0.68rem] font-semibold text-ink"
+              title="Random shape from 1,000,000,000"
+            >
+              ♾️ 1B
+            </button>
+            <input
+              value={customShapePrompt}
+              onChange={(e) => setCustomShapePrompt(e.target.value)}
+              data-testid="billion-shape-input"
+              placeholder="become anything…"
+              aria-label="Describe any shape"
+              className="w-28 rounded-full bg-[#F5F5F7] px-2.5 py-1 text-[0.7rem] text-ink border border-black/[0.06] focus:outline-none focus:border-[#006A67]"
+            />
+          </form>
 
           <p className="text-[0.88rem] font-medium tracking-tight text-ink">{getStatusText()}</p>
         </div>
@@ -880,6 +962,17 @@ export function OrbCompanionView({
           </div>
         )}
 
+        {(plan || lastIntent) && (voice.topicShape !== 5 || lastIntent?.isMultiContext) && (
+          <IntelligentTaskCanvas
+            intent={lastIntent}
+            taskText={activeTaskString}
+            firstStep={plan?.firstStep || null}
+            steps={liveArtifact.checklist}
+            draftTitle={liveArtifact.title}
+            shapeLabel={voice.topicShape === 8 && voice.generativeShape ? voice.generativeShape.label : null}
+          />
+        )}
+
         {/* Sleek Apple Quick-Launch Hooks when Idle */}
         {!plan && !running && voice.topicShape !== 5 && voice.topicShape !== 6 && (
           <div className="mt-4 flex flex-wrap justify-center gap-1.5 max-w-xl">
@@ -908,15 +1001,7 @@ export function OrbCompanionView({
               <button
                 key={chip.label}
                 type="button"
-                onClick={() => {
-                  const cmd = detectVoiceCommand(chip.text);
-                  if (!cmd) {
-                    onTaskSubmit?.(chip.text);
-                  }
-                  const shape = detectTopicShape(chip.text);
-                  if (shape > 0) voice.setTopicShape(shape);
-                  voice.sendUserTextMessage(chip.text);
-                }}
+                onClick={() => routeUtterance(chip.text)}
                 className="rounded-full text-[0.74rem] py-1.5 px-3.5 bg-white/85 backdrop-blur-xl border border-black/[0.07] text-ink hover:bg-white shadow-2xs transition-all"
               >
                 {chip.label}
@@ -1064,15 +1149,7 @@ export function OrbCompanionView({
               setShowScienceDrawer(true);
               return;
             }
-            const cmd = detectVoiceCommand(clean);
-            if (!cmd) {
-              if (onTaskSubmit) {
-                onTaskSubmit(clean);
-              } else {
-                onTaskTextChange(clean);
-              }
-            }
-            voice.sendUserTextMessage(clean);
+            routeUtterance(clean);
           }}
           className="flex items-center gap-2 bg-white/90 backdrop-blur-2xl p-1.5 rounded-full border border-black/[0.08] shadow-[0_12px_36px_rgba(0,0,0,0.06)]"
         >
