@@ -160,13 +160,35 @@ export function chooseBestStrategy(params: {
   };
 }
 
+export function detectTaskLanguage(text: string): 'hi' | 'es' | 'fr' | 'de' | 'en' {
+  if (/[\u0900-\u097F]/.test(text)) return 'hi';
+  if (/[äöüß]/i.test(text) || /\b(ich|du|er|sie|es|wir|ihr|der|die|das|und|nicht|ein|eine|mit|für|machen)\b/i.test(text)) return 'de';
+  if (/[œæçèêëîïôûù]/i.test(text) || /\b(je|tu|il|elle|nous|vous|ils|le|la|les|un|une|des|du|dans|pour|avec|est|sur|veux|faire|mon|mémoire)\b/i.test(text)) return 'fr';
+  if (/[¿¡ñáíóú]/i.test(text) || /\b(el|la|los|las|un|una|de|en|por|para|con|como|tarea|hacer|empezar|quiero|puedo|esta)\b/i.test(text)) return 'es';
+  return 'en';
+}
+
 export function buildDeterministicFirstStep(
   taskText: string,
   strategyKey: StrategyKey
 ): string {
   const cleaned = taskText.trim().replace(/\.$/, '');
-  const lower = cleaned.toLowerCase();
+  const lang = detectTaskLanguage(cleaned);
 
+  if (lang === 'hi') {
+    return `"${cleaned}" के लिए बस पहला छोटा कदम उठाएं: संबंधित ऐप या सामग्री खोलें और केवल 2 मिनट का सेटअप करें।`;
+  }
+  if (lang === 'es') {
+    return `Abre la herramienta o archivo para "${cleaned}" y haz solo los primeros 90 segundos de preparación.`;
+  }
+  if (lang === 'fr') {
+    return `Ouvre l'outil ou le document pour "${cleaned}" et fais uniquement les 90 premières secondes de préparation.`;
+  }
+  if (lang === 'de') {
+    return `Öffne das Dokument oder die App für "${cleaned}" und mach nur die ersten 90 Sekunden Vorbereitung.`;
+  }
+
+  const lower = cleaned.toLowerCase();
   const isMessageTask = /(email|reply|message|text|write to|landlord|client|professor|manager|gp)/i.test(lower);
   const isDocTask = /(report|essay|slides|presentation|doc|proposal|application|cv|resume)/i.test(lower);
   const isAdminTask = /(form|tax|invoice|bill|bank|portal|appointment|insurance|expense)/i.test(lower);
@@ -267,11 +289,31 @@ export function buildDeterministicCoachPlan(params: {
       ? 5
       : strategy.defaultTimerMinutes);
 
-  const whyThisFits =
+  const lang = detectTaskLanguage(params.taskText);
+
+  let whyThisFits =
     personalizedReason ||
     `When ${barrier.label.toLowerCase()} hits, ${strategy.label.toLowerCase()} takes all the pressure off by turning an intimidating task into one tiny physical move.`;
+  let spokenResponse = `I'm right here with you. Let's make this tiny: ${firstStep} Whenever you're ready, we'll run a gentle ${timerMinutes}-minute focus block, and I'll check in the moment it wraps up.`;
+  let checkinPrompt = `Your ${timerMinutes}-minute block is complete. Did you get started on "${firstStep}"?`;
 
-  const spokenResponse = `I'm right here with you. Let's make this tiny: ${firstStep} Whenever you're ready, we'll run a gentle ${timerMinutes}-minute focus block, and I'll check in the moment it wraps up.`;
+  if (lang === 'hi') {
+    spokenResponse = `मैं आपके साथ हूँ। चलिए इसे बहुत आसान बनाते हैं: ${firstStep} जब भी आप तैयार हों, हम ${timerMinutes} मिनट का शांत फोकस ब्लॉक शुरू करेंगे।`;
+    whyThisFits = 'जब शुरुआत करना भारी लगे, तो काम को बहुत छोटा करने से सारा मानसिक तनाव दूर हो जाता है।';
+    checkinPrompt = `आपका ${timerMinutes} मिनट का ब्लॉक पूरा हुआ। क्या आप शुरू कर पाए?`;
+  } else if (lang === 'es') {
+    spokenResponse = `Estoy aquí contigo. Hagámoslo muy pequeño: ${firstStep} Cuando estés listo, haremos un bloque de enfoque de ${timerMinutes} minutos.`;
+    whyThisFits = 'Hacer el primer paso diminuto elimina toda la presión inicial de golpe.';
+    checkinPrompt = `Tu bloque de ${timerMinutes} minutos terminó. ¿Pudiste empezar?`;
+  } else if (lang === 'fr') {
+    spokenResponse = `Je suis là avec toi. Faisons ça tout en douceur : ${firstStep} Dès que tu te sens prêt, on lance un bloc de ${timerMinutes} minutes.`;
+    whyThisFits = 'Réduire la première étape à un geste minuscule élimine immédiatement toute pression.';
+    checkinPrompt = `Ton bloc de ${timerMinutes} minutes est terminé. As-tu pu démarrer ?`;
+  } else if (lang === 'de') {
+    spokenResponse = `Ich bin hier bei dir. Lass es uns ganz leicht machen: ${firstStep} Sobald du bereit bist, starten wir einen sanften ${timerMinutes}-Minuten-Fokusblock.`;
+    whyThisFits = 'Ein winziger erster Schritt nimmt sofort den gesamten Druck weg.';
+    checkinPrompt = `Dein ${timerMinutes}-Minuten-Block ist beendet. Konntest du starten?`;
+  }
 
   return {
     spokenResponse,
@@ -282,7 +324,7 @@ export function buildDeterministicCoachPlan(params: {
     firstStep,
     whyThisFits,
     timerMinutes,
-    checkinPrompt: `Your ${timerMinutes}-minute block is complete. Did you get started on "${firstStep}"?`,
+    checkinPrompt,
     safetyFlag: 'none',
   };
 }

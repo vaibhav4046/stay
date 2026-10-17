@@ -77,4 +77,21 @@ describe('POST /api/coach/plan safety regression', () => {
     const data = await res.json();
     expect(data.error).toBeDefined();
   });
+
+  it('generates native multilingual responses for Hindi and Spanish tasks', async () => {
+    // Hindi task
+    const reqHi = makeRequest({ taskText: 'मुझे अपना कमरा साफ करना है' });
+    const resHi = await POST(reqHi);
+    expect(resHi.status).toBe(200);
+    const dataHi = await resHi.json();
+    expect(dataHi.spokenResponse).toContain('मैं आपके साथ हूँ');
+    expect(dataHi.firstStep).toContain('छोटा कदम');
+
+    // Spanish task
+    const reqEs = makeRequest({ taskText: '¿Cómo puedo empezar esta tarea de matemáticas?' });
+    const resEs = await POST(reqEs);
+    expect(resEs.status).toBe(200);
+    const dataEs = await resEs.json();
+    expect(dataEs.spokenResponse).toContain('Estoy aquí contigo');
+  });
 });
