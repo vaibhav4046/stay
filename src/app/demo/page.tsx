@@ -34,6 +34,9 @@ export default function DemoPage() {
           <StayWordmark />
         </Link>
         <div className="flex items-center gap-3">
+          <Link href="/demo/orb-diagnostic" className="btn btn-ghost text-[0.88rem] text-accent font-medium">
+            Signal Orb Diagnostic
+          </Link>
           <button
             type="button"
             onClick={handleResetDemo}
