@@ -92,6 +92,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const workletNodeRef = useRef<AudioWorkletNode | null>(null);
+  const speechRecRef = useRef<any>(null);
   const activeSourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
   const nextPlaybackTimeRef = useRef<number>(0);
   const pendingToolResultsRef = useRef<
@@ -187,7 +188,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       }
     }
 
-    // 2. Play deterministic spoken boundary via browser SpeechSynthesis
+    // 2. Play spoken audio via browser SpeechSynthesis with dynamic fluid wave pulsing
     if ('speechSynthesis' in window) {
       try {
         window.speechSynthesis.cancel();
@@ -197,24 +198,36 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         const gbVoice = voices.find(
           (v) =>
             v.lang === 'en-GB' ||
-            (v.lang.startsWith('en') && (v.name.includes('UK') || v.name.includes('British') || v.name.includes('Natural')))
+            (v.lang.startsWith('en') &&
+              (v.name.includes('UK') ||
+                v.name.includes('British') ||
+                v.name.includes('Natural') ||
+                v.name.includes('Google') ||
+                v.name.includes('Samantha') ||
+                v.name.includes('Victoria')))
         );
         if (gbVoice) {
           utterance.voice = gbVoice;
         }
         utterance.rate = 1.0;
         utterance.pitch = 1.0;
-        setVisualState('speaking');
-        setAudioEnergy(0.25);
 
-        utterance.onend = () => {
+        let energyTimer: NodeJS.Timeout | null = null;
+        utterance.onstart = () => {
+          setVisualState('speaking');
+          energyTimer = setInterval(() => {
+            setAudioEnergy(0.25 + Math.random() * 0.45);
+          }, 80);
+        };
+
+        const cleanup = () => {
+          if (energyTimer) clearInterval(energyTimer);
           setVisualState('listening');
           setAudioEnergy(0.05);
         };
-        utterance.onerror = () => {
-          setVisualState('listening');
-          setAudioEnergy(0.05);
-        };
+        utterance.onend = cleanup;
+        utterance.onerror = cleanup;
+
         window.speechSynthesis.speak(utterance);
       } catch {
         setVisualState('listening');
@@ -262,6 +275,15 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const disconnectVoiceSession = useCallback(() => {
     sessionReadyRef.current = false;
     stopPlaybackQueue();
+
+    if (speechRecRef.current) {
+      try {
+        speechRecRef.current.abort();
+      } catch {
+        // ignore
+      }
+      speechRecRef.current = null;
+    }
 
     if (workletNodeRef.current) {
       try {
@@ -369,6 +391,245 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     []
   );
 
+  const sendUserTextMessage = useCallback(
+    (text: string) => {
+      const clean = text.trim();
+      if (!clean) return false;
+
+      // Extract long-term memory from typed/spoken text
+      const { profile: updatedMemory, extractedFact } = extractMemoriesFromUtterance(clean);
+      if (extractedFact) {
+        setUserMemory(updatedMemory);
+      }
+
+      // Check text-based voice command
+      const cmd = detectVoiceCommand(clean);
+      if (cmd) {
+        optionsRef.current.onVoiceCommandDetected?.(cmd);
+        if (cmd.type === 'pause_listening') {
+          handsFreePausedRef.current = true;
+          setIsHandsFreePaused(true);
+          setVisualState('idle');
+          playEarcon('pause');
+        } else if (cmd.type === 'resume_listening') {
+          handsFreePausedRef.current = false;
+          setIsHandsFreePaused(false);
+          setVisualState('listening');
+          playEarcon('resume');
+        } else if (cmd.type === 'start_timer') {
+          optionsRef.current.onStartTimerRequested?.(cmd.minutes, clean);
+          playEarcon('chime');
+        } else if (cmd.type === 'record_outcome') {
+          optionsRef.current.onOutcomeRecorded?.(cmd.outcome);
+          playEarcon('chime');
+        }
+      }
+
+      setTranscripts((prev) => [
+        ...prev,
+        {
+          id: `msg-${Date.now()}`,
+          role: 'user',
+          text: clean,
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+
+      const crisis = detectCrisisSignal(clean);
+      if (crisis.triggered) {
+        disconnectVoiceSession();
+        optionsRef.current.onCrisisDetected?.(crisis.message);
+        return true;
+      }
+
+      const medBoundary = detectMedicationAdviceRequest(clean);
+      if (medBoundary.triggered) {
+        medicationSuppressionRef.current = true;
+        stopPlaybackQueue();
+        optionsRef.current.onMedicalBoundaryDetected?.(medBoundary.message);
+        setTranscripts((prev) => [
+          ...prev,
+          {
+            id: `med-boundary-${Date.now()}`,
+            role: 'agent',
+            text: medBoundary.message,
+            timestamp: new Date().toISOString(),
+          },
+        ]);
+        speakDeterministicBoundary(medBoundary.message);
+        return true;
+      }
+
+      const ws = wsRef.current;
+      if (ws && ws.readyState === WebSocket.OPEN && sessionReadyRef.current) {
+        ws.send(JSON.stringify({ type: 'conversation.message', role: 'user', content: clean }));
+        ws.send(JSON.stringify({ type: 'reply.create' }));
+        return true;
+      }
+
+      // If WebSocket is not open, execute via server coaching plan and speak out loud
+      setVisualState('thinking');
+      fetch('/api/coach/plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          taskText: clean,
+          userMemoryPrompt: buildMemorySystemPrompt(loadUserMemory()),
+        }),
+      })
+        .then(async (res) => {
+          if (!res.ok) throw new Error('plan fetch error');
+          return (await res.json()) as CoachPlanProposal;
+        })
+        .then((planProposal) => {
+          if (planProposal.safetyFlag === 'crisis') {
+            optionsRef.current.onCrisisDetected?.(planProposal.spokenResponse);
+            setVisualState('idle');
+            return;
+          }
+          if (planProposal.safetyFlag === 'medical_boundary') {
+            optionsRef.current.onMedicalBoundaryDetected?.(planProposal.spokenResponse);
+            setTranscripts((prev) => [
+              ...prev,
+              {
+                id: `med-${Date.now()}`,
+                role: 'agent',
+                text: planProposal.spokenResponse,
+                timestamp: new Date().toISOString(),
+              },
+            ]);
+            speakDeterministicBoundary(planProposal.spokenResponse);
+            return;
+          }
+          optionsRef.current.onPlanProposed?.(planProposal);
+          setTranscripts((prev) => [
+            ...prev,
+            {
+              id: `agent-${Date.now()}`,
+              role: 'agent',
+              text: planProposal.spokenResponse,
+              timestamp: new Date().toISOString(),
+            },
+          ]);
+          speakDeterministicBoundary(planProposal.spokenResponse);
+        })
+        .catch(() => {
+          const local = buildDeterministicCoachPlan({ taskText: clean });
+          optionsRef.current.onPlanProposed?.(local);
+          setTranscripts((prev) => [
+            ...prev,
+            {
+              id: `agent-${Date.now()}`,
+              role: 'agent',
+              text: local.spokenResponse,
+              timestamp: new Date().toISOString(),
+            },
+          ]);
+          speakDeterministicBoundary(local.spokenResponse);
+        });
+
+      return true;
+    },
+    [disconnectVoiceSession, stopPlaybackQueue, speakDeterministicBoundary, playEarcon]
+  );
+
+  const startNativeSpeechRecognition = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    const SpeechRecognition =
+      (window as unknown as { SpeechRecognition?: any; webkitSpeechRecognition?: any })
+        .SpeechRecognition ||
+      (window as unknown as { SpeechRecognition?: any; webkitSpeechRecognition?: any })
+        .webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setErrorMessage(
+        'Live speech recognition is unavailable in this browser. You can type in the box below.'
+      );
+      setVisualState('error');
+      return;
+    }
+
+    try {
+      if (speechRecRef.current) {
+        try {
+          speechRecRef.current.abort();
+        } catch {
+          // ignore
+        }
+      }
+
+      const rec = new SpeechRecognition();
+      speechRecRef.current = rec;
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.lang = 'en-US';
+
+      rec.onstart = () => {
+        sessionReadyRef.current = true;
+        setIsConnected(true);
+        setVisualState('listening');
+        playEarcon('resume');
+      };
+
+      rec.onresult = (event: any) => {
+        if (handsFreePausedRef.current) return;
+        let interim = '';
+        let final = '';
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            final += event.results[i][0].transcript;
+          } else {
+            interim += event.results[i][0].transcript;
+          }
+        }
+
+        if (interim) {
+          // Cancel any current assistant speech on barge-in
+          if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
+            window.speechSynthesis.cancel();
+          }
+          setPartialUserTranscript(interim);
+          setAudioEnergy(0.25 + Math.random() * 0.2);
+          setVisualState('listening');
+          const analysis = analyzeStreamingUtterance(interim);
+          setStreamingAnalysis(analysis);
+        }
+
+        if (final.trim()) {
+          setPartialUserTranscript('');
+          setAudioEnergy(0.05);
+          sendUserTextMessage(final.trim());
+        }
+      };
+
+      rec.onerror = (e: any) => {
+        if (e.error === 'no-speech') return;
+        if (e.error === 'not-allowed') {
+          setErrorMessage('Microphone access was denied. Please allow microphone permissions.');
+          setVisualState('error');
+          setIsConnected(false);
+          return;
+        }
+      };
+
+      rec.onend = () => {
+        if (sessionReadyRef.current && !handsFreePausedRef.current) {
+          try {
+            rec.start();
+          } catch {
+            // ignore
+          }
+        }
+      };
+
+      rec.start();
+    } catch {
+      setErrorMessage('Browser speech recognition unavailable. You can type in the box below.');
+      setVisualState('error');
+    }
+  }, [playEarcon, sendUserTextMessage]);
+
   const startVoiceSession = useCallback(async () => {
     setErrorMessage(null);
     setVisualState('connecting');
@@ -444,7 +705,6 @@ ${adaptivePrompt}`;
           JSON.stringify({
             type: 'session.update',
             session: {
-              agent_id: agentId || undefined,
               system_prompt: warmHumanPrompt,
               greeting,
               output: {
@@ -736,9 +996,8 @@ ${adaptivePrompt}`;
         }
 
         if (type === 'session.error') {
-          const errText = String(msg.message || 'Voice session encountered an error.');
-          setErrorMessage(errText);
-          setVisualState('error');
+          console.warn('AssemblyAI session error, falling back to browser speech recognition', msg);
+          startNativeSpeechRecognition();
           return;
         }
 
@@ -748,10 +1007,8 @@ ${adaptivePrompt}`;
       };
 
       socket.onerror = () => {
-        setErrorMessage(
-          'Live voice connection was interrupted. You can reconnect or use Quiet Text Mode below.'
-        );
-        setVisualState('error');
+        console.warn('AssemblyAI WebSocket error, activating native speech recognition fallback');
+        startNativeSpeechRecognition();
       };
 
       socket.onclose = () => {
@@ -759,28 +1016,30 @@ ${adaptivePrompt}`;
         setIsConnected(false);
       };
     } catch (err) {
-      disconnectVoiceSession();
-      setErrorMessage(
-        err instanceof Error
-          ? err.message
-          : 'Microphone or voice connection unavailable. Quiet Text Mode is ready below.'
-      );
-      setVisualState('error');
+      console.warn('AssemblyAI voice session startup failed, falling back to browser speech recognition', err);
+      startNativeSpeechRecognition();
     }
   }, [
     disconnectVoiceSession,
     handleClientToolCall,
     scheduleAgentPcmChunk,
     stopPlaybackQueue,
+    startNativeSpeechRecognition,
   ]);
 
   /** Make the agent speak without a user utterance (documented `reply.create`). */
-  const speakProactively = useCallback((instructions: string) => {
-    const ws = wsRef.current;
-    if (!ws || ws.readyState !== WebSocket.OPEN || !sessionReadyRef.current) return false;
-    ws.send(JSON.stringify({ type: 'reply.create', instructions }));
-    return true;
-  }, []);
+  const speakProactively = useCallback(
+    (instructions: string) => {
+      const ws = wsRef.current;
+      if (ws && ws.readyState === WebSocket.OPEN && sessionReadyRef.current) {
+        ws.send(JSON.stringify({ type: 'reply.create', instructions }));
+        return true;
+      }
+      speakDeterministicBoundary(instructions);
+      return true;
+    },
+    [speakDeterministicBoundary]
+  );
 
   /** Seed context without triggering a reply (documented `conversation.message`). */
   const injectContext = useCallback((content: string) => {
@@ -789,88 +1048,6 @@ ${adaptivePrompt}`;
     ws.send(JSON.stringify({ type: 'conversation.message', role: 'system', content }));
     return true;
   }, []);
-
-  const sendUserTextMessage = useCallback(
-    (text: string) => {
-      const clean = text.trim();
-      if (!clean) return false;
-
-      // Extract long-term memory from typed text
-      const { profile: updatedMemory, extractedFact } = extractMemoriesFromUtterance(clean);
-      if (extractedFact) {
-        setUserMemory(updatedMemory);
-      }
-
-      // Check text-based voice command
-      const cmd = detectVoiceCommand(clean);
-      if (cmd) {
-        optionsRef.current.onVoiceCommandDetected?.(cmd);
-        if (cmd.type === 'pause_listening') {
-          handsFreePausedRef.current = true;
-          setIsHandsFreePaused(true);
-          setVisualState('idle');
-          playEarcon('pause');
-        } else if (cmd.type === 'resume_listening') {
-          handsFreePausedRef.current = false;
-          setIsHandsFreePaused(false);
-          setVisualState('listening');
-          playEarcon('resume');
-        } else if (cmd.type === 'start_timer') {
-          optionsRef.current.onStartTimerRequested?.(cmd.minutes, clean);
-          playEarcon('chime');
-        } else if (cmd.type === 'record_outcome') {
-          optionsRef.current.onOutcomeRecorded?.(cmd.outcome);
-          playEarcon('chime');
-        }
-      }
-
-      setTranscripts((prev) => [
-        ...prev,
-        {
-          id: `typed-${Date.now()}`,
-          role: 'user',
-          text: clean,
-          timestamp: new Date().toISOString(),
-        },
-      ]);
-
-      const crisis = detectCrisisSignal(clean);
-      if (crisis.triggered) {
-        disconnectVoiceSession();
-        optionsRef.current.onCrisisDetected?.(crisis.message);
-        return true;
-      }
-
-      const medBoundary = detectMedicationAdviceRequest(clean);
-      if (medBoundary.triggered) {
-        medicationSuppressionRef.current = true;
-        stopPlaybackQueue();
-        optionsRef.current.onMedicalBoundaryDetected?.(medBoundary.message);
-        setTranscripts((prev) => [
-          ...prev,
-          {
-            id: `med-boundary-${Date.now()}`,
-            role: 'agent',
-            text: medBoundary.message,
-            timestamp: new Date().toISOString(),
-          },
-        ]);
-        if (sessionReadyRef.current) {
-          speakDeterministicBoundary(medBoundary.message);
-        }
-        return true;
-      }
-
-      const ws = wsRef.current;
-      if (ws && ws.readyState === WebSocket.OPEN && sessionReadyRef.current) {
-        ws.send(JSON.stringify({ type: 'conversation.message', role: 'user', content: clean }));
-        ws.send(JSON.stringify({ type: 'reply.create' }));
-        return true;
-      }
-      return false;
-    },
-    [disconnectVoiceSession, stopPlaybackQueue, speakDeterministicBoundary, playEarcon]
-  );
 
   useEffect(() => {
     const onPageHide = () => {

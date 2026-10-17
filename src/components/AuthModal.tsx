@@ -2,6 +2,12 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth/useAuth';
+import {
+  saveCustomSupabaseConfig,
+  clearCustomSupabaseConfig,
+  getEffectiveSupabaseConfig,
+  getSupabaseBrowserClient,
+} from '@/lib/supabase/client';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -12,8 +18,46 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const { user, isConfigured, signInWithGoogle, signOut } = useAuth();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [customUrl, setCustomUrl] = useState(() => getEffectiveSupabaseConfig()?.url || '');
+  const [customAnonKey, setCustomAnonKey] = useState(() => getEffectiveSupabaseConfig()?.anonKey || '');
+  const [testStatus, setTestStatus] = useState<string | null>(null);
 
   if (!isOpen) return null;
+
+  const handleSaveSupabase = () => {
+    if (!customUrl.trim() || !customAnonKey.trim()) {
+      setTestStatus('Please enter both Supabase URL and Anon Key.');
+      return;
+    }
+    saveCustomSupabaseConfig(customUrl, customAnonKey);
+    setTestStatus('✓ Saved credentials. Ready to connect.');
+  };
+
+  const handleTestSupabase = async () => {
+    setTestStatus('Testing Supabase connection...');
+    try {
+      const client = getSupabaseBrowserClient();
+      if (!client) {
+        setTestStatus('Failed: Supabase client could not initialize with provided keys.');
+        return;
+      }
+      const { error } = await client.auth.getSession();
+      if (error) {
+        setTestStatus(`Error: ${error.message}`);
+      } else {
+        setTestStatus('✓ Verified: Connected to Supabase Cloud Database.');
+      }
+    } catch (err) {
+      setTestStatus(`Connection error: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  };
+
+  const handleClearSupabase = () => {
+    clearCustomSupabaseConfig();
+    setCustomUrl('');
+    setCustomAnonKey('');
+    setTestStatus('Cleared custom credentials. Defaulted to local mode.');
+  };
 
   const handleGoogleSignIn = async () => {
     setErrorMsg(null);
@@ -130,6 +174,75 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
               </svg>
               <span>{submitting ? 'Connecting...' : 'Continue with Google'}</span>
             </button>
+
+            {/* Supabase Custom Credentials Form */}
+            <div className="pt-2 border-t border-line">
+              <details className="group text-xs text-ink-2">
+                <summary className="cursor-pointer font-medium text-accent hover:underline flex items-center justify-between">
+                  <span>⚡ Configure Supabase Database & OAuth Keys</span>
+                  <span className="text-xs group-open:rotate-180 transition-transform">▼</span>
+                </summary>
+                <div className="mt-3 space-y-2 bg-surface-recessed p-3 rounded-lg border border-line">
+                  <div>
+                    <label className="text-[0.72rem] font-semibold text-ink-2 block">
+                      Supabase Project URL
+                    </label>
+                    <input
+                      type="text"
+                      className="input w-full text-xs py-1.5 px-2 mt-1"
+                      placeholder="https://xyzproject.supabase.co"
+                      value={customUrl}
+                      onChange={(e) => setCustomUrl(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[0.72rem] font-semibold text-ink-2 block">
+                      Supabase Anon Public Key
+                    </label>
+                    <input
+                      type="password"
+                      className="input w-full text-xs py-1.5 px-2 mt-1"
+                      placeholder="eyJhbGciOiJIUzI1NiIsIn..."
+                      value={customAnonKey}
+                      onChange={(e) => setCustomAnonKey(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={handleSaveSupabase}
+                      className="btn btn-primary py-1 px-3 text-xs flex-1"
+                    >
+                      Save & Connect
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleTestSupabase}
+                      className="btn btn-secondary py-1 px-2.5 text-xs"
+                    >
+                      Test
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleClearSupabase}
+                      className="btn btn-ghost py-1 px-2 text-xs"
+                      title="Clear custom credentials"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                  {testStatus && (
+                    <p
+                      className={`text-[0.72rem] font-medium ${
+                        testStatus.startsWith('✓') ? 'text-emerald-600' : 'text-amber-600'
+                      }`}
+                    >
+                      {testStatus}
+                    </p>
+                  )}
+                </div>
+              </details>
+            </div>
 
             <div className="pt-2 text-center">
               <button

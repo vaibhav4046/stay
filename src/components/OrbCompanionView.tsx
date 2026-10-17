@@ -10,6 +10,7 @@ interface OrbCompanionViewProps {
   voice: UseVoiceAgentReturn;
   taskText: string;
   onTaskTextChange: (t: string) => void;
+  onTaskSubmit?: (t: string) => void;
   plan: CoachPlanProposal | null;
   running: boolean;
   remaining: number;
@@ -38,6 +39,7 @@ export function OrbCompanionView({
   voice,
   taskText,
   onTaskTextChange,
+  onTaskSubmit,
   plan,
   running,
   remaining,
@@ -335,10 +337,15 @@ export function OrbCompanionView({
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (!typedMessage.trim()) return;
-            voice.sendUserTextMessage(typedMessage);
-            onTaskTextChange(typedMessage);
+            const clean = typedMessage.trim();
+            if (!clean) return;
             setTypedMessage('');
+            if (onTaskSubmit) {
+              onTaskSubmit(clean);
+            } else {
+              onTaskTextChange(clean);
+            }
+            voice.sendUserTextMessage(clean);
           }}
           className="flex items-center gap-2 bg-surface/90 backdrop-blur-md p-1.5 rounded-full border border-line shadow-lg"
         >
@@ -364,6 +371,7 @@ export function OrbCompanionView({
           <input
             type="text"
             className="flex-1 bg-transparent px-3 py-1 text-xs sm:text-sm text-ink outline-hidden"
+            data-testid="task-input"
             placeholder={
               voice.isConnected
                 ? 'Speak naturally or type a reply...'

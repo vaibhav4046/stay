@@ -136,4 +136,17 @@ describe('patterns', () => {
     expect(a.takenRatePercent).toBe(75);
     expect(a.sideEffectsCount).toBe(2);
   });
+
+  it('supports saving, retrieving, and clearing custom Supabase config in local storage', async () => {
+    const { saveCustomSupabaseConfig, clearCustomSupabaseConfig, getEffectiveSupabaseConfig } =
+      await import('@/lib/supabase/client');
+
+    saveCustomSupabaseConfig('https://myproject.supabase.co', 'eyJcustomAnonKey123');
+    const cfg = getEffectiveSupabaseConfig();
+    expect(cfg?.url).toBe('https://myproject.supabase.co');
+    expect(cfg?.anonKey).toBe('eyJcustomAnonKey123');
+
+    clearCustomSupabaseConfig();
+    expect(getEffectiveSupabaseConfig()).toBeNull();
+  });
 });

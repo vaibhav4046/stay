@@ -117,7 +117,7 @@ export function CoachWorkspace({
   const [helpful, setHelpful] = useState<number | null>(null);
   const [boundaryNote, setBoundaryNote] = useState<string | null>(null);
   const [lastLogged, setLastLogged] = useState<SessionOutcome | null>(null);
-  const [viewMode, setViewMode] = useState<'orb' | 'grid'>('orb');
+  const [viewMode, setViewMode] = useState<'orb' | 'grid'>(isDemo ? 'grid' : 'orb');
   const [showGroundingPanel, setShowGroundingPanel] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const { user } = useAuth();
@@ -311,8 +311,8 @@ export function CoachWorkspace({
   }, [running, timerMinutes, proactiveCheckins, plan, voice.speakProactively]);
 
   const requestPlan = useCallback(
-    async (chosenBarrier: BarrierType | null, preferredStrategy?: StrategyKey) => {
-      const text = taskText.trim();
+    async (chosenBarrier: BarrierType | null, preferredStrategy?: StrategyKey, textOverride?: string) => {
+      const text = (textOverride !== undefined ? textOverride : taskText).trim();
       if (!text) return;
       const crisis = detectCrisisSignal(text);
       if (crisis.triggered) {
@@ -349,6 +349,9 @@ export function CoachWorkspace({
         setTimerMinutes(data.timerMinutes === 0 ? (calibration.preferredMinutes || 20) : data.timerMinutes);
         setActionReceipt(`Plan ready: ${data.strategyLabel}`);
         setStep('plan');
+        if (!quietMode && data.spokenResponse) {
+          voice.speakProactively(data.spokenResponse);
+        }
       } catch {
         // Offline / server error: deterministic local plan keeps the loop working.
         const local = buildDeterministicCoachPlan({
@@ -370,11 +373,14 @@ export function CoachWorkspace({
         setPlan(local);
         setTimerMinutes(local.timerMinutes === 0 ? (calibration.preferredMinutes || 20) : local.timerMinutes);
         setStep('plan');
+        if (!quietMode && local.spokenResponse) {
+          voice.speakProactively(local.spokenResponse);
+        }
       } finally {
         setPlanLoading(false);
       }
     },
-    [taskText, careContext, strategyHistory, triggerCrisis, timerMinutes, calibration.preferredMinutes]
+    [taskText, careContext, strategyHistory, triggerCrisis, timerMinutes, calibration.preferredMinutes, quietMode, voice]
   );
 
   const reset = () => {
@@ -399,6 +405,9 @@ export function CoachWorkspace({
           taskText={taskText}
           onTaskTextChange={(t) => {
             setTaskText(t);
+          }}
+          onTaskSubmit={(t) => {
+            setTaskText(t);
             const ground = detectSensoryGroundingRequest(t);
             if (ground.triggered) {
               setShowGroundingPanel(true);
@@ -410,7 +419,7 @@ export function CoachWorkspace({
               setActionReceipt('Safeguard: 10-Minute Dopamine Pause');
               return;
             }
-            void requestPlan(null);
+            void requestPlan(null, undefined, t);
           }}
           plan={plan}
           running={running}
