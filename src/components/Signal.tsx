@@ -6,7 +6,6 @@ import type { AudioSpectrumBands, VoiceVisualState } from '@/types/domain';
 
 const SignalScene = dynamic(() => import('./SignalScene'), {
   ssr: false,
-  loading: () => <SignalFallbackSvg state="idle" />,
 });
 
 export const STATE_LABELS: Record<VoiceVisualState, string> = {
@@ -178,28 +177,32 @@ export function Signal({
   state,
   energy,
   bands,
+  topicShape = 0,
   hideLabel = false,
   className = '',
 }: {
   state: VoiceVisualState;
   energy: number;
   bands?: AudioSpectrumBands;
+  topicShape?: number;
   hideLabel?: boolean;
   className?: string;
 }) {
-  const [mode, setMode] = useState<'pending' | 'webgl' | 'svg'>('pending');
+  const [mounted, setMounted] = useState(false);
+  const [supportsWebGL, setSupportsWebGL] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+    setSupportsWebGL(hasWebGL());
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
     setReducedMotion(mq.matches);
     const onChange = () => setReducedMotion(mq.matches);
     mq.addEventListener('change', onChange);
-    setMode(hasWebGL() ? 'webgl' : 'svg');
     return () => mq.removeEventListener('change', onChange);
   }, []);
 
-  const onUnsupported = useCallback(() => setMode('svg'), []);
+  const onUnsupported = useCallback(() => setSupportsWebGL(false), []);
 
   return (
     <div
@@ -208,8 +211,15 @@ export function Signal({
       style={{ WebkitTapHighlightColor: 'transparent' }}
     >
       <div className="aspect-square w-full rounded-full overflow-hidden select-none outline-none">
-        {mode === 'webgl' ? (
-          <SignalScene state={state} energy={energy} bands={bands} reducedMotion={reducedMotion} onUnsupported={onUnsupported} />
+        {mounted && supportsWebGL ? (
+          <SignalScene
+            state={state}
+            energy={energy}
+            bands={bands}
+            topicShape={topicShape}
+            reducedMotion={reducedMotion}
+            onUnsupported={onUnsupported}
+          />
         ) : (
           <SignalFallbackSvg state={state} energy={energy} bands={bands} />
         )}

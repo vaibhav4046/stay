@@ -43,6 +43,50 @@ export interface UseVoiceAgentOptions {
   onCrisisDetected?: (message: string) => void;
   onMedicalBoundaryDetected?: (message: string) => void;
   onVoiceCommandDetected?: (command: VoiceCommandAction) => void;
+  onShowMemoryRequested?: () => void;
+  onShowHistoryRequested?: () => void;
+  onGroundingRequested?: () => void;
+  onChangeVoiceRequested?: (voiceId?: string) => void;
+  onToggleQuietModeRequested?: () => void;
+  onClearChatRequested?: () => void;
+}
+
+export interface AvailableVoice {
+  id: string;
+  name: string;
+  gender: 'female' | 'male';
+  accent: 'British' | 'American';
+  description: string;
+}
+
+export const AVAILABLE_VOICES: AvailableVoice[] = [
+  { id: 'anna', name: 'Anna', gender: 'female', accent: 'British', description: 'Calm, steadying British female voice' },
+  { id: 'oliver', name: 'Oliver', gender: 'male', accent: 'British', description: 'Warm, thoughtful British male voice' },
+  { id: 'amanda', name: 'Amanda', gender: 'female', accent: 'American', description: 'Supportive, conversational American female voice' },
+  { id: 'charles', name: 'Charles', gender: 'male', accent: 'American', description: 'Grounded, reassuring American male voice' },
+  { id: 'rachel', name: 'Rachel', gender: 'female', accent: 'American', description: 'Clear, gentle American female voice' },
+  { id: 'josh', name: 'Josh', gender: 'male', accent: 'American', description: 'Crisp, attentive American male voice' },
+];
+
+export function detectTopicShape(text: string): number {
+  const clean = text.toLowerCase();
+  // 1. Calming Concentric Ripples / Somatic Grounding / Breathing / Overwhelm (Mode 4)
+  if (/\b(?:breath|breathe|breathing|calm|ground|grounding|overwhelm(?:ed|ing)?|anxious|anxiety|panic|relax|slow|meditate|meditation|peace|rest)\b/i.test(clean)) {
+    return 4;
+  }
+  // 2. Dual Fluid Spiral Ribbons / Creative / Music / Brainstorming / Art (Mode 3)
+  if (/\b(?:music|song|art|draw|drawing|paint|painting|creative|creativity|design|brainstorm|idea|sketch|dance|guitar|canvas|create|build)\b/i.test(clean)) {
+    return 3;
+  }
+  // 3. Conical Swell / Sweet Treats / Food / Rewards / Energy (Mode 1)
+  if (/\b(?:ice\s*cream|sweet|treat|cake|coffee|snack|dessert|reward|sugar|fruit|cookie|eat|eating)\b/i.test(clean)) {
+    return 1;
+  }
+  // 4. Structured Geometric Facets / Letters / Writing / Docs / Taxes / Code / Paperwork (Mode 2)
+  if (/\b(?:letter|email|write|writing|doc|document|form|tax|taxes|paper|paperwork|report|text|code|coding|draft|essay|spreadsheet|work|file)\b/i.test(clean)) {
+    return 2;
+  }
+  return 0; // Standard organic liquid wave
 }
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
@@ -120,6 +164,47 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const [isHandsFreePaused, setIsHandsFreePaused] = useState(false);
   const [selectedLanguage, setSelectedLanguageState] = useState<string>('auto');
   const selectedLanguageRef = useRef<string>('auto');
+  const [selectedVoice, setSelectedVoiceState] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        return localStorage.getItem('stay_selected_voice') || 'anna';
+      } catch {
+        return 'anna';
+      }
+    }
+    return 'anna';
+  });
+  const selectedVoiceRef = useRef<string>(selectedVoice);
+  const [topicShape, setTopicShape] = useState<number>(0);
+
+  const setSelectedVoice = useCallback((voiceId: string) => {
+    const valid = AVAILABLE_VOICES.find((v) => v.id === voiceId) ? voiceId : 'anna';
+    setSelectedVoiceState(valid);
+    selectedVoiceRef.current = valid;
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('stay_selected_voice', valid);
+      } catch {
+        // ignore
+      }
+    }
+    const ws = wsRef.current;
+    if (ws && ws.readyState === WebSocket.OPEN && sessionReadyRef.current) {
+      ws.send(
+        JSON.stringify({
+          type: 'session.update',
+          session: {
+            output: {
+              type: 'audio',
+              voice: valid,
+              format: { encoding: 'audio/pcm', sample_rate: 24000 },
+            },
+          },
+        })
+      );
+    }
+  }, []);
+
   const [userMemory, setUserMemory] = useState<UserMemoryProfile>(() => {
     try {
       return loadUserMemory();
@@ -276,7 +361,34 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         utterance.lang = detectedLang;
         const voices = window.speechSynthesis.getVoices();
         const langPrefix = detectedLang.split('-')[0].toLowerCase();
+        const isMale = ['oliver', 'charles', 'josh'].includes(selectedVoiceRef.current);
         const matchedVoice =
+          voices.find((v) => {
+            const name = v.name.toLowerCase();
+            const langMatches = v.lang.toLowerCase().startsWith(langPrefix);
+            if (!langMatches && langPrefix !== 'en') return false;
+            if (isMale) {
+              return (
+                name.includes('male') ||
+                name.includes('oliver') ||
+                name.includes('george') ||
+                name.includes('david') ||
+                name.includes('daniel') ||
+                name.includes('guy') ||
+                name.includes('charles') ||
+                name.includes('josh')
+              );
+            }
+            return (
+              name.includes('female') ||
+              name.includes('anna') ||
+              name.includes('samantha') ||
+              name.includes('victoria') ||
+              name.includes('amanda') ||
+              name.includes('rachel') ||
+              name.includes('natural')
+            );
+          }) ||
           voices.find((v) => v.lang.toLowerCase().startsWith(langPrefix)) ||
           voices.find(
             (v) =>
@@ -506,6 +618,10 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         setUserMemory(updatedMemory);
       }
 
+      // Detect topic-reactive dynamic shape
+      const topic = detectTopicShape(clean);
+      setTopicShape(topic);
+
       // Check text-based voice command
       const cmd = detectVoiceCommand(clean);
       if (cmd) {
@@ -526,6 +642,21 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         } else if (cmd.type === 'record_outcome') {
           optionsRef.current.onOutcomeRecorded?.(cmd.outcome);
           playEarcon('chime');
+        } else if (cmd.type === 'change_voice') {
+          setSelectedVoice(cmd.voiceId);
+          playEarcon('chime');
+        } else if (cmd.type === 'open_voice_menu') {
+          optionsRef.current.onChangeVoiceRequested?.();
+        } else if (cmd.type === 'show_memory') {
+          optionsRef.current.onShowMemoryRequested?.();
+        } else if (cmd.type === 'show_history') {
+          optionsRef.current.onShowHistoryRequested?.();
+        } else if (cmd.type === 'open_grounding') {
+          optionsRef.current.onGroundingRequested?.();
+        } else if (cmd.type === 'toggle_quiet_mode') {
+          optionsRef.current.onToggleQuietModeRequested?.();
+        } else if (cmd.type === 'clear_chat') {
+          optionsRef.current.onClearChatRequested?.();
         }
       }
 
@@ -714,6 +845,8 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           setVisualState('listening');
           const analysis = analyzeStreamingUtterance(interim);
           setStreamingAnalysis(analysis);
+          const topic = detectTopicShape(interim);
+          if (topic > 0) setTopicShape(topic);
 
           // ChatGPT-style listening interjection if user pauses mid-sentence
           if (interim.length > 15 && !handsFreePausedRef.current) {
@@ -849,7 +982,7 @@ ${adaptivePrompt}`;
               greeting,
               output: {
                 type: 'audio',
-                voice: 'anna',
+                voice: selectedVoiceRef.current || 'anna',
                 format: { encoding: 'audio/pcm', sample_rate: 24000 },
               },
             },
@@ -933,6 +1066,8 @@ ${adaptivePrompt}`;
           if (text.length > 4) {
             const analysis = analyzeStreamingUtterance(text);
             setStreamingAnalysis(analysis);
+            const topic = detectTopicShape(text);
+            if (topic > 0) setTopicShape(topic);
           }
 
           if (backchannelTimerRef.current) {
@@ -963,6 +1098,22 @@ ${adaptivePrompt}`;
               setVisualState('listening');
               playEarcon('resume');
               return;
+            }
+            if (cmd.type === 'change_voice') {
+              setSelectedVoice(cmd.voiceId);
+              playEarcon('chime');
+            } else if (cmd.type === 'open_voice_menu') {
+              optionsRef.current.onChangeVoiceRequested?.();
+            } else if (cmd.type === 'show_memory') {
+              optionsRef.current.onShowMemoryRequested?.();
+            } else if (cmd.type === 'show_history') {
+              optionsRef.current.onShowHistoryRequested?.();
+            } else if (cmd.type === 'open_grounding') {
+              optionsRef.current.onGroundingRequested?.();
+            } else if (cmd.type === 'toggle_quiet_mode') {
+              optionsRef.current.onToggleQuietModeRequested?.();
+            } else if (cmd.type === 'clear_chat') {
+              optionsRef.current.onClearChatRequested?.();
             }
           }
 
@@ -1010,6 +1161,10 @@ ${adaptivePrompt}`;
               setUserMemory(updatedMemory);
             }
 
+            // Topic shape detection on finalized turn
+            const topic = detectTopicShape(text);
+            setTopicShape(topic);
+
             // Hands-free voice command execution on finalized user turn
             const cmd = detectVoiceCommand(text);
             if (cmd) {
@@ -1032,10 +1187,24 @@ ${adaptivePrompt}`;
               if (cmd.type === 'start_timer') {
                 optionsRef.current.onStartTimerRequested?.(cmd.minutes, text);
                 playEarcon('chime');
-              }
-              if (cmd.type === 'record_outcome') {
+              } else if (cmd.type === 'record_outcome') {
                 optionsRef.current.onOutcomeRecorded?.(cmd.outcome);
                 playEarcon('chime');
+              } else if (cmd.type === 'change_voice') {
+                setSelectedVoice(cmd.voiceId);
+                playEarcon('chime');
+              } else if (cmd.type === 'open_voice_menu') {
+                optionsRef.current.onChangeVoiceRequested?.();
+              } else if (cmd.type === 'show_memory') {
+                optionsRef.current.onShowMemoryRequested?.();
+              } else if (cmd.type === 'show_history') {
+                optionsRef.current.onShowHistoryRequested?.();
+              } else if (cmd.type === 'open_grounding') {
+                optionsRef.current.onGroundingRequested?.();
+              } else if (cmd.type === 'toggle_quiet_mode') {
+                optionsRef.current.onToggleQuietModeRequested?.();
+              } else if (cmd.type === 'clear_chat') {
+                optionsRef.current.onClearChatRequested?.();
               }
             }
 
@@ -1306,6 +1475,11 @@ ${adaptivePrompt}`;
     selectedLanguage,
     setSelectedLanguage,
     supportedLanguages: SUPPORTED_LANGUAGES,
+    selectedVoice,
+    setSelectedVoice,
+    availableVoices: AVAILABLE_VOICES,
+    topicShape,
+    setTopicShape,
     userMemory,
     refreshUserMemory: () => setUserMemory(loadUserMemory()),
     playEarcon,

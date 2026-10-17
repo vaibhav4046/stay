@@ -125,6 +125,8 @@ export function CoachWorkspace({
   const [showStuckRescue, setShowStuckRescue] = useState(false);
   const [showTrainingPanel, setShowTrainingPanel] = useState(false);
   const [showMemoryPanel, setShowMemoryPanel] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showVoiceModal, setShowVoiceModal] = useState(false);
   const [newMemoryFact, setNewMemoryFact] = useState('');
   const [trainingInput, setTrainingInput] = useState('');
   const [typedMessage, setTypedMessage] = useState('');
@@ -201,6 +203,35 @@ export function CoachWorkspace({
     },
     onCrisisDetected: triggerCrisis,
     onMedicalBoundaryDetected: (m) => setBoundaryNote(m),
+    onShowMemoryRequested: () => {
+      setShowMemoryPanel(true);
+      setActionReceipt('Voice command: Displaying user memory');
+    },
+    onShowHistoryRequested: () => {
+      setShowHistoryModal(true);
+      setActionReceipt('Voice command: Displaying session history');
+    },
+    onGroundingRequested: () => {
+      setShowGroundingPanel(true);
+      setActionReceipt('Voice command: Starting grounding session');
+    },
+    onChangeVoiceRequested: (voiceId) => {
+      if (voiceId) {
+        voice.setSelectedVoice(voiceId);
+        setActionReceipt(`Voice changed to ${voiceId}`);
+      } else {
+        setShowVoiceModal(true);
+        setActionReceipt('Opening voice persona menu');
+      }
+    },
+    onToggleQuietModeRequested: () => {
+      if (!quietMode) voice.disconnectVoiceSession();
+      onQuietModeChange(!quietMode);
+      setActionReceipt(`Quiet mode ${!quietMode ? 'enabled' : 'disabled'}`);
+    },
+    onClearChatRequested: () => {
+      setActionReceipt('Chat cleared');
+    },
     onVoiceCommandDetected: (cmd) => {
       if (!cmd) return;
       if (cmd.type === 'start_timer') {
@@ -217,6 +248,27 @@ export function CoachWorkspace({
       } else if (cmd.type === 'stop_timer') {
         setRunning(false);
         setActionReceipt('Voice command: Timer stopped');
+      } else if (cmd.type === 'show_memory') {
+        setShowMemoryPanel(true);
+        setActionReceipt('Voice command: Displaying user memory');
+      } else if (cmd.type === 'show_history') {
+        setShowHistoryModal(true);
+        setActionReceipt('Voice command: Displaying session history');
+      } else if (cmd.type === 'open_grounding') {
+        setShowGroundingPanel(true);
+        setActionReceipt('Voice command: Starting grounding session');
+      } else if (cmd.type === 'change_voice') {
+        voice.setSelectedVoice(cmd.voiceId);
+        setActionReceipt(`Voice command: Switched voice to ${cmd.voiceId}`);
+      } else if (cmd.type === 'open_voice_menu') {
+        setShowVoiceModal(true);
+        setActionReceipt('Voice command: Opening voice persona selector');
+      } else if (cmd.type === 'toggle_quiet_mode') {
+        if (!quietMode) voice.disconnectVoiceSession();
+        onQuietModeChange(!quietMode);
+        setActionReceipt(`Voice command: Quiet mode ${!quietMode ? 'enabled' : 'disabled'}`);
+      } else if (cmd.type === 'clear_chat') {
+        setActionReceipt('Voice command: Cleared chat history');
       }
     },
   });
@@ -435,6 +487,8 @@ export function CoachWorkspace({
             void logOutcome(outcome, 5);
           }}
           onOpenMemory={() => setShowMemoryPanel(true)}
+          onOpenHistory={() => setShowHistoryModal(true)}
+          sessionCount={sessions.length}
           onOpenTraining={() => setShowTrainingPanel(true)}
           onOpenGrounding={() => setShowGroundingPanel(true)}
           onOpenAuth={() => setShowAuthModal(true)}
@@ -841,7 +895,13 @@ export function CoachWorkspace({
 
       {/* Voice column */}
       <aside className="card p-5 sm:p-6 flex flex-col" aria-label="Voice companion">
-        <Signal state={quietMode ? 'idle' : voice.visualState} energy={voice.audioEnergy} className="mx-auto w-full max-w-[260px]" />
+        <Signal
+          state={quietMode ? 'idle' : voice.visualState}
+          energy={voice.audioEnergy}
+          bands={voice.audioBands}
+          topicShape={voice.topicShape}
+          className="mx-auto w-full max-w-[260px]"
+        />
 
         {/* Real-time NLU comprehension chips (Full-duplex VoiceAgentRAG) */}
         {!quietMode && voice.streamingAnalysis && (voice.partialUserTranscript || voice.visualState === 'listening' || voice.visualState === 'backchannel') && (
@@ -1352,6 +1412,208 @@ export function CoachWorkspace({
           isOpen={showAuthModal}
           onClose={() => setShowAuthModal(false)}
         />
+      )}
+
+      {/* Session History & Conversation Transcript Modal */}
+      {showHistoryModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs animate-fadeIn"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="history-dialog-title"
+        >
+          <div className="card w-full max-w-xl p-5 sm:p-6 bg-surface border border-line shadow-2xl max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-line pb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">📜</span>
+                <div>
+                  <h3 id="history-dialog-title" className="font-display font-semibold text-ink text-base">
+                    Session &amp; Chat History
+                  </h3>
+                  <p className="text-xs text-ink-3">Your focus blocks and recent voice transcripts</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowHistoryModal(false)}
+                className="text-ink-3 hover:text-ink text-xl font-medium px-2 py-1"
+                aria-label="Close history dialog"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-5 py-4">
+              {/* Recent Focus Blocks */}
+              <div>
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-ink-3 mb-2">
+                  Recorded Focus Blocks ({sessions.length})
+                </h4>
+                {sessions.length === 0 ? (
+                  <p className="text-xs text-ink-2 italic bg-surface-recessed p-3 rounded-lg border border-line">
+                    No sessions completed yet. Start a focus block with the timer or by voice (&ldquo;Start 20 minutes&rdquo;).
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {sessions.slice(0, 10).map((s, idx) => (
+                      <div
+                        key={s.id || idx}
+                        className="rounded-lg bg-surface-recessed p-3 border border-line text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                      >
+                        <div className="space-y-1">
+                          <p className="font-semibold text-ink text-[0.85rem]">{s.taskText}</p>
+                          <div className="flex flex-wrap items-center gap-1.5 text-ink-3 text-[0.72rem]">
+                            <span>{s.completedAt ? new Date(s.completedAt).toLocaleDateString() : 'Recent'}</span>
+                            <span>•</span>
+                            <span className="capitalize">{(s.strategyKey || 'coaching').replace('_', ' ')}</span>
+                            <span>•</span>
+                            <span>{s.plannedMinutes || 20}m sprint</span>
+                          </div>
+                        </div>
+                        <span
+                          className={`self-start sm:self-auto rounded-full px-2.5 py-0.5 font-medium text-[0.72rem] ${
+                            s.outcome === 'started'
+                              ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border border-emerald-500/20'
+                              : s.outcome === 'partly_started'
+                              ? 'bg-amber-500/10 text-amber-800 dark:text-amber-300 border border-amber-500/20'
+                              : 'bg-ink-3/10 text-ink-3 border border-line'
+                          }`}
+                        >
+                          {(s.outcome || 'in progress').replace('_', ' ')}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Current Active Conversation Transcripts */}
+              <div>
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-ink-3 mb-2">
+                  Active Conversation Transcripts ({voice.transcripts.length})
+                </h4>
+                {voice.transcripts.length === 0 ? (
+                  <p className="text-xs text-ink-2 italic bg-surface-recessed p-3 rounded-lg border border-line">
+                    No conversation turns yet in this active session. Speak or type to Stay to see real-time captions here.
+                  </p>
+                ) : (
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    {voice.transcripts.map((t) => (
+                      <div
+                        key={t.id + t.timestamp}
+                        className={`rounded-lg p-2.5 text-xs ${
+                          t.role === 'user'
+                            ? 'bg-surface-recessed border border-line text-ink ml-4'
+                            : 'bg-accent/5 border border-accent/20 text-ink mr-4'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-bold text-[0.7rem] uppercase tracking-wider text-ink-3">
+                            {t.role === 'user' ? 'You' : 'Stay'}
+                          </span>
+                          <span className="text-[0.68rem] text-ink-3">
+                            {new Date(t.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <p className="text-[0.82rem] leading-relaxed">{t.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-line flex items-center justify-between">
+              <span className="text-xs text-ink-3">Stored locally on your device</span>
+              <button
+                type="button"
+                onClick={() => setShowHistoryModal(false)}
+                className="btn btn-primary py-1.5 px-4 text-xs"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Voice Persona Selection Modal */}
+      {showVoiceModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs animate-fadeIn"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="voice-modal-title"
+        >
+          <div className="card w-full max-w-md p-5 sm:p-6 bg-surface border border-line shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-line pb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🎙️</span>
+                <div>
+                  <h3 id="voice-modal-title" className="font-display font-semibold text-ink text-base">
+                    Choose Voice Persona
+                  </h3>
+                  <p className="text-xs text-ink-3">Switch between female &amp; male voices and accents</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowVoiceModal(false)}
+                className="text-ink-3 hover:text-ink text-xl font-medium px-2 py-1"
+                aria-label="Close voice persona dialog"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="py-4 space-y-2.5">
+              {voice.availableVoices.map((v) => {
+                const isSelected = voice.selectedVoice === v.id;
+                return (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => {
+                      voice.setSelectedVoice(v.id);
+                      voice.playEarcon('chime');
+                      setActionReceipt(`Voice set to ${v.name}`);
+                      setShowVoiceModal(false);
+                    }}
+                    className={`w-full text-left p-3 rounded-xl border transition-all flex items-center justify-between ${
+                      isSelected
+                        ? 'border-accent bg-accent/10 shadow-xs'
+                        : 'border-line bg-surface hover:bg-surface-recessed'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-ink text-sm">{v.name}</span>
+                        <span className="rounded-full bg-surface-recessed px-2 py-0.5 text-[0.7rem] font-medium text-ink-2 border border-line">
+                          {v.gender === 'female' ? 'Female' : 'Male'} · {v.accent}
+                        </span>
+                      </div>
+                      <p className="text-xs text-ink-3 mt-0.5">{v.description}</p>
+                    </div>
+                    {isSelected && (
+                      <span className="h-2.5 w-2.5 rounded-full bg-accent shrink-0" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="pt-3 border-t border-line flex items-center justify-between">
+              <span className="text-xs text-ink-3">Voice commands: &ldquo;Switch to male voice&rdquo; · &ldquo;Change voice to Oliver&rdquo;</span>
+              <button
+                type="button"
+                onClick={() => setShowVoiceModal(false)}
+                className="btn btn-secondary py-1 px-3 text-xs"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

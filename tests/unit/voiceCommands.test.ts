@@ -36,6 +36,25 @@ describe('Hands-Free Voice Command Parser', () => {
     expect(parseVoiceCommand('had to stop early')).toEqual({ type: 'record_outcome', outcome: 'paused_or_stopped' });
   });
 
+  it('detects memory and history inspection commands', () => {
+    expect(parseVoiceCommand('Show me the memory')).toEqual({ type: 'show_memory' });
+    expect(parseVoiceCommand('open memory')).toEqual({ type: 'show_memory' });
+    expect(parseVoiceCommand('what do you remember about me')).toEqual({ type: 'show_memory' });
+    expect(parseVoiceCommand('Show history')).toEqual({ type: 'show_history' });
+    expect(parseVoiceCommand('open chat history')).toEqual({ type: 'show_history' });
+  });
+
+  it('detects grounding, voice switching, quiet mode, and clear chat commands', () => {
+    expect(parseVoiceCommand('Stay ground me')).toEqual({ type: 'open_grounding' });
+    expect(parseVoiceCommand('help me breathe')).toEqual({ type: 'open_grounding' });
+    expect(parseVoiceCommand('Switch to male voice')).toEqual({ type: 'change_voice', voiceId: 'oliver' });
+    expect(parseVoiceCommand('Change voice to Anna')).toEqual({ type: 'change_voice', voiceId: 'anna' });
+    expect(parseVoiceCommand('Switch voice')).toEqual({ type: 'open_voice_menu' });
+    expect(parseVoiceCommand('Turn on quiet mode')).toEqual({ type: 'toggle_quiet_mode' });
+    expect(parseVoiceCommand('Clear chat')).toEqual({ type: 'clear_chat' });
+    expect(parseVoiceCommand('Start over')).toEqual({ type: 'clear_chat' });
+  });
+
   it('ignores ordinary conversational speech', () => {
     expect(parseVoiceCommand('I need to reply to my landlord regarding rent')).toBeNull();
     expect(parseVoiceCommand('The weather is nice today')).toBeNull();

@@ -19,6 +19,8 @@ interface OrbCompanionViewProps {
   onStopTimer: () => void;
   onLogOutcome: (outcome: SessionOutcome) => void;
   onOpenMemory: () => void;
+  onOpenHistory?: () => void;
+  sessionCount?: number;
   onOpenTraining: () => void;
   onOpenGrounding: () => void;
   onOpenAuth: () => void;
@@ -48,6 +50,8 @@ export function OrbCompanionView({
   onStopTimer,
   onLogOutcome,
   onOpenMemory,
+  onOpenHistory,
+  sessionCount,
   onOpenTraining,
   onOpenGrounding,
   onOpenAuth,
@@ -66,23 +70,23 @@ export function OrbCompanionView({
     if (voice.isHandsFreePaused) return 'Listening Paused · Say "Hey Stay" to Resume';
     switch (voice.visualState) {
       case 'connecting':
-        return 'Connecting Living AGI...';
+        return 'Connecting voice session...';
       case 'listening':
-        return voice.partialUserTranscript ? 'Comprehending speech...' : 'Living 24/7 · Listening for task';
+        return voice.partialUserTranscript ? 'Listening...' : 'Listening · Speak anytime';
       case 'thinking':
-        return 'Analyzing ADHD barrier & first step...';
+        return 'Finding the lightest first step...';
       case 'speaking':
         return 'Stay speaking...';
       case 'backchannel':
-        return 'Attentive body-double listening...';
+        return 'Listening closely...';
       default:
-        return 'Living 24/7 Companion Ready';
+        return 'Ready · Tap or speak to start';
     }
   };
 
   return (
     <div className="relative min-h-[82vh] flex flex-col justify-between items-center rounded-3xl bg-radial from-canvas via-surface to-canvas p-4 sm:p-8 border border-line/80 shadow-2xl overflow-hidden">
-      {/* Top Floating Living AGI Control Bar */}
+      {/* Top Floating Control Bar */}
       <header className="w-full max-w-4xl flex flex-wrap items-center justify-between gap-2 z-20">
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2 rounded-full bg-surface-recessed px-3 py-1.5 border border-line shadow-xs">
@@ -99,7 +103,7 @@ export function OrbCompanionView({
               {voice.isConnected
                 ? voice.isHandsFreePaused
                   ? 'PAUSED'
-                  : 'LIVING 24/7 ACTIVE'
+                  : 'LISTENING'
                 : 'STANDBY'}
             </span>
           </div>
@@ -113,6 +117,26 @@ export function OrbCompanionView({
             <span>🌿</span>
             <span className="font-medium hidden sm:inline">Ground Me</span>
           </button>
+
+          {/* Named Voice Persona Selector */}
+          <div className="relative">
+            <select
+              value={voice.selectedVoice}
+              onChange={(e) => voice.setSelectedVoice(e.target.value)}
+              className="chip text-[0.78rem] flex items-center gap-1 border border-line bg-surface hover:bg-line transition-colors cursor-pointer appearance-none pr-5 pl-2.5 py-1 text-ink font-medium rounded-full"
+              title="Voice Persona (Anna, Oliver, Amanda, Charles, Rachel, Josh)"
+              aria-label="Select Voice Persona"
+            >
+              {voice.availableVoices.map((v) => (
+                <option key={v.id} value={v.id}>
+                  🎙️ {v.name} ({v.gender === 'female' ? 'Female' : 'Male'} · {v.accent === 'British' ? 'UK' : 'US'})
+                </option>
+              ))}
+            </select>
+            <span className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-[0.6rem] text-ink-3">
+              ▼
+            </span>
+          </div>
 
           {/* Multilingual Speech Language Selector */}
           <div className="relative">
@@ -137,6 +161,21 @@ export function OrbCompanionView({
 
         {/* Center / Right Control Chips */}
         <div className="flex items-center gap-2">
+          {onOpenHistory && (
+            <button
+              type="button"
+              onClick={onOpenHistory}
+              className="chip text-[0.8rem] flex items-center gap-1.5 border border-line hover:bg-line transition-colors"
+              title="View session history and past transcripts (or say 'show history')"
+            >
+              <span>📜</span>
+              <span className="font-medium hidden sm:inline">History</span>
+              {typeof sessionCount === 'number' && (
+                <span className="font-mono text-[0.72rem]">({sessionCount})</span>
+              )}
+            </button>
+          )}
+
           <button
             type="button"
             onClick={onOpenMemory}
@@ -211,8 +250,8 @@ export function OrbCompanionView({
               voice.toggleHandsFreeMute();
             }
           }}
-          className="relative mx-auto flex items-center justify-center w-[260px] sm:w-[320px] h-[260px] sm:h-[320px] rounded-full cursor-pointer group outline-none focus:outline-none focus-visible:ring-4 focus-visible:ring-accent/40 transition-transform duration-300 hover:scale-[1.02] active:scale-[0.98] select-none border-0 bg-transparent p-0"
-          style={{ WebkitTapHighlightColor: 'transparent', outline: 'none' }}
+          className="relative mx-auto flex items-center justify-center w-[260px] sm:w-[320px] h-[260px] sm:h-[320px] rounded-full cursor-pointer group outline-none focus:outline-none ring-0 focus-visible:ring-0 transition-transform duration-300 hover:scale-[1.02] active:scale-[0.98] select-none border-0 bg-transparent p-0"
+          style={{ WebkitTapHighlightColor: 'transparent', outline: 'none', border: 'none' }}
           aria-label={
             !voice.isConnected
               ? 'Click to wake Stay'
@@ -225,6 +264,7 @@ export function OrbCompanionView({
             state={quietMode ? 'idle' : voice.visualState}
             energy={voice.audioEnergy}
             bands={voice.audioBands}
+            topicShape={voice.topicShape}
             hideLabel
             className="w-full h-full rounded-full overflow-hidden filter drop-shadow-2xl"
           />
@@ -249,7 +289,7 @@ export function OrbCompanionView({
         <div className="mt-4 text-center">
           <p className="text-sm font-medium text-ink transition-colors">{getStatusText()}</p>
           <p className="text-[0.78rem] text-ink-3 mt-1">
-            Hands-free voice: &ldquo;Stay pause&rdquo; · &ldquo;Hey Stay&rdquo; · &ldquo;Start 20m&rdquo; · &ldquo;Stay ground me&rdquo;
+            Voice commands: &ldquo;Stay pause&rdquo; · &ldquo;Hey Stay&rdquo; · &ldquo;Start 20m&rdquo; · &ldquo;Show history&rdquo; · &ldquo;Change voice&rdquo;
           </p>
         </div>
 

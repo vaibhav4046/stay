@@ -8,6 +8,7 @@ interface Props {
   state: VoiceVisualState;
   energy: number;
   bands?: AudioSpectrumBands;
+  topicShape?: number;
   reducedMotion: boolean;
   onUnsupported: () => void;
 }
@@ -142,6 +143,7 @@ const VERTEX_SHADER = `
   uniform float uLowBand;
   uniform float uMidBand;
   uniform float uHighBand;
+  uniform float uTopicShape;
   uniform float uReducedMotion;
 
   void main() {
@@ -155,9 +157,29 @@ const VERTEX_SHADER = `
     // High band (1500+ Hz: sibilants/plosives) triggers acoustic surface ripple
     float sibilantRipple = uReducedMotion > 0.5 ? 0.0 : uHighBand * 0.05 * sin(position.y * 14.0 + uTime * 16.0);
     
+    // Topic-reactive organic geometric modulation
+    // Mode 1 (Treats/Sweets/Ice cream): Conical dome & soft swirl atop the fluid wave
+    float coneTaper = (uTopicShape > 0.5 && uTopicShape < 1.5)
+      ? (0.13 * smoothstep(-0.2, 1.0, position.y) * sin(position.x * 3.4 + uTime * 2.6) * (1.0 + uMidBand * 0.7))
+      : 0.0;
+    // Mode 2 (Letterforms / Writing / Docs / Code): Harmonic facet contours
+    float facetContour = (uTopicShape > 1.5 && uTopicShape < 2.5)
+      ? (0.09 * cos(position.x * 6.8 + position.y * 6.8 + uTime * 3.2) * (0.8 + uMidBand * 1.1))
+      : 0.0;
+    // Mode 3 (Creative / Music / Brainstorming): Double spiral fluid vortex ribbons
+    float ribbonSpiral = (uTopicShape > 2.5 && uTopicShape < 3.5)
+      ? (0.11 * sin(position.y * 4.6 + position.x * 3.8 - uTime * 4.0) * (1.0 + uHighBand * 1.4))
+      : 0.0;
+    // Mode 4 (Calming / Somatic / Breathing): Concentric soothing ripples
+    float calmRipple = (uTopicShape > 3.5)
+      ? (0.07 * cos(length(position.xy) * 8.0 - uTime * 2.0) * (0.5 + uLowBand * 0.5))
+      : 0.0;
+
+    float topicDisplacement = uReducedMotion > 0.5 ? 0.0 : (coneTaper + facetContour + ribbonSpiral + calmRipple);
+
     // Subtle organic surface breathing
     float breath = uReducedMotion > 0.5 ? 0.0 : sin(uTime * 1.2) * 0.02;
-    vec3 displaced = position * (1.0 + breath + vowelSwell + mouthContour + sibilantRipple);
+    vec3 displaced = position * (1.0 + breath + vowelSwell + mouthContour + sibilantRipple + topicDisplacement);
     
     vPosition = displaced;
     vec4 mvPosition = modelViewMatrix * vec4(displaced, 1.0);
@@ -324,18 +346,25 @@ const FRAGMENT_SHADER = `
   }
 `;
 
-export default function SignalScene({ state, energy, bands, reducedMotion, onUnsupported }: Props) {
+export default function SignalScene({ state, energy, bands, topicShape = 0, reducedMotion, onUnsupported }: Props) {
   const mountRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef(state);
   const energyRef = useRef(energy);
   const bandsRef = useRef(bands);
+  const topicShapeRef = useRef(topicShape);
   stateRef.current = state;
   energyRef.current = energy;
   bandsRef.current = bands;
+  topicShapeRef.current = topicShape;
 
   useEffect(() => {
     const mount = mountRef.current;
     if (!mount) return;
+
+    // Ensure any existing canvas is cleared before attaching a new WebGL renderer
+    while (mount.firstChild) {
+      mount.removeChild(mount.firstChild);
+    }
 
     let renderer: THREE.WebGLRenderer;
     try {
@@ -406,6 +435,7 @@ export default function SignalScene({ state, energy, bands, reducedMotion, onUns
       uLowBand: { value: 0 },
       uMidBand: { value: 0 },
       uHighBand: { value: 0 },
+      uTopicShape: { value: topicShapeRef.current },
       uSpeed: { value: initialConfig.speed },
       uWaveAmp: { value: initialConfig.waveAmp },
       uReducedMotion: { value: reducedMotion ? 1.0 : 0.0 },
@@ -479,6 +509,7 @@ export default function SignalScene({ state, energy, bands, reducedMotion, onUns
       uniforms.uLowBand.value = smoothLow;
       uniforms.uMidBand.value = smoothMid;
       uniforms.uHighBand.value = smoothHigh;
+      uniforms.uTopicShape.value += ((topicShapeRef.current || 0) - uniforms.uTopicShape.value) * 0.12;
 
       if (!reducedMotion) {
         t += dt;
