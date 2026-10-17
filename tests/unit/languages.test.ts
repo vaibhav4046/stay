@@ -1,6 +1,20 @@
 import { describe, it, expect } from 'vitest';
-import { detectTextLanguage, SUPPORTED_LANGUAGES, AVAILABLE_VOICES } from '@/lib/voice/useVoiceAgent';
+import {
+  detectTextLanguage,
+  buildLocalizedStayResponse,
+  SUPPORTED_LANGUAGES,
+  AVAILABLE_VOICES,
+} from '@/lib/voice/useVoiceAgent';
 import { detectVoiceCommand } from '@/lib/voice/voiceCommands';
+import { buildDeterministicCoachPlan } from '@/lib/coach/strategies';
+import {
+  CompliantKeyRotationPool,
+  getCachedCoachPlan,
+  setCachedCoachPlan,
+  compressPromptForTokenEfficiency,
+  shouldTransmitPcmFrame,
+  buildUniversal3ProConfig,
+} from '@/lib/voice/tokenOptimizer';
 
 describe('Stay 32-Language Universal Voice Engine & Detection', () => {
   it('supports at least 32 distinct world languages plus universal auto mode', () => {
@@ -25,9 +39,16 @@ describe('Stay 32-Language Universal Voice Engine & Detection', () => {
     expect(codes).toContain('th-TH');
   });
 
-  it('accurately classifies distinct non-Latin script families without latency', () => {
+  it('accurately classifies distinct non-Latin script families AND Romanized Hinglish / Romanized Korean without latency', () => {
     // Hindi (Devanagari)
     expect(detectTextLanguage('नमस्ते मुझे काम शुरू करने में मदद चाहिए')).toBe('hi-IN');
+    // Hindi (Romanized Hinglish)
+    expect(detectTextLanguage('mujhe kaam shuru karne mein madad chahiye')).toBe('hi-IN');
+    expect(detectTextLanguage('namaste mera dimag thak gaya hai')).toBe('hi-IN');
+    // Korean (Hangul)
+    expect(detectTextLanguage('지금 이 작업을 시작하고 싶어요')).toBe('ko-KR');
+    // Korean (Romanized)
+    expect(detectTextLanguage('annyeonghaseyo jigeum dowajuseyo')).toBe('ko-KR');
     // Bengali
     expect(detectTextLanguage('আমি এই কাজটি শুরু করতে চাই')).toBe('bn-BD');
     // Tamil
@@ -40,8 +61,6 @@ describe('Stay 32-Language Universal Voice Engine & Detection', () => {
     expect(detectTextLanguage('אני רוצה להתחיל לעבוד עכשיו')).toBe('he-IL');
     // Japanese
     expect(detectTextLanguage('レポートの作成を始めたいです')).toBe('ja-JP');
-    // Korean
-    expect(detectTextLanguage('지금 이 작업을 시작하고 싶어요')).toBe('ko-KR');
     // Chinese
     expect(detectTextLanguage('我想开始写这个报告')).toBe('zh-CN');
     // Greek
@@ -52,6 +71,23 @@ describe('Stay 32-Language Universal Voice Engine & Detection', () => {
     expect(detectTextLanguage('Я хочу почати робити цей звіт')).toBe('uk-UA');
     // Cyrillic Russian
     expect(detectTextLanguage('Я хочу начать делать этот отчет')).toBe('ru-RU');
+  });
+
+  it('generates native Hindi (हिन्दी), Korean (한국어), and multilingual reactions in buildLocalizedStayResponse', () => {
+    const mockPlan = buildDeterministicCoachPlan({
+      taskText: 'Open the document for 60 seconds.',
+      barrierType: 'overwhelm',
+    });
+    const hiReply = buildLocalizedStayResponse('मुझे ध्यान केंद्रित करने में मदद करो', 'hi-IN', mockPlan);
+    expect(hiReply).toContain('नमस्ते');
+    expect(hiReply).toContain('मैं यहीं आपके साथ हूँ');
+
+    const koReply = buildLocalizedStayResponse('집중할 수 있게 도와줘', 'ko-KR', mockPlan);
+    expect(koReply).toContain('안녕하세요');
+    expect(koReply).toContain('함께할게요');
+
+    const esReply = buildLocalizedStayResponse('Ayúdame a concentrarme', 'es-ES', mockPlan);
+    expect(esReply).toContain('Estoy aquí contigo');
   });
 
   it('accurately classifies characteristic Western and Latin scripts', () => {
@@ -132,4 +168,38 @@ describe('Stay 32-Language Universal Voice Engine & Detection', () => {
     const oliver = AVAILABLE_VOICES.find((v) => v.id === 'oliver');
     expect(oliver?.gender).toBe('male');
   });
+
+  it('validates Compliant Multi-Key Rotation Pool, Semantic Cache, Prompt Compression, and Universal-3 Pro Config', () => {
+    const pool = new CompliantKeyRotationPool('assemblyai', ['key_A,key_B,key_C']);
+    expect(pool.getStatus().totalKeysConfigured).toBe(3);
+    const k1 = pool.getNextHealthyKey();
+    const k2 = pool.getNextHealthyKey();
+    expect(k1).toBe('key_A');
+    expect(k2).toBe('key_B');
+    pool.reportRateLimitOrError('key_C', 60000);
+    // Next healthy key should skip key_C during cooldown
+    expect(pool.getNextHealthyKey()).toBe('key_A');
+
+    const dummyPlan = buildDeterministicCoachPlan({
+      taskText: 'Write quarterly tax email',
+      barrierType: 'overwhelm',
+    });
+    setCachedCoachPlan('Write quarterly tax email', dummyPlan, 'overwhelm', 'en');
+    const cached = getCachedCoachPlan('write quarterly tax email!', 'overwhelm', 'en');
+    expect(cached?.firstStep).toBe(dummyPlan.firstStep);
+
+    const compressed = compressPromptForTokenEfficiency('Please   help   me   with   this   task   now');
+    expect(compressed).toBe('Please help me with this task now');
+
+    const silentRef = { current: 20 };
+    expect(shouldTransmitPcmFrame(0.001, silentRef)).toBe(false);
+    expect(shouldTransmitPcmFrame(0.04, silentRef)).toBe(true);
+
+    const u3Config = buildUniversal3ProConfig('auto', 'anna');
+    expect(u3Config.speech_model).toBe('u3-rt-pro');
+    expect(u3Config.language_detection).toBe(true);
+    expect(u3Config.speaker_isolation).toBe(true);
+    expect(u3Config.voice_focus).toBe(true);
+  });
 });
+

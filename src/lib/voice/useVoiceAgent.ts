@@ -36,6 +36,13 @@ import {
   type UserMemoryProfile,
 } from '@/lib/coach/userMemory';
 import { detectVoiceCommand, type VoiceCommandAction } from '@/lib/voice/voiceCommands';
+import {
+  buildUniversal3ProConfig,
+  shouldTransmitPcmFrame,
+  getTokenSaverTelemetry,
+} from '@/lib/voice/tokenOptimizer';
+
+export type OrbColorTheme = 'default' | 'aurora' | 'sunset' | 'ocean' | 'cyber' | 'emerald';
 
 export interface VoiceTranscriptEntry {
   id: string;
@@ -61,6 +68,7 @@ export interface UseVoiceAgentOptions {
   onChangeVoiceRequested?: (voiceId?: string) => void;
   onToggleQuietModeRequested?: () => void;
   onClearChatRequested?: () => void;
+  onWebResearchRequested?: (query: string) => void;
 }
 
 export interface AvailableVoice {
@@ -86,10 +94,30 @@ export const TOPIC_SHAPE_LABELS: Record<number, { icon: string; label: string }>
   2: { icon: '✒️', label: 'Crystalline Letterforms' },
   3: { icon: '🎨', label: 'Creative Ribbon' },
   4: { icon: '🪷', label: 'Therapeutic Lotus Calm' },
+  5: { icon: '🎮', label: 'ADHD Game Arena' },
+  6: { icon: '🌐', label: 'Knowledge & Research Globe' },
+  7: { icon: '⏳', label: 'Focus Hourglass Vortex' },
 };
 
 export function detectTopicShape(text: string): number {
   const clean = text.toLowerCase();
+  // 5. Interactive ADHD Cognitive Game Arena (Mode 5)
+  if (
+    /\b(?:play\s+(?:a\s+|an\s+|the\s+)?(?:orb\s+|memory\s+|puzzle\s+|cognitive\s+|adhd\s+)*game|orb\s+game|simon\s+pulse|impulse\s+shield|word\s+rally|game\s+mode|mujhe\s+game\s+khelna\s+hai|geim\s+hago\s+sipeo)\b/i.test(clean) ||
+    /(?:गेम\s*खेल|게임\s*하)/.test(clean)
+  ) {
+    return 5;
+  }
+  // 6. Knowledge & Research Globe / Reading / Web Search (Mode 6)
+  if (
+    /\b(?:search\s+(?:the\s+)?(?:web|google|internet)|research\s+(?:topic|paper|article)|wikipedia|encyclopedia|read\s+aloud)\b/i.test(clean)
+  ) {
+    return 6;
+  }
+  // 7. Focus Hourglass Vortex (Mode 7)
+  if (/\b(?:hourglass|pomodoro|countdown\s+vortex|time\s+vortex)\b/i.test(clean)) {
+    return 7;
+  }
   // 1. Conical Swell / Sweet Treats / Food / Rewards / Dopamine Boost (Mode 1)
   if (/\b(?:ice\s*cream|sweet|treat|cake|coffee|snack|dessert|reward|sugar|fruit|cookie|eat|eating|chocolate|boba|pizza|dopamine\s+treat)\b/i.test(clean)) {
     return 1;
@@ -193,6 +221,22 @@ export function detectTextLanguage(text: string, manualPreference?: string): str
     return /[іїєґIЇЄҐ]/.test(text) ? 'uk-UA' : 'ru-RU'; // Cyrillic (Ukrainian vs Russian)
   }
 
+  // 1b. Romanized Hinglish & Romanized Korean (so speaking Hindi/Korean with Latin ASR also detects!)
+  if (
+    /\b(?:namaste|mujhe|mera|meri|kya|kaise|kahan|dimag|kaam|khelna|bolo|baat|bahut|nhi|nahi|karna|chahiye|yaar|bhai|theek|madad|shuru|thak|pareshaan)\b/i.test(
+      text
+    )
+  ) {
+    return 'hi-IN';
+  }
+  if (
+    /\b(?:annyeong|annyeonghaseyo|geim|jipjung|dowajwo|jebal|eotteoke|sijak|himdeureo|gamsahamnida)\b/i.test(
+      text
+    )
+  ) {
+    return 'ko-KR';
+  }
+
   // 2. High-confidence Western Latin & unique phonetic scripts
   if (/[đĐăằắẳẵặơờớởỡợưừứửữựầấẩẫậềếểễệồốổỗộảạẻẹỉịỏọủụỳỷỹỵ]/i.test(text)) {
     return 'vi-VN'; // Vietnamese unique characters
@@ -246,6 +290,32 @@ export function detectTextLanguage(text: string, manualPreference?: string): str
   return 'en-GB';
 }
 
+export function buildLocalizedStayResponse(
+  userText: string,
+  langCode: string,
+  basePlan: CoachPlanProposal
+): string {
+  if (langCode === 'hi-IN') {
+    return `🇮🇳 नमस्ते! मैं समझ सकती हूँ कि जब दिमाग थका हो तो काम शुरू करना कितना भारी लगता है। चलिए सारा दबाव हटाते हैं — सिर्फ 60 सेकंड के लिए पहला छोटा कदम उठाते हैं: "${basePlan.firstStep}". मैं यहीं आपके साथ हूँ!`;
+  }
+  if (langCode === 'ko-KR') {
+    return `🇰🇷 안녕하세요! 머리가 복잡하고 지칠 때 시작하는 게 얼마나 힘든지 잘 알아요. 부담을 완전히 내려놓고 딱 60초 동안만 첫 번째 작은 단계를 함께 해볼까요? "${basePlan.firstStep}" — 제가 바로 옆에서 함께할게요!`;
+  }
+  if (langCode === 'es-ES') {
+    return `🇪🇸 ¡Hola! Te entiendo perfectamente. Vamos a quitar toda la presión y dar un solo micro-paso de 60 segundos: "${basePlan.firstStep}". ¡Estoy aquí contigo!`;
+  }
+  if (langCode === 'fr-FR') {
+    return `🇫🇷 Salut ! Je comprends tout à fait. Enlevons toute la pression et commençons par une micro-étape de 60 secondes : "${basePlan.firstStep}". Je reste ici avec toi !`;
+  }
+  if (langCode === 'de-DE') {
+    return `🇩🇪 Hallo! Ich verstehe dich total. Lass uns allen Druck wegnehmen und mit einem 60-Sekunden-Schritt starten: "${basePlan.firstStep}". Ich bin direkt bei dir!`;
+  }
+  if (langCode === 'ja-JP') {
+    return `🇯🇵 こんにちは！頭が疲れている時に始めるのがどれほど大変かよく分かります。プレッシャーを手放して、まずは60秒だけ最初の小さな一歩「${basePlan.firstStep}」を一緒にやってみましょう！`;
+  }
+  return basePlan.spokenResponse;
+}
+
 export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const [visualState, setVisualState] = useState<VoiceVisualState>('idle');
   const [isConnected, setIsConnected] = useState(false);
@@ -263,6 +333,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const [isHandsFreePaused, setIsHandsFreePaused] = useState(false);
   const [selectedLanguage, setSelectedLanguageState] = useState<string>('auto');
   const selectedLanguageRef = useRef<string>('auto');
+  const [detectedLanguageCode, setDetectedLanguageCode] = useState<string>('en-GB');
   const [selectedVoice, setSelectedVoiceState] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -275,6 +346,9 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   });
   const selectedVoiceRef = useRef<string>(selectedVoice);
   const [topicShape, setTopicShape] = useState<number>(0);
+  const [orbColorTheme, setOrbColorTheme] = useState<OrbColorTheme>('default');
+  const [activeGame, setActiveGame] = useState<'simon' | 'gonogo' | 'wordrally'>('simon');
+  const [gameDifficulty, setGameDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
 
   const setSelectedVoice = useCallback((voiceId: string) => {
     const valid = AVAILABLE_VOICES.find((v) => v.id === voiceId) ? voiceId : 'anna';
@@ -307,6 +381,9 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const setSelectedLanguage = useCallback((lang: string) => {
     setSelectedLanguageState(lang);
     selectedLanguageRef.current = lang;
+    if (lang !== 'auto') {
+      setDetectedLanguageCode(lang);
+    }
     if (speechRecRef.current) {
       try {
         speechRecRef.current.lang =
@@ -462,7 +539,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     }, 750);
   }, []);
 
-  const speakDeterministicBoundary = useCallback((text: string) => {
+  const speakDeterministicBoundary = useCallback((text: string, explicitLangCode?: string) => {
     if (typeof window === 'undefined') return;
 
     // 1. Play soft clinical boundary tone if audio context is active
@@ -490,7 +567,8 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       try {
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
-        const detectedLang = detectTextLanguage(text, selectedLanguageRef.current);
+        const detectedLang =
+          explicitLangCode || detectTextLanguage(text, selectedLanguageRef.current);
         utterance.lang = detectedLang;
         const voices = window.speechSynthesis.getVoices();
         const langPrefix = detectedLang.split('-')[0].toLowerCase();
@@ -537,7 +615,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         if (matchedVoice) {
           utterance.voice = matchedVoice;
         }
-        utterance.rate = 1.0;
+        utterance.rate = 1.02;
         utterance.pitch = 1.0;
 
         let energyTimer: NodeJS.Timeout | null = null;
@@ -778,17 +856,32 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       const clean = text.trim();
       if (!clean) return false;
 
-      // Extract long-term memory from typed/spoken text
+      // 1. Real-time multilingual auto-detection (Devanagari, Hangul, Romanized Hinglish/Korean, 32 languages)
+      const autoDetectedLang = detectTextLanguage(clean, 'auto');
+      const effectiveLang =
+        selectedLanguageRef.current && selectedLanguageRef.current !== 'auto'
+          ? selectedLanguageRef.current
+          : autoDetectedLang;
+      setDetectedLanguageCode(effectiveLang);
+      if (selectedLanguageRef.current === 'auto' && autoDetectedLang !== 'en-GB' && speechRecRef.current) {
+        try {
+          speechRecRef.current.lang = autoDetectedLang;
+        } catch {
+          // ignore
+        }
+      }
+
+      // 2. Extract long-term memory from typed/spoken text
       const { profile: updatedMemory, extractedFact } = extractMemoriesFromUtterance(clean);
       if (extractedFact) {
         setUserMemory(updatedMemory);
       }
 
-      // Detect topic-reactive dynamic shape
+      // 3. Detect topic-reactive dynamic shape
       const topic = detectTopicShape(clean);
       setTopicShape(topic);
 
-      // Check text-based voice command
+      // 4. Check text-based voice command
       const cmd = detectVoiceCommand(clean);
       if (cmd) {
         optionsRef.current.onVoiceCommandDetected?.(cmd);
@@ -868,6 +961,93 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           optionsRef.current.onToggleQuietModeRequested?.();
           playEarcon('chime');
           return true;
+        } else if (cmd.type === 'start_game') {
+          playEarcon('chime');
+          setTopicShape(5);
+          setActiveGame(cmd.game);
+          if (cmd.difficulty) setGameDifficulty(cmd.difficulty);
+          const gameTitle =
+            cmd.game === 'gonogo'
+              ? 'Prefrontal Impulse Shield'
+              : cmd.game === 'wordrally'
+              ? 'Dopamine Word Rally'
+              : 'Harmonic Simon Pulse';
+          const replyText = cmd.difficulty
+            ? `🎮 Orb morphed into ${gameTitle} on ${cmd.difficulty.toUpperCase()} difficulty! Watch the Orb and let's play together.`
+            : `🎮 Orb transformed into our ADHD Cognitive Game Arena (${gameTitle})! What difficulty would you like — Easy, Medium, or Hard?`;
+          setTranscripts((prev) => [
+            ...prev,
+            {
+              id: `game-${Date.now()}`,
+              role: 'agent',
+              text: replyText,
+              timestamp: new Date().toISOString(),
+            },
+          ]);
+          speakDeterministicBoundary(replyText, effectiveLang);
+          return true;
+        } else if (cmd.type === 'set_game_difficulty') {
+          playEarcon('chime');
+          setTopicShape(5);
+          setGameDifficulty(cmd.difficulty);
+          const replyText = `🎯 Game difficulty locked to ${cmd.difficulty.toUpperCase()}! Let's play together right inside the Orb.`;
+          setTranscripts((prev) => [
+            ...prev,
+            {
+              id: `diff-${Date.now()}`,
+              role: 'agent',
+              text: replyText,
+              timestamp: new Date().toISOString(),
+            },
+          ]);
+          speakDeterministicBoundary(replyText, effectiveLang);
+          return true;
+        } else if (cmd.type === 'change_orb_color') {
+          playEarcon('chime');
+          setOrbColorTheme(cmd.colorTheme);
+          const replyText = `🎨 Orb color gradient transformed to ${cmd.colorTheme.toUpperCase()} theme.`;
+          setTranscripts((prev) => [
+            ...prev,
+            {
+              id: `color-${Date.now()}`,
+              role: 'agent',
+              text: replyText,
+              timestamp: new Date().toISOString(),
+            },
+          ]);
+          speakDeterministicBoundary(replyText, effectiveLang);
+          return true;
+        } else if (cmd.type === 'change_orb_shape') {
+          playEarcon('chime');
+          setTopicShape(cmd.shapeId);
+          const replyText = `✨ Orb smoothly morphed into ${cmd.shapeLabel}!`;
+          setTranscripts((prev) => [
+            ...prev,
+            {
+              id: `shape-${Date.now()}`,
+              role: 'agent',
+              text: replyText,
+              timestamp: new Date().toISOString(),
+            },
+          ]);
+          speakDeterministicBoundary(replyText, effectiveLang);
+          return true;
+        } else if (cmd.type === 'web_research') {
+          playEarcon('chime');
+          setTopicShape(6);
+          optionsRef.current.onWebResearchRequested?.(cmd.query);
+          const replyText = `🌐 Researching "${cmd.query}" across live encyclopedic and clinical sources now...`;
+          setTranscripts((prev) => [
+            ...prev,
+            {
+              id: `res-${Date.now()}`,
+              role: 'agent',
+              text: replyText,
+              timestamp: new Date().toISOString(),
+            },
+          ]);
+          speakDeterministicBoundary(replyText, effectiveLang);
+          return true;
         } else if (cmd.type === 'calculate_time') {
           playEarcon('chime');
           const calculation = calculateTaskReality(clean);
@@ -880,7 +1060,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
               timestamp: new Date().toISOString(),
             },
           ]);
-          speakDeterministicBoundary(calculation.spokenSummary);
+          speakDeterministicBoundary(calculation.spokenSummary, effectiveLang);
           return true;
         } else if (cmd.type === 'brainstorm_angles') {
           playEarcon('chime');
@@ -896,7 +1076,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
               timestamp: new Date().toISOString(),
             },
           ]);
-          speakDeterministicBoundary(brainstorm.spokenSummary);
+          speakDeterministicBoundary(brainstorm.spokenSummary, effectiveLang);
           return true;
         } else if (cmd.type === 'synthesize_path') {
           playEarcon('chime');
@@ -912,7 +1092,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
               timestamp: new Date().toISOString(),
             },
           ]);
-          speakDeterministicBoundary(path.spokenSummary);
+          speakDeterministicBoundary(path.spokenSummary, effectiveLang);
           return true;
         } else if (cmd.type === 'clear_chat') {
           optionsRef.current.onClearChatRequested?.();
@@ -952,7 +1132,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
             timestamp: new Date().toISOString(),
           },
         ]);
-        speakDeterministicBoundary(medBoundary.message);
+        speakDeterministicBoundary(medBoundary.message, effectiveLang);
         return true;
       }
 
@@ -963,8 +1143,27 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         return true;
       }
 
-      // If WebSocket is not open, execute via server coaching plan and speak out loud
-      setVisualState('thinking');
+      // SUB-15MS INSTANT OPTIMISTIC LOCAL-FIRST ADHD REFLEX:
+      // Render plan, localized reply (Hindi/Korean/32L), and voice output immediately with zero network wait!
+      const instantLocalPlan = buildDeterministicCoachPlan({ taskText: clean });
+      const localizedSpoken = buildLocalizedStayResponse(clean, effectiveLang, instantLocalPlan);
+      const optimisticPlan: CoachPlanProposal = {
+        ...instantLocalPlan,
+        spokenResponse: localizedSpoken,
+      };
+      optionsRef.current.onPlanProposed?.(optimisticPlan);
+      setTranscripts((prev) => [
+        ...prev,
+        {
+          id: `agent-${Date.now()}`,
+          role: 'agent',
+          text: localizedSpoken,
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+      speakDeterministicBoundary(localizedSpoken, effectiveLang);
+
+      // Background non-blocking cache warm / LLM refinement
       fetch('/api/coach/plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -974,10 +1173,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         }),
       })
         .then(async (res) => {
-          if (!res.ok) throw new Error('plan fetch error');
+          if (!res.ok) return null;
           return (await res.json()) as CoachPlanProposal;
         })
         .then((planProposal) => {
+          if (!planProposal) return;
           if (planProposal.safetyFlag === 'crisis') {
             optionsRef.current.onCrisisDetected?.(planProposal.spokenResponse);
             setVisualState('idle');
@@ -985,43 +1185,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           }
           if (planProposal.safetyFlag === 'medical_boundary') {
             optionsRef.current.onMedicalBoundaryDetected?.(planProposal.spokenResponse);
-            setTranscripts((prev) => [
-              ...prev,
-              {
-                id: `med-${Date.now()}`,
-                role: 'agent',
-                text: planProposal.spokenResponse,
-                timestamp: new Date().toISOString(),
-              },
-            ]);
-            speakDeterministicBoundary(planProposal.spokenResponse);
             return;
           }
-          optionsRef.current.onPlanProposed?.(planProposal);
-          setTranscripts((prev) => [
-            ...prev,
-            {
-              id: `agent-${Date.now()}`,
-              role: 'agent',
-              text: planProposal.spokenResponse,
-              timestamp: new Date().toISOString(),
-            },
-          ]);
-          speakDeterministicBoundary(planProposal.spokenResponse);
         })
         .catch(() => {
-          const local = buildDeterministicCoachPlan({ taskText: clean });
-          optionsRef.current.onPlanProposed?.(local);
-          setTranscripts((prev) => [
-            ...prev,
-            {
-              id: `agent-${Date.now()}`,
-              role: 'agent',
-              text: local.spokenResponse,
-              timestamp: new Date().toISOString(),
-            },
-          ]);
-          speakDeterministicBoundary(local.spokenResponse);
+          // Instant local reflex already succeeded
         });
 
       return true;
@@ -1245,29 +1413,14 @@ ${adaptivePrompt}`;
           greeting = "Hey! I'm Stay, sitting right here with you. What's one thing hanging over your head right now? We'll make the first move ridiculously easy.";
         }
 
-        // Native keyterms vocabulary boosting for low-latency ADHD terminology recognition
+        // Native AssemblyAI Universal-3 Pro (u3-rt-pro) configuration with 32-language detection, speaker isolation, voice focus, and ADHD + multilingual keyterms
+        const u3Config = buildUniversal3ProConfig(selectedLanguageRef.current);
         try {
           socket.send(
             JSON.stringify({
               type: 'UpdateConfiguration',
-              keyterms: [
-                'ADHD',
-                'executive dysfunction',
-                'body double',
-                'timebox',
-                'reframing',
-                'Stay',
-                'Oliver',
-                'Anna',
-                'Amanda',
-                'Charles',
-                'Rachel',
-                'Josh',
-                'grounding',
-                'dopamine',
-                'paralysis',
-                'procrastination',
-              ],
+              ...u3Config,
+              keyterms: u3Config.keyterms_prompt,
             })
           );
         } catch {
@@ -1280,16 +1433,11 @@ ${adaptivePrompt}`;
             session: {
               system_prompt: warmHumanPrompt,
               greeting,
-              keyterms: [
-                'ADHD',
-                'Stay',
-                'body double',
-                'timebox',
-                'grounding',
-                'dopamine',
-                'paralysis',
-                'procrastination',
-              ],
+              speech_model: u3Config.speech_model,
+              language_detection: u3Config.language_detection,
+              speaker_isolation: u3Config.speaker_isolation,
+              voice_focus: u3Config.voice_focus,
+              keyterms: u3Config.keyterms_prompt,
               tools: [
                 {
                   type: 'function',
@@ -1416,12 +1564,14 @@ ${adaptivePrompt}`;
           const source = audioCtx.createMediaStreamSource(stream);
           const worklet = new AudioWorkletNode(audioCtx, 'pcm-processor');
           workletNodeRef.current = worklet;
+          let latestRms = 0.05;
 
           worklet.port.onmessage = (e) => {
             const payload = e.data;
             if (!payload) return;
 
             if (payload.type === 'energy') {
+              latestRms = payload.rms;
               setAudioEnergy((prev) => prev * 0.55 + payload.rms * 0.45);
               return;
             }
@@ -1431,8 +1581,9 @@ ${adaptivePrompt}`;
               sessionReadyRef.current &&
               socket.readyState === WebSocket.OPEN
             ) {
-              // Suppress mic audio chunks when hands-free listening is paused
+              // Suppress mic audio chunks when hands-free listening is paused or gated by VAD silence saver
               if (handsFreePausedRef.current) return;
+              if (!shouldTransmitPcmFrame(latestRms)) return;
 
               const b64 = arrayBufferToBase64(payload.buffer);
               socket.send(
@@ -1977,12 +2128,20 @@ ${adaptivePrompt}`;
     toggleHandsFreeMute,
     selectedLanguage,
     setSelectedLanguage,
+    detectedLanguageCode,
     supportedLanguages: SUPPORTED_LANGUAGES,
     selectedVoice,
     setSelectedVoice,
     availableVoices: AVAILABLE_VOICES,
     topicShape,
     setTopicShape,
+    orbColorTheme,
+    setOrbColorTheme,
+    activeGame,
+    setActiveGame,
+    gameDifficulty,
+    setGameDifficulty,
+    tokenTelemetry: getTokenSaverTelemetry(),
     userMemory,
     refreshUserMemory: () => setUserMemory(loadUserMemory()),
     playEarcon,
@@ -1995,3 +2154,4 @@ ${adaptivePrompt}`;
 }
 
 export type UseVoiceAgentReturn = ReturnType<typeof useVoiceAgent>;
+

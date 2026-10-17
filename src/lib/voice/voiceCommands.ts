@@ -24,6 +24,11 @@ export type VoiceCommandAction =
   | { type: 'calculate_time' }
   | { type: 'brainstorm_angles' }
   | { type: 'synthesize_path' }
+  | { type: 'start_game'; game: 'simon' | 'gonogo' | 'wordrally'; difficulty?: 'easy' | 'medium' | 'hard' }
+  | { type: 'set_game_difficulty'; difficulty: 'easy' | 'medium' | 'hard' }
+  | { type: 'change_orb_color'; colorTheme: 'default' | 'aurora' | 'sunset' | 'ocean' | 'cyber' | 'emerald' }
+  | { type: 'change_orb_shape'; shapeId: number; shapeLabel: string }
+  | { type: 'web_research'; query: string }
   | { type: 'toggle_quiet_mode' }
   | { type: 'clear_chat' }
   | null;
@@ -327,7 +332,88 @@ export function detectVoiceCommand(text: string): VoiceCommandAction {
     return { type: 'synthesize_path' };
   }
 
+  // 16. Interactive Orb Cognitive Games ("I want to play a game", "let's play a game", "play simon", "play impulse shield", "play word rally", Hindi/Korean/Spanish)
+  if (
+    /\b(?:(?:i\s+want\s+to\s+|let'?s\s+|can\s+we\s+|start\s+(?:a\s+)?)?play\s+(?:a\s+|an\s+|the\s+)?(?:orb\s+|adhd\s+|cognitive\s+)?(?:game|games|simon|pulse|impulse(?:\s+shield)?|go\s+no\s+go|word\s+rally|word\s+chain)|orb\s+game|game\s+mode|mujhe\s+game\s+khelna\s+hai|game\s+khelo|geim\s+hago\s+sipeo|quiero\s+jugar)\b/i.test(
+      clean
+    ) ||
+    /(?:गेम\s*खेल|खेलना\s*है|게임\s*하|게임\s*시작)/.test(clean)
+  ) {
+    const difficulty: 'easy' | 'medium' | 'hard' | undefined = /\b(?:hard|expert|fast)\b/i.test(clean)
+      ? 'hard'
+      : /\b(?:easy|gentle|beginner)\b/i.test(clean)
+      ? 'easy'
+      : /\b(?:medium|normal)\b/i.test(clean)
+      ? 'medium'
+      : undefined;
+
+    if (/\b(?:impulse|shield|go\s+no\s+go|gonogo)\b/i.test(clean)) {
+      return { type: 'start_game', game: 'gonogo', difficulty };
+    }
+    if (/\b(?:word|rally|chain)\b/i.test(clean)) {
+      return { type: 'start_game', game: 'wordrally', difficulty };
+    }
+    return { type: 'start_game', game: 'simon', difficulty };
+  }
+
+  // 17. Set Game Difficulty ("difficulty easy", "easy difficulty", "hard mode", "make it easy")
+  if (
+    /\b(?:(?:set\s+|change\s+)?difficulty\s+(?:to\s+)?(easy|medium|hard)|(easy|medium|hard)\s+(?:difficulty|mode|level)|make\s+it\s+(easy|medium|hard))\b/i.test(
+      clean
+    )
+  ) {
+    const diff = /\bhard\b/i.test(clean) ? 'hard' : /\beasy\b/i.test(clean) ? 'easy' : 'medium';
+    return { type: 'set_game_difficulty', difficulty: diff };
+  }
+
+  // 18. Change Orb Color / Gradient ("change orb color to aurora", "sunset gradient", "color ocean", "color cyber", "color emerald")
+  const colorMatch = clean.match(
+    /\b(?:(?:change|set|make|switch)\s+(?:the\s+)?(?:orb\s+)?(?:color|colour|gradient|theme)\s+(?:to\s+)?|(?:orb\s+)?(?:color|colour|gradient)\s+)(aurora|sunset|ocean|cyber|emerald|default|teal|rose|purple|blue|gold)\b|\b(aurora|sunset|ocean|cyber|emerald)\s+(?:color|colour|gradient|theme)\b/i
+  );
+  if (colorMatch && (colorMatch[1] || colorMatch[2])) {
+    const raw = (colorMatch[1] || colorMatch[2]).toLowerCase();
+    const map: Record<string, 'default' | 'aurora' | 'sunset' | 'ocean' | 'cyber' | 'emerald'> = {
+      aurora: 'aurora',
+      purple: 'aurora',
+      sunset: 'sunset',
+      rose: 'sunset',
+      gold: 'sunset',
+      ocean: 'ocean',
+      blue: 'ocean',
+      cyber: 'cyber',
+      emerald: 'emerald',
+      teal: 'default',
+      default: 'default',
+    };
+    return { type: 'change_orb_color', colorTheme: map[raw] || 'aurora' };
+  }
+
+  // 19. Direct Orb Shape Morphing ("change shape to ice cream", "morph into lotus", "shape gem", "shape star", "shape hourglass", "shape globe")
+  const shapeMatch = clean.match(
+    /\b(?:(?:change|set|morph|transform|switch)\s+(?:the\s+)?(?:orb\s+)?(?:shape\s+)?(?:to|into)\s+|(?:orb\s+)?shape\s+|shapify\s+)(fluid|wave|sphere|ice\s*cream|cone|swirl|letter|gem|crystal|star|rose|creative|lotus|calm|flower|game|arena|globe|research|hourglass|timer|vortex)\b/i
+  );
+  if (shapeMatch && shapeMatch[1]) {
+    const raw = shapeMatch[1].toLowerCase();
+    if (/ice\s*cream|cone|swirl/.test(raw)) return { type: 'change_orb_shape', shapeId: 1, shapeLabel: 'Ice Cream Swirl' };
+    if (/letter|gem|crystal/.test(raw)) return { type: 'change_orb_shape', shapeId: 2, shapeLabel: 'Crystalline Letterforms' };
+    if (/star|rose|creative/.test(raw)) return { type: 'change_orb_shape', shapeId: 3, shapeLabel: 'Creative Harmonic Star' };
+    if (/lotus|calm|flower/.test(raw)) return { type: 'change_orb_shape', shapeId: 4, shapeLabel: 'Therapeutic Lotus Calm' };
+    if (/game|arena/.test(raw)) return { type: 'change_orb_shape', shapeId: 5, shapeLabel: 'ADHD Game Arena' };
+    if (/globe|research/.test(raw)) return { type: 'change_orb_shape', shapeId: 6, shapeLabel: 'Knowledge & Research Globe' };
+    if (/hourglass|timer|vortex/.test(raw)) return { type: 'change_orb_shape', shapeId: 7, shapeLabel: 'Focus Hourglass Vortex' };
+    return { type: 'change_orb_shape', shapeId: 0, shapeLabel: 'Fluid Resonance' };
+  }
+
+  // 20. Live Web & Clinical Research ("search web for...", "research...", "search google for...", "look up...")
+  const researchMatch = clean.match(
+    /\b(?:search\s+(?:the\s+)?(?:web|internet|google)\s+(?:for|about)\s+|research\s+(?:about|on|topic)?\s*|find\s+articles?\s+(?:on|about)\s+)(.{3,90})$/i
+  );
+  if (researchMatch && researchMatch[1]) {
+    return { type: 'web_research', query: researchMatch[1].trim() };
+  }
+
   return null;
 }
 
 export const parseVoiceCommand = detectVoiceCommand;
+

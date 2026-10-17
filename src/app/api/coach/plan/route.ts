@@ -15,6 +15,13 @@ import {
   detectMedicationAdviceRequest,
   UK_CRISIS_RESOURCES,
 } from '@/lib/safety/crisis';
+import {
+  getCachedCoachPlan,
+  setCachedCoachPlan,
+  compressPromptForTokenEfficiency,
+  getNextGroqKey,
+  reportGroqKeyRateLimit,
+} from '@/lib/voice/tokenOptimizer';
 import type { CoachPlanProposal } from '@/types/domain';
 
 export async function POST(req: NextRequest) {
@@ -81,16 +88,23 @@ export async function POST(req: NextRequest) {
     strategyHistory: input.strategyHistory,
   });
 
+  // 2b. Check Semantic LRU Cache first (0 tokens spent on hit!)
+  const cached = getCachedCoachPlan(input.taskText, barrierType);
+  if (cached) {
+    return NextResponse.json(cached, { status: 200 });
+  }
+
   const fallbackPlan = buildDeterministicCoachPlan({
     ...input,
     barrierType,
     preferredStrategy: strategyKey,
   });
 
-  const groqKey = process.env.GROQ_API_KEY;
+  const groqKey = getNextGroqKey() || process.env.GROQ_API_KEY;
   const groqModel = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
 
   if (!groqKey) {
+    setCachedCoachPlan(input.taskText, fallbackPlan, barrierType);
     return NextResponse.json(fallbackPlan, { status: 200 });
   }
 
@@ -98,7 +112,7 @@ export async function POST(req: NextRequest) {
     const strategyDef = STRATEGY_DEFINITIONS[strategyKey];
     const barrierDef = BARRIER_DEFINITIONS[barrierType];
 
-    const systemPrompt = `You are Stay, an authentic, warm, deeply human body-double companion for adults with ADHD.
+    const systemPrompt = compressPromptForTokenEfficiency(`You are Stay, an authentic, warm, deeply human body-double companion for adults with ADHD.
 You speak like a trusted, empathetic friend sitting right across the table — casual contractions ("I'm", "let's", "you're"), natural conversational cadence, zero clinical jargon, zero condescending lectures, 100% warm reassurance.
 Your spoken response MUST be under 35 words. Gently validate how heavy starting feels, propose one ridiculously tiny physical move, and offer to keep time.
 
@@ -116,22 +130,22 @@ ${input.userMemoryPrompt ? `${input.userMemoryPrompt}\n\n` : ''}Return ONLY a va
   "safetyFlag": "none"
 }
 Hard rules:
-- MULTILINGUAL CONVERSATION: Detect the language and script of the user's task description (e.g. Hindi, Hinglish, Spanish, French, German, Japanese, Mandarin, Arabic, Portuguese, etc.). If the task is in a non-English language or mixed vernacular, write ALL string fields ("spokenResponse", "firstStep", "whyThisFits", "checkinPrompt") in that EXACT SAME language with natural, warm conversational fluency.
+- MULTILINGUAL CONVERSATION: Detect the language and script of the user's task description (e.g. Hindi, Hinglish, Korean, Spanish, French, German, Japanese, Mandarin, Arabic, Portuguese, etc.). If the task is in a non-English language or mixed vernacular, write ALL string fields ("spokenResponse", "firstStep", "whyThisFits", "checkinPrompt") in that EXACT SAME language with natural, warm conversational fluency.
 - Never diagnose ADHD or any medical condition.
 - Never give medication or dosing advice.
-- Do not wrap the JSON in markdown fences.`;
+- Do not wrap the JSON in markdown fences.`);
 
-    const userPrompt = `User care context: ${input.careContext}
+    const userPrompt = compressPromptForTokenEfficiency(`User care context: ${input.careContext}
 Task being avoided: "${input.taskText}"
 Primary barrier: ${barrierDef.label} (${barrierType})
 Selected strategy: ${strategyDef.label} (${strategyKey})
 Target focus block: ${input.preferredMinutes || fallbackPlan.timerMinutes} minutes
-Generate the JSON coaching plan.`;
+Generate the JSON coaching plan.`);
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5500);
+    const timeout = setTimeout(() => controller.abort(), 4200);
 
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    let res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${groqKey}`,
@@ -144,10 +158,35 @@ Generate the JSON coaching plan.`;
           { role: 'user', content: userPrompt },
         ],
         temperature: 0.3,
-        max_tokens: 350,
+        max_tokens: 300,
       }),
       signal: controller.signal,
     });
+
+    if (res.status === 429 || res.status === 401) {
+      reportGroqKeyRateLimit(groqKey);
+      const backupKey = getNextGroqKey();
+      if (backupKey && backupKey !== groqKey) {
+        res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${backupKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: groqModel,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userPrompt },
+            ],
+            temperature: 0.3,
+            max_tokens: 300,
+          }),
+          signal: controller.signal,
+        });
+      }
+    }
+
     clearTimeout(timeout);
 
     if (!res.ok) {
@@ -181,6 +220,7 @@ Generate the JSON coaching plan.`;
       return NextResponse.json(fallbackPlan, { status: 200 });
     }
 
+    setCachedCoachPlan(input.taskText, validated.data, barrierType);
     return NextResponse.json(validated.data, { status: 200 });
   } catch {
     return NextResponse.json(fallbackPlan, { status: 200 });

@@ -435,4 +435,70 @@ test.describe('Stay — Multi-User Concurrency, Executive Engine & Session Isola
     await input.press('Enter');
     await expect(page).toHaveURL(/\/app\/settings/);
   });
+
+  test('Interactive Orb ADHD Cognitive Games (Easy/Medium/Hard), Real-Time Hindi & Korean Detection/Reaction, Shapify Color Sandbox, and Live Web Research', async ({
+    page,
+  }) => {
+    await page.goto('/app/today');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+
+    await page.getByTestId('care-self_managing').click();
+    await page.getByTestId('onboarding-ack').click();
+    await page.getByTestId('onboarding-done').click();
+
+    const input = page.getByTestId('task-input');
+
+    // 1. Verify Always-Visible Real-Time Multilingual Transcription & Reaction Bar + Universal-3 Pro badge
+    await expect(page.getByTestId('live-transcript-bar')).toBeVisible();
+    await expect(page.getByTestId('u3-pro-badge')).toContainText('u3-rt-pro');
+
+    // 2. Test Live Hindi (हिन्दी) Detection & Native Reaction
+    await page.getByTestId('quick-hindi-btn').click();
+    await expect(page.getByTestId('detected-language-badge')).toContainText('hi-IN');
+    await expect(page.getByTestId('live-transcript-user')).toContainText('मुझे ध्यान केंद्रित करने में मदद करो');
+    await expect(page.getByTestId('live-transcript-stay')).toContainText('नमस्ते');
+
+    // 3. Test Live Korean (한국어) Detection & Native Reaction
+    await page.getByTestId('quick-korean-btn').click();
+    await expect(page.getByTestId('detected-language-badge')).toContainText('ko-KR');
+    await expect(page.getByTestId('live-transcript-user')).toContainText('집중할 수 있게 도와줘');
+    await expect(page.getByTestId('live-transcript-stay')).toContainText('안녕하세요');
+
+    // 4. Test Interactive Orb ADHD Cognitive Games via voice/text command ("I want to play a game")
+    await input.fill('I want to play a game');
+    await input.press('Enter');
+
+    await expect(page.getByTestId('orb-morph-badge')).toHaveAttribute('data-topic-shape', '5');
+    await expect(page.getByTestId('orb-cognitive-games-arena')).toBeVisible();
+    await expect(page.getByTestId('live-transcript-stay')).toContainText('What difficulty would you like');
+
+    // Switch difficulty to Hard and play Harmonic Simon Pulse, Impulse Shield, and Word Rally
+    await page.getByTestId('game-diff-hard').click();
+    await expect(page.getByTestId('game-diff-hard')).toHaveAttribute('aria-pressed', 'true');
+    await page.getByTestId('simon-pad-0').click();
+    await expect(page.getByTestId('simon-score')).toContainText('Score: 10');
+
+    await page.getByTestId('game-tab-gonogo').click();
+    await expect(page.getByTestId('game-panel-gonogo')).toBeVisible();
+    await page.getByTestId('gonogo-target-btn').click();
+
+    await page.getByTestId('game-tab-wordrally').click();
+    await expect(page.getByTestId('game-panel-wordrally')).toBeVisible();
+    await page.getByTestId('wordrally-input').fill('serenity');
+    await page.getByTestId('wordrally-submit').click();
+    await expect(page.getByTestId('wordrally-streak')).toContainText('2x');
+
+    // 5. Test Shapify Color Gradient Sandbox (Aurora & Sunset)
+    await page.getByTestId('orb-color-btn-aurora').click();
+    await expect(page.getByTestId('orb-color-btn-aurora')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('[data-signal-state]').first()).toHaveAttribute('data-color-theme', 'aurora');
+
+    // 6. Test Live Agentic Web & Clinical Research Globe (Topic Shape 6) + Read Aloud button
+    await page.getByTestId('orb-shape-btn-6').click();
+    await expect(page.getByTestId('orb-research-panel')).toBeVisible();
+    await expect(page.getByTestId('research-result-title')).toBeVisible();
+    await expect(page.getByTestId('research-read-aloud-btn')).toBeVisible();
+  });
 });
+

@@ -38,6 +38,13 @@ describe('Topic Shape Classifier', () => {
     expect(detectTopicShape('The car is parked outside')).toBe(0);
     expect(detectTopicShape('Testing 1 2 3')).toBe(0);
   });
+
+  it('detects ADHD cognitive games, web research, and timer hourglass as shapes 5, 6, and 7', () => {
+    expect(detectTopicShape('I want to play a game')).toBe(5);
+    expect(detectTopicShape('Play memory puzzle game')).toBe(5);
+    expect(detectTopicShape('Search the web for ADHD neuroscience')).toBe(6);
+    expect(detectTopicShape('Start a countdown timer hourglass')).toBe(7);
+  });
 });
 
 import { evaluateParametricShapePoint } from '@/components/Signal';
@@ -48,8 +55,8 @@ import {
 } from '@/lib/coach/adhdClinicalEngine';
 
 describe('Smooth Parametric Shape Sculpture & 24/7 Living ADHD Clinical Engine', () => {
-  it('evaluates smooth, non-NaN parametric control points across all 5 topic shapes and layer scales', () => {
-    for (const shapeId of [0, 1, 2, 3, 4]) {
+  it('evaluates smooth, non-NaN parametric control points across all 8 topic shapes (0..7) and layer scales', () => {
+    for (const shapeId of [0, 1, 2, 3, 4, 5, 6, 7]) {
       for (const layerScale of [1.0, 0.82, 0.64]) {
         const ptTop = evaluateParametricShapePoint(shapeId, -Math.PI / 2, 1.0, 0.35, layerScale);
         const ptBottom = evaluateParametricShapePoint(shapeId, Math.PI / 2, 1.0, 0.35, layerScale);

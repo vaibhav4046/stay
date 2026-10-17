@@ -36,10 +36,21 @@ const FALLBACK_COLOR: Record<VoiceVisualState, { primary: string; secondary: str
 
 export const SHAPE_PALETTES: Record<number, { primary: string; secondary: string; glow: string; accent: string }> = {
   0: { primary: '#006A67', secondary: '#003634', glow: '#5EEAD4', accent: '#E0F2FE' },
-  1: { primary: '#E11D48', secondary: '#881337', glow: '#FDA4AF', accent: '#FBBF24' }, // Ice Cream Cone & Swirl (Strawberry & Waffle Gold)
-  2: { primary: '#0071E3', secondary: '#1E3A8A', glow: '#7DD3FC', accent: '#E0F2FE' }, // Crystalline Letterform Gem (Apple Sapphire Prism)
-  3: { primary: '#7C3AED', secondary: '#3B0764', glow: '#E879F9', accent: '#F5D0FE' }, // Creative Harmonic Rose (Silk Amethyst & Rose)
-  4: { primary: '#0D9488', secondary: '#115E59', glow: '#5EEAD4', accent: '#FDE68A' }, // 8-Petal Botanical Lotus (Serene Jade & Lotus Gold)
+  1: { primary: '#E11D48', secondary: '#881337', glow: '#FDA4AF', accent: '#FBBF24' }, // Ice Cream Cone & Swirl
+  2: { primary: '#0071E3', secondary: '#1E3A8A', glow: '#7DD3FC', accent: '#E0F2FE' }, // Crystalline Letterform Gem
+  3: { primary: '#7C3AED', secondary: '#3B0764', glow: '#E879F9', accent: '#F5D0FE' }, // Creative Harmonic Rose
+  4: { primary: '#0D9488', secondary: '#115E59', glow: '#5EEAD4', accent: '#FDE68A' }, // 8-Petal Botanical Lotus
+  5: { primary: '#10B981', secondary: '#1E1B4B', glow: '#38BDF8', accent: '#F59E0B' }, // ADHD Cognitive Game Arena
+  6: { primary: '#0284C7', secondary: '#0C4A6E', glow: '#67E8F9', accent: '#E0F2FE' }, // Knowledge & Research Globe
+  7: { primary: '#D97706', secondary: '#451A03', glow: '#FDE68A', accent: '#FEF3C7' }, // Focus Hourglass Vortex
+};
+
+export const COLOR_THEME_PALETTES: Record<string, { primary: string; secondary: string; glow: string; accent: string }> = {
+  aurora: { primary: '#7C3AED', secondary: '#1E1B4B', glow: '#5EEAD4', accent: '#F0ABFC' },
+  sunset: { primary: '#EA580C', secondary: '#7C2D12', glow: '#FDA4AF', accent: '#FDE68A' },
+  ocean: { primary: '#0284C7', secondary: '#082F49', glow: '#67E8F9', accent: '#E0F2FE' },
+  cyber: { primary: '#DB2777', secondary: '#3B0764', glow: '#38BDF8', accent: '#F472B6' },
+  emerald: { primary: '#059669', secondary: '#064E3B', glow: '#6EE7B7', accent: '#A7F3D0' },
 };
 
 function hasWebGL(): boolean {
@@ -53,7 +64,7 @@ function hasWebGL(): boolean {
 
 /**
  * Evaluates exact 2D polar/parametric coordinates (cx=60, cy=60) for angle theta in [0, 2*PI)
- * for each of the 5 morphologies so vertex-to-vertex spring interpolation is 100% smooth and artifact-free.
+ * for each of the 8 morphologies so vertex-to-vertex spring interpolation is 100% smooth and artifact-free.
  * Note: theta = -PI/2 is top (12 o'clock), theta = PI/2 is bottom (6 o'clock).
  */
 export function evaluateParametricShapePoint(
@@ -69,19 +80,15 @@ export function evaluateParametricShapePoint(
 
   if (shape === 1) {
     // Mode 1: Sculpted Ice Cream Cone & Triple Soft-Serve Scoop
-    // Normalize angle relative to top (-PI/2)
     const sinT = Math.sin(theta);
     const cosT = Math.cos(theta);
     if (sinT > 0.12) {
-      // Lower hemisphere (sinT > 0.12 -> bottom at theta = PI/2): crisp V-shaped waffle cone
-      // Map sinT from [0.12..1.0] to a linear cone taper toward the bottom tip (60, 105)
       const tCone = Math.min(1, Math.max(0, (sinT - 0.12) / 0.88));
       const halfWidth = 28 * (1 - tCone * 0.92) * layerScale;
       const x = cx + Math.sign(cosT) * Math.pow(Math.abs(cosT), 0.75) * halfWidth;
       const y = cy + (8 + tCone * 38) * layerScale + breath * 0.25;
       return [x, y];
     } else {
-      // Upper hemisphere: 3-tier sculpted soft-serve scoop dome with side cheek scallops
       const cheekScallop = 4.2 * Math.pow(Math.abs(cosT), 1.8) * Math.exp(-Math.pow(sinT + 0.05, 2) * 18);
       const topCrown = 3.5 * Math.exp(-Math.pow(cosT, 2) * 12) * (sinT < -0.5 ? 1 : 0);
       const swirlWave = Math.sin(theta * 6 + time * 2.2) * (0.6 + energy * 1.2);
@@ -94,12 +101,10 @@ export function evaluateParametricShapePoint(
 
   if (shape === 2) {
     // Mode 2: Precision Chamfered Octagonal Crystalline Gem
-    // Exact mathematical polygonal distance for an 8-faceted gem: r(theta) = R / cos((theta mod (PI/4)) - PI/8)
     const n = 8;
     const sector = (2 * Math.PI) / n;
     const modTheta = ((theta % sector) + sector) % sector;
     const polyFactor = Math.cos(sector / 2) / Math.cos(modTheta - sector / 2);
-    // Slight vertical elongation for classic emerald/diamond cut
     const r = (38.5 * polyFactor + breath * 0.35) * layerScale;
     const x = cx + Math.cos(theta) * r * 0.96;
     const y = cy + Math.sin(theta) * r * 1.04;
@@ -120,11 +125,32 @@ export function evaluateParametricShapePoint(
     // Mode 4: Sacred 8-Petal Botanical Lotus Blossom
     const petals = 8;
     const petalWave = Math.abs(Math.cos((petals / 2) * theta + time * 0.25));
-    // Pointed botanical lotus arch: sharp tip at petal peak, smooth valley between petals
     const pointedArch = Math.pow(petalWave, 0.58);
     const calmBreath = Math.sin(time * 1.1) * 1.2;
     const r = (30 + 13.5 * pointedArch + calmBreath + energy * 2.5) * layerScale;
     return [cx + Math.cos(theta) * r, cy + Math.sin(theta) * r];
+  }
+
+  if (shape === 5) {
+    // Mode 5: Interactive 4-Quadrant Harmonic Game Arena Pad (Rounded Squircle with 4 Harmonic Lobes)
+    const quadWave = Math.cos(4 * theta);
+    const pulse = Math.sin(4 * theta - time * 3.0) * (1.2 + energy * 2.5);
+    const r = (39.5 + 4.2 * quadWave + pulse + breath * 0.4) * layerScale;
+    return [cx + Math.cos(theta) * r, cy + Math.sin(theta) * r];
+  }
+
+  if (shape === 6) {
+    // Mode 6: Geodesic Knowledge & Research Globe (12-Meridian Harmonic Sphere)
+    const meridian = Math.cos(12 * theta + time * 1.2) * 1.4;
+    const r = (41.0 + meridian + breath * 0.45) * layerScale;
+    return [cx + Math.cos(theta) * r, cy + Math.sin(theta) * r];
+  }
+
+  if (shape === 7) {
+    // Mode 7: Focus Hourglass Vortex (Pinched Waist at theta = 0 and PI, Expanded Bulbs at Top/Bottom)
+    const pinch = Math.pow(Math.sin(theta), 2);
+    const waistR = (22 + 22 * pinch + breath * 0.4) * layerScale;
+    return [cx + Math.cos(theta) * waistR * 0.88, cy + Math.sin(theta) * (41 * layerScale)];
   }
 
   // Mode 0: Default Apple Siri / Fluid Harmonic Silk Sphere
@@ -155,12 +181,14 @@ function ParametricMorphSculpture({
   energy = 0,
   bands,
   topicShape = 0,
+  colorTheme = 'default',
   isOverlay = false,
 }: {
   state: VoiceVisualState;
   energy?: number;
   bands?: AudioSpectrumBands;
   topicShape?: number;
+  colorTheme?: string;
   isOverlay?: boolean;
 }) {
   const outerPathRef = useRef<SVGPathElement>(null);
@@ -176,10 +204,12 @@ function ParametricMorphSculpture({
   bandsRef.current = bands;
 
   const baseCol = FALLBACK_COLOR[state] || FALLBACK_COLOR.idle;
-  const col = (topicShape > 0 && SHAPE_PALETTES[topicShape]) || {
-    ...baseCol,
-    accent: '#FFFFFF',
-  };
+  const col =
+    (colorTheme !== 'default' && COLOR_THEME_PALETTES[colorTheme]) ||
+    (topicShape > 0 && SHAPE_PALETTES[topicShape]) || {
+      ...baseCol,
+      accent: '#FFFFFF',
+    };
 
   useEffect(() => {
     const N = 120;
@@ -477,6 +507,65 @@ function ParametricMorphSculpture({
         <circle cx="60" cy="60" r="11" fill="rgba(253, 230, 138, 0.32)" stroke="#FDE68A" strokeWidth="1.6" />
         <circle cx="60" cy="60" r="4.5" fill="#FEF08A" />
       </g>
+
+      {/* Mode 5: Interactive 4-Quadrant ADHD Cognitive Game Arena Sculpture */}
+      <g
+        style={{
+          opacity: topicShape === 5 ? 1 : 0,
+          transform: topicShape === 5 ? 'scale(1)' : 'scale(0.84)',
+          transformOrigin: '60px 60px',
+          transition: 'opacity 520ms cubic-bezier(0.22, 1, 0.36, 1), transform 520ms cubic-bezier(0.22, 1, 0.36, 1)',
+        }}
+        fill="none"
+      >
+        {/* 4 Harmonic Simon Pulse Quadrants */}
+        <path d="M 60,24 A 36,36 0 0,1 96,60 L 72,60 A 12,12 0 0,0 60,48 Z" fill="rgba(16,185,129,0.45)" stroke="#6EE7B7" strokeWidth="1.3" />
+        <path d="M 96,60 A 36,36 0 0,1 60,96 L 60,72 A 12,12 0 0,0 72,60 Z" fill="rgba(14,165,233,0.45)" stroke="#7DD3FC" strokeWidth="1.3" />
+        <path d="M 60,96 A 36,36 0 0,1 24,60 L 48,60 A 12,12 0 0,0 60,72 Z" fill="rgba(245,158,11,0.45)" stroke="#FDE68A" strokeWidth="1.3" />
+        <path d="M 24,60 A 36,36 0 0,1 60,24 L 60,48 A 12,12 0 0,0 48,60 Z" fill="rgba(139,92,246,0.45)" stroke="#DDD6FE" strokeWidth="1.3" />
+        <circle cx="60" cy="60" r="10" fill="#FFFFFF" fillOpacity="0.92" stroke="#10B981" strokeWidth="1.6" />
+        <circle cx="60" cy="60" r="4" fill="#006A67" />
+      </g>
+
+      {/* Mode 6: Geodesic Knowledge & Web Research Globe */}
+      <g
+        style={{
+          opacity: topicShape === 6 ? 1 : 0,
+          transform: topicShape === 6 ? 'scale(1)' : 'scale(0.84)',
+          transformOrigin: '60px 60px',
+          transition: 'opacity 520ms cubic-bezier(0.22, 1, 0.36, 1), transform 520ms cubic-bezier(0.22, 1, 0.36, 1)',
+        }}
+        fill="none"
+        stroke="#E0F2FE"
+        strokeWidth="1.15"
+        strokeOpacity="0.82"
+      >
+        <circle cx="60" cy="60" r="34" fill="rgba(56,189,248,0.12)" />
+        <ellipse cx="60" cy="60" rx="18" ry="34" />
+        <ellipse cx="60" cy="60" rx="34" ry="15" />
+        <line x1="26" y1="60" x2="94" y2="60" />
+        <line x1="60" y1="26" x2="60" y2="94" />
+        <circle cx="60" cy="60" r="5" fill="#FFFFFF" />
+      </g>
+
+      {/* Mode 7: Focus Hourglass Time Vortex */}
+      <g
+        style={{
+          opacity: topicShape === 7 ? 1 : 0,
+          transform: topicShape === 7 ? 'scale(1)' : 'scale(0.84)',
+          transformOrigin: '60px 60px',
+          transition: 'opacity 520ms cubic-bezier(0.22, 1, 0.36, 1), transform 520ms cubic-bezier(0.22, 1, 0.36, 1)',
+        }}
+        fill="none"
+      >
+        <path
+          d="M 38,28 L 82,28 C 82,45 64,53 60,60 C 56,67 38,75 38,92 L 82,92 C 82,75 64,67 60,60 C 56,53 38,45 38,28 Z"
+          fill="rgba(253,230,138,0.22)"
+          stroke="#FEF3C7"
+          strokeWidth="1.5"
+        />
+        <circle cx="60" cy="60" r="3.5" fill="#FDE68A" />
+      </g>
     </svg>
   );
 }
@@ -486,11 +575,13 @@ export function SignalFallbackSvg({
   energy = 0,
   bands,
   topicShape = 0,
+  colorTheme = 'default',
 }: {
   state: VoiceVisualState;
   energy?: number;
   bands?: AudioSpectrumBands;
   topicShape?: number;
+  colorTheme?: string;
 }) {
   return (
     <ParametricMorphSculpture
@@ -498,6 +589,7 @@ export function SignalFallbackSvg({
       energy={energy}
       bands={bands}
       topicShape={topicShape}
+      colorTheme={colorTheme}
       isOverlay={false}
     />
   );
@@ -508,6 +600,7 @@ export function Signal({
   energy = 0,
   bands,
   topicShape = 0,
+  colorTheme = 'default',
   size = 240,
   hideLabel = false,
   className = '',
@@ -516,6 +609,7 @@ export function Signal({
   energy?: number;
   bands?: AudioSpectrumBands;
   topicShape?: number;
+  colorTheme?: string;
   size?: number;
   hideLabel?: boolean;
   className?: string;
@@ -541,6 +635,7 @@ export function Signal({
       className={`flex flex-col items-center gap-2 select-none ${className}`}
       data-signal-state={state}
       data-topic-shape={topicShape}
+      data-color-theme={colorTheme}
     >
       <div
         className="relative flex items-center justify-center w-full h-full select-none outline-none"
@@ -563,12 +658,19 @@ export function Signal({
                 energy={energy}
                 bands={bands}
                 topicShape={topicShape}
+                colorTheme={colorTheme}
                 isOverlay={true}
               />
             </div>
           </>
         ) : (
-          <SignalFallbackSvg state={state} energy={energy} bands={bands} topicShape={topicShape} />
+          <SignalFallbackSvg
+            state={state}
+            energy={energy}
+            bands={bands}
+            topicShape={topicShape}
+            colorTheme={colorTheme}
+          />
         )}
       </div>
       {!hideLabel && (
@@ -579,3 +681,4 @@ export function Signal({
     </div>
   );
 }
+

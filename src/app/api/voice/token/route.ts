@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getNextAssemblyAiKey, reportAssemblyAiKeyRateLimit } from '@/lib/voice/tokenOptimizer';
 
 const RATE_WINDOW_MS = 10 * 60 * 1000;
 const MAX_TOKENS_PER_WINDOW = 25;
@@ -29,7 +30,7 @@ async function handleMintToken(req: NextRequest) {
     );
   }
 
-  const apiKey = process.env.ASSEMBLYAI_API_KEY;
+  const apiKey = getNextAssemblyAiKey() || process.env.ASSEMBLYAI_API_KEY;
   const agentId = process.env.ASSEMBLYAI_AGENT_ID || '';
 
   if (!apiKey) {
@@ -45,13 +46,27 @@ async function handleMintToken(req: NextRequest) {
   try {
     const url =
       'https://agents.assemblyai.com/v1/token?expires_in_seconds=180&max_session_duration_seconds=600';
-    const upstream = await fetch(url, {
+    let upstream = await fetch(url, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${apiKey}`,
       },
       cache: 'no-store',
     });
+
+    if (upstream.status === 429 || upstream.status === 401) {
+      reportAssemblyAiKeyRateLimit(apiKey);
+      const backupKey = getNextAssemblyAiKey();
+      if (backupKey && backupKey !== apiKey) {
+        upstream = await fetch(url, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${backupKey}`,
+          },
+          cache: 'no-store',
+        });
+      }
+    }
 
     if (!upstream.ok) {
       return NextResponse.json(
@@ -76,6 +91,7 @@ async function handleMintToken(req: NextRequest) {
         token: data.token,
         agentId,
         wsUrl: 'wss://agents.assemblyai.com/v1/ws',
+        speechModel: 'u3-rt-pro',
         expiresInSeconds: 180,
       },
       {

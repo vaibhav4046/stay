@@ -105,4 +105,61 @@ describe('Hands-Free Voice Command Parser', () => {
     expect(parseVoiceCommand('The weather is nice today')).toBeNull();
     expect(parseVoiceCommand('Why is it so hard to start working')).toBeNull();
   });
+
+  it('detects ADHD cognitive game launch & difficulty voice commands in English, Hindi, and Korean', () => {
+    expect(parseVoiceCommand('I want to play a game')).toEqual({
+      type: 'start_game',
+      game: 'simon',
+      difficulty: undefined,
+    });
+    expect(parseVoiceCommand('play impulse game on hard')).toEqual({
+      type: 'start_game',
+      game: 'gonogo',
+      difficulty: 'hard',
+    });
+    expect(parseVoiceCommand('play word rally game')).toEqual({
+      type: 'start_game',
+      game: 'wordrally',
+      difficulty: undefined,
+    });
+    expect(parseVoiceCommand('मुझे गेम खेलना है')).toEqual({
+      type: 'start_game',
+      game: 'simon',
+      difficulty: undefined,
+    });
+    expect(parseVoiceCommand('게임 하고 싶어')).toEqual({
+      type: 'start_game',
+      game: 'simon',
+      difficulty: undefined,
+    });
+    expect(parseVoiceCommand('difficulty hard')).toEqual({
+      type: 'set_game_difficulty',
+      difficulty: 'hard',
+    });
+    expect(parseVoiceCommand('make it easy')).toEqual({
+      type: 'set_game_difficulty',
+      difficulty: 'easy',
+    });
+  });
+
+  it('detects orb color/gradient, shape sandbox, and live web research commands', () => {
+    expect(parseVoiceCommand('change orb color to aurora')).toEqual({
+      type: 'change_orb_color',
+      colorTheme: 'aurora',
+    });
+    expect(parseVoiceCommand('sunset gradient')).toEqual({
+      type: 'change_orb_color',
+      colorTheme: 'sunset',
+    });
+    expect(parseVoiceCommand('transform into lotus')).toEqual({
+      type: 'change_orb_shape',
+      shapeId: 4,
+      shapeLabel: 'Therapeutic Lotus Calm',
+    });
+    expect(parseVoiceCommand('search web for ADHD dopamine')).toEqual({
+      type: 'web_research',
+      query: 'adhd dopamine',
+    });
+  });
 });
+
