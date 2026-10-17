@@ -478,6 +478,10 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   >([]);
   const medicationSuppressionRef = useRef(false);
   const handsFreePausedRef = useRef(false);
+  const isAssistantSpeakingRef = useRef(false);
+  const speechAccumulatorRef = useRef('');
+  const speechFinalizeTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const assistantCooldownTimerRef = useRef<NodeJS.Timeout | null>(null);
   const optionsRef = useRef(options);
   optionsRef.current = options;
 
@@ -522,6 +526,16 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   }, [playEarcon]);
 
   const stopPlaybackQueue = useCallback(() => {
+    isAssistantSpeakingRef.current = false;
+    if (assistantCooldownTimerRef.current) {
+      clearTimeout(assistantCooldownTimerRef.current);
+      assistantCooldownTimerRef.current = null;
+    }
+    if (speechFinalizeTimerRef.current) {
+      clearTimeout(speechFinalizeTimerRef.current);
+      speechFinalizeTimerRef.current = null;
+    }
+    speechAccumulatorRef.current = '';
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       try {
         window.speechSynthesis.cancel();
@@ -545,26 +559,8 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
   const triggerConversationalBackchannel = useCallback(() => {
     if (handsFreePausedRef.current || !sessionReadyRef.current) return;
+    // Silent visual pulse: attunes to user pause without playing audio tone that could feedback into microphone
     setVisualState('backchannel');
-    if (audioCtxRef.current && audioCtxRef.current.state === 'running') {
-      try {
-        const ctx = audioCtxRef.current;
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(587.33, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(783.99, ctx.currentTime + 0.18);
-        gain.gain.setValueAtTime(0.001, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.035, ctx.currentTime + 0.04);
-        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.32);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.33);
-      } catch {
-        // ignore
-      }
-    }
     setTimeout(() => {
       setVisualState((prev) => (prev === 'backchannel' ? 'listening' : prev));
     }, 750);
@@ -651,6 +647,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
         let energyTimer: NodeJS.Timeout | null = null;
         utterance.onstart = () => {
+          isAssistantSpeakingRef.current = true;
+          if (assistantCooldownTimerRef.current) {
+            clearTimeout(assistantCooldownTimerRef.current);
+            assistantCooldownTimerRef.current = null;
+          }
           setVisualState('speaking');
           let frame = 0;
           energyTimer = setInterval(() => {
@@ -668,6 +669,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
         const cleanup = () => {
           if (energyTimer) clearInterval(energyTimer);
+          // 400ms acoustic cooldown so mic doesn't capture trailing speaker room echo
+          assistantCooldownTimerRef.current = setTimeout(() => {
+            isAssistantSpeakingRef.current = false;
+            assistantCooldownTimerRef.current = null;
+          }, 400);
           setVisualState('listening');
           setAudioEnergy(0.05);
           setAudioBands({ low: 0, mid: 0, high: 0, overall: 0.05 });
@@ -914,7 +920,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       if (genSpec && topic === 8) {
         setGenerativeShape(genSpec);
         setTopicShape(8);
-      } else {
+      } else if (topic > 0) {
         setTopicShape(topic);
       }
 
@@ -1027,6 +1033,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
             executedReplies.push(
               `🎯 Game difficulty locked to ${cmd.difficulty.toUpperCase()}! Let's play together right inside the Orb.`
             );
+          } else if (cmd.type === 'game_action') {
+            optionsRef.current.onVoiceCommandDetected?.(cmd);
+            playEarcon('chime');
+            executedReplies.push('🎮 Executed hands-free game move.');
+            shouldReturnEarly = true;
           } else if (cmd.type === 'change_orb_color') {
             playEarcon('chime');
             setOrbColorTheme(cmd.colorTheme);
@@ -1283,11 +1294,27 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           }
         }
 
-        if (interim) {
-          // Cancel any current assistant speech on barge-in
+        const cleanInterim = interim.trim();
+        const cleanFinal = final.trim();
+
+        // 1. ACOUSTIC ECHO SUPPRESSION: If assistant is actively speaking, ignore mic capture of speaker output
+        // UNLESS the user explicitly utters a deliberate barge-in command (e.g. "stop", "wait", "hold on", "pause", "quiet", "stay")
+        if (isAssistantSpeakingRef.current) {
+          const isExplicitBargeIn = /\b(?:stop|pause|wait|quiet|shh|hold\s+on|shut\s+up|stay|chup|ruko)\b/i.test(
+            cleanInterim || cleanFinal
+          );
+          if (!isExplicitBargeIn) {
+            // Echo bleed from Stay's own voice: silently drop to prevent self-interruption!
+            return;
+          }
+          // Explicit barge-in requested by user
           if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
             window.speechSynthesis.cancel();
           }
+          isAssistantSpeakingRef.current = false;
+        }
+
+        if (interim) {
           if (backchannelTimerRef.current) {
             clearTimeout(backchannelTimerRef.current);
             backchannelTimerRef.current = null;
@@ -1307,7 +1334,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           const topic = detectTopicShape(interim);
           if (topic > 0) setTopicShape(topic);
 
-          // ChatGPT-style listening interjection if user pauses mid-sentence
+          // ChatGPT-style listening interjection if user pauses mid-sentence (visual only)
           if (interim.length > 15 && !handsFreePausedRef.current) {
             backchannelTimerRef.current = setTimeout(() => {
               triggerConversationalBackchannel();
@@ -1315,15 +1342,39 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           }
         }
 
-        if (final.trim()) {
+        if (cleanFinal) {
           if (backchannelTimerRef.current) {
             clearTimeout(backchannelTimerRef.current);
             backchannelTimerRef.current = null;
           }
-          setPartialUserTranscript('');
-          setAudioEnergy(0.05);
-          setAudioBands({ low: 0, mid: 0, high: 0, overall: 0.05 });
-          sendUserTextMessage(final.trim());
+
+          // ADHD Conversational Turn Debouncing:
+          // Adults with ADHD pause mid-sentence, trail off with conjunctions ("and", "um", "also"),
+          // or deliver thoughts in bursts. Accumulate and debounce before dispatching to prevent premature cutoffs!
+          const accumulated = (speechAccumulatorRef.current + ' ' + cleanFinal).trim();
+          speechAccumulatorRef.current = accumulated;
+
+          if (speechFinalizeTimerRef.current) {
+            clearTimeout(speechFinalizeTimerRef.current);
+          }
+
+          const hasHesitation = /\b(?:and|or|um|uh|like|also|with|to|because|so|but|wait|मतलब|और)$/i.test(
+            accumulated
+          );
+          const delayMs = hasHesitation ? 1100 : 650;
+
+          speechFinalizeTimerRef.current = setTimeout(() => {
+            const dispatchText = speechAccumulatorRef.current.trim();
+            speechAccumulatorRef.current = '';
+            speechFinalizeTimerRef.current = null;
+
+            if (dispatchText) {
+              setPartialUserTranscript('');
+              setAudioEnergy(0.05);
+              setAudioBands({ low: 0, mid: 0, high: 0, overall: 0.05 });
+              sendUserTextMessage(dispatchText);
+            }
+          }, delayMs);
         }
       };
 
@@ -1789,7 +1840,7 @@ ${adaptivePrompt}`;
             if (genSpec && topic === 8) {
               setGenerativeShape(genSpec);
               setTopicShape(8);
-            } else {
+            } else if (topic > 0) {
               setTopicShape(topic);
             }
 

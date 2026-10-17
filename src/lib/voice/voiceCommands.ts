@@ -26,6 +26,7 @@ export type VoiceCommandAction =
   | { type: 'synthesize_path' }
   | { type: 'start_game'; game: 'simon' | 'gonogo' | 'wordrally'; difficulty?: 'easy' | 'medium' | 'hard' }
   | { type: 'set_game_difficulty'; difficulty: 'easy' | 'medium' | 'hard' }
+  | { type: 'game_action'; action: 'simon_pad' | 'gonogo_tap' | 'start_simon'; padId?: number }
   | { type: 'change_orb_color'; colorTheme: 'default' | 'aurora' | 'sunset' | 'ocean' | 'cyber' | 'emerald' }
   | { type: 'change_orb_shape'; shapeId: number; shapeLabel: string }
   | { type: 'synthesize_billion_shape'; concept: string }
@@ -369,6 +370,26 @@ export function detectVoiceCommand(text: string): VoiceCommandAction {
   );
   if (researchMatch && researchMatch[1]) {
     return { type: 'web_research', query: researchMatch[1].trim() };
+  }
+
+  // 21. In-Game Hands-Free Voice Commands (Simon Pulse, Go/No-Go Impulse Shield, Word Rally)
+  if (/^(?:emerald|green|north|one|1)$/i.test(clean)) {
+    return { type: 'game_action', action: 'simon_pad', padId: 0 };
+  }
+  if (/^(?:sapphire|blue|east|two|2)$/i.test(clean)) {
+    return { type: 'game_action', action: 'simon_pad', padId: 1 };
+  }
+  if (/^(?:amber|gold|yellow|south|three|3)$/i.test(clean)) {
+    return { type: 'game_action', action: 'simon_pad', padId: 2 };
+  }
+  if (/^(?:violet|purple|west|four|4)$/i.test(clean)) {
+    return { type: 'game_action', action: 'simon_pad', padId: 3 };
+  }
+  if (/^(?:go|target|hit|now|catch|press|shield|tap|yes)$/i.test(clean)) {
+    return { type: 'game_action', action: 'gonogo_tap' };
+  }
+  if (/^(?:start|begin|new\s+round)$/i.test(clean)) {
+    return { type: 'game_action', action: 'start_simon' };
   }
 
   return null;

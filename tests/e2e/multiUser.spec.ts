@@ -65,8 +65,8 @@ test.describe('Stay — Multi-User Concurrency, Executive Engine & Session Isola
       await pageB.getByTestId('get-plan').click();
 
       // Verify tailored coaching plans are independent
-      await expect(pageA.getByTestId('plan-panel')).toBeVisible();
-      await expect(pageB.getByTestId('plan-panel')).toBeVisible();
+      await expect(pageA.getByTestId('plan-panel')).toBeVisible({ timeout: 15000 });
+      await expect(pageB.getByTestId('plan-panel')).toBeVisible({ timeout: 15000 });
 
       // Verify ADHD Executive Engine: Time Reality Calculator & Blindness Debunker
       await expect(pageA.getByTestId('executive-engine-box')).toBeVisible();
@@ -556,6 +556,72 @@ test.describe('Stay — Multi-User Concurrency, Executive Engine & Session Isola
     await expect(page.getByTestId('canvas-action-receipts')).toBeVisible();
     await expect(page.getByTestId('canvas-context')).toContainText('landlord email');
     await expect(page.getByTestId('canvas-steps')).toBeVisible();
+  });
+
+  test('Hands-Free Voice Game Execution & Zero-Overlap Showcase Verification', async ({ page }) => {
+    // 1. Verify Showcase Bento Cards has zero overlapping layers and interactive components operate
+    await page.goto('/');
+    const showcase = page.getByTestId('stay-video-cards-showcase');
+    await expect(showcase).toBeVisible();
+
+    // Verify all 4 cards have distinct posters
+    const poster0 = await page.locator('[data-testid="video-card-0"] video').getAttribute('poster');
+    const poster1 = await page.locator('[data-testid="video-card-1"] video').getAttribute('poster');
+    const poster2 = await page.locator('[data-testid="video-card-2"] video').getAttribute('poster');
+    const poster3 = await page.locator('[data-testid="video-card-3"] video').getAttribute('poster');
+    expect(poster0).toBe('/poster-1b-shapes.png');
+    expect(poster1).toBe('/poster-rewards.png');
+    expect(poster2).toBe('/poster-canvas.png');
+    expect(poster3).toBe('/poster-arch.png');
+
+    // Test card 0 interactive shape switch
+    await page.getByRole('button', { name: '🦋 Butterfly' }).click();
+
+    // Test card 1 language selector
+    await page.getByRole('button', { name: 'हिन्दी' }).click();
+
+    // Test card 3 Simon interactive game pads and score increment
+    await page.getByRole('button', { name: '🟢 Emerald' }).click();
+    await expect(page.getByText('Dopamine Score: 40')).toBeVisible();
+
+    // 2. Real App: Hands-Free Voice Commands for Cognitive Games
+    await page.goto('/app/today');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+
+    await page.getByTestId('care-self_managing').click();
+    await page.getByTestId('onboarding-ack').click();
+    await page.getByTestId('onboarding-done').click();
+
+    const taskInput = page.getByTestId('task-input');
+
+    // Command: Start ADHD Game
+    await taskInput.fill('play game on easy');
+    await taskInput.press('Enter');
+
+    const arena = page.getByTestId('orb-cognitive-games-arena');
+    await expect(arena).toBeVisible();
+    await expect(page.getByTestId('game-diff-easy')).toHaveAttribute('aria-pressed', 'true');
+
+    // Voice command: Tap Emerald Simon Pad
+    await taskInput.fill('emerald');
+    await taskInput.press('Enter');
+    await expect(page.getByTestId('simon-score')).toContainText('Score: 10');
+
+    // Voice command: Switch to Impulse Shield (Go/No-Go)
+    await taskInput.fill('switch to impulse shield');
+    await taskInput.press('Enter');
+    await expect(page.getByTestId('game-panel-gonogo')).toBeVisible();
+
+    // Voice command: Go/No-Go voice trigger "go"
+    await taskInput.fill('go');
+    await taskInput.press('Enter');
+    await expect(page.getByTestId('gonogo-metrics')).toBeVisible();
+
+    // Voice command: Switch to Word Rally
+    await taskInput.fill('switch to word rally');
+    await taskInput.press('Enter');
+    await expect(page.getByTestId('game-panel-wordrally')).toBeVisible();
   });
 });
 

@@ -158,8 +158,7 @@ export function OrbCognitiveGames({
 
       if (simonStatus !== 'input') {
         // Allow immediate play even if user taps directly before clicking "Start"
-        const nextScore = simonScore + 10;
-        setSimonScore(nextScore);
+        setSimonScore((s) => s + 10);
         return;
       }
 
@@ -267,7 +266,22 @@ export function OrbCognitiveGames({
     prevUtteranceRef.current = lastUserUtterance;
     const clean = lastUserUtterance.toLowerCase();
 
-    if (/\b(?:easy|gentle|beginner)\b/.test(clean)) {
+    // 1. Game switching via voice
+    if (/\b(?:simon|pulse|memory\s+game)\b/.test(clean)) {
+      handleGameChange('simon');
+      return;
+    }
+    if (/\b(?:go\s*no\s*go|impulse|shield|reflex)\b/.test(clean)) {
+      handleGameChange('gonogo');
+      return;
+    }
+    if (/\b(?:word\s+rally|word\s+chain|words)\b/.test(clean)) {
+      handleGameChange('wordrally');
+      return;
+    }
+
+    // 2. Difficulty switching via voice
+    if (/\b(?:easy|gentle|beginner|slow)\b/.test(clean)) {
       handleDiffChange('easy');
       return;
     }
@@ -275,16 +289,22 @@ export function OrbCognitiveGames({
       handleDiffChange('medium');
       return;
     }
-    if (/\b(?:hard|fast|expert|challenge)\b/.test(clean)) {
+    if (/\b(?:hard|fast|expert|challenge|difficult)\b/.test(clean)) {
       handleDiffChange('hard');
       return;
     }
 
+    // 3. In-game voice commands
     if (game === 'simon') {
       if (/\b(?:emerald|green|north|one|1)\b/.test(clean)) handleSimonPadPress(0);
       else if (/\b(?:sapphire|blue|east|two|2)\b/.test(clean)) handleSimonPadPress(1);
       else if (/\b(?:amber|gold|yellow|south|three|3)\b/.test(clean)) handleSimonPadPress(2);
       else if (/\b(?:violet|purple|west|four|4)\b/.test(clean)) handleSimonPadPress(3);
+      else if (/\b(?:start|begin|go|play|new\s+round)\b/.test(clean)) startSimonRound();
+    } else if (game === 'gonogo') {
+      if (/\b(?:go|target|hit|now|catch|press|shield|tap|yes)\b/.test(clean)) {
+        handleGoNoGoTap();
+      }
     } else if (game === 'wordrally') {
       const tokens = clean.split(/\s+/).filter(Boolean);
       const candidate = tokens[tokens.length - 1];
@@ -292,7 +312,7 @@ export function OrbCognitiveGames({
         submitRallyWord(candidate);
       }
     }
-  }, [lastUserUtterance, game, handleSimonPadPress, submitRallyWord]);
+  }, [lastUserUtterance, game, handleSimonPadPress, submitRallyWord, handleGoNoGoTap, startSimonRound]);
 
   const inhibitionAccuracy =
     goHits + goMistakes > 0 ? Math.round((goHits / (goHits + goMistakes)) * 100) : 100;

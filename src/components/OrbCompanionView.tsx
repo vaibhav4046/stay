@@ -87,7 +87,12 @@ export function OrbCompanionView({
   const routeUtterance = (text: string) => {
     const multi = parseMultiIntentUtterance(text);
     setLastIntent({ ...multi, utterance: text });
-    if (multi.commands.length === 0 || multi.conversationalContext) {
+    const isGameUtterance =
+      voice.topicShape === 5 ||
+      multi.commands.some((c) => c.type === 'start_game' || c.type === 'game_action' || c.type === 'set_game_difficulty') ||
+      /\b(?:emerald|sapphire|amber|violet|simon|impulse|shield|gonogo|word\s+rally|target|hit)\b/i.test(text);
+
+    if (!isGameUtterance && (multi.commands.length === 0 || multi.conversationalContext)) {
       const taskPart = multi.conversationalContext || text;
       if (onTaskSubmit) onTaskSubmit(taskPart);
       else onTaskTextChange(taskPart);
@@ -612,6 +617,7 @@ export function OrbCompanionView({
             difficulty={voice.gameDifficulty}
             onSelectDifficulty={voice.setGameDifficulty}
             onSpeak={speakTextAloud}
+            lastUserUtterance={voice.partialUserTranscript || lastUserTurn?.text || ''}
             onClose={() => voice.setTopicShape(0)}
           />
         )}
@@ -1185,7 +1191,7 @@ export function OrbCompanionView({
             onChange={(e) => {
               const val = e.target.value;
               setTypedMessage(val);
-              if (val.trim().length > 2) {
+              if (val.trim().length > 2 && voice.topicShape !== 5) {
                 const shape = detectTopicShape(val);
                 if (shape > 0) {
                   voice.setTopicShape(shape);
