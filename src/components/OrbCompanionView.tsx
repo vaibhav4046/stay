@@ -202,6 +202,7 @@ export function OrbCompanionView({
           <Signal
             state={quietMode ? 'idle' : voice.visualState}
             energy={voice.audioEnergy}
+            bands={voice.audioBands}
             className="w-[260px] sm:w-[320px] h-[260px] sm:h-[320px] mx-auto filter drop-shadow-2xl"
           />
 

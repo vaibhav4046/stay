@@ -2,11 +2,12 @@
 
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import type { VoiceVisualState } from '@/types/domain';
+import type { AudioSpectrumBands, VoiceVisualState } from '@/types/domain';
 
 interface Props {
   state: VoiceVisualState;
   energy: number;
+  bands?: AudioSpectrumBands;
   reducedMotion: boolean;
   onUnsupported: () => void;
 }
@@ -138,17 +139,25 @@ const VERTEX_SHADER = `
 
   uniform float uTime;
   uniform float uEnergy;
+  uniform float uLowBand;
+  uniform float uMidBand;
+  uniform float uHighBand;
   uniform float uReducedMotion;
 
   void main() {
     vUv = uv;
     vNormal = normalize(normalMatrix * normal);
     
+    // Low band (0-700 Hz: vowels/formants) triggers organic radial swell
+    float vowelSwell = uReducedMotion > 0.5 ? 0.0 : uLowBand * 0.085 * sin(position.y * 3.5 + uTime * 4.5);
+    // Mid band (700-1500 Hz: transitions/consonants) triggers lip-sync vertical mouth-like contour
+    float mouthContour = uReducedMotion > 0.5 ? 0.0 : uMidBand * 0.065 * cos(position.x * 4.2 - uTime * 5.2);
+    // High band (1500+ Hz: sibilants/plosives) triggers acoustic surface ripple
+    float sibilantRipple = uReducedMotion > 0.5 ? 0.0 : uHighBand * 0.05 * sin(position.y * 14.0 + uTime * 16.0);
+    
     // Subtle organic surface breathing
     float breath = uReducedMotion > 0.5 ? 0.0 : sin(uTime * 1.2) * 0.02;
-    // Acoustic soundwave surface ripple on audio arrival
-    float soundRipple = uReducedMotion > 0.5 ? 0.0 : uEnergy * 0.045 * sin(position.y * 5.0 + uTime * 7.0);
-    vec3 displaced = position * (1.0 + breath + soundRipple);
+    vec3 displaced = position * (1.0 + breath + vowelSwell + mouthContour + sibilantRipple);
     
     vPosition = displaced;
     vec4 mvPosition = modelViewMatrix * vec4(displaced, 1.0);
@@ -167,6 +176,9 @@ const FRAGMENT_SHADER = `
 
   uniform float uTime;
   uniform float uEnergy;
+  uniform float uLowBand;
+  uniform float uMidBand;
+  uniform float uHighBand;
   uniform float uSpeed;
   uniform float uWaveAmp;
   uniform float uReducedMotion;
@@ -220,17 +232,17 @@ const FRAGMENT_SHADER = `
     float t = uTime * uSpeed;
     float tilt = x * 0.14; // Subtle natural diagonal slope
 
-    // Primary undulating liquid swell
-    float wave1 = sin(x * 3.1 + t * 2.0) * (uWaveAmp + uEnergy * 0.26);
+    // Primary undulating liquid swell driven by energy and mid-band frequencies
+    float wave1 = sin(x * 3.1 + t * 2.0) * (uWaveAmp + uEnergy * 0.26 + uMidBand * 0.18);
     // Secondary counter-wave for rich fluid viscosity
-    float wave2 = cos(x * 4.6 - z * 2.4 - t * 1.5) * (uWaveAmp * 0.65 + uEnergy * 0.16);
+    float wave2 = cos(x * 4.6 - z * 2.4 - t * 1.5) * (uWaveAmp * 0.65 + uEnergy * 0.16 + uMidBand * 0.12);
 
-    // Fast acoustic harmonic ripples when voice energy arrives
+    // Fast acoustic harmonic ripples when voice energy arrives, modulated by high band sibilants
     float harmonics = 0.0;
     if (uReducedMotion < 0.5) {
-      harmonics = uEnergy * (
+      harmonics = (uEnergy + uHighBand * 1.3) * (
         0.08 * sin(x * 9.2 + t * 7.5) * cos(z * 5.5 - t * 5.0) +
-        0.05 * sin(x * 15.0 - t * 11.0)
+        0.05 * sin(x * 16.0 - t * 12.0)
       );
     }
 
@@ -241,30 +253,31 @@ const FRAGMENT_SHADER = `
     float waveMask = smoothstep(-0.045, 0.045, distToWave);
 
     // Luminous starlight wave crest ribbon along the fluid interface
-    float crestGlow = exp(-distToWave * distToWave * 160.0) * (0.6 + uEnergy * 1.5);
+    float crestGlow = exp(-distToWave * distToWave * 160.0) * (0.6 + uEnergy * 1.5 + uHighBand * 1.2);
 
     // 2. Marvel 'Eternity' Cosmic Interior ("Carrying Intensity Inside")
-    // Central radiant singularity star core
-    float coreSingularity = 1.0 / (1.0 + rDist * rDist * 4.2);
-    coreSingularity *= (1.3 + uEnergy * 2.7);
+    // Central radiant singularity star core swells with low-band vowel energy
+    float coreSingularity = 1.0 / (1.0 + rDist * rDist * max(1.8, (4.2 - uLowBand * 2.5)));
+    coreSingularity *= (1.3 + uEnergy * 2.7 + uLowBand * 2.0);
 
-    // Swirling volumetric celestial nebula clouds
-    vec3 nebulaCoords = pos * 2.2 + vec3(sin(uTime * 0.32), cos(uTime * 0.26), sin(uTime * 0.38)) * 0.35;
+    // Swirling volumetric celestial nebula clouds with mid-band turbulence
+    vec3 nebulaCoords = pos * 2.2 + vec3(sin(uTime * 0.32), cos(uTime * 0.26), sin(uTime * 0.38)) * (0.35 + uMidBand * 0.25);
     float nebulaDensity = fbm(nebulaCoords);
 
     // 3D Twinkling Stardust & Celestial Stars (Eternity starry silhouette)
+    // Sibilants & high frequencies trigger starlight sparkle bursts
     vec3 starGrid = pos * 24.0;
     vec3 starCell = floor(starGrid);
     float starRand = hash31(starCell);
     float isStar = step(0.92, starRand);
-    float twinkle = sin(starRand * 628.3 + uTime * (3.0 + uEnergy * 5.5)) * 0.5 + 0.5;
-    float starGlint = isStar * pow(twinkle, 3.5) * (0.8 + uEnergy * 1.8);
+    float twinkle = sin(starRand * 628.3 + uTime * (3.0 + uEnergy * 5.5 + uHighBand * 8.0)) * 0.5 + 0.5;
+    float starGlint = isStar * pow(twinkle, 3.5) * (0.8 + uEnergy * 1.8 + uHighBand * 2.8);
 
     // Chromatic dispersion along the wave horizon (iridescent prismatic edge)
     float crestR = exp(-pow(distToWave - 0.012, 2.0) * 160.0);
     float crestG = exp(-pow(distToWave, 2.0) * 160.0);
     float crestB = exp(-pow(distToWave + 0.012, 2.0) * 160.0);
-    vec3 chromaticCrest = vec3(crestR, crestG, crestB) * (0.6 + uEnergy * 1.4);
+    vec3 chromaticCrest = vec3(crestR, crestG, crestB) * (0.6 + uEnergy * 1.4 + uHighBand * 1.6);
 
     // 3. Fluid Color Compositing
     // Upper Fluid: Cosmic Universe / Nebula (Eternity)
@@ -311,12 +324,14 @@ const FRAGMENT_SHADER = `
   }
 `;
 
-export default function SignalScene({ state, energy, reducedMotion, onUnsupported }: Props) {
+export default function SignalScene({ state, energy, bands, reducedMotion, onUnsupported }: Props) {
   const mountRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef(state);
   const energyRef = useRef(energy);
+  const bandsRef = useRef(bands);
   stateRef.current = state;
   energyRef.current = energy;
+  bandsRef.current = bands;
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -382,6 +397,9 @@ export default function SignalScene({ state, energy, reducedMotion, onUnsupporte
     const uniforms = {
       uTime: { value: 0 },
       uEnergy: { value: 0 },
+      uLowBand: { value: 0 },
+      uMidBand: { value: 0 },
+      uHighBand: { value: 0 },
       uSpeed: { value: initialConfig.speed },
       uWaveAmp: { value: initialConfig.waveAmp },
       uReducedMotion: { value: reducedMotion ? 1.0 : 0.0 },
@@ -405,6 +423,9 @@ export default function SignalScene({ state, energy, reducedMotion, onUnsupporte
     scene.add(orbMesh);
 
     let smoothEnergy = 0;
+    let smoothLow = 0;
+    let smoothMid = 0;
+    let smoothHigh = 0;
     let t = 0;
     let raf = 0;
     const clock = new THREE.Clock();
@@ -420,6 +441,15 @@ export default function SignalScene({ state, energy, reducedMotion, onUnsupporte
       const dt = Math.min(clock.getDelta(), 0.05);
       const config = COSMIC_PALETTES[stateRef.current] || COSMIC_PALETTES.idle;
       smoothEnergy += (energyRef.current - smoothEnergy) * 0.18;
+
+      const curBands = bandsRef.current;
+      const targetLow = curBands ? curBands.low : smoothEnergy * 0.85;
+      const targetMid = curBands ? curBands.mid : smoothEnergy * 0.65;
+      const targetHigh = curBands ? curBands.high : smoothEnergy * 0.45;
+
+      smoothLow += (targetLow - smoothLow) * 0.22;
+      smoothMid += (targetMid - smoothMid) * 0.22;
+      smoothHigh += (targetHigh - smoothHigh) * 0.25;
 
       // Color targets
       targetPrimary.setHex(config.primary);
@@ -440,6 +470,9 @@ export default function SignalScene({ state, energy, reducedMotion, onUnsupporte
       uniforms.uSpeed.value += (config.speed - uniforms.uSpeed.value) * 0.08;
       uniforms.uWaveAmp.value += (config.waveAmp - uniforms.uWaveAmp.value) * 0.08;
       uniforms.uEnergy.value = smoothEnergy;
+      uniforms.uLowBand.value = smoothLow;
+      uniforms.uMidBand.value = smoothMid;
+      uniforms.uHighBand.value = smoothHigh;
 
       if (!reducedMotion) {
         t += dt;
@@ -451,7 +484,7 @@ export default function SignalScene({ state, energy, reducedMotion, onUnsupporte
 
         // Aura bloom response
         auraMat.color.lerp(targetRim, 0.08);
-        const auraScale = 1 + Math.sin(t * 1.2) * 0.05 + smoothEnergy * 0.35;
+        const auraScale = 1 + Math.sin(t * 1.2) * 0.05 + (smoothEnergy + smoothLow * 0.5) * 0.35;
         auraMesh.scale.set(auraScale, auraScale, 1);
         auraMat.opacity = 0.45 + smoothEnergy * 0.4;
       } else {

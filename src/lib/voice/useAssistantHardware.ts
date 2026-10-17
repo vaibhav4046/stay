@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react';
 interface AssistantHardwareProps {
   isConnected: boolean;
   isHandsFreePaused: boolean;
+  keepScreenAwake?: boolean;
   onToggleVoice: () => void;
   onToggleHandsFreeMute: () => void;
   onTriggerGrounding?: () => void;
@@ -21,18 +22,20 @@ interface AssistantHardwareProps {
 export function useAssistantHardware({
   isConnected,
   isHandsFreePaused,
+  keepScreenAwake,
   onToggleVoice,
   onToggleHandsFreeMute,
   onTriggerGrounding,
   onStartTimer,
 }: AssistantHardwareProps) {
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+  const shouldLock = Boolean(keepScreenAwake ?? isConnected);
 
-  // 1. Screen Wake Lock API during active voice or focus timer
+  // 1. Screen Wake Lock API during active voice or focus timer sprint
   useEffect(() => {
     let released = false;
     const requestLock = async () => {
-      if ('wakeLock' in navigator && isConnected && !released) {
+      if ('wakeLock' in navigator && shouldLock && !released) {
         try {
           wakeLockRef.current = await navigator.wakeLock.request('screen');
         } catch {
@@ -41,7 +44,7 @@ export function useAssistantHardware({
       }
     };
 
-    if (isConnected) {
+    if (shouldLock) {
       void requestLock();
     } else {
       if (wakeLockRef.current) {
@@ -57,7 +60,7 @@ export function useAssistantHardware({
         wakeLockRef.current = null;
       }
     };
-  }, [isConnected]);
+  }, [shouldLock]);
 
   // 2. Mobile Media Session API for Bluetooth earbuds / lock screen / headset button hold
   useEffect(() => {

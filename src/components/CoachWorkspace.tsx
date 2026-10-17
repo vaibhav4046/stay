@@ -224,6 +224,7 @@ export function CoachWorkspace({
   useAssistantHardware({
     isConnected: voice.isConnected,
     isHandsFreePaused: voice.isHandsFreePaused,
+    keepScreenAwake: running || voice.isConnected,
     onToggleVoice: () => {
       if (!voice.isConnected) voice.startVoiceSession();
       else voice.disconnectVoiceSession();

@@ -45,6 +45,13 @@ export type VoiceVisualState =
   | 'complete'
   | 'error';
 
+export interface AudioSpectrumBands {
+  low: number;     // 0..1 (0-700 Hz: vowels/formants -> core swell & mouth contour)
+  mid: number;     // 0..1 (700-1500 Hz: consonants -> fluid displacement & currents)
+  high: number;    // 0..1 (1500+ Hz: sibilants/plosives -> surface ripples & starlight glints)
+  overall: number; // 0..1 (composite amplitude)
+}
+
 export interface UserProfile {
   userId: string;
   careContext: CareContext;

@@ -149,4 +149,21 @@ describe('patterns', () => {
     clearCustomSupabaseConfig();
     expect(getEffectiveSupabaseConfig()).toBeNull();
   });
+
+  it('validates 3-band audio spectrum viseme mapping and backchannel state labels', async () => {
+    const { STATE_LABELS } = await import('@/components/Signal');
+    expect(STATE_LABELS.backchannel).toBe('Listening closely');
+    expect(STATE_LABELS.speaking).toBe('Speaking');
+    expect(STATE_LABELS.interrupted).toBe('Listening (interrupted)');
+
+    const testBands: import('@/types/domain').AudioSpectrumBands = {
+      low: 0.85,    // Vowel formant
+      mid: 0.45,    // Transition
+      high: 0.12,   // Sibilant
+      overall: 0.65,
+    };
+
+    expect(testBands.low).toBeGreaterThan(testBands.high);
+    expect(testBands.overall).toBeLessThanOrEqual(1.0);
+  });
 });

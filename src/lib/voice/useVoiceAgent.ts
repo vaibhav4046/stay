@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
+  AudioSpectrumBands,
   BarrierType,
   CoachPlanProposal,
   SessionOutcome,
@@ -66,6 +67,12 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const [visualState, setVisualState] = useState<VoiceVisualState>('idle');
   const [isConnected, setIsConnected] = useState(false);
   const [audioEnergy, setAudioEnergy] = useState(0);
+  const [audioBands, setAudioBands] = useState<AudioSpectrumBands>({
+    low: 0,
+    mid: 0,
+    high: 0,
+    overall: 0,
+  });
   const [partialUserTranscript, setPartialUserTranscript] = useState('');
   const [transcripts, setTranscripts] = useState<VoiceTranscriptEntry[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -90,6 +97,9 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const wsRef = useRef<WebSocket | null>(null);
   const sessionReadyRef = useRef(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const backchannelTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const speechStartTimeRef = useRef<number>(0);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const workletNodeRef = useRef<AudioWorkletNode | null>(null);
   const speechRecRef = useRef<any>(null);
@@ -165,6 +175,33 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     }
   }, []);
 
+  const triggerConversationalBackchannel = useCallback(() => {
+    if (handsFreePausedRef.current || !sessionReadyRef.current) return;
+    setVisualState('backchannel');
+    if (audioCtxRef.current && audioCtxRef.current.state === 'running') {
+      try {
+        const ctx = audioCtxRef.current;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(783.99, ctx.currentTime + 0.18);
+        gain.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.035, ctx.currentTime + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.32);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.33);
+      } catch {
+        // ignore
+      }
+    }
+    setTimeout(() => {
+      setVisualState((prev) => (prev === 'backchannel' ? 'listening' : prev));
+    }, 750);
+  }, []);
+
   const speakDeterministicBoundary = useCallback((text: string) => {
     if (typeof window === 'undefined') return;
 
@@ -215,15 +252,25 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         let energyTimer: NodeJS.Timeout | null = null;
         utterance.onstart = () => {
           setVisualState('speaking');
+          let frame = 0;
           energyTimer = setInterval(() => {
-            setAudioEnergy(0.25 + Math.random() * 0.45);
-          }, 80);
+            frame++;
+            const syllableWave = Math.sin(frame * 0.45) * 0.5 + 0.5;
+            const sibilantNoise = Math.random() > 0.75 ? Math.random() * 0.55 : 0.05;
+            const low = 0.25 + syllableWave * 0.45;
+            const mid = 0.2 + Math.random() * 0.35;
+            const high = sibilantNoise;
+            const overall = low * 0.5 + mid * 0.3 + high * 0.2;
+            setAudioBands({ low, mid, high, overall });
+            setAudioEnergy(overall);
+          }, 75);
         };
 
         const cleanup = () => {
           if (energyTimer) clearInterval(energyTimer);
           setVisualState('listening');
           setAudioEnergy(0.05);
+          setAudioBands({ low: 0, mid: 0, high: 0, overall: 0.05 });
         };
         utterance.onend = cleanup;
         utterance.onerror = cleanup;
@@ -257,7 +304,12 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
     const source = ctx.createBufferSource();
     source.buffer = audioBuffer;
-    source.connect(ctx.destination);
+    if (analyserRef.current) {
+      source.connect(analyserRef.current);
+      analyserRef.current.connect(ctx.destination);
+    } else {
+      source.connect(ctx.destination);
+    }
 
     const startAt = Math.max(ctx.currentTime + 0.015, nextPlaybackTimeRef.current);
     source.start(startAt);
@@ -268,6 +320,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       activeSourcesRef.current.delete(source);
       if (activeSourcesRef.current.size === 0) {
         setAudioEnergy(0.05);
+        setAudioBands({ low: 0, mid: 0, high: 0, overall: 0.05 });
       }
     };
   }, []);
@@ -314,6 +367,13 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         // ignore
       }
     }
+
+    if (backchannelTimerRef.current) {
+      clearTimeout(backchannelTimerRef.current);
+      backchannelTimerRef.current = null;
+    }
+    analyserRef.current = null;
+    setAudioBands({ low: 0, mid: 0, high: 0, overall: 0 });
 
     if (audioCtxRef.current) {
       try {
@@ -589,16 +649,39 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
             window.speechSynthesis.cancel();
           }
+          if (backchannelTimerRef.current) {
+            clearTimeout(backchannelTimerRef.current);
+            backchannelTimerRef.current = null;
+          }
           setPartialUserTranscript(interim);
-          setAudioEnergy(0.25 + Math.random() * 0.2);
+          const energy = 0.25 + Math.random() * 0.25;
+          setAudioEnergy(energy);
+          setAudioBands({
+            low: energy * 0.95,
+            mid: energy * 0.7,
+            high: energy * 0.45,
+            overall: energy,
+          });
           setVisualState('listening');
           const analysis = analyzeStreamingUtterance(interim);
           setStreamingAnalysis(analysis);
+
+          // ChatGPT-style listening interjection if user pauses mid-sentence
+          if (interim.length > 15 && !handsFreePausedRef.current) {
+            backchannelTimerRef.current = setTimeout(() => {
+              triggerConversationalBackchannel();
+            }, 1400);
+          }
         }
 
         if (final.trim()) {
+          if (backchannelTimerRef.current) {
+            clearTimeout(backchannelTimerRef.current);
+            backchannelTimerRef.current = null;
+          }
           setPartialUserTranscript('');
           setAudioEnergy(0.05);
+          setAudioBands({ low: 0, mid: 0, high: 0, overall: 0.05 });
           sendUserTextMessage(final.trim());
         }
       };
@@ -649,6 +732,13 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       const audioCtx = new AudioContext();
       audioCtxRef.current = audioCtx;
       nextPlaybackTimeRef.current = audioCtx.currentTime;
+
+      // Real-time 3-band FFT AnalyserNode for vocal visemes & lip-sync deformation
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.75;
+      analyserRef.current = analyser;
+
       await audioCtx.audioWorklet.addModule('/pcm-processor.js');
 
       // 3. Mint ephemeral single-use AssemblyAI token from our server route
@@ -765,12 +855,18 @@ ${adaptivePrompt}`;
             }
           };
 
+          source.connect(analyser);
           source.connect(worklet);
           return;
         }
 
         if (type === 'input.speech.started') {
           stopPlaybackQueue();
+          if (backchannelTimerRef.current) {
+            clearTimeout(backchannelTimerRef.current);
+            backchannelTimerRef.current = null;
+          }
+          speechStartTimeRef.current = Date.now();
           medicationSuppressionRef.current = false;
           if (!handsFreePausedRef.current) {
             setVisualState('listening');
@@ -787,6 +883,16 @@ ${adaptivePrompt}`;
           if (text.length > 4) {
             const analysis = analyzeStreamingUtterance(text);
             setStreamingAnalysis(analysis);
+          }
+
+          if (backchannelTimerRef.current) {
+            clearTimeout(backchannelTimerRef.current);
+            backchannelTimerRef.current = null;
+          }
+          if (text.length > 15 && !handsFreePausedRef.current) {
+            backchannelTimerRef.current = setTimeout(() => {
+              triggerConversationalBackchannel();
+            }, 1400);
           }
 
           // Hands-free voice command interception in streaming delta
@@ -826,6 +932,10 @@ ${adaptivePrompt}`;
         }
 
         if (type === 'input.speech.stopped') {
+          if (backchannelTimerRef.current) {
+            clearTimeout(backchannelTimerRef.current);
+            backchannelTimerRef.current = null;
+          }
           setVisualState('thinking');
           return;
         }
@@ -1049,6 +1159,53 @@ ${adaptivePrompt}`;
     return true;
   }, []);
 
+  // Continuous Web Audio 3-band FFT formant spectrum analyzer loop
+  useEffect(() => {
+    if (!isConnected) return;
+    let rafId: number;
+    const freqData = new Uint8Array(128);
+
+    const sample = () => {
+      const analyser = analyserRef.current;
+      if (analyser) {
+        analyser.getByteFrequencyData(freqData);
+
+        // Bins 0-6 (~0-700 Hz): Low band (fundamental vowels, formants) -> core swell & mouth contour
+        let lowSum = 0;
+        for (let i = 0; i <= 6; i++) lowSum += freqData[i];
+        const low = lowSum / (7 * 255);
+
+        // Bins 7-16 (~700-1500 Hz): Mid band (consonants, transitions) -> fluid wave displacement & currents
+        let midSum = 0;
+        for (let i = 7; i <= 16; i++) midSum += freqData[i];
+        const mid = midSum / (10 * 255);
+
+        // Bins 17-64 (~1500+ Hz): High band (sibilants, plosives, fricatives) -> surface ripples & starlight glints
+        let highSum = 0;
+        for (let i = 17; i <= 64; i++) highSum += freqData[i];
+        const high = highSum / (48 * 255);
+
+        const overall = Math.min(1, (low * 0.5 + mid * 0.3 + high * 0.2) * 2.2);
+
+        if (overall > 0.02) {
+          setAudioBands({ low, mid, high, overall });
+          setAudioEnergy((prev) => prev * 0.4 + overall * 0.6);
+        } else {
+          setAudioBands((prev) => ({
+            low: prev.low * 0.85,
+            mid: prev.mid * 0.85,
+            high: prev.high * 0.85,
+            overall: prev.overall * 0.85,
+          }));
+        }
+      }
+      rafId = requestAnimationFrame(sample);
+    };
+
+    rafId = requestAnimationFrame(sample);
+    return () => cancelAnimationFrame(rafId);
+  }, [isConnected]);
+
   useEffect(() => {
     const onPageHide = () => {
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -1072,6 +1229,7 @@ ${adaptivePrompt}`;
     setVisualState,
     isConnected,
     audioEnergy,
+    audioBands,
     partialUserTranscript,
     transcripts,
     errorMessage,

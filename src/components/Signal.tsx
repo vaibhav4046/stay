@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useState } from 'react';
-import type { VoiceVisualState } from '@/types/domain';
+import type { AudioSpectrumBands, VoiceVisualState } from '@/types/domain';
 
 const SignalScene = dynamic(() => import('./SignalScene'), {
   ssr: false,
@@ -49,11 +49,21 @@ function hasWebGL(): boolean {
  * Renders a circular clip with the iconic ChatGPT undulating fluid horizon, celestial stardust,
  * inner radiant core singularity, and specular glass rim.
  */
-export function SignalFallbackSvg({ state, energy = 0 }: { state: VoiceVisualState; energy?: number }) {
+export function SignalFallbackSvg({
+  state,
+  energy = 0,
+  bands,
+}: {
+  state: VoiceVisualState;
+  energy?: number;
+  bands?: AudioSpectrumBands;
+}) {
   const col = FALLBACK_COLOR[state] || FALLBACK_COLOR.idle;
-  const radius = 40 + energy * 4;
-  const glowRadius = 54 + energy * 8;
-  const waveShift = energy * 6;
+  const lowEnergy = bands ? bands.low : energy;
+  const highEnergy = bands ? bands.high : energy;
+  const radius = 40 + lowEnergy * 5;
+  const glowRadius = 54 + energy * 8 + highEnergy * 4;
+  const waveShift = energy * 6 + lowEnergy * 3;
 
   return (
     <svg viewBox="0 0 120 120" className="h-full w-full" aria-hidden="true" data-testid="signal-fallback">
@@ -167,10 +177,12 @@ export function SignalFallbackSvg({ state, energy = 0 }: { state: VoiceVisualSta
 export function Signal({
   state,
   energy,
+  bands,
   className = '',
 }: {
   state: VoiceVisualState;
   energy: number;
+  bands?: AudioSpectrumBands;
   className?: string;
 }) {
   const [mode, setMode] = useState<'pending' | 'webgl' | 'svg'>('pending');
@@ -191,9 +203,9 @@ export function Signal({
     <div className={`relative ${className}`} data-signal-state={state}>
       <div className="aspect-square w-full">
         {mode === 'webgl' ? (
-          <SignalScene state={state} energy={energy} reducedMotion={reducedMotion} onUnsupported={onUnsupported} />
+          <SignalScene state={state} energy={energy} bands={bands} reducedMotion={reducedMotion} onUnsupported={onUnsupported} />
         ) : (
-          <SignalFallbackSvg state={state} energy={energy} />
+          <SignalFallbackSvg state={state} energy={energy} bands={bands} />
         )}
       </div>
       <p className="meta text-center mt-1" role="status" aria-live="polite" data-testid="signal-state-label">
