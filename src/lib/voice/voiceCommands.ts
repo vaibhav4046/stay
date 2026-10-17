@@ -17,6 +17,9 @@ export type VoiceCommandAction =
   | { type: 'change_voice'; voiceId: string }
   | { type: 'open_voice_menu' }
   | { type: 'change_language'; langCode: string; langName: string }
+  | { type: 'calculate_time' }
+  | { type: 'brainstorm_angles' }
+  | { type: 'synthesize_path' }
   | { type: 'toggle_quiet_mode' }
   | { type: 'clear_chat' }
   | null;
@@ -231,6 +234,33 @@ export function detectVoiceCommand(text: string): VoiceCommandAction {
   // 12. Stop Timer Command ("stop timer", "cancel timer")
   if (/\b(?:stop timer|cancel timer|reset timer|stop the timer)\b/i.test(clean)) {
     return { type: 'stop_timer' };
+  }
+
+  // 13. Calculate / Predict Time Reality ("calculate time", "how long will this take", "predict time")
+  if (
+    /\b(?:calculate\s+(?:the\s+)?time|predict\s+(?:the\s+)?time|how\s+long\s+will\s+this\s+take|time\s+reality(?:\s+check)?|reality\s+check|how\s+long\s+really)\b/i.test(
+      clean
+    )
+  ) {
+    return { type: 'calculate_time' };
+  }
+
+  // 14. Brainstorm Starter Angles ("brainstorm", "give me ideas", "help me brainstorm", "unblock me")
+  if (
+    /\b(?:brainstorm(?:\s+ideas|\s+angles)?|help\s+me\s+brainstorm|give\s+me\s+ideas|give\s+me\s+angles|i'm\s+stuck\s+give\s+me\s+ideas|unblock\s+me)\b/i.test(
+      clean
+    )
+  ) {
+    return { type: 'brainstorm_angles' };
+  }
+
+  // 15. Synthesize Task Path / Research Steps ("outline steps", "task path", "research steps")
+  if (
+    /\b(?:outline\s+steps|task\s+path|research\s+steps|give\s+me\s+a\s+path|how\s+do\s+i\s+do\s+this|step\s+by\s+step\s+path)\b/i.test(
+      clean
+    )
+  ) {
+    return { type: 'synthesize_path' };
   }
 
   return null;

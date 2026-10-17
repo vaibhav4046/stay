@@ -93,3 +93,15 @@ export const RecordSessionOutcomeToolArgsSchema = z.object({
   outcome: SessionOutcomeSchema,
   helpfulRating: z.number().int().min(1).max(5).optional(),
 });
+
+export const PredictTaskRealityToolArgsSchema = z.object({
+  taskText: z.string().min(1).max(280),
+});
+
+export const BrainstormStarterAnglesToolArgsSchema = z.object({
+  taskText: z.string().min(1).max(280),
+});
+
+export const SynthesizeTaskPathToolArgsSchema = z.object({
+  taskText: z.string().min(1).max(280),
+});

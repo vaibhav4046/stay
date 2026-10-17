@@ -17,7 +17,15 @@ import {
   ProposeCoachingPlanToolArgsSchema,
   RecordSessionOutcomeToolArgsSchema,
   StartFocusTimerToolArgsSchema,
+  PredictTaskRealityToolArgsSchema,
+  BrainstormStarterAnglesToolArgsSchema,
+  SynthesizeTaskPathToolArgsSchema,
 } from '@/lib/coach/schema';
+import {
+  calculateTaskReality,
+  brainstormStarterAngles,
+  synthesizeTaskPath,
+} from '@/lib/coach/executiveEngine';
 import { buildDeterministicCoachPlan } from '@/lib/coach/strategies';
 import { analyzeStreamingUtterance, type RealtimeStreamingAnalysis } from '@/lib/coach/knowledge';
 import { loadUserCalibration, buildAdaptiveSystemPrompt } from '@/lib/coach/selfImprovement';
@@ -702,6 +710,39 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           return;
         }
 
+        if (name === 'predict_task_reality') {
+          const parsed = PredictTaskRealityToolArgsSchema.parse(rawArgs);
+          const calculation = calculateTaskReality(parsed.taskText);
+          pendingToolResultsRef.current.push({
+            call_id: callId,
+            result: JSON.stringify(calculation),
+            is_error: false,
+          });
+          return;
+        }
+
+        if (name === 'brainstorm_starter_angles') {
+          const parsed = BrainstormStarterAnglesToolArgsSchema.parse(rawArgs);
+          const brainstorm = brainstormStarterAngles(parsed.taskText);
+          pendingToolResultsRef.current.push({
+            call_id: callId,
+            result: JSON.stringify(brainstorm),
+            is_error: false,
+          });
+          return;
+        }
+
+        if (name === 'synthesize_task_path') {
+          const parsed = SynthesizeTaskPathToolArgsSchema.parse(rawArgs);
+          const path = synthesizeTaskPath(parsed.taskText);
+          pendingToolResultsRef.current.push({
+            call_id: callId,
+            result: JSON.stringify(path),
+            is_error: false,
+          });
+          return;
+        }
+
         pendingToolResultsRef.current.push({
           call_id: callId,
           result: JSON.stringify({ error: `Unknown tool: ${name}` }),
@@ -771,6 +812,52 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           optionsRef.current.onGroundingRequested?.();
         } else if (cmd.type === 'toggle_quiet_mode') {
           optionsRef.current.onToggleQuietModeRequested?.();
+        } else if (cmd.type === 'calculate_time') {
+          playEarcon('chime');
+          const calculation = calculateTaskReality(clean);
+          setTranscripts((prev) => [
+            ...prev,
+            {
+              id: `reality-${Date.now()}`,
+              role: 'agent',
+              text: `⏱️ ${calculation.spokenSummary}\n\n• Perceived time: ~${calculation.perceivedMinutes} min\n• Micro-entry move: ${calculation.microEntrySeconds}s\n• Recommended block: ${calculation.recommendedSprintMinutes} min\n• Momentum rate: ${calculation.inertiaBreakRate}%`,
+              timestamp: new Date().toISOString(),
+            },
+          ]);
+          speakDeterministicBoundary(calculation.spokenSummary);
+          return true;
+        } else if (cmd.type === 'brainstorm_angles') {
+          playEarcon('chime');
+          const brainstorm = brainstormStarterAngles(clean);
+          const formatted = `💡 3 Starter Angles for "${clean}":\n\n` +
+            brainstorm.angles.map((a, i) => `${i + 1}. **${a.name}** (~${a.timeSeconds}s)\n${a.prompt}`).join('\n\n');
+          setTranscripts((prev) => [
+            ...prev,
+            {
+              id: `brainstorm-${Date.now()}`,
+              role: 'agent',
+              text: formatted,
+              timestamp: new Date().toISOString(),
+            },
+          ]);
+          speakDeterministicBoundary(brainstorm.spokenSummary);
+          return true;
+        } else if (cmd.type === 'synthesize_path') {
+          playEarcon('chime');
+          const path = synthesizeTaskPath(clean);
+          const formatted = `🧭 3-Phase Action Path for "${clean}" (${path.totalSprintMinutes}m total):\n\n` +
+            path.phases.map((p) => `Phase ${p.phase} · **${p.name}** (${p.durationMinutes}m)\n${p.action}`).join('\n\n');
+          setTranscripts((prev) => [
+            ...prev,
+            {
+              id: `path-${Date.now()}`,
+              role: 'agent',
+              text: formatted,
+              timestamp: new Date().toISOString(),
+            },
+          ]);
+          speakDeterministicBoundary(path.spokenSummary);
+          return true;
         } else if (cmd.type === 'clear_chat') {
           optionsRef.current.onClearChatRequested?.();
         }
@@ -1145,6 +1232,102 @@ ${adaptivePrompt}`;
                 'paralysis',
                 'procrastination',
               ],
+              tools: [
+                {
+                  type: 'function',
+                  function: {
+                    name: 'propose_coaching_plan',
+                    description:
+                      'Decompose an overwhelming task into ONE ridiculous micro-step (<60s) with a personalized CBT strategy.',
+                    parameters: {
+                      type: 'object',
+                      properties: {
+                        taskText: { type: 'string' },
+                        barrierType: { type: 'string' },
+                        strategyKey: { type: 'string' },
+                        firstStep: { type: 'string' },
+                        timerMinutes: { type: 'number' },
+                      },
+                      required: ['taskText', 'firstStep'],
+                    },
+                  },
+                },
+                {
+                  type: 'function',
+                  function: {
+                    name: 'start_focus_timer',
+                    description:
+                      'Start a bounded focus timer sprint (e.g. 5, 10, 15, 20 minutes) with zero pressure.',
+                    parameters: {
+                      type: 'object',
+                      properties: {
+                        minutes: { type: 'number' },
+                        firstStep: { type: 'string' },
+                      },
+                      required: ['minutes', 'firstStep'],
+                    },
+                  },
+                },
+                {
+                  type: 'function',
+                  function: {
+                    name: 'record_session_outcome',
+                    description: 'Log whether the user started, partly started, or did not start.',
+                    parameters: {
+                      type: 'object',
+                      properties: {
+                        outcome: { type: 'string' },
+                      },
+                      required: ['outcome'],
+                    },
+                  },
+                },
+                {
+                  type: 'function',
+                  function: {
+                    name: 'predict_task_reality',
+                    description:
+                      'Calculate realistic initiation duration vs ADHD perceived time blindness.',
+                    parameters: {
+                      type: 'object',
+                      properties: {
+                        taskText: { type: 'string' },
+                      },
+                      required: ['taskText'],
+                    },
+                  },
+                },
+                {
+                  type: 'function',
+                  function: {
+                    name: 'brainstorm_starter_angles',
+                    description:
+                      'Brainstorm 3 zero-friction starter angles to bypass executive freeze.',
+                    parameters: {
+                      type: 'object',
+                      properties: {
+                        taskText: { type: 'string' },
+                      },
+                      required: ['taskText'],
+                    },
+                  },
+                },
+                {
+                  type: 'function',
+                  function: {
+                    name: 'synthesize_task_path',
+                    description:
+                      'Synthesize a structured 3-phase execution path for complex tasks.',
+                    parameters: {
+                      type: 'object',
+                      properties: {
+                        taskText: { type: 'string' },
+                      },
+                      required: ['taskText'],
+                    },
+                  },
+                },
+              ],
               output: {
                 type: 'audio',
                 voice: selectedVoiceRef.current || 'anna',
@@ -1374,6 +1557,52 @@ ${adaptivePrompt}`;
                 optionsRef.current.onGroundingRequested?.();
               } else if (cmd.type === 'toggle_quiet_mode') {
                 optionsRef.current.onToggleQuietModeRequested?.();
+              } else if (cmd.type === 'calculate_time') {
+                playEarcon('chime');
+                const calculation = calculateTaskReality(text);
+                setTranscripts((prev) => [
+                  ...prev,
+                  {
+                    id: `reality-${Date.now()}`,
+                    role: 'agent',
+                    text: `⏱️ ${calculation.spokenSummary}\n\n• Perceived time: ~${calculation.perceivedMinutes} min\n• Micro-entry move: ${calculation.microEntrySeconds}s\n• Recommended block: ${calculation.recommendedSprintMinutes} min\n• Momentum rate: ${calculation.inertiaBreakRate}%`,
+                    timestamp: new Date().toISOString(),
+                  },
+                ]);
+                speakDeterministicBoundary(calculation.spokenSummary);
+                return;
+              } else if (cmd.type === 'brainstorm_angles') {
+                playEarcon('chime');
+                const brainstorm = brainstormStarterAngles(text);
+                const formatted = `💡 3 Starter Angles for "${text}":\n\n` +
+                  brainstorm.angles.map((a, i) => `${i + 1}. **${a.name}** (~${a.timeSeconds}s)\n${a.prompt}`).join('\n\n');
+                setTranscripts((prev) => [
+                  ...prev,
+                  {
+                    id: `brainstorm-${Date.now()}`,
+                    role: 'agent',
+                    text: formatted,
+                    timestamp: new Date().toISOString(),
+                  },
+                ]);
+                speakDeterministicBoundary(brainstorm.spokenSummary);
+                return;
+              } else if (cmd.type === 'synthesize_path') {
+                playEarcon('chime');
+                const path = synthesizeTaskPath(text);
+                const formatted = `🧭 3-Phase Action Path for "${text}" (${path.totalSprintMinutes}m total):\n\n` +
+                  path.phases.map((p) => `Phase ${p.phase} · **${p.name}** (${p.durationMinutes}m)\n${p.action}`).join('\n\n');
+                setTranscripts((prev) => [
+                  ...prev,
+                  {
+                    id: `path-${Date.now()}`,
+                    role: 'agent',
+                    text: formatted,
+                    timestamp: new Date().toISOString(),
+                  },
+                ]);
+                speakDeterministicBoundary(path.spokenSummary);
+                return;
               } else if (cmd.type === 'clear_chat') {
                 optionsRef.current.onClearChatRequested?.();
               }
