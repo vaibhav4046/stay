@@ -65,7 +65,7 @@ export function calculateTaskReality(taskText: string): TaskRealityCalculation {
     microEntrySeconds = 60;
     recommendedSprintMinutes = 5;
     inertiaBreakRate = 89;
-  } else if (/(essay|thesis|study|exam|code|presentation|deck|writing|draft)/i.test(lower)) {
+  } else if (/(write|writing|essay|thesis|study|exam|code|presentation|deck|draft|abstract|proposal|paper|report|article|blog)/i.test(lower)) {
     perceivedMinutes = 240;
     microEntrySeconds = 90;
     recommendedSprintMinutes = 15;

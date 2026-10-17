@@ -35,6 +35,11 @@ import { AuthModal } from '@/components/AuthModal';
 import { useAssistantHardware } from '@/lib/voice/useAssistantHardware';
 import { useAuth } from '@/lib/auth/useAuth';
 import { detectSensoryGroundingRequest, detectImpulsiveActionRisk } from '@/lib/safety/crisis';
+import {
+  calculateTaskReality,
+  brainstormStarterAngles,
+  synthesizeTaskPath,
+} from '@/lib/coach/executiveEngine';
 
 type Step = 'capture' | 'barrier' | 'plan' | 'timer' | 'outcome' | 'done';
 
@@ -131,6 +136,10 @@ export function CoachWorkspace({
   const [trainingInput, setTrainingInput] = useState('');
   const [typedMessage, setTypedMessage] = useState('');
   const [actionReceipt, setActionReceipt] = useState<string | null>(null);
+  const [activeExecTab, setActiveExecTab] = useState<'reality' | 'brainstorm' | 'path'>('reality');
+  const execReality = useMemo(() => calculateTaskReality(plan?.taskText || taskText || 'Current task'), [plan?.taskText, taskText]);
+  const execBrainstorm = useMemo(() => brainstormStarterAngles(plan?.taskText || taskText || 'Current task'), [plan?.taskText, taskText]);
+  const execPath = useMemo(() => synthesizeTaskPath(plan?.taskText || taskText || 'Current task'), [plan?.taskText, taskText]);
   const deadlineRef = useRef<number>(0);
   const crisisRef = useRef(false);
   const taskInputRef = useRef<HTMLTextAreaElement>(null);
@@ -515,7 +524,7 @@ export function CoachWorkspace({
                 {step === 'outcome' && 'How did it go?'}
                 {step === 'done' && 'Logged'}
               </h2>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {isDemo && <span className="sample-badge">Sample data</span>}
                 <button
                   type="button"
@@ -721,6 +730,113 @@ export function CoachWorkspace({
                 <dd className="mt-0.5 text-ink-2">{plan.whyThisFits}</dd>
               </div>
             </dl>
+
+            {/* Executive Engine: Calculate · Predict · Brainstorm · Path */}
+            <div className="mt-6 rounded-xl border border-line bg-surface p-4" data-testid="executive-engine-box">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-3">
+                <span className="text-[0.78rem] font-semibold uppercase tracking-wider text-accent">
+                  ⚡ ADHD Executive Engine
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    className="chip text-[0.78rem] py-1 px-2.5"
+                    aria-pressed={activeExecTab === 'reality'}
+                    onClick={() => setActiveExecTab('reality')}
+                    data-testid="exec-btn-reality"
+                  >
+                    ⏱️ Time Reality
+                  </button>
+                  <button
+                    type="button"
+                    className="chip text-[0.78rem] py-1 px-2.5"
+                    aria-pressed={activeExecTab === 'brainstorm'}
+                    onClick={() => setActiveExecTab('brainstorm')}
+                    data-testid="exec-btn-brainstorm"
+                  >
+                    💡 Brainstorm (3)
+                  </button>
+                  <button
+                    type="button"
+                    className="chip text-[0.78rem] py-1 px-2.5"
+                    aria-pressed={activeExecTab === 'path'}
+                    onClick={() => setActiveExecTab('path')}
+                    data-testid="exec-btn-path"
+                  >
+                    🧭 3-Phase Path
+                  </button>
+                </div>
+              </div>
+
+              {activeExecTab === 'reality' && (
+                <div className="mt-3 space-y-3" data-testid="exec-panel-reality">
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    <div className="rounded-lg bg-recessed p-2.5 text-center">
+                      <span className="meta block text-[0.7rem]">Perceived Dread</span>
+                      <span className="font-mono text-sm font-bold text-ink" data-testid="exec-perceived-min">
+                        ~{execReality.perceivedMinutes}m
+                      </span>
+                    </div>
+                    <div className="rounded-lg bg-recessed p-2.5 text-center">
+                      <span className="meta block text-[0.7rem]">Physical Entry</span>
+                      <span className="font-mono text-sm font-bold text-accent" data-testid="exec-entry-sec">
+                        {execReality.microEntrySeconds}s
+                      </span>
+                    </div>
+                    <div className="rounded-lg bg-recessed p-2.5 text-center">
+                      <span className="meta block text-[0.7rem]">Ideal Sprint</span>
+                      <span className="font-mono text-sm font-bold text-ink">
+                        {execReality.recommendedSprintMinutes}m
+                      </span>
+                    </div>
+                    <div className="rounded-lg bg-recessed p-2.5 text-center">
+                      <span className="meta block text-[0.7rem]">Momentum Rate</span>
+                      <span className="font-mono text-sm font-bold text-emerald-700 dark:text-emerald-400" data-testid="exec-inertia-rate">
+                        {execReality.inertiaBreakRate}%
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-[0.82rem] text-ink-2 leading-relaxed">{execReality.neuroInsight}</p>
+                </div>
+              )}
+
+              {activeExecTab === 'brainstorm' && (
+                <div className="mt-3 grid gap-2" data-testid="exec-panel-brainstorm">
+                  {execBrainstorm.angles.map((angle, idx) => (
+                    <button
+                      key={angle.id}
+                      type="button"
+                      onClick={() => {
+                        setPlan({ ...plan, firstStep: angle.prompt });
+                        setActionReceipt(`Selected starter angle: ${angle.name}`);
+                      }}
+                      className="text-left rounded-lg border border-line bg-recessed p-3 hover:border-accent transition-colors"
+                      data-testid={`exec-angle-${idx}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-[0.88rem] text-ink">{angle.name}</span>
+                        <span className="font-mono text-[0.72rem] text-accent">~{angle.timeSeconds}s · Use this</span>
+                      </div>
+                      <p className="mt-1 text-[0.82rem] text-ink-2">{angle.prompt}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {activeExecTab === 'path' && (
+                <div className="mt-3 space-y-2" data-testid="exec-panel-path">
+                  {execPath.phases.map((p) => (
+                    <div key={p.phase} className="rounded-lg bg-recessed p-2.5 text-[0.84rem]" data-testid={`exec-phase-${p.phase}`}>
+                      <div className="flex items-center justify-between font-semibold text-ink">
+                        <span>Phase {p.phase}: {p.name}</span>
+                        <span className="font-mono text-xs text-accent">{p.durationMinutes} min</span>
+                      </div>
+                      <p className="mt-0.5 text-ink-2 text-[0.8rem]">{p.action}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <fieldset className="mt-6">
               <div className="flex items-center justify-between">

@@ -209,6 +209,7 @@ export function OrbCompanionView({
             onClick={onSwitchToWorkspace}
             className="chip text-[0.8rem] border border-line hover:bg-line transition-colors"
             title="Switch to detailed grid workspace view"
+            data-testid="switch-to-grid"
           >
             <span className="hidden sm:inline">Grid View</span>
             <span className="sm:hidden">Grid</span>
