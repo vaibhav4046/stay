@@ -1,5 +1,6 @@
 'use client';
 
+import { byokHeaders } from '@/lib/byok/config';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
   AudioSpectrumBands,
@@ -537,6 +538,29 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
   const wsRef = useRef<WebSocket | null>(null);
   const restartVoiceRef = useRef<(() => void) | null>(null);
+  // All-day companion: when a session ends on its own (3-hour cap, network drop), quietly start the next one.
+  const [companionMode, setCompanionModeState] = useState(false);
+  const companionRef = useRef(false);
+  const renewingRef = useRef(false);
+  const renewAttemptsRef = useRef(0);
+  useEffect(() => {
+    try {
+      const on = window.localStorage.getItem('stay_companion') === '1';
+      companionRef.current = on;
+      setCompanionModeState(on);
+    } catch {
+      // private mode: off
+    }
+  }, []);
+  const setCompanionMode = useCallback((on: boolean) => {
+    companionRef.current = on;
+    setCompanionModeState(on);
+    try {
+      window.localStorage.setItem('stay_companion', on ? '1' : '0');
+    } catch {
+      // not persisted
+    }
+  }, []);
   const playbackGainRef = useRef<GainNode | null>(null);
   const duckTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sessionReadyRef = useRef(false);
@@ -1650,8 +1674,9 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       await audioCtx.audioWorklet.addModule('/pcm-processor.js');
 
       // 3. Mint ephemeral single-use AssemblyAI token from our server route
-      const tokenRes = await fetch('/api/voice/token', {
+      const tokenRes = await fetch(`/api/voice/token${companionRef.current ? '?long=1' : ''}`, {
         method: 'POST',
+        headers: byokHeaders(),
       });
       if (!tokenRes.ok) {
         const errBody = await tokenRes.json().catch(() => ({}));
@@ -1674,7 +1699,8 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         const memory = loadUserMemory();
         const persona = personaById(selectedVoiceRef.current);
         const warmHumanPrompt = buildSystemPrompt(persona, memory);
-        const greeting = buildGreeting(persona, memory);
+        const greeting = buildGreeting(persona, memory, renewingRef.current);
+        renewingRef.current = false;
 
         const u3Config = buildUniversal3ProConfig(selectedLanguageRef.current);
         const langBase = selectedLanguageRef.current !== 'auto' && isAgentVerifiedLanguage(selectedLanguageRef.current) ? selectedLanguageRef.current.split('-')[0].toLowerCase() : null;
@@ -1713,6 +1739,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
         if (type === 'session.ready') {
           sessionReadyRef.current = true;
+          renewAttemptsRef.current = 0;
           setIsConnected(true);
           setVisualState('listening');
 
@@ -2044,7 +2071,13 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         }
 
         if (type === 'session.ended') {
+          const renew = wsRef.current === socket && companionRef.current && renewAttemptsRef.current < 4;
           disconnectVoiceSession();
+          if (renew) {
+            renewAttemptsRef.current += 1;
+            renewingRef.current = true;
+            window.setTimeout(() => restartVoiceRef.current?.(), 600);
+          }
         }
       };
 
@@ -2054,8 +2087,15 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       };
 
       socket.onclose = () => {
+        const unexpected = wsRef.current === socket; // we set wsRef to null before closing on purpose
         sessionReadyRef.current = false;
         setIsConnected(false);
+        if (unexpected && companionRef.current && renewAttemptsRef.current < 4) {
+          renewAttemptsRef.current += 1;
+          renewingRef.current = true;
+          disconnectVoiceSession();
+          window.setTimeout(() => restartVoiceRef.current?.(), 1500);
+        }
       };
     } catch (err) {
       console.warn('AssemblyAI voice session startup failed, falling back to browser speech recognition', err);
@@ -2181,6 +2221,8 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     supportedLanguages: SUPPORTED_LANGUAGES,
     selectedVoice,
     setSelectedVoice,
+    companionMode,
+    setCompanionMode,
     availableVoices: AVAILABLE_VOICES,
     topicShape,
     setTopicShape,

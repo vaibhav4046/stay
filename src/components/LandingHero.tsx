@@ -6,7 +6,7 @@ import { Signal } from '@/components/Signal';
 import { useOrbShape } from '@/lib/orb/useOrbShape';
 
 /** What the orb shows on its own until you touch the field: the kind of thing people actually avoid. */
-const INTRO = ['landlord email', 'taxes', 'ice cream'];
+const INTRO = ['landlord email', 'taxes', 'overwhelmed', 'first step'];
 const HANDOFF_KEY = 'stay_handoff_task';
 
 export function LandingHero() {
@@ -85,7 +85,7 @@ export function LandingHero() {
             Talk to Stay
           </Link>
         </form>
-        <p className="meta mt-3 max-w-[46ch]">Type a word like ice cream, taxes or dragon and watch the dots gather. Then continue in Stay by voice or text.</p>
+        <p className="meta mt-3 max-w-[46ch]">Type what you are avoiding, like taxes, a landlord email or "I'm overwhelmed", and watch the dots become it. Then continue in Stay by voice or text.</p>
       </div>
 
       <div className="order-1 mx-auto aspect-square w-full max-w-[520px] lg:order-2" data-testid="hero-orb">

@@ -27,9 +27,9 @@ describe('Self-Improving Adaptation Engine (RLUF)', () => {
     localStorageMock.clear();
   });
 
-  it('loads default calibration with 20-minute focus duration and warm body-double tone', () => {
+  it('loads default calibration with short 10-minute focus duration and warm body-double tone', () => {
     const profile = loadUserCalibration();
-    expect(profile.preferredMinutes).toBe(20);
+    expect(profile.preferredMinutes).toBe(10);
     expect(profile.personaTone).toBe('warm_body_double');
     expect(profile.strategyWeights.task_shrinking).toBeGreaterThan(1.0);
   });

@@ -24,7 +24,7 @@ export const PERSONAS: VoicePersona[] = [
   { id: 'paul', name: 'Chaiwala Blitz', gender: 'male', voiceLabel: 'British voice', style: 'Quick and upbeat. Hypes two-minute sprints.', shape: 'bolt', nativeLang: null },
   { id: 'vera', name: 'Scouse Sprocket', gender: 'female', voiceLabel: 'British voice', style: 'Dry wit, no waffle. Keeps you grounded.', shape: 'key', nativeLang: null },
   { id: 'anna', name: 'Lady Lavender', gender: 'female', voiceLabel: 'British voice', style: 'Soft and calm. Slows everything down when you are overwhelmed.', shape: 'moon', nativeLang: null },
-  { id: 'giovanni', name: 'Boba Fettuccine', gender: 'male', voiceLabel: 'Native Italian voice', style: 'Expressive and dramatic. Makes chores feel like opera.', shape: 'pizza', nativeLang: 'it' },
+  { id: 'giovanni', name: 'Boba Fettuccine', gender: 'male', voiceLabel: 'Native Italian voice', style: 'Expressive and dramatic. Makes chores feel like opera.', shape: 'note', nativeLang: 'it' },
   { id: 'lola', name: 'Taco Tornado', gender: 'female', voiceLabel: 'Native Spanish voice', style: 'High-energy hype coach for beating couch paralysis.', shape: 'rocket', nativeLang: 'es' },
   { id: 'juergen', name: 'Professor Pretzel', gender: 'male', voiceLabel: 'Native German voice', style: 'Deadpan engineer. Breaks big projects into tiny gears.', shape: 'bulb', nativeLang: 'de' },
   { id: 'jane', name: 'Waffle Wizard', gender: 'female', voiceLabel: 'American voice', style: 'Cozy late-night focus companion.', shape: 'star', nativeLang: null },
@@ -34,7 +34,7 @@ export const PERSONAS: VoicePersona[] = [
   { id: 'michael', name: 'Maple Moose', gender: 'male', voiceLabel: 'American voice', style: 'Ultra-polite. Celebrates every tiny check-off.', shape: 'tree', nativeLang: null },
   { id: 'alba', name: 'Matcha Gremlin', gender: 'female', voiceLabel: 'American voice', style: 'Brisk arcade energy for speed-running your inbox.', shape: 'game', nativeLang: null },
   { id: 'mary', name: 'Viking Velvet', gender: 'female', voiceLabel: 'American voice', style: 'Cool minimalist. Strips ten tasks down to one.', shape: 'mountain', nativeLang: null },
-  { id: 'rafael', name: 'Goblin Mode Gus', gender: 'male', voiceLabel: 'Native Portuguese voice', style: 'Chaotic-good peer. Whispers: just do ninety seconds, I dare you.', shape: 'cat', nativeLang: 'pt' },
+  { id: 'rafael', name: 'Goblin Mode Gus', gender: 'male', voiceLabel: 'Native Portuguese voice', style: 'Chaotic-good peer. Whispers: just do ninety seconds, I dare you.', shape: 'target', nativeLang: 'pt' },
   { id: 'jean', name: 'Pumpkin Pixel', gender: 'female', voiceLabel: 'American voice', style: 'Bubbly and kind. Gentle encouragement, never pressure.', shape: 'sprout', nativeLang: null },
 ];
 

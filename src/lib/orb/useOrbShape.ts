@@ -16,6 +16,7 @@ import { extractVisualKeywords, matchConcept, normalizeConceptKey } from './lexi
 import { colorize, emojiCloud, isSingleEmoji } from './points';
 import { hashString, proceduralProgram, sampleProgram, type ShapeProgram } from './sdf';
 import { detectCrisisSignal, detectMedicationAdviceRequest } from '@/lib/safety/crisis';
+import { byokHeaders } from '@/lib/byok/config';
 
 export type FeedKind = 'partial' | 'user' | 'typed';
 
@@ -167,7 +168,7 @@ export function useOrbShape() {
       try {
         const res = await fetch('/api/orb/shape', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...byokHeaders() },
           body: JSON.stringify({ keywords }),
         });
         if (res.ok) {

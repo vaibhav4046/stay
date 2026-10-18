@@ -25,6 +25,7 @@ import { useCrisisPanel } from '@/components/CrisisHelpPanel';
 import { GroundingPanel } from '@/components/GroundingPanel';
 import { OrbCognitiveGames } from '@/components/OrbCognitiveGames';
 import { Signal } from '@/components/Signal';
+import { byokHeaders } from '@/lib/byok/config';
 
 type Step = 'idle' | 'plan' | 'timer' | 'outcome' | 'done';
 
@@ -106,7 +107,7 @@ export function StayHome({
   const [planLoading, setPlanLoading] = useState(false);
   const [minutes, setMinutes] = useState(() => {
     try {
-      return loadUserCalibration().preferredMinutes || 20;
+      return loadUserCalibration().preferredMinutes || 10;
     } catch {
       return 20;
     }
@@ -121,6 +122,7 @@ export function StayHome({
   const [grounding, setGrounding] = useState(false);
   const [usedVoice, setUsedVoice] = useState(false);
   const deadline = useRef(0);
+  const lastNudge = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const strategyHistory = useMemo(
@@ -147,11 +149,12 @@ export function StayHome({
 
   const startTimer = useCallback(
     (m: number) => {
-      const valid = Math.max(1, Math.min(60, m));
+      const valid = Math.max(1, Math.min(120, m));
       setMinutes(valid);
       deadline.current = Date.now() + valid * 60_000;
       setRemaining(valid * 60);
       setElapsed(0);
+      lastNudge.current = 0;
       setRunning(true);
       setStep('timer');
       say(`Timer started · ${valid} min`);
@@ -191,12 +194,12 @@ export function StayHome({
   const voice = useVoiceAgent({
     onPlanProposed: (p) => {
       setPlan(p);
-      setMinutes(p.timerMinutes === 0 ? loadUserCalibration().preferredMinutes || 20 : p.timerMinutes);
+      setMinutes(p.timerMinutes === 0 ? loadUserCalibration().preferredMinutes || 10 : p.timerMinutes);
       setStep('plan');
       say('Plan ready');
     },
     onStartTimerRequested: (m, firstStep) => {
-      const valid = m || loadUserCalibration().preferredMinutes || 20;
+      const valid = m || loadUserCalibration().preferredMinutes || 10;
       setPlan((prev) => (prev ? { ...prev, firstStep, timerMinutes: valid } : buildDeterministicCoachPlan({ taskText: firstStep, careContext, preferredMinutes: valid })));
       startTimer(valid);
     },
@@ -287,6 +290,11 @@ export function StayHome({
       const left = Math.max(0, Math.round((deadline.current - Date.now()) / 1000));
       setRemaining(left);
       setElapsed(minutes * 60 - left);
+      const spent = minutes * 60 - left;
+      if (minutes >= 25 && left > 90 && spent - lastNudge.current >= 600 && voiceRef.current.companionMode && voiceRef.current.isConnected) {
+        lastNudge.current = spent;
+        voiceRef.current.speakProactively('Say one very short, warm line, under eight words, so the user knows you are still here. Ask nothing.');
+      }
       if (left === 0) {
         setRunning(false);
         setStep('outcome');
@@ -312,7 +320,7 @@ export function StayHome({
       try {
         const res = await fetch('/api/coach/plan', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...byokHeaders() },
           body: JSON.stringify({
             taskText: t,
             preferredStrategy,
@@ -324,10 +332,12 @@ export function StayHome({
         });
         const data = (await res.json()) as CoachPlanProposal & { error?: string };
         if (!res.ok || data.error) throw new Error(data.error || 'plan failed');
+        const keyError = res.headers.get('x-stay-llm-key-error');
+        if (keyError) setNote(`Your own key did not work (${keyError.replace('_', ' ')}), so Stay used its shared brain. Check Settings.`);
         if (data.safetyFlag === 'crisis') return triggerCrisis(data.spokenResponse);
         if (data.safetyFlag === 'medical_boundary') return setNote(data.spokenResponse);
         setPlan(data);
-        setMinutes(data.timerMinutes === 0 ? loadUserCalibration().preferredMinutes || 20 : data.timerMinutes);
+        setMinutes(data.timerMinutes === 0 ? loadUserCalibration().preferredMinutes || 10 : data.timerMinutes);
         setStep('plan');
         if (!quietMode && !voiceRef.current.isConnected && data.spokenResponse) voiceRef.current.speakProactively(data.spokenResponse); // a live agent already answers: never a second voice
       } catch {
@@ -336,7 +346,7 @@ export function StayHome({
         if (local.safetyFlag === 'crisis') return triggerCrisis(local.spokenResponse);
         if (local.safetyFlag === 'medical_boundary') return setNote(local.spokenResponse);
         setPlan(local);
-        setMinutes(local.timerMinutes === 0 ? loadUserCalibration().preferredMinutes || 20 : local.timerMinutes);
+        setMinutes(local.timerMinutes === 0 ? loadUserCalibration().preferredMinutes || 10 : local.timerMinutes);
         setStep('plan');
         if (!quietMode && !voiceRef.current.isConnected && local.spokenResponse) voiceRef.current.speakProactively(local.spokenResponse);
       } finally {
@@ -487,12 +497,13 @@ export function StayHome({
             <button type="button" className="btn btn-secondary" onClick={() => void requestPlan(plan.taskText, 'task_shrinking')}>
               Make it smaller
             </button>
-            {[5, 10, 20, 30].map((m) => (
-              <button key={m} type="button" className="chip" aria-pressed={minutes === m} onClick={() => setMinutes(m)}>
+            {[5, 10, 25, 45, 90].map((m) => (
+              <button key={m} type="button" className="chip" aria-pressed={minutes === m} onClick={() => setMinutes(m)} aria-label={`${m} minute block`}>
                 {m}
               </button>
             ))}
           </div>
+          <p className="meta mt-2">Short blocks start easier. Pick a longer one when you are in flow, and Stay sits with you through it.</p>
         </section>
       )}
 
@@ -538,9 +549,16 @@ export function StayHome({
         <section className="card w-full p-5 text-center" aria-label="Logged" data-testid="done-card">
           <p className="font-display text-lg font-semibold">Logged{lastOutcome ? `: ${OUTCOMES.find((o) => o.key === lastOutcome)?.label.toLowerCase()}` : ''}</p>
           <p className="mt-1 text-ink-2">It is saved in this browser. Nothing is judged here.</p>
-          <button type="button" className="btn btn-primary mt-3" onClick={reset} data-testid="start-another">
-            Start something else
-          </button>
+          <div className="mt-3 flex flex-wrap justify-center gap-2">
+            {plan && (
+              <button type="button" className="btn btn-primary" onClick={() => startTimer(lastOutcome === 'not_started' ? 5 : Math.min(minutes, 10))} data-testid="another-block">
+                {lastOutcome === 'not_started' ? 'Try just 5 min' : `Another ${Math.min(minutes, 10)} min`}
+              </button>
+            )}
+            <button type="button" className={plan ? 'btn btn-secondary' : 'btn btn-primary'} onClick={reset} data-testid="start-another">
+              Start something else
+            </button>
+          </div>
         </section>
       )}
 
@@ -605,11 +623,17 @@ export function StayHome({
             >
               {quietMode ? 'Turn voice on' : 'Quiet mode: type only'}
             </button>
+            <button type="button" className="btn btn-secondary justify-start" onClick={() => voice.setCompanionMode(!voice.companionMode)} aria-pressed={voice.companionMode} data-testid="companion-toggle">
+              {voice.companionMode ? 'Stay with me all day: on' : 'Stay with me all day: off'}
+            </button>
             <button type="button" className="btn btn-secondary justify-start" onClick={() => router.push('/app/history')}>
               History
             </button>
+            <button type="button" className="btn btn-secondary justify-start" onClick={() => router.push('/app/settings')}>
+              Settings and your own keys
+            </button>
           </div>
-          <p className="meta mt-4">Everything here also works by voice: &ldquo;ground me&rdquo;, &ldquo;show my memory&rdquo;, &ldquo;switch to Spanish&rdquo;, &ldquo;change voice to Charles&rdquo;.</p>
+          <p className="meta mt-4">All-day mode keeps the voice session alive for up to three hours at a time and renews it quietly while this tab stays open. Everything here also works by voice: &ldquo;ground me&rdquo;, &ldquo;show my memory&rdquo;, &ldquo;switch to Spanish&rdquo;, &ldquo;change voice to Charles&rdquo;.</p>
         </Sheet>
       )}
 

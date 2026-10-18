@@ -71,15 +71,17 @@ describe('untrusted shape programs', () => {
 
 describe('conversation to concept', () => {
   const cases: Array<[string, string | null]> = [
-    ['I want some ice cream', 'icecream'],
+    ['I feel so overwhelmed', 'tangle'],
+    ['I am stuck, I cannot start', 'stairs'],
+    ['I need to focus on one thing', 'target'],
+    ['I have no energy left', 'battery'],
+    ['what is on my to do list', 'list'],
     ['I keep putting off the landlord email', 'envelope'],
     ['my taxes are due', 'coin'],
     ['I cannot sleep, so tired', 'moon'],
-    ['feeling really overwhelmed', 'lotus'],
+    ['I need to breathe and calm down', 'lotus'],
     ['let us play a game', 'game'],
     ['I need to study for my exam', 'book'],
-    ['मुझे आइसक्रीम चाहिए', 'icecream'],
-    ['quiero un helado', 'icecream'],
     ['what a lovely zebra', null],
     ['', null],
   ];

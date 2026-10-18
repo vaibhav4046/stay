@@ -36,7 +36,7 @@ export const CoachPlanRequestSchema = z.object({
   barrierType: BarrierTypeSchema.optional(),
   preferredStrategy: StrategyKeySchema.optional(),
   careContext: CareContextSchema.optional().default('self_managing'),
-  preferredMinutes: z.number().int().min(1).max(60).optional(),
+  preferredMinutes: z.number().int().min(1).max(120).optional(),
   userMemoryPrompt: z.string().max(2000).optional(),
   strategyHistory: z
     .array(
@@ -57,7 +57,7 @@ export const CoachPlanResponseSchema = z.object({
   strategyLabel: z.string().max(80),
   firstStep: z.string().max(220),
   whyThisFits: z.string().max(240),
-  timerMinutes: z.number().int().min(0).max(60),
+  timerMinutes: z.number().int().min(0).max(120),
   checkinPrompt: z.string().max(200),
   safetyFlag: z.enum(['none', 'crisis', 'medical_boundary']),
   resources: z

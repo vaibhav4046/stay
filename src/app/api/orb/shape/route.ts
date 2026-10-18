@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { normalizeConceptKey } from '@/lib/orb/lexicon';
 import { isSingleEmoji } from '@/lib/orb/points';
-import { getNextGroqKey, reportGroqKeyRateLimit } from '@/lib/voice/tokenOptimizer';
+import { callLlm } from '@/lib/llm/provider';
 import { detectCrisisSignal, detectMedicationAdviceRequest } from '@/lib/safety/crisis';
 
 /**
@@ -48,34 +48,19 @@ export async function POST(req: NextRequest) {
   const hit = cache.get(key);
   if (hit) return NextResponse.json({ emoji: hit, source: 'ai', cached: true });
 
-  const apiKey = getNextGroqKey() || process.env.GROQ_API_KEY;
-  if (!apiKey) return NextResponse.json({ emoji: null, source: 'none' });
-
   try {
-    const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), 5000);
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        // gpt-oss is a reasoning model: keep effort low and leave room for it, or the visible answer comes back empty
-        model: process.env.GROQ_SHAPE_MODEL || 'openai/gpt-oss-20b',
-        temperature: 0,
-        max_tokens: 700,
-        reasoning_effort: 'low',
-        include_reasoning: false,
-        messages: [
-          { role: 'system', content: SYSTEM },
-          { role: 'user', content: `Concept: ${phrase}` },
-        ],
-      }),
-      signal: ctl.signal,
+    const llm = await callLlm(req, {
+      messages: [
+        { role: 'system', content: SYSTEM },
+        { role: 'user', content: `Concept: ${phrase}` },
+      ],
+      maxTokens: 700,
+      temperature: 0,
+      serverModel: process.env.GROQ_SHAPE_MODEL || 'openai/gpt-oss-20b',
+      timeoutMs: 5000,
     });
-    clearTimeout(timer);
-    if (res.status === 429 || res.status === 401) reportGroqKeyRateLimit(apiKey);
-    if (!res.ok) throw new Error(`groq ${res.status}`);
-    const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
-    const emoji = (json.choices?.[0]?.message?.content || '').trim();
+    if (!llm.ok) throw new Error(`llm ${llm.error}`);
+    const emoji = llm.text;
     if (!isSingleEmoji(emoji)) throw new Error('not a single emoji');
     cache.set(key, emoji);
     if (cache.size > 500) cache.delete(cache.keys().next().value as string);

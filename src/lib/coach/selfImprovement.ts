@@ -21,7 +21,7 @@ export interface UserCalibrationProfile {
 const STORAGE_KEY = 'stay_user_calibration_v1';
 
 export const DEFAULT_CALIBRATION_PROFILE: UserCalibrationProfile = {
-  preferredMinutes: 20, // Default to 20 min per user preference
+  preferredMinutes: 10, // short blocks start easier; people can pick longer ones
   personaTone: 'warm_body_double',
   stepGranularity: 'ultra_micro',
   strategyWeights: {

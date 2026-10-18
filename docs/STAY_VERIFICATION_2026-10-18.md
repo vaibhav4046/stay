@@ -75,3 +75,20 @@ Other live results:
 **Timing caveat (important).** After the fixes, the provider's response time was too uneven to quote a number. With one identical session config, time from end of speech to first reply audio measured 1.8 s, 2.5 s, 3.9 s and 9.6 s across consecutive runs, while the same probes measured 1.4 to 1.8 s earlier in the day. The fake-microphone harness also shifts when speech reaches the server. So: no latency figure is claimed here. The measured floor with this provider pipeline is about 1.4 s in its calm periods, against roughly 0.3 to 0.5 s for ChatGPT's native speech model. Matching that would need a different architecture (own STT, a fast LLM and streaming TTS), which has not been built or measured.
 
 **Test harness bug found and fixed:** the 16-command tools probe first synthesized only the first word of each sentence (arguments split by the shell), which looked like "the agent hears one word". With correct audio and lead-in silence the single-tool design scored 10 of 16 on the first try; the misses were speech-recognition errors ("Change your password to noodle") and one wrong tool choice.
+
+## Part 5. Product fit, own keys, all-day mode, and the cascade question
+
+**Shapes.** Removed ice cream, cat, dog paw, butterfly and pizza from the built-in library and from the landing intro; added ADHD-native shapes: tangle (overwhelm, too much, scattered), stairs with one dot on the first step (stuck, first step), target (focus), list (to do), battery with a flat bottom third (no energy, burnout), bowl (meals). Checked in a real browser: "overwhelmed" -> tangle, "first step" -> stairs, "no energy" -> battery, "to do list" -> list, "focus" -> target, "my taxes" -> coin. Generic "putting off" no longer outranks a concrete object ("putting off the landlord email" -> envelope).
+
+**Own keys.** Settings > Your own keys: GPT-OSS on Groq, Mistral, OpenAI, or any OpenAI-compatible https address; plus an AssemblyAI key. Verified live with the shared Groq key used as a user key: key check ok; a wrong key -> invalid_key; a private address (169.254.169.254) -> refused; plan with a user key -> source user; plan with a wrong user key -> falls back to the shared brain and flags the failure in a header the UI shows. Voice token route now answers 429 with code quota when the shared AssemblyAI allowance is gone, and the UI tells the person to add their own. Not tested live: Mistral and OpenAI (no keys here). DNS rebinding is not defended beyond the host-name checks and not following redirects.
+
+**Blocks and all-day mode.** Default 10 minutes; 5, 10, 25, 45, 90 available; "Another 10 min" / "Try just 5 min" after a block. Voice session cap raised from 10 to 30 minutes (3 hours in all-day mode; the provider's cap is 10800 s, probed). All-day mode renews the session after the provider ends it or the socket drops (max 4 tries), with a 4-word "Still here with you." greeting instead of the intro. Not tested: a real 3-hour run, and renewal on a real network drop.
+
+**The cascade question (measured, not guessed).** `scripts/voice-e2e/cascade-bench.mjs`, 6 runs: speech-to-text end-of-turn 0.88 s p50 (0.83 to 0.95); GPT-OSS first token 0.31 s p50 (20b) and 0.29 s (120b); streaming TTS first audio about 0.2 s (protocol found by probing: messages Generate, Flush, Terminate, KeepAlive, Cancel; audio arrives as base64 PCM 24 kHz in Audio messages). Sum is about 1.4 s, equal to the Voice Agent's floor, so a hand-built cascade was not built into the app. Changing min/max turn silence did not move end-of-turn below about 0.87 s in the sweep. ChatGPT voice and Google live voice were NOT measured (no keys), so there is no comparison and no speed claim.
+
+## Gates (after Part 5)
+
+- `tsc --noEmit`: 0 errors
+- `vitest run`: 267 tests (13 files plus byok.test.ts)
+- `next build`: all routes (adds /api/keys/check)
+- `playwright test`: 37 passed

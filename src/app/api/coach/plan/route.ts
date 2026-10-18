@@ -19,9 +19,8 @@ import {
   getCachedCoachPlan,
   setCachedCoachPlan,
   compressPromptForTokenEfficiency,
-  getNextGroqKey,
-  reportGroqKeyRateLimit,
 } from '@/lib/voice/tokenOptimizer';
+import { callLlm, llmHeaders } from '@/lib/llm/provider';
 import type { CoachPlanProposal } from '@/types/domain';
 
 export async function POST(req: NextRequest) {
@@ -100,13 +99,7 @@ export async function POST(req: NextRequest) {
     preferredStrategy: strategyKey,
   });
 
-  const groqKey = getNextGroqKey() || process.env.GROQ_API_KEY;
   const groqModel = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
-
-  if (!groqKey) {
-    setCachedCoachPlan(input.taskText, fallbackPlan, barrierType);
-    return NextResponse.json(fallbackPlan, { status: 200 });
-  }
 
   try {
     const strategyDef = STRATEGY_DEFINITIONS[strategyKey];
@@ -142,62 +135,23 @@ Selected strategy: ${strategyDef.label} (${strategyKey})
 Target focus block: ${input.preferredMinutes || fallbackPlan.timerMinutes} minutes
 Generate the JSON coaching plan.`);
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 4200);
-
-    let res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${groqKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: groqModel,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        temperature: 0.3,
-        max_tokens: 300,
-      }),
-      signal: controller.signal,
+    const llm = await callLlm(req, {
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      maxTokens: 700,
+      temperature: 0.3,
+      serverModel: groqModel,
+      timeoutMs: 7000,
     });
+    const hdr = { headers: llmHeaders(llm) };
+    if (!llm.ok) return NextResponse.json(fallbackPlan, { status: 200, ...hdr });
 
-    if (res.status === 429 || res.status === 401) {
-      reportGroqKeyRateLimit(groqKey);
-      const backupKey = getNextGroqKey();
-      if (backupKey && backupKey !== groqKey) {
-        res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${backupKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: groqModel,
-            messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: userPrompt },
-            ],
-            temperature: 0.3,
-            max_tokens: 300,
-          }),
-          signal: controller.signal,
-        });
-      }
-    }
-
-    clearTimeout(timeout);
-
-    if (!res.ok) {
-      return NextResponse.json(fallbackPlan, { status: 200 });
-    }
-
-    const data = await res.json();
-    const rawContent: string = data.choices?.[0]?.message?.content || '';
+    const rawContent: string = llm.text;
     const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      return NextResponse.json(fallbackPlan, { status: 200 });
+      return NextResponse.json(fallbackPlan, { status: 200, ...hdr });
     }
 
     const candidate = JSON.parse(jsonMatch[0]);
@@ -212,16 +166,16 @@ Generate the JSON coaching plan.`);
     });
 
     if (!validated.success) {
-      return NextResponse.json(fallbackPlan, { status: 200 });
+      return NextResponse.json(fallbackPlan, { status: 200, ...hdr });
     }
 
     // Ensure LLM response did not accidentally introduce medical dosing advice
     if (detectMedicationAdviceRequest(validated.data.spokenResponse).triggered) {
-      return NextResponse.json(fallbackPlan, { status: 200 });
+      return NextResponse.json(fallbackPlan, { status: 200, ...hdr });
     }
 
     setCachedCoachPlan(input.taskText, validated.data, barrierType);
-    return NextResponse.json(validated.data, { status: 200 });
+    return NextResponse.json(validated.data, { status: 200, ...hdr });
   } catch {
     return NextResponse.json(fallbackPlan, { status: 200 });
   }

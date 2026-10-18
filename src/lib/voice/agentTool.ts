@@ -63,7 +63,8 @@ export function buildSystemPrompt(persona: VoicePersona, memory: UserMemoryProfi
 }
 
 /** Greetings stay under ~8 words so the first thing the user hears never lasts longer than their patience. */
-export function buildGreeting(persona: VoicePersona, memory: UserMemoryProfile): string {
+export function buildGreeting(persona: VoicePersona, memory: UserMemoryProfile, resumed = false): string {
+  if (resumed) return 'Still here with you.'; // all-day mode renewed the session: do not re-introduce
   const last = memory.recentSessionsSummary[0];
   if (memory.name && last) return `Welcome back, ${clip(memory.name, 16)}. How did ${clip(last.task, 28)} go?`;
   if (last) return `Welcome back. How did ${clip(last.task, 28)} go?`;

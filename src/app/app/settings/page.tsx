@@ -7,6 +7,7 @@ import { deleteAllUserData, exportAllUserDataJson, getLocalAuditEvents } from '@
 import type { AuditEventRecord } from '@/types/domain';
 import { useAuth } from '@/lib/auth/useAuth';
 import { AuthModal } from '@/components/AuthModal';
+import { KeysSection } from '@/components/KeysSection';
 
 export default function SettingsPage() {
   const { profile, loaded, updateProfile } = useStayData('app');
@@ -88,6 +89,8 @@ export default function SettingsPage() {
           )}
         </div>
       </section>
+
+      <KeysSection />
 
       <section className="card p-5 sm:p-6" aria-labelledby="data-title">
         <h2 id="data-title" className="card-title">Your data</h2>

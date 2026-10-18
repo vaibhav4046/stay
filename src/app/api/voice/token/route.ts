@@ -23,29 +23,33 @@ async function handleMintToken(req: NextRequest) {
     req.headers.get('x-real-ip') ||
     'local';
 
-  if (!checkRateLimit(ip)) {
+  const userKey = req.headers.get('x-stay-aai-key')?.trim() || '';
+  const hasUserKey = /^[\w-]{16,200}$/.test(userKey);
+  if (!hasUserKey && !checkRateLimit(ip)) {
     return NextResponse.json(
       { error: 'Too many voice session requests. Please wait a few minutes or use Quiet Text Mode.' },
       { status: 429 }
     );
   }
 
-  const apiKey = getNextAssemblyAiKey() || process.env.ASSEMBLYAI_API_KEY;
+  const apiKey = hasUserKey ? userKey : getNextAssemblyAiKey() || process.env.ASSEMBLYAI_API_KEY;
   const agentId = process.env.ASSEMBLYAI_AGENT_ID || '';
 
   if (!apiKey) {
     return NextResponse.json(
       {
+        code: 'quota',
         error:
-          'Server voice credentials are not configured in this environment. Quiet Text Mode is fully available.',
+          'Server voice credentials are not configured. Add your own AssemblyAI key in Settings, or use Quiet Text Mode.',
       },
       { status: 503 }
     );
   }
 
   try {
-    const url =
-      'https://agents.assemblyai.com/v1/token?expires_in_seconds=180&max_session_duration_seconds=600';
+    // all-day companion sessions may run up to 3 hours (the provider's cap); ordinary sessions 30 minutes
+    const long = req.nextUrl.searchParams.get('long') === '1';
+    const url = `https://agents.assemblyai.com/v1/token?expires_in_seconds=180&max_session_duration_seconds=${long ? 10800 : 1800}`;
     let upstream = await fetch(url, {
       method: 'GET',
       headers: {
@@ -54,7 +58,7 @@ async function handleMintToken(req: NextRequest) {
       cache: 'no-store',
     });
 
-    if (upstream.status === 429 || upstream.status === 401) {
+    if (!hasUserKey && (upstream.status === 429 || upstream.status === 401)) {
       reportAssemblyAiKeyRateLimit(apiKey);
       const backupKey = getNextAssemblyAiKey();
       if (backupKey && backupKey !== apiKey) {
@@ -69,6 +73,18 @@ async function handleMintToken(req: NextRequest) {
     }
 
     if (!upstream.ok) {
+      // 401/402/403/429 from the provider: the shared allowance is used up (or the person's own key is wrong)
+      if ([401, 402, 403, 429].includes(upstream.status)) {
+        return NextResponse.json(
+          {
+            code: hasUserKey ? 'invalid_user_key' : 'quota',
+            error: hasUserKey
+              ? 'AssemblyAI rejected your key. Check it in Settings, or continue in Quiet Text Mode.'
+              : 'The shared voice allowance is used up for now. Add your own AssemblyAI key in Settings to keep talking, or use Quiet Text Mode.',
+          },
+          { status: 429 }
+        );
+      }
       return NextResponse.json(
         {
           error:
@@ -93,6 +109,7 @@ async function handleMintToken(req: NextRequest) {
         wsUrl: 'wss://agents.assemblyai.com/v1/ws',
         speechModel: 'u3-rt-pro',
         expiresInSeconds: 180,
+        keySource: hasUserKey ? 'user' : 'server',
       },
       {
         status: 200,

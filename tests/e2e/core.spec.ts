@@ -42,8 +42,10 @@ test.describe('Landing', () => {
     await page.waitForSelector('[data-testid="hero-orb"] canvas');
     const input = page.getByTestId('hero-input');
     const cases: Array<[string, RegExp]> = [
-      ['ice cream', /^icecream$/],
       ['my taxes', /^coin$/],
+      ['I feel overwhelmed', /^tangle$/],
+      ['stuck on the first step', /^stairs$/],
+      ['I have no energy', /^battery$/],
       ['zebra', /^emoji:/],
       ['hedgehog', /^emoji:/], // not in any local table: drawn by the shape service
       ['landlord email', /^envelope$/],
@@ -56,8 +58,8 @@ test.describe('Landing', () => {
 
   test('crisis wording never turns into a playful shape', async ({ page }) => {
     await page.goto('/');
-    await page.getByTestId('hero-input').fill('ice cream');
-    await expect.poll(() => shapeOf(page, '[data-testid="hero-orb"] [data-shape]')).toBe('icecream');
+    await page.getByTestId('hero-input').fill('my taxes');
+    await expect.poll(() => shapeOf(page, '[data-testid="hero-orb"] [data-shape]')).toBe('coin');
     await page.getByTestId('hero-input').fill('I want to take my own life');
     await expect.poll(() => shapeOf(page, '[data-testid="hero-orb"] [data-shape]'), { timeout: 5000 }).toBe('orb');
   });
@@ -92,9 +94,9 @@ test.describe('The loop', () => {
 
   test('the orb in the app reshapes with what you type', async ({ page }) => {
     await onboard(page);
-    await page.getByTestId('task-input').fill('I need some ice cream');
+    await page.getByTestId('task-input').fill('I feel so overwhelmed');
     await page.getByTestId('send').click();
-    await expect.poll(() => shapeOf(page), { timeout: 8000 }).toBe('icecream');
+    await expect.poll(() => shapeOf(page), { timeout: 8000 }).toBe('tangle');
   });
 });
 
@@ -149,4 +151,55 @@ test('two people on two browsers never see each other’s history', async ({ bro
   await expect(b.getByText(/VAT/i)).toHaveCount(0);
   await a.goto('/app/history');
   await expect(a.getByText(/VAT/i).first()).toBeVisible();
+});
+
+test.describe('Your own keys and block lengths', () => {
+  test('own-key settings: a private address is refused, the choice survives a reload, and removal clears it', async ({ page }) => {
+    await onboard(page);
+    await page.goto('/app/settings');
+    await page.getByTestId('provider-custom').click();
+    await page.getByTestId('llm-key').fill('sk-test-key-123');
+    await page.getByTestId('llm-base').fill('https://127.0.0.1/v1');
+    await page.getByTestId('llm-model').fill('some-model');
+    await page.getByTestId('llm-check').click();
+    await expect(page.getByTestId('keys-section')).toContainText(/not allowed/i, { timeout: 8000 });
+    await page.reload();
+    await expect(page.getByTestId('provider-custom')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByTestId('llm-key')).toHaveValue('sk-test-key-123');
+    await page.getByTestId('keys-clear').click();
+    await expect(page.getByTestId('provider-default')).toHaveAttribute('aria-pressed', 'true');
+    expect(await page.evaluate(() => localStorage.getItem('stay_byok'))).toBeNull();
+  });
+
+  test('delete-all-data also removes saved keys', async ({ page }) => {
+    await onboard(page);
+    await page.goto('/app/settings');
+    await page.getByTestId('provider-groq').click();
+    await page.getByTestId('llm-key').fill('gsk_not_real_key');
+    expect(await page.evaluate(() => localStorage.getItem('stay_byok'))).not.toBeNull();
+    await page.getByTestId('delete-start').click();
+    await page.getByTestId('delete-confirm').click();
+    await page.waitForURL(/\/app\/today/, { timeout: 8000 });
+    expect(await page.evaluate(() => localStorage.getItem('stay_byok'))).toBeNull();
+  });
+
+  test('short blocks are the default and long ones are one tap away', async ({ page }) => {
+    await onboard(page);
+    await page.getByTestId('task-input').fill('Reply to my landlord about the renewal');
+    await page.getByTestId('send').click();
+    await expect(page.getByTestId('plan-card')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByTestId('start-timer')).toContainText(/Start (5|10) min/);
+    await page.getByRole('button', { name: '90 minute block' }).click();
+    await expect(page.getByTestId('start-timer')).toContainText('Start 90 min');
+  });
+
+  test('all-day mode is a visible switch in the menu', async ({ page }) => {
+    await onboard(page);
+    await page.getByTestId('menu-button').click();
+    const t = page.getByTestId('companion-toggle');
+    await expect(t).toContainText('off');
+    await t.click();
+    await expect(t).toContainText('on');
+    expect(await page.evaluate(() => localStorage.getItem('stay_companion'))).toBe('1');
+  });
 });
