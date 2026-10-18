@@ -226,3 +226,17 @@ test.describe('Parking lot and reply-speed readout', () => {
     await expect(page.getByTestId('reply-speed')).toContainText(/Talk to Stay/);
   });
 });
+
+test('fast voice is an opt-in switch in the voice sheet and the choice is remembered', async ({ page }) => {
+  await onboard(page);
+  await page.getByTestId('menu-button').click();
+  await page.getByRole('button', { name: 'Voice and language' }).click();
+  const t = page.getByTestId('fast-voice-toggle');
+  await expect(t).not.toBeChecked();
+  await t.check();
+  expect(await page.evaluate(() => localStorage.getItem('stay_fast_voice'))).toBe('1');
+  await page.reload();
+  await page.getByTestId('menu-button').click();
+  await page.getByRole('button', { name: 'Voice and language' }).click();
+  await expect(page.getByTestId('fast-voice-toggle')).toBeChecked();
+});

@@ -70,13 +70,18 @@ Next.js 15, React 19, TypeScript, Tailwind v4, Three.js (the dot field), Zod, js
 
 ## Latency: what is and is not true
 
-All figures are time from the true end of the spoken sentence to the first reply audio, measured here with synthesized speech streamed in real time (`scripts/voice-e2e/`). Not a human microphone, one machine, few runs.
+All figures are time from the last moment the microphone heard the speaker to the first reply audio, measured in the real app with a fake microphone playing the same synthesized sentence (`scripts/voice-e2e/fast-app-bench.mjs`, which reads Stay's own reply-speed readout). Not a human voice, one machine, three runs per engine.
 
-- **Stay today (AssemblyAI Voice Agent): 2.5 s p50** (2.45 to 2.69 s, 5 runs, `compare-bench.mjs`).
-- **Parts of a hand-built pipeline** (`cascade-bench.mjs`, 6 runs): speech-to-text end-of-turn 0.88 s p50, GPT-OSS first token 0.3 s p50, streaming text-to-speech first audio about 0.2 s. Added up that is about 1.4 s, so a hand-built pipeline should be roughly 1 s faster than the Voice Agent on the same definition. That is a sum of measured parts, not a measured end-to-end result.
-- **ChatGPT voice and Google live voice: not measured** (no keys). `compare-bench.mjs` times them when `OPENAI_API_KEY` / `GEMINI_API_KEY` are in `.env.local`; those two legs follow the vendors' documented events but have never been run.
+| Engine | Runs (s) | Median |
+|---|---|---|
+| Voice Agent (managed by AssemblyAI) | 3.4, 3.3, 3.0 | 3.3 s |
+| **Fast voice (beta)**: AssemblyAI streaming speech-to-text, your choice of chat model, AssemblyAI streaming text-to-speech | 1.7, 1.3, 1.2 | 1.3 s |
 
-Stay does not claim to be faster than either. Earlier notes quoted 1.4 s for the Voice Agent; that was measured from the server's own "speech stopped" event, which fires later than the real end of speech, so it is not comparable.
+Fast voice is an opt-in switch (More > Voice and language). It speaks English, Spanish, French, German, Italian and Portuguese, runs the same app actions, safety gates and memory, and its thinking step uses your own key if you added one. It is not the default because it has had no real-microphone test (echo, earphones) and only three measured runs.
+
+Parts, measured separately (`cascade-bench.mjs`, 6 runs): speech-to-text end-of-turn 0.88 s p50, first model token 0.3 s p50, text-to-speech first audio about 0.2 s.
+
+**ChatGPT voice and Google live voice: not measured** (no keys). `compare-bench.mjs` times them when `OPENAI_API_KEY` / `GEMINI_API_KEY` are in `.env.local`; those two legs follow the vendors' documented events but have never been run. Stay does not claim to be faster than either.
 
 ## Not done
 

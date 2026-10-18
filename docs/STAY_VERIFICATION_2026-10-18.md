@@ -90,9 +90,17 @@ Other live results:
 
 **Comparison harness.** `scripts/voice-e2e/compare-bench.mjs` streams the same sentence in real time and times true end of speech -> first reply audio. Stay (AssemblyAI Voice Agent), 5 runs: p50 2539 ms, p90 2693 ms, min 2453, max 2693. OpenAI Realtime and Gemini Live: NOT MEASURED (no keys); their legs are written to the vendors' documented events and have not been run. The 1.4 s figure elsewhere in this document is measured from the server's own "speech stopped" event, which is later than true end of speech, so the two numbers are not comparable.
 
+## Part 6. Fast voice, built and measured in the real app
+
+**What it is.** `src/lib/voice/fastSocket.ts` is a WebSocket-shaped object that emits the Voice Agent's own events (input.speech.started, transcript.user, reply.audio, tool.call, ...) but is built from AssemblyAI streaming speech-to-text (v3, browser connects directly with a short-lived token), the chat model through `/api/voice/chat` (streaming; the person's own key first, then the shared one; crisis and medication gates run server-side before any model), and AssemblyAI streaming text-to-speech. The voice hook is unchanged apart from choosing which socket to open, so memory, app actions, orb, safety, personas and all-day renewal work in both modes. New routes: `/api/voice/fast-token`, `/api/voice/chat`. The AssemblyAI TTS protocol (Generate, Flush, Cancel, Terminate, KeepAlive; Audio as base64 PCM 24 kHz; voice and language as query parameters; the same short-lived tokens work as for speech-to-text) was found by probing and is undocumented.
+
+**Bugs found by running it in the real app, then fixed.** (1) Cancel/flush ids: the server numbers flushes itself and reported two flushes as one FlushDone, so the reply never finished and the readout stayed empty in 2 of 3 early runs. Completion is now tracked by id range and cancelled audio is recognised by the server's Cancelled acknowledgement. (2) A late partial of an already-handled turn could cancel the reply; late and formatted re-sends are now ignored. Both have unit tests with a scripted AssemblyAI (11 tests).
+
+**Measured in the real app** (fake microphone, same sentence, in-app reply-speed readout = last moment the mic heard you -> first reply audio): Voice Agent 3.4, 3.3, 3.0 s (median 3.3 s); Fast voice 1.7, 1.3, 1.2 s (median 1.3 s). Three alternating runs each, one reply per run, synthesized speech. Not measured: real human voice, echo and earphones, languages other than English, long sessions, the Mistral/OpenAI paths.
+
 ## Gates (after Part 5)
 
 - `tsc --noEmit`: 0 errors
-- `vitest run`: 271 tests (15 files)
+- `vitest run`: 282 tests (16 files)
 - `next build`: all routes (adds /api/keys/check)
-- `playwright test`: 39 passed (local production build)
+- `playwright test`: 40 passed (local production build)

@@ -657,8 +657,15 @@ export function StayHome({
               </button>
             ))}
           </div>
+          <label className="mt-5 flex cursor-pointer items-start gap-3" data-testid="fast-voice-row">
+            <input type="checkbox" className="mt-1 h-5 w-5 accent-[#006A67]" checked={voice.fastVoice} onChange={(e) => voice.setFastVoice(e.target.checked)} data-testid="fast-voice-toggle" />
+            <span>
+              <span className="label block">Fast voice (beta)</span>
+              <span className="meta block">Faster replies from separate speech, thinking and voice parts, and the thinking part uses your own key if you added one. Speaks English, Spanish, French, German, Italian and Portuguese.</span>
+            </span>
+          </label>
           <p className="label mt-5">Reply speed on this device</p>
-          <p className="meta mt-1" data-testid="reply-speed">
+          <p className="meta mt-1" data-testid="reply-speed" data-times={voice.replyTimes.join(",")} data-engine={voice.voiceEngine ?? ""}>
             {voice.replyTimes.length === 0
               ? 'Talk to Stay and the real time from the end of your speech to the first sound of its reply shows up here.'
               : `Last ${(voice.replyTimes[voice.replyTimes.length - 1] / 1000).toFixed(1)} s, median ${(([...voice.replyTimes].sort((a, b) => a - b)[Math.floor(voice.replyTimes.length / 2)]) / 1000).toFixed(1)} s over ${voice.replyTimes.length} repl${voice.replyTimes.length === 1 ? 'y' : 'ies'}. Measured here, not a claim.`}

@@ -1,6 +1,7 @@
 'use client';
 
 import { byokHeaders } from '@/lib/byok/config';
+import { FastSocket, FAST_TTS_LANGUAGE } from '@/lib/voice/fastSocket';
 import { loadParked, parkThought } from '@/lib/coach/parkingLot';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
@@ -542,6 +543,20 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const restartVoiceRef = useRef<(() => void) | null>(null);
   // Reply time as this device experiences it: the server heard you stop -> the first reply audio arrives here.
   const speechStoppedAtRef = useRef(0);
+  const lastLoudAtRef = useRef(0);
+  // Fast voice (beta): own speech-to-text + chat model + text-to-speech instead of the managed Voice Agent.
+  const [fastVoice, setFastVoiceState] = useState(false);
+  const fastVoiceRef = useRef(false);
+  const [voiceEngine, setVoiceEngine] = useState<'fast' | 'agent' | null>(null);
+  useEffect(() => {
+    try {
+      const on = window.localStorage.getItem('stay_fast_voice') === '1';
+      fastVoiceRef.current = on;
+      setFastVoiceState(on);
+    } catch {
+      // private mode: off
+    }
+  }, []);
   const [replyTimes, setReplyTimes] = useState<number[]>([]);
   // All-day companion: when a session ends on its own (3-hour cap, network drop), quietly start the next one.
   const [companionMode, setCompanionModeState] = useState(false);
@@ -556,6 +571,16 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     } catch {
       // private mode: off
     }
+  }, []);
+  const setFastVoice = useCallback((on: boolean) => {
+    fastVoiceRef.current = on;
+    setFastVoiceState(on);
+    try {
+      window.localStorage.setItem('stay_fast_voice', on ? '1' : '0');
+    } catch {
+      // not persisted
+    }
+    if (wsRef.current) restartVoiceRef.current?.(); // switch engines now if a session is live
   }, []);
   const setCompanionMode = useCallback((on: boolean) => {
     companionRef.current = on;
@@ -1687,8 +1712,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
       await audioCtx.audioWorklet.addModule('/pcm-processor.js');
 
-      // 3. Mint ephemeral single-use AssemblyAI token from our server route
-      const tokenRes = await fetch(`/api/voice/token${companionRef.current ? '?long=1' : ''}`, {
+      // 3. Mint ephemeral AssemblyAI tokens from our server routes
+      const fastLangBase = selectedLanguageRef.current === 'auto' ? 'en' : selectedLanguageRef.current.split('-')[0].toLowerCase();
+      const useFast = fastVoiceRef.current && Boolean(FAST_TTS_LANGUAGE[fastLangBase]);
+      const longQuery = companionRef.current ? '?long=1' : '';
+      const tokenRes = await fetch(`/api/voice/${useFast ? 'fast-token' : 'token'}${longQuery}`, {
         method: 'POST',
         headers: byokHeaders(),
       });
@@ -1699,14 +1727,13 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
             'Voice session token unavailable. You can continue immediately in Quiet Text Mode.'
         );
       }
-      const { token, agentId, wsUrl } = (await tokenRes.json()) as {
-        token: string;
-        agentId: string;
-        wsUrl: string;
-      };
+      const tokenJson = (await tokenRes.json()) as { token?: string; agentId?: string; wsUrl?: string; sttToken?: string; ttsToken?: string };
 
-      // 4. Connect to AssemblyAI Voice Agent WebSocket
-      const socket = new WebSocket(`${wsUrl}?token=${encodeURIComponent(token)}`);
+      // 4. Connect: either the managed Voice Agent socket, or fast voice (same events, built from STT + chat model + TTS)
+      const socket: WebSocket = useFast
+        ? (new FastSocket({ sttToken: tokenJson.sttToken || '', ttsToken: tokenJson.ttsToken || '' }) as unknown as WebSocket)
+        : new WebSocket(`${tokenJson.wsUrl}?token=${encodeURIComponent(tokenJson.token || '')}`);
+      setVoiceEngine(useFast ? 'fast' : 'agent');
       wsRef.current = socket;
 
       socket.onopen = () => {
@@ -1735,6 +1762,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
               output: {
                 voice: selectedVoiceRef.current || 'anna',
               },
+              ...(socket instanceof FastSocket ? { tts_language: FAST_TTS_LANGUAGE[fastLangBase] || 'english' } : {}),
             },
           })
         );
@@ -1768,6 +1796,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
             if (!payload) return;
 
             if (payload.type === 'energy') {
+              if (payload.rms > 0.08) lastLoudAtRef.current = performance.now();
               pushAudioLevels(payload.rms);
               // Barge-in without waiting ~1 s for the server: sustained loud mic input while the agent is audible ducks it.
               // (Echo cancellation is on; a stray blip never hard-stops anything, only quiets it briefly.)
@@ -1889,7 +1918,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         }
 
         if (type === 'input.speech.stopped') {
-          speechStoppedAtRef.current = performance.now();
+          speechStoppedAtRef.current = lastLoudAtRef.current || performance.now(); // the last moment the mic heard you, not when the server noticed
           if (backchannelTimerRef.current) {
             clearTimeout(backchannelTimerRef.current);
             backchannelTimerRef.current = null;
@@ -2244,6 +2273,9 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     companionMode,
     setCompanionMode,
     replyTimes,
+    fastVoice,
+    setFastVoice,
+    voiceEngine,
     availableVoices: AVAILABLE_VOICES,
     topicShape,
     setTopicShape,

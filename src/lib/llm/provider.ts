@@ -23,13 +23,13 @@ export interface LlmCall {
   timeoutMs: number;
 }
 
-interface Target {
+export interface LlmTarget {
   baseUrl: string;
   key: string;
   model: string;
 }
 
-const GROQ_BASE = 'https://api.groq.com/openai/v1';
+export const GROQ_BASE = 'https://api.groq.com/openai/v1';
 const PRIVATE_V4 = /^(0\.|10\.|127\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.)/;
 
 /** https only, no credentials in the URL, and never a loopback, private-range, link-local or internal host. */
@@ -48,7 +48,7 @@ export function safeBaseUrl(raw: string): string | null {
   return `${u.origin}${u.pathname.replace(/\/+$/, '')}`;
 }
 
-export function readUserLlm(req: Request): Target | null {
+export function readUserLlm(req: Request): LlmTarget | null {
   const key = req.headers.get('x-stay-llm-key')?.trim() || '';
   const base = req.headers.get('x-stay-llm-base')?.trim() || '';
   const model = req.headers.get('x-stay-llm-model')?.trim() || '';
@@ -58,13 +58,13 @@ export function readUserLlm(req: Request): Target | null {
   return baseUrl ? { baseUrl, key, model } : null;
 }
 
-function classify(status: number): LlmError {
+export function classifyStatus(status: number): LlmError {
   if (status === 401 || status === 403) return 'invalid_key';
   if (status === 429 || status === 402) return 'quota';
   return 'other';
 }
 
-async function post(t: Target, call: LlmCall): Promise<{ ok: boolean; status: number; text: string; error?: LlmError }> {
+async function post(t: LlmTarget, call: LlmCall): Promise<{ ok: boolean; status: number; text: string; error?: LlmError }> {
   const isGroqGptOss = t.baseUrl.startsWith(GROQ_BASE) && /gpt-oss/i.test(t.model);
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), call.timeoutMs);
@@ -83,7 +83,7 @@ async function post(t: Target, call: LlmCall): Promise<{ ok: boolean; status: nu
       }),
       signal: ctl.signal,
     });
-    if (!res.ok) return { ok: false, status: res.status, text: '', error: res.status >= 300 && res.status < 400 ? 'bad_endpoint' : classify(res.status) };
+    if (!res.ok) return { ok: false, status: res.status, text: '', error: res.status >= 300 && res.status < 400 ? 'bad_endpoint' : classifyStatus(res.status) };
     const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
     const text = (json.choices?.[0]?.message?.content || '').trim();
     return text ? { ok: true, status: 200, text } : { ok: false, status: 200, text: '', error: 'other' };
@@ -96,7 +96,7 @@ async function post(t: Target, call: LlmCall): Promise<{ ok: boolean; status: nu
 
 const serverHits = new Map<string, number[]>();
 /** Shared-key protection: 30 server-paid reasoning calls per minute per address. Bring-your-own keys skip this. */
-function allowServerUse(ip: string): boolean {
+export function allowServerUse(ip: string): boolean {
   const now = Date.now();
   const recent = (serverHits.get(ip) || []).filter((t) => now - t < 60_000);
   if (recent.length >= 30) return false;
