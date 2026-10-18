@@ -16,6 +16,10 @@ The orb is the interface. It is a field of dots that gathers into whatever you a
 
 **Short blocks first, long ones when you are in flow.** Blocks default to 10 minutes (5, 10, 25, 45, 90 on one tap). After a block, "Another 10 min" or, if you did not start, "Try just 5 min". **All-day mode** (More > Stay with me all day) keeps the voice session alive up to three hours at a time and renews it quietly while the tab is open; in blocks of 25 minutes or more it says one short line every ten minutes so you know it is still there. A browser tab cannot listen while it is closed; this is a companion while Stay is open, not a background service.
 
+**Parking lot.** Say "park it: call the dentist" (or type it into More > Parked thoughts) and the thought is set aside so it stops competing with the one thing you are starting. Each parked item can become a task with one tap. Local only; wiped with "delete all my data".
+
+**Reply speed, shown honestly.** The voice sheet shows the real time on your device from the end of your speech to the first sound of Stay's reply (last and median), so nobody has to take a claim on trust.
+
 **Your own keys.** The shared defaults (GPT-OSS on Groq for plans and shapes, AssemblyAI for live voice) are free to use. In Settings you can add your own key for GPT-OSS on Groq, Mistral, OpenAI or any OpenAI-compatible address, and your own AssemblyAI key for when the shared voice allowance runs out. Keys stay in your browser and ride along as headers through Stay's server to the provider you chose; they are never stored or logged. Custom addresses must be https and public (loopback, private ranges and internal names are refused).
 
 ## Safety and privacy (what is actually enforced)

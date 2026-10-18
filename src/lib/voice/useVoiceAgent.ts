@@ -1,6 +1,7 @@
 'use client';
 
 import { byokHeaders } from '@/lib/byok/config';
+import { loadParked, parkThought } from '@/lib/coach/parkingLot';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
   AudioSpectrumBands,
@@ -73,6 +74,7 @@ export interface UseVoiceAgentOptions {
   onMedicalBoundaryDetected?: (message: string) => void;
   onVoiceCommandDetected?: (command: VoiceCommandAction) => void;
   onShowMemoryRequested?: () => void;
+  onShowParkingRequested?: () => void;
   onShowHistoryRequested?: () => void;
   onOpenTrainingRequested?: () => void;
   onCloseModalsRequested?: () => void;
@@ -538,6 +540,9 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
   const wsRef = useRef<WebSocket | null>(null);
   const restartVoiceRef = useRef<(() => void) | null>(null);
+  // Reply time as this device experiences it: the server heard you stop -> the first reply audio arrives here.
+  const speechStoppedAtRef = useRef(0);
+  const [replyTimes, setReplyTimes] = useState<number[]>([]);
   // All-day companion: when a session ends on its own (3-hour cap, network drop), quietly start the next one.
   const [companionMode, setCompanionModeState] = useState(false);
   const companionRef = useRef(false);
@@ -974,6 +979,15 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           o.onShowMemoryRequested?.();
           const m = loadUserMemory();
           return { ok: true, facts: m.facts.slice(-6), name: m.name };
+        }
+        case 'park': {
+          if (!value) return { ok: false, error: 'value must be the thought to park, e.g. call the dentist' };
+          const list = parkThought(value);
+          return { ok: true, parked: value.slice(0, 140), total: list.length };
+        }
+        case 'park_show': {
+          o.onShowParkingRequested?.();
+          return { ok: true, items: loadParked().slice(0, 6).map((i) => i.text) };
         }
         case 'quiet': o.onToggleQuietModeRequested?.(); return { ok: true };
         case 'game': {
@@ -1875,6 +1889,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         }
 
         if (type === 'input.speech.stopped') {
+          speechStoppedAtRef.current = performance.now();
           if (backchannelTimerRef.current) {
             clearTimeout(backchannelTimerRef.current);
             backchannelTimerRef.current = null;
@@ -1982,6 +1997,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         }
 
         if (type === 'reply.audio') {
+          if (speechStoppedAtRef.current) {
+            const ms = Math.round(performance.now() - speechStoppedAtRef.current);
+            speechStoppedAtRef.current = 0;
+            setReplyTimes((prev) => [...prev.slice(-19), ms]);
+          }
           if (medicationSuppressionRef.current) {
             // Drop raw audio chunks from model to prevent any spoken dosing advice
             return;
@@ -2223,6 +2243,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     setSelectedVoice,
     companionMode,
     setCompanionMode,
+    replyTimes,
     availableVoices: AVAILABLE_VOICES,
     topicShape,
     setTopicShape,

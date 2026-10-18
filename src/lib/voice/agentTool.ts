@@ -8,7 +8,7 @@ import { type VoicePersona } from './personas';
 
 export const APP_ACTIONS = [
   'open', 'ground', 'timer_start', 'timer_stop', 'outcome', 'plan', 'shape', 'color', 'language', 'voice',
-  'memory_add', 'memory_forget', 'memory_show', 'quiet', 'game', 'pause', 'export_data', 'delete_data',
+  'memory_add', 'memory_forget', 'memory_show', 'park', 'park_show', 'quiet', 'game', 'pause', 'export_data', 'delete_data',
 ] as const;
 export type AppActionName = (typeof APP_ACTIONS)[number];
 
@@ -22,14 +22,14 @@ export interface AppActionArgs {
 export const APP_TOOL = {
   type: 'function',
   name: 'app',
-  description: 'Control the Stay app. Call when the user asks to open, change, start, stop, remember, forget or show something. One action per call.',
+  description: 'Control the Stay app. Call when the user asks to open, change, start, stop, remember, forget, park or show something. One action per call. For park, value is the thought to set aside for later, in the user\'s words (park it: call the dentist -> value "call the dentist").',
   parameters: {
     type: 'object',
     properties: {
       action: { type: 'string', enum: [...APP_ACTIONS] },
       value: {
         type: 'string',
-        description: 'Target or text: screen (today, history, report, checkin, settings, privacy, memory, voice), language, voice name or gender/accent or random, colour (aurora, sunset, ocean, cyber, emerald, default), object for the orb, fact to remember or forget (or all), task, outcome (started, partly_started, not_started, paused), game (memory, focus, words) with optional easy/medium/hard, on/off',
+        description: 'Target or text: screen (today, history, report, checkin, settings, privacy, memory, voice), language, voice name or gender/accent or random, colour (aurora, sunset, ocean, cyber, emerald, default), object for the orb, fact to remember or forget (or all), thought to park for later, task, outcome (started, partly_started, not_started, paused), game (memory, focus, words) with optional easy/medium/hard, on/off',
       },
       minutes: { type: 'number' },
       step: { type: 'string', description: 'The first tiny step, when planning or starting a timer' },
@@ -56,7 +56,7 @@ export function buildSystemPrompt(persona: VoicePersona, memory: UserMemoryProfi
     `You are Stay, a calm friend who helps an adult with ADHD start tasks. Voice: ${persona.name}. ${persona.style}`,
     'Speak one or two short sentences, at most 15 words. Never read lists aloud. Never talk over a pause or an um.',
     'Use the app tool when asked to open, change, start, stop, remember or forget something, then confirm in a few words.',
-    'If they ramble several tasks, keep it brief and name ONE two-minute physical first step.',
+    'If they ramble several tasks, name ONE two-minute first step and park the others with the app tool (action park).',
     'Match the language they speak. You are not a therapist and never advise on medication.',
     memoryLine(memory),
   ].filter(Boolean).join('\n');

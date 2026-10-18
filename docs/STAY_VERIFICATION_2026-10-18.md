@@ -86,9 +86,11 @@ Other live results:
 
 **The cascade question (measured, not guessed).** `scripts/voice-e2e/cascade-bench.mjs`, 6 runs: speech-to-text end-of-turn 0.88 s p50 (0.83 to 0.95); GPT-OSS first token 0.31 s p50 (20b) and 0.29 s (120b); streaming TTS first audio about 0.2 s (protocol found by probing: messages Generate, Flush, Terminate, KeepAlive, Cancel; audio arrives as base64 PCM 24 kHz in Audio messages). Sum is about 1.4 s, equal to the Voice Agent's floor, so a hand-built cascade was not built into the app. Changing min/max turn silence did not move end-of-turn below about 0.87 s in the sweep. ChatGPT voice and Google live voice were NOT measured (no keys), so there is no comparison and no speed claim.
 
+**Parking lot and reply meter.** New `park` / `park_show` actions on the single app tool. Live probe (synthesized speech into a real agent session): "Park it, I need to call the dentist." -> park("call the dentist"); "Show me what I parked." -> park_show. The first attempt failed (the agent parked "the current task" with no text); the tool description was changed to say what value must hold, and it then passed 2/2. The voice sheet shows measured reply time on the user's device (server-heard end of speech -> first reply audio received); it is a readout, not a benchmark.
+
 ## Gates (after Part 5)
 
 - `tsc --noEmit`: 0 errors
-- `vitest run`: 267 tests (13 files plus byok.test.ts)
+- `vitest run`: 271 tests (15 files)
 - `next build`: all routes (adds /api/keys/check)
-- `playwright test`: 37 passed
+- `playwright test`: 39 passed (local production build)

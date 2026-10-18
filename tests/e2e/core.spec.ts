@@ -203,3 +203,26 @@ test.describe('Your own keys and block lengths', () => {
     expect(await page.evaluate(() => localStorage.getItem('stay_companion'))).toBe('1');
   });
 });
+
+test.describe('Parking lot and reply-speed readout', () => {
+  test('parked thoughts list, start-from, and remove; wiped with all data', async ({ page }) => {
+    await onboard(page);
+    await page.evaluate(() => localStorage.setItem('stay_parking_lot', JSON.stringify([{ id: 'p-1', text: 'call the dentist', at: new Date().toISOString() }, { id: 'p-2', text: 'buy printer ink', at: new Date().toISOString() }])));
+    await page.getByTestId('menu-button').click();
+    await page.getByTestId('parking-open').click();
+    const list = page.getByTestId('parking-list');
+    await expect(list).toContainText('call the dentist');
+    await page.getByRole('button', { name: 'Remove buy printer ink' }).click();
+    await expect(list).not.toContainText('printer ink');
+    await list.getByRole('button', { name: 'Start this' }).click();
+    await expect(page.getByTestId('plan-card')).toBeVisible({ timeout: 15000 });
+    expect(await page.evaluate(() => JSON.parse(localStorage.getItem('stay_parking_lot') || '[]').length)).toBe(0);
+  });
+
+  test('the voice sheet shows a measured-here reply speed, never a claim', async ({ page }) => {
+    await onboard(page);
+    await page.getByTestId('menu-button').click();
+    await page.getByRole('button', { name: 'Voice and language' }).click();
+    await expect(page.getByTestId('reply-speed')).toContainText(/Talk to Stay/);
+  });
+});

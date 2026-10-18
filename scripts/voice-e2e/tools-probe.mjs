@@ -19,12 +19,12 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 export const APP_TOOL = {
   type: 'function',
   name: 'app',
-  description: 'Control the Stay app for the user. Call it whenever they ask you to open, change, start, stop, remember, forget or show something. One action per call.',
+  description: 'Control the Stay app for the user. Call it whenever they ask you to open, change, start, stop, remember, forget, park or show something. One action per call. For park, value is the thought to set aside for later, in the user words (park it: call the dentist -> value "call the dentist").',
   ...(process.env.HOLD === '1' ? { execution_mode: 'hold' } : {}),
   parameters: {
     type: 'object',
     properties: {
-      action: { type: 'string', enum: ['open', 'ground', 'timer_start', 'timer_stop', 'outcome', 'plan', 'shape', 'color', 'language', 'voice', 'memory_add', 'memory_forget', 'memory_show', 'quiet', 'game', 'pause', 'export_data', 'delete_data'] },
+      action: { type: 'string', enum: ['open', 'ground', 'timer_start', 'timer_stop', 'outcome', 'plan', 'shape', 'color', 'language', 'voice', 'memory_add', 'memory_forget', 'memory_show', 'park', 'park_show', 'quiet', 'game', 'pause', 'export_data', 'delete_data'] },
       value: { type: 'string', description: 'The target or text: screen (today, history, report, checkin, settings, privacy), language name, voice name or gender or accent, colour theme (aurora, sunset, ocean, cyber, emerald, default), object to draw, fact to remember, task, outcome (started, partly_started, not_started, paused), game (memory, focus, words), on or off' },
       minutes: { type: 'number' },
       step: { type: 'string', description: 'The first tiny step, when planning or starting a timer' },
@@ -36,6 +36,8 @@ export const APP_TOOL = {
 const PROMPT = `You are Stay, a calm friend helping an adult with ADHD start tasks. Reply in one or two short sentences, at most 15 words. Use the app tool to act on requests; after it, confirm in a few words. Never give medication advice.`;
 
 const CASES = [
+  ['park', 'Park it, I need to call the dentist.', 'park', 'dentist'],
+  ['park show', 'Show me what I parked.', 'park_show', ''],
   ['open history', 'Can you open my history please.', 'open', 'history'],
   ['language', 'Switch to Spanish.', 'language', 'spanish'],
   ['voice by name', 'Change your voice to Noodle.', 'voice', 'noodle'],

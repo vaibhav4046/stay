@@ -26,6 +26,7 @@ import { GroundingPanel } from '@/components/GroundingPanel';
 import { OrbCognitiveGames } from '@/components/OrbCognitiveGames';
 import { Signal } from '@/components/Signal';
 import { byokHeaders } from '@/lib/byok/config';
+import { loadParked, unparkThought, type ParkedItem } from '@/lib/coach/parkingLot';
 
 type Step = 'idle' | 'plan' | 'timer' | 'outcome' | 'done';
 
@@ -118,7 +119,8 @@ export function StayHome({
   const [lastOutcome, setLastOutcome] = useState<SessionOutcome | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<string | null>(null);
-  const [sheet, setSheet] = useState<null | 'menu' | 'memory' | 'voice'>(null);
+  const [sheet, setSheet] = useState<null | 'menu' | 'memory' | 'voice' | 'parking'>(null);
+  const [parked, setParked] = useState<ParkedItem[]>([]);
   const [grounding, setGrounding] = useState(false);
   const [usedVoice, setUsedVoice] = useState(false);
   const deadline = useRef(0);
@@ -207,6 +209,7 @@ export function StayHome({
     onCrisisDetected: triggerCrisis,
     onMedicalBoundaryDetected: (m) => setNote(m),
     onShowMemoryRequested: () => setSheet('memory'),
+    onShowParkingRequested: () => (setParked(loadParked()), setSheet('parking')),
     onShowHistoryRequested: () => router.push('/app/history'),
     onCloseModalsRequested: () => {
       setSheet(null);
@@ -612,6 +615,9 @@ export function StayHome({
             <button type="button" className="btn btn-secondary justify-start" onClick={() => setSheet('memory')}>
               What Stay remembers
             </button>
+            <button type="button" className="btn btn-secondary justify-start" onClick={() => (setParked(loadParked()), setSheet('parking'))} data-testid="parking-open">
+              Parked thoughts
+            </button>
             <button
               type="button"
               className="btn btn-secondary justify-start"
@@ -651,6 +657,12 @@ export function StayHome({
               </button>
             ))}
           </div>
+          <p className="label mt-5">Reply speed on this device</p>
+          <p className="meta mt-1" data-testid="reply-speed">
+            {voice.replyTimes.length === 0
+              ? 'Talk to Stay and the real time from the end of your speech to the first sound of its reply shows up here.'
+              : `Last ${(voice.replyTimes[voice.replyTimes.length - 1] / 1000).toFixed(1)} s, median ${(([...voice.replyTimes].sort((a, b) => a - b)[Math.floor(voice.replyTimes.length / 2)]) / 1000).toFixed(1)} s over ${voice.replyTimes.length} repl${voice.replyTimes.length === 1 ? 'y' : 'ies'}. Measured here, not a claim.`}
+          </p>
           <p className="label mt-5">Language</p>
           <p className="meta mt-1">Auto-detect follows you if you switch mid-sentence. Languages marked * use your browser&apos;s speech recognition (best in Chrome or Edge).</p>
           <div className="mt-2 flex flex-wrap gap-2">
@@ -661,6 +673,28 @@ export function StayHome({
               </button>
             ))}
           </div>
+        </Sheet>
+      )}
+
+      {sheet === 'parking' && (
+        <Sheet title="Parked thoughts" onClose={() => setSheet(null)}>
+          <p className="meta">Things that came up while you were starting something else. Say &ldquo;park it: call the dentist&rdquo; any time. Stored on this device.</p>
+          <ul className="mt-3 space-y-2" data-testid="parking-list">
+            {parked.map((p) => (
+              <li key={p.id} className="flex items-center justify-between gap-2 rounded-lg bg-recessed p-3">
+                <span>{p.text}</span>
+                <span className="flex shrink-0 gap-1">
+                  <button type="button" className="btn btn-ghost !px-2 !py-1" onClick={() => (setSheet(null), submit(p.text), setParked(unparkThought(p.id)))}>
+                    Start this
+                  </button>
+                  <button type="button" className="btn btn-ghost !px-2 !py-1" onClick={() => setParked(unparkThought(p.id))} aria-label={`Remove ${p.text}`}>
+                    Remove
+                  </button>
+                </span>
+              </li>
+            ))}
+            {parked.length === 0 && <li className="text-ink-2">Nothing parked. Good.</li>}
+          </ul>
         </Sheet>
       )}
 
