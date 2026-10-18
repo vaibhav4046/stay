@@ -371,7 +371,7 @@ export function StayHome({
       const multi = parseMultiIntentUtterance(t);
       const isGame = multi.commands.some((c) => c.type === 'start_game' || c.type === 'game_action' || c.type === 'set_game_difficulty');
       if (!isGame && (multi.commands.length === 0 || multi.conversationalContext)) void requestPlan(multi.conversationalContext || t);
-      voiceRef.current.sendUserTextMessage(t);
+      voiceRef.current.sendUserTextMessage(t, { skipLocalPlan: true });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [requestPlan],

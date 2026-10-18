@@ -142,6 +142,7 @@ test('the voice sheet lists all 16 named voices, honest about which are native a
 });
 
 test('two people on two browsers never see each other’s history', async ({ browser }: { browser: Browser }) => {
+  test.setTimeout(75_000); // two onboardings and a full loop; slower over a real network
   const a = await (await browser.newContext()).newPage();
   const b = await (await browser.newContext()).newPage();
   await onboard(a);
@@ -239,4 +240,19 @@ test('fast voice is an opt-in switch in the voice sheet and the choice is rememb
   await page.getByTestId('menu-button').click();
   await page.getByRole('button', { name: 'Voice and language' }).click();
   await expect(page.getByTestId('fast-voice-toggle')).toBeChecked();
+});
+
+test('one typed task makes exactly one plan request and the card never jumps back after you start', async ({ page }) => {
+  await onboard(page);
+  const planCalls: number[] = [];
+  page.on('request', (r) => { if (r.url().includes('/api/coach/plan')) planCalls.push(Date.now()); });
+  await page.getByTestId('task-input').fill('Sort the paperwork pile in the hallway');
+  await page.getByTestId('send').click();
+  await expect(page.getByTestId('plan-card')).toBeVisible({ timeout: 15000 });
+  await page.getByTestId('start-timer').click();
+  await expect(page.getByTestId('clock')).toBeVisible();
+  await page.waitForTimeout(3000); // any late plan response would land in this window
+  await expect(page.getByTestId('clock')).toBeVisible();
+  await expect(page.getByTestId('plan-card')).toHaveCount(0);
+  expect(planCalls).toHaveLength(1);
 });

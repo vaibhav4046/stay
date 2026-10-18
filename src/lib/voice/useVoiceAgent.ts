@@ -1154,7 +1154,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   );
 
   const sendUserTextMessage = useCallback(
-    (text: string) => {
+    (text: string, opts?: { skipLocalPlan?: boolean }) => {
       const clean = text.trim();
       if (!clean) return false;
 
@@ -1367,7 +1367,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         }
 
         // If the user ALSO spoke about a real-world task/context in the same breath, address both like a human!
-        if (!shouldReturnEarly && multi.conversationalContext) {
+        if (!shouldReturnEarly && multi.conversationalContext && !opts?.skipLocalPlan) {
           const instantLocalPlan = buildDeterministicCoachPlan({ taskText: clean });
           const localizedSpoken = buildLocalizedStayResponse(clean, effectiveLang, instantLocalPlan);
           const combinedReply =
@@ -1449,6 +1449,10 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         ws.send(JSON.stringify({ type: 'reply.create' }));
         return true;
       }
+
+      // The caller (the app screen) already requests the plan for typed text: a second plan, a second voice and a second
+      // model call would race the first and pull the person back to the plan card after they have started.
+      if (opts?.skipLocalPlan) return true;
 
       // SUB-15MS INSTANT OPTIMISTIC LOCAL-FIRST ADHD REFLEX:
       // Render plan, localized reply (Hindi/Korean/32L), and voice output immediately with zero network wait!
