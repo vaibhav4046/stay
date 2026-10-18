@@ -68,7 +68,7 @@ export const BARRIER_DEFINITIONS: Record<BarrierType, BarrierDefinition> = {
 export const STRATEGY_DEFINITIONS: Record<StrategyKey, StrategyDefinition> = {
   task_shrinking: {
     key: 'task_shrinking',
-    label: 'Task shrinking (<2 min entry)',
+    label: 'Make it tiny',
     evidenceBasis: 'CBT behavioral activation & executive-function task decomposition',
     shortDescription: 'Cut the task down to a physical setup move that takes under two minutes.',
     howItWorks: 'Removes working-memory load by separating opening the work from finishing it.',
@@ -76,7 +76,7 @@ export const STRATEGY_DEFINITIONS: Record<StrategyKey, StrategyDefinition> = {
   },
   implementation_intention: {
     key: 'implementation_intention',
-    label: 'If-Then anchor (Implementation intention)',
+    label: 'If-then step',
     evidenceBasis: 'Gollwitzer implementation intentions & ADHD CBT skills modules',
     shortDescription: 'Pair an immediate physical cue with one specific action.',
     howItWorks: 'Replaces open-ended deciding with a pre-committed trigger ("When timer starts, I will...").',
@@ -84,7 +84,7 @@ export const STRATEGY_DEFINITIONS: Record<StrategyKey, StrategyDefinition> = {
   },
   reframing: {
     key: 'reframing',
-    label: 'Permission for a rough draft (Cognitive reframing)',
+    label: 'Permission for a rough draft',
     evidenceBasis: 'CBT cognitive restructuring for ADHD perfectionism & avoidance',
     shortDescription: 'Lower the bar explicitly to a messy, private first pass.',
     howItWorks: 'Disarms all-or-nothing paralysis by making a flawed version the official target.',
@@ -92,7 +92,7 @@ export const STRATEGY_DEFINITIONS: Record<StrategyKey, StrategyDefinition> = {
   },
   timeboxing: {
     key: 'timeboxing',
-    label: 'Bounded sprint with clean exit (Timeboxing)',
+    label: 'A short block with a clean exit',
     evidenceBasis: 'Structured time-horizon bounding in adult ADHD coaching',
     shortDescription: 'Work for a fixed 5–10 minute window with full permission to stop at the bell.',
     howItWorks: 'Replaces an infinite horizon with a short, visible finish line.',
@@ -306,7 +306,7 @@ export function buildDeterministicCoachPlan(params: {
 
   let whyThisFits =
     personalizedReason ||
-    `When ${barrier.label.toLowerCase()} hits, ${strategy.label.toLowerCase()} takes all the pressure off by turning an intimidating task into one tiny physical move.`;
+    strategy.shortDescription;
   let spokenResponse = `I'm right here with you. Let's make this tiny: ${firstStep} Whenever you're ready, we'll run a gentle ${timerMinutes}-minute focus block, and I'll check in the moment it wraps up.`;
   let checkinPrompt = `Your ${timerMinutes}-minute block is complete. Did you get started on "${firstStep}"?`;
 

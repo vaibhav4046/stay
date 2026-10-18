@@ -5,7 +5,7 @@ import {
   detectTextLanguage,
   buildLocalizedStayResponse,
   SUPPORTED_LANGUAGES,
-  AVAILABLE_VOICES, isAgentNativeLanguage,
+  AVAILABLE_VOICES, isAgentVerifiedLanguage, AGENT_VERIFIED_LANGS,
 } from '@/lib/voice/useVoiceAgent';
 import { detectVoiceCommand } from '@/lib/voice/voiceCommands';
 import { buildDeterministicCoachPlan } from '@/lib/coach/strategies';
@@ -163,9 +163,11 @@ describe('Stay 32-Language Universal Voice Engine & Detection', () => {
     expect(AVAILABLE_VOICES.find((v) => v.id === 'charles')?.gender).toBe('male');
   });
 
-  it('pins only the documented Voice Agent languages; others stay on server auto-detect', () => {
-    for (const c of ['en-GB', 'es-ES', 'fr-FR', 'de-DE', 'it-IT', 'pt-PT']) expect(isAgentNativeLanguage(c)).toBe(true);
-    for (const c of ['hi-IN', 'ko-KR', 'ja-JP', 'zh-CN', 'ar-SA']) expect(isAgentNativeLanguage(c)).toBe(false);
+  it('routes verified languages to the live agent and the rest to the browser engine', () => {
+    for (const c of ['en-GB', 'es-ES', 'pt-PT', 'hi-IN', 'ja-JP', 'zh-CN', 'ko-KR', 'ar-SA', 'no-NO', 'he-IL', 'vi-VN']) expect(isAgentVerifiedLanguage(c), c).toBe(true);
+    // measured failures: misheard on auto-detect and silent when pinned
+    for (const c of ['pl-PL', 'el-GR', 'hu-HU', 'uk-UA', 'bn-BD', 'ta-IN', 'te-IN', 'th-TH']) expect(isAgentVerifiedLanguage(c), c).toBe(false);
+    expect(AGENT_VERIFIED_LANGS.length).toBe(23);
   });
 
   it('keeps the live voice protocol on the documented contract (regression guard)', () => {

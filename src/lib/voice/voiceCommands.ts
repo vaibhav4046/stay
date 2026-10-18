@@ -143,12 +143,6 @@ export function detectVoiceCommand(text: string): VoiceCommandAction {
   if (/\b(?:(?:go|navigate|take\s+me)\s+to\s+(?:the\s+)?today(?:\s+page)?|open\s+today(?:\s+page)?)\b/i.test(clean)) {
     return { type: 'navigate', path: '/app/today', label: 'Today' };
   }
-  if (/\b(?:(?:go|navigate|take\s+me)\s+to\s+(?:the\s+)?(?:orb\s+)?diagnostic|open\s+(?:orb\s+)?diagnostic)\b/i.test(clean)) {
-    return { type: 'navigate', path: '/demo/orb-diagnostic', label: 'Orb Diagnostic' };
-  }
-  if (/\b(?:(?:go|navigate|take\s+me)\s+to\s+(?:the\s+)?demo(?:\s+page)?|open\s+demo(?:\s+page)?)\b/i.test(clean)) {
-    return { type: 'navigate', path: '/demo', label: 'Demo' };
-  }
   if (/\b(?:(?:go|navigate|take\s+me)\s+(?:to\s+)?home(?:\s+page)?|landing\s+page)\b/i.test(clean)) {
     return { type: 'navigate', path: '/', label: 'Home' };
   }

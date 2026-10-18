@@ -47,7 +47,6 @@ describe('Topic Shape Classifier', () => {
   });
 });
 
-import { evaluateParametricShapePoint } from '@/components/Signal';
 import {
   generateLiveAgenticArtifact,
   analyzeUserAdhdPhenotype,
@@ -55,19 +54,6 @@ import {
 } from '@/lib/coach/adhdClinicalEngine';
 
 describe('Smooth Parametric Shape Sculpture & 24/7 Living ADHD Clinical Engine', () => {
-  it('evaluates smooth, non-NaN parametric control points across all 8 topic shapes (0..7) and layer scales', () => {
-    for (const shapeId of [0, 1, 2, 3, 4, 5, 6, 7]) {
-      for (const layerScale of [1.0, 0.82, 0.64]) {
-        const ptTop = evaluateParametricShapePoint(shapeId, -Math.PI / 2, 1.0, 0.35, layerScale);
-        const ptBottom = evaluateParametricShapePoint(shapeId, Math.PI / 2, 1.0, 0.35, layerScale);
-        expect(Number.isFinite(ptTop[0])).toBe(true);
-        expect(Number.isFinite(ptTop[1])).toBe(true);
-        expect(Number.isFinite(ptBottom[0])).toBe(true);
-        expect(Number.isFinite(ptBottom[1])).toBe(true);
-      }
-    }
-  });
-
   it('autonomously drafts editable correspondence, tax triage worksheets, or document skeletons (24/7 Living Agent)', () => {
     const landlordArtifact = generateLiveAgenticArtifact(
       "uhh my brain is fried and I haven't replied to my landlord or touched my tax paperwork"

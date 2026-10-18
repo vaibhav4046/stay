@@ -68,11 +68,6 @@ describe('Hands-Free Voice Command Parser', () => {
       path: '/app/history',
       label: 'Session History',
     });
-    expect(parseVoiceCommand('open orb diagnostic')).toEqual({
-      type: 'navigate',
-      path: '/demo/orb-diagnostic',
-      label: 'Orb Diagnostic',
-    });
     expect(parseVoiceCommand('switch to grid view')).toEqual({
       type: 'switch_view',
       mode: 'grid',

@@ -152,9 +152,9 @@ describe('patterns', () => {
 
   it('validates 3-band audio spectrum viseme mapping and backchannel state labels', async () => {
     const { STATE_LABELS } = await import('@/components/Signal');
-    expect(STATE_LABELS.backchannel).toBe('Listening closely');
+    expect(STATE_LABELS.backchannel).toBe('Listening');
     expect(STATE_LABELS.speaking).toBe('Speaking');
-    expect(STATE_LABELS.interrupted).toBe('Listening (interrupted)');
+    expect(STATE_LABELS.interrupted).toBe('Listening');
 
     const testBands: import('@/types/domain').AudioSpectrumBands = {
       low: 0.85,    // Vowel formant

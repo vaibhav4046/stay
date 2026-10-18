@@ -1,102 +1,70 @@
-# Stay — Make starting easier
+# Stay
 
-A voice-first task-initiation and treatment-adherence companion for adults with ADHD, built with the **AssemblyAI Voice Agent API** for the AssemblyAI Online Hackathon #2 (October 2026).
+Start the thing you've been avoiding. Stay is a voice companion for adults with ADHD: tell it the task you can't begin, get one small first step, a short block to do it in, and a note of what helped.
 
-**Live App**: [https://stay-two-swart.vercel.app](https://stay-two-swart.vercel.app)  
-**Interactive Demo**: [https://stay-two-swart.vercel.app/demo](https://stay-two-swart.vercel.app/demo)  
-**GitHub Repository**: [https://github.com/vaibhav4046/stay](https://github.com/vaibhav4046/stay)
+Built on the **AssemblyAI Voice Agent API** for the AssemblyAI Online Hackathon #2.
 
----
+Live: https://stay-two-swart.vercel.app
 
-## The Problem
+## What it does
 
-Adults with ADHD do not avoid tasks because they lack motivation. When working memory is saturated, the brain cannot locate a manageable first physical move, creating executive-function paralysis.
+1. **Say it.** Talk or type. One task, said however it comes out.
+2. **Shrink it.** Stay names what makes it hard and turns it into a step you can start in two minutes.
+3. **Start it.** A short timer, a spoken check-in when it ends, and a record of what helped. Your own start rate per strategy, with the real counts.
 
-Existing tools either wait passively for prompts or pile up to-do lists that generate guilt. Stay provides real-time body doubling:
-1. Speak what you're avoiding (or type quietly).
-2. Stay identifies the specific friction barrier and shrinks the entry action to under two minutes.
-3. Start a short focus block (5, 10, or 15 minutes).
-4. Stay speaks first when the timer ends to ask how it went.
-5. Learn what strategies help you start, with real counts and denominators.
-6. Export a clear one-page PDF summary for your clinician.
+The orb is the interface. It is a field of dots that gathers into whatever you are talking about: say "ice cream" and the dots pour into a cone, say "dragon" and they form a dragon in its own colours. Common words morph instantly from a hand-built library. Any other word is resolved by a small shape service (an LLM that only names the best emoji, a few tokens per call) and the glyph is sampled into coloured dots. Only dots are drawn.
 
----
+## Safety and privacy (what is actually enforced)
 
-## Clinical & Safety Boundaries
+- **Crisis wording stops coaching.** A deterministic, multilingual, spacing-evasion-resistant detector runs before any model. It shows UK emergency numbers (999, NHS 111, Samaritans 116 123) and never starts a timer. Tested against genuine phrasings and ordinary false positives.
+- **No medication advice.** Dose, mixing and "is this safe" questions get a fixed reply that points to a prescriber or pharmacist.
+- **Local-first.** Sessions, check-ins and memory live in the browser. Export or delete all of it in Settings. Cloud sync (Supabase) is optional and not required.
+- **Audio is not stored by Stay.** It streams to AssemblyAI for the live session.
+- **Only keywords leave for the shape service**, up to three words, never sentences. Crisis and medication wording never reaches it.
+- Not a medical device. No diagnosis.
 
-- **Not a medical device:** Stay does not diagnose ADHD or any other condition, and does not provide psychiatric or medical care.
-- **Medication guardrail:** Stay never recommends, adjusts, starts, stops, or compares medications or doses. Any question regarding prescription drugs is redirected to the user's prescribing clinician or pharmacist.
-- **Fixed crisis support:** Pre-LLM deterministic pattern detection immediately halts coaching and displays UK crisis resources (`999`, `NHS 111`, `Samaritans 116 123`, `Shout 85258`).
-- **Data privacy:** Audio is streamed ephemerally to AssemblyAI and never stored as recordings. All user data can be exported as JSON or permanently erased in one click from Settings.
+## Voice, measured
 
----
+All numbers below come from live probes in `scripts/` (synthesized speech streamed into real sessions, not a human microphone):
 
-## Architecture & Technology
+- Auto-detect transcription accuracy and same-language replies across many languages: `scripts/voice-lang-probe/` (results in `docs/STAY_VERIFICATION_2026-10-18.md`).
+- Tool calls from speech work (`start_focus_timer` with the right minutes).
+- Barge-in: the server notices you speaking about 1.1 s in; Stay stops its own audio on that event.
+- Native-accent voices for Spanish, French, German, Italian and Portuguese; British and American English voices.
 
-- **Frontend & App Router:** Next.js 15, React 19, TypeScript, Tailwind CSS v4.
-- **Voice Agent Pipeline:** AssemblyAI Voice Agent API (`wss://agents.assemblyai.com/v1/ws`) with single-use ephemeral token minting (`/api/voice/token`).
-- **Speech & Audio Engine:** British voice `anna` (24,000 Hz mono PCM16) with custom `AudioWorkletProcessor` (`public/pcm-processor.js`) for capture, resampling, and RMS energy metering.
-- **Visual Instrument ("Stay Signal"):** Original 3D WebGL Torus/Ring harmonic assembly in Three.js with full semantic state tracking, audio-reactive energy, `prefers-reduced-motion` support, and non-WebGL SVG fallback.
-- **LLM Orchestration:** Groq `openai/gpt-oss-120b` (custom LLM on AssemblyAI agent + structured server fallback on `/api/coach/plan`).
-- **Persistence:** Local-first browser storage (`localStorage`) + optional Supabase PostgreSQL schema with strict Row-Level Security (`auth.uid() = user_id`).
-- **Reporting:** Client-side 1-page clinician appointment PDF generator using `jsPDF`.
-- **Testing:** Vitest unit tests (24/24 passing) + Playwright browser E2E tests (5/5 passing against live production).
+## Run it
 
----
-
-## Getting Started
-
-### 1. Clone & Install
 ```bash
-git clone https://github.com/vaibhav4046/stay.git
-cd stay
 npm install
-```
-
-### 2. Configure Environment
-Copy `.env.example` to `.env.local` and add your keys:
-```bash
-cp .env.example .env.local
-```
-
-Required keys:
-- `ASSEMBLYAI_API_KEY`: Your AssemblyAI API key.
-- `GROQ_API_KEY`: Your Groq API key.
-- `ASSEMBLYAI_AGENT_ID`: `agent_c70c56210f7c41548f7785d33dc6c8ab` (or run `npm run agent:sync` to provision a new agent).
-
-### 3. Run Development Server
-```bash
+cp .env.example .env.local   # ASSEMBLYAI_API_KEY, GROQ_API_KEY (optional: GROQ_SHAPE_MODEL, default openai/gpt-oss-20b)
 npm run dev
 ```
-Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### 4. Run Verification Suites
 ```bash
-# Unit tests
-npm test
-
-# Type-check
-npm run lint
-
-# Production build
+npm test            # unit
+npm run lint        # typecheck
 npm run build
+npm run test:e2e    # Playwright against the production build
 ```
 
----
+Live protocol probes (need keys in `.env.local`):
 
-## Project Routes
+```bash
+node scripts/probe-voice-protocol.mjs
+uv run --with edge-tts python scripts/voice-lang-probe/gen_audio.py <dir>
+node scripts/voice-lang-probe/probe-languages.mjs <dir>
+node scripts/voice-lang-probe/probe-tools-bargein.mjs <dir>
+```
 
-- `/`: Landing page introducing the proposition, 4-step flow, and clinical boundaries.
-- `/demo`: Full interactive demonstration mode with live voice + synthetic 7-day history (clearly labeled as sample data).
-- `/app/today`: Live coaching workspace and personal strategy pattern summary.
-- `/app/history`: Timeline of logged task sessions, barriers, and strategies.
-- `/app/treatment`: 30-second daily treatment and focus log.
-- `/app/reports`: Appointment summary preview and one-page PDF export.
-- `/app/settings`: Preferences, care context, JSON export, and one-click data deletion.
-- `/privacy`: Plain-language data privacy disclosure.
-- `/terms`: Terms of use, evidence framing, and safety boundaries.
+## Stack
 
----
+Next.js 15, React 19, TypeScript, Tailwind v4, Three.js (the dot field), Zod, jsPDF (clinician summary), optional Supabase. LLM: Groq (`openai/gpt-oss-120b` for plans, `openai/gpt-oss-20b` for shape picking).
+
+## Not done
+
+- A real-microphone and speaker test (echo, earphone buttons) and a phone GPU frame-rate check.
+- Supabase Auth, Google sign-in and row-level security against a real project.
+- The Voice Agent API documents six languages; others work in practice (see the verification doc) but are not promised by the provider.
 
 ## License
 

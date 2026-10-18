@@ -22,16 +22,13 @@ export interface UserMemoryProfile {
 
 const MEMORY_STORAGE_KEY = 'stay_user_memory_v1';
 
+/** A new user starts with an empty memory: nothing is "known" until they say it or finish a session. */
 export const DEFAULT_USER_MEMORY: UserMemoryProfile = {
   name: null,
   roleOrField: null,
-  coreTriggers: ['email backlog', 'complex documentation', 'administrative paperwork'],
-  knownStrengths: ['20-minute visual sprints', 'voice brainstorming', 'ultra-micro first steps'],
-  facts: [
-    'User thrives when breaking intimidating tasks into under 90-second entry steps.',
-    'Prefers 20-minute focus blocks over shorter 5-minute sprints.',
-    'Appreciates warm, non-judgmental body-double check-ins.',
-  ],
+  coreTriggers: [],
+  knownStrengths: [],
+  facts: [],
   recentSessionsSummary: [],
   lastActive: new Date().toISOString(),
 };

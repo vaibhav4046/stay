@@ -78,13 +78,15 @@ export interface UseVoiceAgentOptions {
   onToggleQuietModeRequested?: () => void;
   onClearChatRequested?: () => void;
   onWebResearchRequested?: (query: string) => void;
+  /** The agent asked the orb to take the shape of something (its show_shape tool). */
+  onShapeRequested?: (concept: string) => void;
 }
 
 export interface AvailableVoice {
   id: string;
   name: string;
   gender: 'female' | 'male';
-  accent: 'British' | 'American';
+  accent: 'British' | 'American' | 'Spanish' | 'French' | 'German' | 'Italian' | 'Portuguese';
   description: string;
 }
 
@@ -98,12 +100,27 @@ export const AVAILABLE_VOICES: AvailableVoice[] = [
   { id: 'alba', name: 'Alba', gender: 'female', accent: 'American', description: 'Gentle American female voice' },
   { id: 'george', name: 'George', gender: 'male', accent: 'American', description: 'Warm, steady American male voice' },
   { id: 'michael', name: 'Michael', gender: 'male', accent: 'American', description: 'Crisp, attentive American male voice' },
+  { id: 'lola', name: 'Lola', gender: 'female', accent: 'Spanish', description: 'Native Spanish voice' },
+  { id: 'estelle', name: 'Estelle', gender: 'female', accent: 'French', description: 'Native French voice' },
+  { id: 'juergen', name: 'Jürgen', gender: 'male', accent: 'German', description: 'Native German voice' },
+  { id: 'giovanni', name: 'Giovanni', gender: 'male', accent: 'Italian', description: 'Native Italian voice' },
+  { id: 'rafael', name: 'Rafael', gender: 'male', accent: 'Portuguese', description: 'Native Portuguese voice' },
 ];
 
-/** Languages the docs list as pinnable via input.language_codes. Live probes (scripts/voice-lang-probe) show auto-detect also transcribes hi/ko/ja accurately, so everything else stays on auto-detect. */
-export const AGENT_NATIVE_LANGS = ['en', 'es', 'fr', 'de', 'it', 'pt'] as const;
-export function isAgentNativeLanguage(code: string): boolean {
-  return (AGENT_NATIVE_LANGS as readonly string[]).includes(code.split('-')[0].toLowerCase());
+/** Language -> the voice with that native accent. Voices cannot change mid-session, so switching restarts cleanly. */
+export const NATIVE_VOICE_FOR_LANG: Record<string, string> = { es: 'lola', fr: 'estelle', de: 'juergen', it: 'giovanni', pt: 'rafael' };
+const NATIVE_VOICE_IDS = Object.values(NATIVE_VOICE_FOR_LANG);
+
+/**
+ * Languages verified end to end against the live AssemblyAI Voice Agent (scripts/voice-lang-probe): a spoken sentence
+ * transcribed with <= 20% character error AND answered in the same language. The provider documents only six of
+ * these (en es fr de it pt); the rest were measured. Pinning input.language_codes to one of them improves accuracy
+ * (pt 13% -> 0%, hi 5% -> 0%). Other languages (pl el hu uk bn ta te th ...) were misheard on auto-detect and are
+ * silent when pinned, so they use the browser's speech recognition instead.
+ */
+export const AGENT_VERIFIED_LANGS = ['en', 'es', 'fr', 'de', 'it', 'pt', 'hi', 'ja', 'zh', 'ko', 'nl', 'ru', 'tr', 'ar', 'sv', 'no', 'da', 'fi', 'ro', 'vi', 'id', 'ms', 'he'] as const;
+export function isAgentVerifiedLanguage(code: string): boolean {
+  return (AGENT_VERIFIED_LANGS as readonly string[]).includes(code.split('-')[0].toLowerCase());
 }
 /** Browser TTS fallback only: which ids sound male. */
 const MALE_VOICE_IDS = ['charles', 'paul', 'george', 'michael'];
@@ -453,15 +470,31 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         // ignore
       }
     }
+    const base = lang.split('-')[0].toLowerCase();
+    const wantVoice = NATIVE_VOICE_FOR_LANG[base];
+    const curVoice = selectedVoiceRef.current;
+    let voiceChanged = false;
+    if (wantVoice && curVoice !== wantVoice && (!NATIVE_VOICE_IDS.includes(curVoice) || NATIVE_VOICE_FOR_LANG[base] !== curVoice)) {
+      selectedVoiceRef.current = wantVoice;
+      setSelectedVoiceState(wantVoice);
+      voiceChanged = true;
+    } else if (!wantVoice && NATIVE_VOICE_IDS.includes(curVoice)) {
+      selectedVoiceRef.current = 'anna';
+      setSelectedVoiceState('anna');
+      voiceChanged = true;
+    }
     const ws = wsRef.current;
-    if (ws && ws.readyState === WebSocket.OPEN && sessionReadyRef.current) {
+    const wsLive = !!ws && ws.readyState === WebSocket.OPEN && sessionReadyRef.current;
+    const onBrowserEngine = !wsLive && !!speechRecRef.current;
+    const agentCanHear = lang === 'auto' || isAgentVerifiedLanguage(lang);
+    if (wsLive && ws && !voiceChanged && agentCanHear) {
       {
         const langMatch = SUPPORTED_LANGUAGES.find((l) => l.code === lang);
         const label = langMatch ? langMatch.label : lang;
         ws.send(
           JSON.stringify({
             type: 'session.update',
-            session: { input: { language_codes: lang !== 'auto' && isAgentNativeLanguage(lang) ? [lang.split('-')[0].toLowerCase()] : [] } },
+            session: { input: { language_codes: lang !== 'auto' && isAgentVerifiedLanguage(lang) ? [lang.split('-')[0].toLowerCase()] : [] } },
           })
         );
         ws.send(
@@ -475,6 +508,9 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           })
         );
       }
+    } else if ((wsLive && (voiceChanged || !agentCanHear)) || (onBrowserEngine && agentCanHear)) {
+      // route changes (agent <-> browser engine) and immutable voice changes need a clean restart
+      restartVoiceRef.current?.();
     } else if (speechRecRef.current) {
       try {
         speechRecRef.current.abort(); // onend restarts recognition with the new lang tag
@@ -871,6 +907,17 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           pendingToolResultsRef.current.push({
             call_id: callId,
             result: JSON.stringify({ status: 'outcome_logged', outcome: parsed.outcome }),
+            is_error: false,
+          });
+          return;
+        }
+
+        if (name === 'show_shape') {
+          const concept = String((rawArgs as { object?: unknown }).object ?? '').trim().slice(0, 40);
+          if (concept) optionsRef.current.onShapeRequested?.(concept);
+          pendingToolResultsRef.current.push({
+            call_id: callId,
+            result: JSON.stringify({ status: concept ? 'shape_shown' : 'ignored' }),
             is_error: false,
           });
           return;
@@ -1449,6 +1496,13 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     setErrorMessage(null);
     setVisualState('connecting');
 
+    const chosenLang = selectedLanguageRef.current;
+    if (chosenLang !== 'auto' && !isAgentVerifiedLanguage(chosenLang)) {
+      // The live agent misheard or ignored this language in testing: use the browser's speech recognition.
+      startNativeSpeechRecognition();
+      return;
+    }
+
     try {
       // 1. Request microphone with hardware echo cancellation, noise suppression, single-channel isolation, and auto gain
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -1512,6 +1566,7 @@ Rules:
 - Default focus timer is ${calibration.preferredMinutes} minutes if the user asks for focus, or whatever duration they say (such as 20 or 25 minutes).
 - When they mention what they are avoiding, acknowledge how they feel, propose ONE ridiculously small first move (<60 seconds), and ask warmly if that feels doable.
 - Never diagnose ADHD or advise on medication or doses.
+- Call show_shape now and then with a plain object that matches the topic, so the orb visibly reflects the conversation.
 - You have native hands-free voice command awareness:
   • If the user says "start timer", "start 20 minutes", or "let's do 15 min", invoke start_focus_timer with that duration.
   • If the user says "break this down" or "make it smaller", invoke propose_coaching_plan with task_shrinking.
@@ -1535,7 +1590,7 @@ ${adaptivePrompt}`;
         }
 
         const u3Config = buildUniversal3ProConfig(selectedLanguageRef.current);
-        const langBase = selectedLanguageRef.current !== 'auto' && isAgentNativeLanguage(selectedLanguageRef.current) ? selectedLanguageRef.current.split('-')[0].toLowerCase() : null;
+        const langBase = selectedLanguageRef.current !== 'auto' && isAgentVerifiedLanguage(selectedLanguageRef.current) ? selectedLanguageRef.current.split('-')[0].toLowerCase() : null;
         socket.send(
           JSON.stringify({
             type: 'session.update',
@@ -1595,6 +1650,19 @@ ${adaptivePrompt}`;
                         outcome: { type: 'string' },
                       },
                       required: ['outcome'],
+                    },
+                  },
+                },
+                {
+                  type: 'function',
+                  function: {
+                    name: 'show_shape',
+                    description:
+                      'Make the orb take the shape of a simple object that resonates with what the user is talking about right now (for example "ice cream", "house keys", "rocket", "volcano"). Call it when the topic changes or the user names something. Use one or two plain words.',
+                    parameters: {
+                      type: 'object',
+                      properties: { object: { type: 'string' } },
+                      required: ['object'],
                     },
                   },
                 },
@@ -2192,6 +2260,19 @@ ${adaptivePrompt}`;
     stopPlaybackQueue,
     startNativeSpeechRecognition,
   ]);
+
+  // Restart cleanly (used when something immutable changes mid-session, like the voice).
+  useEffect(() => {
+    restartVoiceRef.current = () => {
+      disconnectVoiceSession();
+      window.setTimeout(() => {
+        void startVoiceSession();
+      }, 450);
+    };
+    return () => {
+      restartVoiceRef.current = null;
+    };
+  }, [disconnectVoiceSession, startVoiceSession]);
 
   /** Make the agent speak without a user utterance (documented `reply.create`). */
   const speakProactively = useCallback(

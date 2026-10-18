@@ -8,7 +8,7 @@ export function SiteHeader() {
         <StayWordmark />
       </Link>
       <nav className="flex items-center gap-1 sm:gap-2" aria-label="Main">
-        <Link href="/demo" className="btn btn-ghost">Try the demo</Link>
+        <Link href="/privacy" className="btn btn-ghost">Privacy</Link>
         <Link href="/app/today" className="btn btn-primary">Open Stay</Link>
       </nav>
     </header>

@@ -30,12 +30,12 @@ describe('Persistent Cognitive User Memory Engine', () => {
     localStorageMock.clear();
   });
 
-  it('loads default cognitive memory profile', () => {
+  it('starts a new user with an empty memory: nothing is "known" until they say it', () => {
     const memory = loadUserMemory();
     expect(memory.name).toBeNull();
-    expect(memory.coreTriggers.length).toBeGreaterThan(0);
-    expect(memory.knownStrengths).toContain('20-minute visual sprints');
-    expect(memory.facts.length).toBeGreaterThan(0);
+    expect(memory.coreTriggers).toEqual([]);
+    expect(memory.knownStrengths).toEqual([]);
+    expect(memory.facts).toEqual([]);
   });
 
   it('automatically extracts user name from utterance', () => {

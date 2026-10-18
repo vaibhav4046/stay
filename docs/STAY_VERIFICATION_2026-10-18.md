@@ -1,42 +1,59 @@
 # Stay verification, 2026-10-18
 
-Everything below was measured on this machine in this session. Nothing here is carried over from earlier reports.
+Everything below was measured on this machine in this session. Nothing is carried over from earlier reports.
 
-## What was wrong (found, then fixed)
+## Part 1. Defects found and fixed
 
 | # | Defect | Evidence | Fix |
 |---|--------|----------|-----|
-| 1 | **Live voice session config was rejected by the server.** Wrapped tool shape, invented session fields, invented voice ids. | Live probe (`scripts/probe-voice-protocol.mjs`): voice `oliver` -> `invalid_value`, socket closed 1008; wrapped tools -> `invalid_value`, closed 1008; invented fields -> `invalid_format`. | Documented schema: flat tools, `input.keyterms`, `input.voice_focus`, `input.language_codes`, `output.voice`. New schema: `session.updated` -> `session.ready` -> greeting. |
-| 2 | Every `session.error` (and a bogus `UpdateConfiguration` frame) started the browser speech engine **on top of** the live agent: two engines listening and speaking. | Code read against the events reference. | Only fatal codes fall back; the bogus frame is gone. |
-| 3 | 6 of 8 offered voice ids did not exist. | Voices doc + live `invalid_value`. | Real ids: anna, vera, charles, paul, eve, alba, george, michael. Old names ("Oliver") still resolve by voice command. |
-| 4 | Silence "saver" dropped audio frames, starving server turn detection (and billing is per session-hour, so it saved nothing). | Code read. | Removed. |
-| 5 | Crisis detector missed 25 of 27 genuine phrasings and every non-English phrase. Medication gate missed 12 of 15. | Adversarial probe. | Rewritten: English, 30+ languages, spacing-evasion; 55 positive/negative unit cases plus HTTP-level tests. |
-| 6 | "Delete all my data" left memory, calibration and voice prefs; cloud delete reported success without checking errors and used the anon key as a service key. | Code read. | Wipes every `stay_*` key (except user-entered Supabase config), acts as the user under RLS, reports failure. |
-| 7 | Orb smoothing used per-frame constants (speed varied with refresh rate); audio meter caused hundreds of React renders per second. | Code read; measured after fix: p95 frame 16.7 ms, 0 long tasks. | dt-based easing, asymmetric attack/release, critically damped shape spring, 20 Hz state throttle, pause offscreen, adaptive DPR. |
-| 8 | Landing hero orb rendered over the card text; orb popped in blank. | Screenshot. | Sized and contained; placeholder crossfade. |
-| 9 | Dead `HeroSignal` component faked "Listening" with random energy. | Code read. | Deleted. |
+| 1 | **Live voice config was rejected by the server** (wrapped tools, invented session fields, invented voice ids). | `scripts/probe-voice-protocol.mjs`: voice `oliver` -> `invalid_value`, socket closed 1008; wrapped tools -> `invalid_value`, 1008; invented fields -> `invalid_format`. | Documented schema: flat tools, `input.*`, `output.voice`. New schema: `session.updated` -> `session.ready` -> greeting. |
+| 2 | Every `session.error` (and a bogus `UpdateConfiguration` frame) started the browser speech engine on top of the live agent. | Code read against the events reference. | Only fatal codes fall back. |
+| 3 | 6 of 8 offered voices did not exist. | Voices doc + live `invalid_value`. | Real ids; native-accent voices for es/fr/de/it/pt added. |
+| 4 | "Silence saver" dropped audio frames, starving server turn detection (billing is per session-hour, so it saved nothing). | Code read. | Removed. |
+| 5 | Mid-session voice change did nothing (`restartVoiceRef` was never assigned) and `output.voice` is immutable. | Code read + docs. | Clean restart is wired. |
+| 6 | Crisis detector missed 25 of 27 genuine phrasings and every non-English one; medication gate missed 12 of 15. | Adversarial probe. | Rewritten, 30+ languages, spacing-evasion; unit + HTTP tests with false-positive cases. |
+| 7 | "Delete all my data" left memory and prefs; cloud delete reported success unchecked. | Code read. | Wipes every `stay_*` key, acts as the user under RLS, reports failure. |
+| 8 | New users were shown fabricated "memories" ("prefers 20-minute blocks"). | Code read. | Memory starts empty. |
+| 9 | Orb motion: per-frame constants, hundreds of React renders per second, orb overlapped hero text. | p95 frame 16.7 ms, 0 long tasks after fix. | See Part 3. |
 
-## Live voice measurements (AssemblyAI Voice Agent, synthesized speech, no microphone)
+## Part 2. Live voice, measured (synthesized speech into real sessions, not a human microphone)
 
-Speech was synthesized with neural TTS and streamed in real time into live sessions. **This is not a human microphone test.**
+Per-language test: one spoken sentence per language streamed into a live session; transcription accuracy as character error rate (CER) against the known sentence, and whether the reply stayed in the speaker's language/script.
 
-- Transcribe + reply, auto-detect, no `language_codes`: **en, es, fr, de, it, hi, ko, ja all transcribed correctly and replied in kind.** pt transcribed with errors ("às semanas", "pronto como estar").
-- Time to first reply audio after end of speech: about 1.0 to 2.6 s (hi 1.0 s, ja 0.1 s, it 2.6 s).
-- Client tool from speech: `start_focus_timer {minutes: 15, firstStep: "open the tax folder"}` received.
-- Barge-in: `input.speech.started` fired about 1.1 s after the user began speaking and `reply.done interrupted` about 2.7 s. Changing `vad_threshold` / `interruption_delay` did not improve this. The client stops local playback on `input.speech.started`, so audible overlap is about 1.1 s plus network.
+**Verified on auto-detect (CER <= 20% and same-language reply): 23 of 29 tested**
 
-Docs list only en/es/fr/de/it/pt for the Voice Agent API; the probe shows more work in practice. UI copy now says "9 languages verified live" and is not a "32 languages" claim. The 32-language browser/text paths (language detect, localized plans) are unchanged and are separate from live voice.
+en 0%, es 0%, fr 0%, de 0%, it 0%, pt 13%, hi 5%, ja 0%, zh 0%, ko 0%, nl 0%, ru 0%, tr 0%, ar 3%, sv 0%, no 2%, da 0%, fi 0%, ro 2%, vi 0%, id 4%, ms 1%, he 2%.
+
+Pinning `input.language_codes` to the spoken language improved accuracy: pt 13% -> 0%, hi 5% -> 0%; es, ja, ru stayed 0%.
+
+**Not verified (misheard on auto-detect; silent when pinned): pl 58%, hu 38%, el, uk, bn, ta, te, th (all ~100%).** For these the app uses the browser's speech recognition. Czech could not be tested (the test voice returned no audio). Browser recognition itself was not tested here.
+
+Other live results:
+- Reply latency after the end of speech: about 1.0 to 2.6 s (ja 0.1 to 0.4 s).
+- Client tool from speech: `start_focus_timer {minutes: 15, firstStep: "open the tax folder"}`.
+- Barge-in: `input.speech.started` about 1.1 s after the user begins; `vad_threshold` and `interruption_delay` did not change it.
+- The provider documents only six languages for the Voice Agent (en es fr de it pt). The other 17 verified here are measured, not promised.
+
+## Part 3. The orb and the site
+
+- The orb is one field of 3,200 to 5,200 dots. A shape is a different place for the same dots to gather: dots leave the old shape, swirl through the middle at different times, and settle into the new one. Nothing but dots is drawn (no image or SVG overlay; a test checks this).
+- Shape sources, fastest first: 37 hand-built shapes (instant, offline); an offline word table (about 200 words); a shape service where an LLM only names the best emoji (`openai/gpt-oss-20b`, about 350 ms, about 150 tokens; it correctly chose 🦔 hedgehog, 💍 wedding, 🏛️ cathedral, 🛹 skateboard, 🎷 saxophone, 🐙 octopus); a deterministic rosette for anything else. The emoji glyph is sampled into dots in its own colours.
+- Only up to three keywords go to the shape service. Crisis and medication wording is withheld server-side and by the client, and returns the calm orb.
+- The voice agent can also reshape the orb itself with a `show_shape` tool.
+- Removed: `/demo`, the preview tour, the video-card showcase, the old two-mode workspace, the research globe, and clinical-jargon labels. Landing page is now one hero (orb plus a field that reshapes it), three steps, an honest trust section.
+- An LLM asked to author shapes as geometry directly was tried and rejected: umbrella, guitar and dragon came out poor and the model hit a 8k tokens/min limit after six calls.
 
 ## Gates
 
 - `tsc --noEmit`: 0 errors
-- `vitest run`: 167 passed
-- `next build`: 19/19 routes
-- `playwright test`: 24 passed, plus 11 layout/fluidity tests (9 widths 320 to 1920, hero overlap, square canvas, 60 fps-class pacing)
+- `vitest run`: 223 passed
+- `next build`: all routes
+- `playwright test`: 32 tests (landing, shapes, loop, safety, memory, two-user isolation, layout 320 to 1920 px, frame pacing)
 
 ## Not verified
 
 - A real human microphone and speakers (echo, AEC leakage, earphone buttons).
 - Real GPU frame pacing on a phone (measured in headless Chromium with software GL).
-- Supabase Auth / Google OAuth / RLS against a real project (no credentials exercised).
-- Keys used for probes came from `.env.local`; rotate any key that has been pasted into chat.
+- Browser speech recognition for the 9 languages that fall back to it.
+- Supabase Auth / Google OAuth / RLS against a real project.
+- Bundle size: the landing page ships Three.js (about 265 kB first load). A raw WebGL renderer would cut it.

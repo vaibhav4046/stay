@@ -326,7 +326,7 @@ export function OrbCognitiveGames({
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-black/[0.06] pb-3">
         <div>
           <span className="text-[0.68rem] font-bold uppercase tracking-widest text-[#006A67] block">
-            🎮 Co-Op ADHD Prefrontal Game Arena · Stay &amp; You
+            A quick game with Stay
           </span>
           <h3 className="text-sm font-bold text-ink">
             Play with the Living Orb (Voice or Touch)
@@ -383,7 +383,7 @@ export function OrbCognitiveGames({
               : 'bg-black/[0.04] text-ink-2 hover:text-ink'
           }`}
         >
-          🎵 Harmonic Simon Pulse
+          Pattern memory
         </button>
         <button
           type="button"
@@ -396,7 +396,7 @@ export function OrbCognitiveGames({
               : 'bg-black/[0.04] text-ink-2 hover:text-ink'
           }`}
         >
-          🛡️ Impulse Shield (Go/No-Go)
+          Go and stop
         </button>
         <button
           type="button"
@@ -409,7 +409,7 @@ export function OrbCognitiveGames({
               : 'bg-black/[0.04] text-ink-2 hover:text-ink'
           }`}
         >
-          ⚡ Dopamine Word Rally
+          Word chain
         </button>
       </div>
 
@@ -418,7 +418,7 @@ export function OrbCognitiveGames({
         <div className="mt-3.5 space-y-3" data-testid="game-panel-simon">
           <div className="flex items-center justify-between text-xs">
             <span className="text-ink-2">
-              Clinical Target: <strong>Visuospatial Working Memory (Klingberg)</strong>
+              A memory warm-up: <strong>repeat the pattern</strong>
             </span>
             <span className="font-mono font-bold text-[#006A67]" data-testid="simon-score">
               Score: {simonScore} · Span: {bestSpan}
@@ -480,7 +480,7 @@ export function OrbCognitiveGames({
         <div className="mt-3.5 space-y-3" data-testid="game-panel-gonogo">
           <div className="flex items-center justify-between text-xs">
             <span className="text-ink-2">
-              Clinical Target: <strong>Prefrontal Inhibitory Control (Barkley/Still)</strong>
+              A focus warm-up: <strong>tap on go, hold on stop</strong>
             </span>
             <span className="font-mono font-bold text-[#006A67]" data-testid="gonogo-metrics">
               RT: {lastReactionMs ?? '--'}ms · Accuracy: {inhibitionAccuracy}%
@@ -531,10 +531,10 @@ export function OrbCognitiveGames({
         <div className="mt-3.5 space-y-3" data-testid="game-panel-wordrally">
           <div className="flex items-center justify-between text-xs">
             <span className="text-ink-2">
-              Clinical Target: <strong>Left-PFC Verbal Fluency &amp; Dopamine Ignition</strong>
+              A word warm-up: <strong>start each word with the last letter</strong>
             </span>
             <span className="font-mono font-bold text-[#006A67]" data-testid="wordrally-streak">
-              Co-Op Rally Streak: {rallyStreak}x
+              Words in a row: {rallyStreak}
             </span>
           </div>
 
