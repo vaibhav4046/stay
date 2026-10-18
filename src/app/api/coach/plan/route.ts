@@ -159,6 +159,8 @@ Generate the JSON coaching plan.`);
       ...fallbackPlan,
       ...candidate,
       taskText: input.taskText.trim(),
+      // the block length is the person's choice (short by default); the model may not stretch it
+      timerMinutes: input.preferredMinutes || candidate.timerMinutes || fallbackPlan.timerMinutes,
       barrierType,
       strategyKey,
       strategyLabel: strategyDef.label,
