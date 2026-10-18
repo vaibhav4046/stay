@@ -57,3 +57,21 @@ Other live results:
 - Browser speech recognition for the 9 languages that fall back to it.
 - Supabase Auth / Google OAuth / RLS against a real project.
 - Bundle size: the landing page ships Three.js (about 265 kB first load). A raw WebGL renderer would cut it.
+
+## Part 4. Voice lag, round 2 (live-measured; see the caveat on timing)
+
+**Causes found and fixed in the client (deterministic, no timing needed):**
+
+| Cause | Evidence | Fix |
+|---|---|---|
+| Sending a partial `turn_detection` block | Any `turn_detection` object raised reply lag from about 1.4 s to about 3.5 s; its `min_silence` values had no effect (`scripts/voice-e2e/turn-tuning.mjs`). | Removed. The provider's defaults are used. |
+| 11 s greeting, 9 s replies | Full-app timeline: greeting audio ran 1.8 s to 11 s; replies about 9 s of speech. A short prompt cut replies to about 4 s (`latency-ab.mjs`). | Greeting 8 words or fewer (now about 2.2 s of speech, measured in the app); system prompt under about 250 tokens; replies capped at 15 words by prompt. |
+| Several executors for one command | The same spoken command ran on every partial transcript, again on the final transcript, and again via the agent's tool. Typed commands also spoke through the browser voice on top of the live agent. | One executor: the agent's single `app` tool. Locally only pause/resume are instant. Browser speech is blocked while the agent is live (the fixed medication boundary is the one exception). The plan is no longer spoken a second time while the agent is connected. |
+| 18 tools | Each tool adds about 0.08 s per reply. | One compact tool with an action list. |
+| Slow barge-in | The server notices speech about 1.1 s in. | The mic ducks the agent's volume within about 60 ms of sustained loud input; the server event then stops it. Not tested with a real speaker and microphone. |
+
+**Also added:** 16 named voice personas (one per real provider voice; only 5 are genuine non-English accents and the UI says so), voice switching by name, memory add/forget/show by voice (starts empty, never fabricated), and agent actions to open screens, start timers, change language, colour and orb shape. Destructive actions never run by voice: "delete my data" only opens Settings.
+
+**Timing caveat (important).** After the fixes, the provider's response time was too uneven to quote a number. With one identical session config, time from end of speech to first reply audio measured 1.8 s, 2.5 s, 3.9 s and 9.6 s across consecutive runs, while the same probes measured 1.4 to 1.8 s earlier in the day. The fake-microphone harness also shifts when speech reaches the server. So: no latency figure is claimed here. The measured floor with this provider pipeline is about 1.4 s in its calm periods, against roughly 0.3 to 0.5 s for ChatGPT's native speech model. Matching that would need a different architecture (own STT, a fast LLM and streaming TTS), which has not been built or measured.
+
+**Test harness bug found and fixed:** the 16-command tools probe first synthesized only the first word of each sentence (arguments split by the shell), which looked like "the agent hears one word". With correct audio and lead-in silence the single-tool design scored 10 of 16 on the first try; the misses were speech-recognition errors ("Change your password to noodle") and one wrong tool choice.

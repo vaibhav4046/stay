@@ -55,11 +55,12 @@ const CASES = [
 ];
 
 function makePcm(id, text) {
-  const mp3 = path.join(work, `${id}.mp3`), pcm = path.join(work, `${id}.pcm`);
-  if (fs.existsSync(pcm)) return pcm;
-  fs.writeFileSync(path.join(work, 'g.py'), `import asyncio,sys,edge_tts\nasyncio.run(edge_tts.Communicate(sys.argv[2],"en-GB-SoniaNeural").save(sys.argv[1]))\n`);
-  const a = spawnSync('uv', ['run', '--with', 'edge-tts', 'python', path.join(work, 'g.py'), mp3, text], { shell: true });
-  const b = spawnSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', mp3, '-ar', '24000', '-ac', '1', '-f', 's16le', pcm], { shell: true });
+  const mp3 = path.join(work, id + '.mp3'), pcm = path.join(work, id + '.pcm'), txt = path.join(work, id + '.txt');
+  if (fs.existsSync(pcm) && fs.existsSync(txt) && fs.readFileSync(txt, 'utf8') === text) return pcm;
+  // the sentence goes through a file: passing it as a shell argument splits it at spaces and synthesizes one word
+  fs.writeFileSync(txt, text);
+  const a = spawnSync('uv', ['run', '--with', 'edge-tts', 'python', path.join(process.cwd(), 'scripts/voice-e2e/tts_one.py'), mp3, txt]);
+  const b = spawnSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', mp3, '-ar', '24000', '-ac', '1', '-f', 's16le', pcm]);
   if (a.status !== 0 || b.status !== 0) throw new Error('tts failed for ' + id);
   return pcm;
 }
@@ -110,7 +111,8 @@ function run(pcm) {
 let ok = 0;
 const only = process.argv[3] ? process.argv[3].split(',') : null;
 for (const [id, text, wantAction, wantValue] of CASES.filter(([id]) => !only || only.includes(id))) {
-  const pcm = fs.readFileSync(makePcm(id.replace(/\W+/g, '_'), text));
+  // 700 ms of room tone before speech, like a real microphone: without it the first consonant is clipped
+  const pcm = Buffer.concat([Buffer.alloc(33600), fs.readFileSync(makePcm(id.replace(/\W+/g, '_'), text))]);
   const r = await run(pcm);
   const c = r.calls[0];
   const actionOk = wantAction === null ? r.calls.length === 0 : c?.action === wantAction;

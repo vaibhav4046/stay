@@ -18,6 +18,8 @@ const browser = await chromium.launch({
     '--use-fake-device-for-media-stream',
     `--use-file-for-fake-audio-capture=${wav}%noloop`,
     '--autoplay-policy=no-user-gesture-required',
+    // headless defaults to a software GPU; the orb then starves the main thread that relays mic audio. GL=hw uses the real GPU.
+    ...(process.env.GL === 'hw' ? ['--use-angle=d3d11', '--ignore-gpu-blocklist', '--enable-gpu-rasterization'] : []),
   ],
 });
 const ctx = await browser.newContext({ permissions: ['microphone'], viewport: { width: 1200, height: 900 } });
@@ -32,6 +34,7 @@ await page.addInitScript(() => {
 
 const t0 = { v: 0 };
 const events = [];
+const sent = {}; // input.audio frames sent per second: shows whether the mic reaches the server in real time
 const rel = () => ((Date.now() - t0.v) / 1000).toFixed(2);
 page.on('websocket', (ws) => {
   if (!ws.url().includes('assemblyai')) return;
@@ -47,6 +50,7 @@ page.on('websocket', (ws) => {
   ws.on('framesent', (f) => {
     let m;
     try { m = JSON.parse(String(f.payload)); } catch { return; }
+    if (m.type === 'input.audio') { const sec = Math.floor((Date.now() - t0.v) / 1000); sent[sec] = (sent[sec] || 0) + 1; }
     if (m.type !== 'input.audio') events.push({ t: rel(), type: '>> ' + m.type, text: m.type === 'reply.create' ? String(m.instructions || '').slice(0, 90) : m.type === 'conversation.message' ? String(m.content).slice(0, 90) : '', n: 1 });
   });
 });
@@ -63,6 +67,19 @@ t0.v = Date.now();
 await page.getByTestId('orb-button').click();
 await page.waitForTimeout(seconds * 1000);
 
+// lag from each final user transcript to the first agent audio that follows it (independent of the fake device's start offset)
+{
+  const turns = events.filter((e) => e.type === 'transcript.user');
+  for (const u of turns) {
+    const a = events.find((e) => e.type === 'reply.audio' && Number(e.t) >= Number(u.t));
+    const starts = events.filter((e) => e.type === 'reply.started' && Number(e.t) >= Number(u.t) && (!a || Number(e.t) <= Number(a.t) + 30)).length;
+    console.log(`TURN "${String(u.text).slice(0, 50)}" -> first agent audio ${a ? Math.round((Number(a.t) - Number(u.t)) * 1000) + ' ms' : 'none'} (reply.started x${starts})`);
+  }
+  const greeting = events.find((e) => e.type === 'transcript.agent');
+  const ga = events.filter((e) => e.type === 'reply.audio').slice(0, 1)[0];
+  if (greeting && ga) console.log(`GREETING first audio at ${ga.t}s, text ends at ${greeting.t}s -> ${(Number(greeting.t) - Number(ga.t)).toFixed(1)} s of speech`);
+}
+console.log('mic frames sent per second:', Object.entries(sent).map(([k, v]) => `${k}s:${v}`).join(' '));
 console.log(`\n=== timeline (s since mic start) ===`);
 for (const e of events) console.log(`${e.t.padStart(6)}  ${e.type.padEnd(26)} ${e.n > 1 ? `x${e.n} (until ${e.until}) ` : ''}${e.text ? JSON.stringify(String(e.text).slice(0, 110)) : ''}`);
 const tts = await page.evaluate(() => window.__tts);

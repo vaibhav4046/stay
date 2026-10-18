@@ -1,0 +1,76 @@
+/**
+ * The agent's whole control surface: ONE compact tool. Every extra tool adds about 0.08 s to every reply (measured),
+ * so actions live in an enum instead of separate tool definitions. The system prompt is kept under ~200 tokens for the
+ * same reason (long prompts made replies run 9 s instead of 4 s).
+ */
+import type { UserMemoryProfile } from '@/lib/coach/userMemory';
+import { type VoicePersona } from './personas';
+
+export const APP_ACTIONS = [
+  'open', 'ground', 'timer_start', 'timer_stop', 'outcome', 'plan', 'shape', 'color', 'language', 'voice',
+  'memory_add', 'memory_forget', 'memory_show', 'quiet', 'game', 'pause', 'export_data', 'delete_data',
+] as const;
+export type AppActionName = (typeof APP_ACTIONS)[number];
+
+export interface AppActionArgs {
+  action: AppActionName;
+  value?: string;
+  minutes?: number;
+  step?: string;
+}
+
+export const APP_TOOL = {
+  type: 'function',
+  name: 'app',
+  description: 'Control the Stay app. Call when the user asks to open, change, start, stop, remember, forget or show something. One action per call.',
+  parameters: {
+    type: 'object',
+    properties: {
+      action: { type: 'string', enum: [...APP_ACTIONS] },
+      value: {
+        type: 'string',
+        description: 'Target or text: screen (today, history, report, checkin, settings, privacy, memory, voice), language, voice name or gender/accent or random, colour (aurora, sunset, ocean, cyber, emerald, default), object for the orb, fact to remember or forget (or all), task, outcome (started, partly_started, not_started, paused), game (memory, focus, words) with optional easy/medium/hard, on/off',
+      },
+      minutes: { type: 'number' },
+      step: { type: 'string', description: 'The first tiny step, when planning or starting a timer' },
+    },
+    required: ['action'],
+  },
+} as const;
+
+const clip = (s: string, n: number) => (s.length > n ? s.slice(0, n - 1).trimEnd() + '…' : s);
+
+/** One compact line of what Stay knows about the user (top few facts only; the rest is fetched on demand by the tool). */
+export function memoryLine(m: UserMemoryProfile): string {
+  const bits: string[] = [];
+  if (m.name) bits.push(`name ${clip(m.name, 20)}`);
+  if (m.roleOrField) bits.push(clip(m.roleOrField, 30));
+  bits.push(...m.facts.slice(-6).map((f) => clip(f, 60)));
+  const last = m.recentSessionsSummary[0];
+  if (last) bits.push(`last task "${clip(last.task, 40)}" ${last.outcome.replace(/_/g, ' ')}`);
+  return bits.length ? `Remember: ${bits.join('; ')}.` : '';
+}
+
+export function buildSystemPrompt(persona: VoicePersona, memory: UserMemoryProfile): string {
+  return [
+    `You are Stay, a calm friend who helps an adult with ADHD start tasks. Voice: ${persona.name}. ${persona.style}`,
+    'Speak one or two short sentences, at most 15 words. Never read lists aloud. Never talk over a pause or an um.',
+    'Use the app tool when asked to open, change, start, stop, remember or forget something, then confirm in a few words.',
+    'If they ramble several tasks, keep it brief and name ONE two-minute physical first step.',
+    'Match the language they speak. You are not a therapist and never advise on medication.',
+    memoryLine(memory),
+  ].filter(Boolean).join('\n');
+}
+
+/** Greetings stay under ~8 words so the first thing the user hears never lasts longer than their patience. */
+export function buildGreeting(persona: VoicePersona, memory: UserMemoryProfile): string {
+  const last = memory.recentSessionsSummary[0];
+  if (memory.name && last) return `Welcome back, ${clip(memory.name, 16)}. How did ${clip(last.task, 28)} go?`;
+  if (last) return `Welcome back. How did ${clip(last.task, 28)} go?`;
+  if (memory.name) return `Hi ${clip(memory.name, 16)}. What are you putting off?`;
+  return `${persona.name} here. What are you putting off?`;
+}
+
+export function appKeyterms(): string[] {
+  return ['Stay', 'ADHD', 'micro-step', 'parking lot', 'Crumpet', 'Chaiwala', 'Sprocket', 'Lavender', 'Fettuccine', 'Tornado', 'Pretzel', 'Waffle', 'Outback', 'Croissant', 'Bagel', 'Maple Moose', 'Matcha', 'Viking Velvet', 'Goblin Mode', 'Pumpkin Pixel'];
+}

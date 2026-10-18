@@ -329,7 +329,7 @@ export function StayHome({
         setPlan(data);
         setMinutes(data.timerMinutes === 0 ? loadUserCalibration().preferredMinutes || 20 : data.timerMinutes);
         setStep('plan');
-        if (!quietMode && data.spokenResponse) voiceRef.current.speakProactively(data.spokenResponse);
+        if (!quietMode && !voiceRef.current.isConnected && data.spokenResponse) voiceRef.current.speakProactively(data.spokenResponse); // a live agent already answers: never a second voice
       } catch {
         // offline or server error: the deterministic local plan keeps the loop working
         const local = buildDeterministicCoachPlan({ taskText: t, preferredStrategy, careContext, preferredMinutes: minutes, strategyHistory });
@@ -338,7 +338,7 @@ export function StayHome({
         setPlan(local);
         setMinutes(local.timerMinutes === 0 ? loadUserCalibration().preferredMinutes || 20 : local.timerMinutes);
         setStep('plan');
-        if (!quietMode && local.spokenResponse) voiceRef.current.speakProactively(local.spokenResponse);
+        if (!quietMode && !voiceRef.current.isConnected && local.spokenResponse) voiceRef.current.speakProactively(local.spokenResponse);
       } finally {
         setPlanLoading(false);
       }
@@ -616,6 +616,7 @@ export function StayHome({
       {sheet === 'voice' && (
         <Sheet title="Voice and language" onClose={() => setSheet(null)}>
           <p className="label">Voice</p>
+          <p className="meta mt-1">Say a name to switch, like &ldquo;change voice to Captain Crumpet&rdquo;, or &ldquo;a female American voice&rdquo;. Only the voices marked native have a real Spanish, French, German, Italian or Portuguese accent; the rest are British or American voices with a personality.</p>
           <div className="mt-2 grid grid-cols-2 gap-2">
             {voice.availableVoices.map((v) => (
               <button key={v.id} type="button" className="chip justify-start" aria-pressed={voice.selectedVoice === v.id} onClick={() => voice.setSelectedVoice(v.id)}>

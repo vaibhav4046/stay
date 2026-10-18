@@ -9,6 +9,8 @@ import type {
   StrategyKey,
   VoiceVisualState,
 } from '@/types/domain';
+import { PERSONAS, personaById, resolvePersona, type VoicePersona } from '@/lib/voice/personas';
+import { APP_TOOL, appKeyterms, buildGreeting, buildSystemPrompt, type AppActionArgs } from '@/lib/voice/agentTool';
 import {
   detectCrisisSignal,
   detectMedicationAdviceRequest,
@@ -33,6 +35,8 @@ import {
   loadUserMemory,
   extractMemoriesFromUtterance,
   buildMemorySystemPrompt,
+  addUserMemoryFact,
+  removeUserMemoryFact,
   type UserMemoryProfile,
 } from '@/lib/coach/userMemory';
 import {
@@ -86,26 +90,18 @@ export interface AvailableVoice {
   id: string;
   name: string;
   gender: 'female' | 'male';
-  accent: 'British' | 'American' | 'Spanish' | 'French' | 'German' | 'Italian' | 'Portuguese';
+  accent: string;
   description: string;
 }
 
-/** Voice ids are the exact ids the AssemblyAI Voice Agent API accepts (docs: Voices). */
-export const AVAILABLE_VOICES: AvailableVoice[] = [
-  { id: 'anna', name: 'Anna', gender: 'female', accent: 'British', description: 'Calm, steadying British female voice' },
-  { id: 'vera', name: 'Vera', gender: 'female', accent: 'British', description: 'Clear, warm British female voice' },
-  { id: 'charles', name: 'Charles', gender: 'male', accent: 'British', description: 'Grounded, reassuring British male voice' },
-  { id: 'paul', name: 'Paul', gender: 'male', accent: 'British', description: 'Easygoing British male voice' },
-  { id: 'eve', name: 'Eve', gender: 'female', accent: 'American', description: 'Supportive, conversational American female voice' },
-  { id: 'alba', name: 'Alba', gender: 'female', accent: 'American', description: 'Gentle American female voice' },
-  { id: 'george', name: 'George', gender: 'male', accent: 'American', description: 'Warm, steady American male voice' },
-  { id: 'michael', name: 'Michael', gender: 'male', accent: 'American', description: 'Crisp, attentive American male voice' },
-  { id: 'lola', name: 'Lola', gender: 'female', accent: 'Spanish', description: 'Native Spanish voice' },
-  { id: 'estelle', name: 'Estelle', gender: 'female', accent: 'French', description: 'Native French voice' },
-  { id: 'juergen', name: 'Jürgen', gender: 'male', accent: 'German', description: 'Native German voice' },
-  { id: 'giovanni', name: 'Giovanni', gender: 'male', accent: 'Italian', description: 'Native Italian voice' },
-  { id: 'rafael', name: 'Rafael', gender: 'male', accent: 'Portuguese', description: 'Native Portuguese voice' },
-];
+/** One entry per persona; ids are the exact voice ids the AssemblyAI Voice Agent API accepts (see personas.ts for honesty notes). */
+export const AVAILABLE_VOICES: AvailableVoice[] = PERSONAS.map((p) => ({
+  id: p.id,
+  name: p.name,
+  gender: p.gender,
+  accent: p.voiceLabel,
+  description: `${p.voiceLabel}. ${p.style}`,
+}));
 
 /** Language -> the voice with that native accent. Voices cannot change mid-session, so switching restarts cleanly. */
 export const NATIVE_VOICE_FOR_LANG: Record<string, string> = { es: 'lola', fr: 'estelle', de: 'juergen', it: 'giovanni', pt: 'rafael' };
@@ -434,22 +430,25 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     return spec;
   }, []);
 
-  const setSelectedVoice = useCallback((voiceId: string) => {
-    const valid = AVAILABLE_VOICES.find((v) => v.id === voiceId) ? voiceId : 'anna';
-    setSelectedVoiceState(valid);
-    selectedVoiceRef.current = valid;
+  const setSelectedVoice = useCallback((query: string): VoicePersona | null => {
+    const persona = resolvePersona(query, selectedVoiceRef.current);
+    if (!persona) return null;
+    setSelectedVoiceState(persona.id);
+    selectedVoiceRef.current = persona.id;
     if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem('stay_selected_voice', valid);
+        localStorage.setItem('stay_selected_voice', persona.id);
       } catch {
         // ignore
       }
     }
+    optionsRef.current.onShapeRequested?.(persona.shape);
     // output.voice is immutable once the session is ready (immutable_field), so restart cleanly to apply it.
     const ws = wsRef.current;
     if (ws && ws.readyState === WebSocket.OPEN && sessionReadyRef.current) {
       restartVoiceRef.current?.();
     }
+    return persona;
   }, []);
 
   const setSelectedLanguage = useCallback((lang: string) => {
@@ -538,6 +537,8 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
   const wsRef = useRef<WebSocket | null>(null);
   const restartVoiceRef = useRef<(() => void) | null>(null);
+  const playbackGainRef = useRef<GainNode | null>(null);
+  const duckTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sessionReadyRef = useRef(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -641,8 +642,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     }, 750);
   }, []);
 
-  const speakDeterministicBoundary = useCallback((text: string, explicitLangCode?: string) => {
+  const speakDeterministicBoundary = useCallback((text: string, explicitLangCode?: string, force = false) => {
     if (typeof window === 'undefined') return;
+    // One voice at a time: while the live agent is connected, only the fixed safety boundary may use the browser voice.
+    const liveWs = wsRef.current;
+    if (!force && liveWs && liveWs.readyState === WebSocket.OPEN && sessionReadyRef.current) return;
 
     // 1. Play soft clinical boundary tone if audio context is active
     if (audioCtxRef.current && audioCtxRef.current.state === 'running') {
@@ -785,7 +789,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
     const source = ctx.createBufferSource();
     source.buffer = audioBuffer;
-    source.connect(ctx.destination);
+    source.connect(playbackGainRef.current ?? ctx.destination);
     if (analyserRef.current) {
       source.connect(analyserRef.current);
     }
@@ -869,6 +873,109 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     setVisualState('idle');
   }, [stopPlaybackQueue]);
 
+  /** Runs one action requested by the agent's single app tool. Never deletes data: delete_data only opens the confirm screen. */
+  const runAppAction = useCallback(
+    (args: AppActionArgs): Record<string, unknown> => {
+      const o = optionsRef.current;
+      const value = String(args.value ?? '').trim();
+      const lower = value.toLowerCase();
+      switch (args.action) {
+        case 'open': {
+          const screens: Record<string, [string, string]> = {
+            today: ['/app/today', 'Today'], home: ['/app/today', 'Today'], history: ['/app/history', 'History'],
+            report: ['/app/reports', 'Report'], reports: ['/app/reports', 'Report'], checkin: ['/app/treatment', 'Check-in'],
+            'check-in': ['/app/treatment', 'Check-in'], settings: ['/app/settings', 'Settings'], privacy: ['/privacy', 'Privacy'],
+          };
+          if (lower === 'memory') { o.onShowMemoryRequested?.(); return { ok: true, opened: 'memory' }; }
+          if (lower === 'voice' || lower === 'voices') { o.onChangeVoiceRequested?.(); return { ok: true, opened: 'voices' }; }
+          const hit = Object.entries(screens).find(([k]) => lower.includes(k));
+          if (!hit) return { ok: false, error: 'unknown screen' };
+          o.onNavigateRequested?.(hit[1][0], hit[1][1]);
+          return { ok: true, opened: hit[1][1] };
+        }
+        case 'ground': o.onGroundingRequested?.(); return { ok: true };
+        case 'timer_start': {
+          const m = Math.max(1, Math.min(60, Math.round(Number(args.minutes) || 20)));
+          o.onStartTimerRequested?.(m, args.step || value || '');
+          return { ok: true, minutes: m };
+        }
+        case 'timer_stop': o.onVoiceCommandDetected?.({ type: 'stop_timer' } as VoiceCommandAction); return { ok: true };
+        case 'outcome': {
+          const map: Array<[RegExp, SessionOutcome]> = [[/partly|part/, 'partly_started'], [/not|didn|no/, 'not_started'], [/paus|stop/, 'paused_or_stopped'], [/start|did|done|yes/, 'started']];
+          const hit = map.find(([re]) => re.test(lower));
+          if (!hit) return { ok: false, error: 'unknown outcome' };
+          o.onOutcomeRecorded?.(hit[1]);
+          return { ok: true, outcome: hit[1] };
+        }
+        case 'plan': {
+          const plan = buildDeterministicCoachPlan({ taskText: value || args.step || 'this task', preferredMinutes: args.minutes });
+          if (args.step) plan.firstStep = args.step;
+          o.onPlanProposed?.(plan);
+          return { ok: true, firstStep: plan.firstStep };
+        }
+        case 'shape': if (!value) return { ok: false }; o.onShapeRequested?.(value); return { ok: true };
+        case 'color': {
+          const themes = ['aurora', 'sunset', 'ocean', 'cyber', 'emerald', 'default'] as const;
+          const t = themes.find((x) => lower.includes(x));
+          if (!t) return { ok: false, error: 'unknown colour', options: themes };
+          setOrbColorTheme(t);
+          return { ok: true, colour: t };
+        }
+        case 'language': {
+          if (/auto/.test(lower)) { setSelectedLanguage('auto'); return { ok: true, language: 'auto' }; }
+          const l = SUPPORTED_LANGUAGES.find((x) => x.code !== 'auto' && (lower.includes(x.label.toLowerCase()) || lower.includes(x.nativeName.toLowerCase()) || lower === x.code.toLowerCase() || lower === x.code.split('-')[0]));
+          if (!l) return { ok: false, error: 'unknown language' };
+          setSelectedLanguage(l.code);
+          return { ok: true, language: l.label };
+        }
+        case 'voice': {
+          const p = setSelectedVoice(value);
+          return p ? { ok: true, voice: p.name, note: p.voiceLabel } : { ok: false, error: 'no such voice', options: PERSONAS.map((x) => x.name) };
+        }
+        case 'memory_add': {
+          if (!value) return { ok: false };
+          setUserMemory(addUserMemoryFact(value.slice(0, 160)));
+          return { ok: true, saved: value.slice(0, 160) };
+        }
+        case 'memory_forget': {
+          if (!value || /^(all|everything)$/.test(lower)) { o.onShowMemoryRequested?.(); return { ok: true, note: 'Opened memory; the user confirms clearing it there.' }; }
+          const mem = loadUserMemory();
+          const idx = mem.facts.findIndex((f) => f.toLowerCase().includes(lower) || lower.split(/\s+/).some((w) => w.length > 3 && f.toLowerCase().includes(w)));
+          if (idx < 0) return { ok: false, error: 'nothing matched' };
+          const removed = mem.facts[idx];
+          setUserMemory(removeUserMemoryFact(idx));
+          return { ok: true, forgot: removed };
+        }
+        case 'memory_show': {
+          o.onShowMemoryRequested?.();
+          const m = loadUserMemory();
+          return { ok: true, facts: m.facts.slice(-6), name: m.name };
+        }
+        case 'quiet': o.onToggleQuietModeRequested?.(); return { ok: true };
+        case 'game': {
+          const g = /word/.test(lower) ? 'wordrally' : /focus|go|stop|react/.test(lower) ? 'gonogo' : 'simon';
+          const d = /hard/.test(lower) ? 'hard' : /easy/.test(lower) ? 'easy' : /medium/.test(lower) ? 'medium' : null;
+          setTopicShape(5);
+          setActiveGame(g);
+          if (d) setGameDifficulty(d);
+          return { ok: true, game: g, difficulty: d };
+        }
+        case 'pause': {
+          handsFreePausedRef.current = true;
+          setIsHandsFreePaused(true);
+          setVisualState('idle');
+          return { ok: true };
+        }
+        case 'export_data':
+        case 'delete_data':
+          o.onNavigateRequested?.('/app/settings', 'Settings');
+          return { ok: true, note: 'Opened Settings. Data is only downloaded or deleted by the user pressing the button there.' };
+        default: return { ok: false, error: 'unknown action' };
+      }
+    },
+    [setSelectedVoice, setSelectedLanguage]
+  );
+
   const handleClientToolCall = useCallback(
     (callId: string, name: string, rawArgs: Record<string, unknown>) => {
       try {
@@ -909,6 +1016,15 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
             result: JSON.stringify({ status: 'outcome_logged', outcome: parsed.outcome }),
             is_error: false,
           });
+          return;
+        }
+
+        if (name === 'app') {
+          const result = runAppAction(rawArgs as unknown as AppActionArgs);
+          const ws = wsRef.current;
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'tool.result', call_id: callId, result: JSON.stringify(result) }));
+          }
           return;
         }
 
@@ -971,7 +1087,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         });
       }
     },
-    []
+    [runAppAction]
   );
 
   const sendUserTextMessage = useCallback(
@@ -1012,7 +1128,8 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
       // 4. Multi-Intent Human Conversational Parser (executes simultaneous commands + task context)
       const multi = parseMultiIntentUtterance(clean);
-      if (multi.commands.length > 0) {
+      const liveNow = !!wsRef.current && wsRef.current.readyState === WebSocket.OPEN && sessionReadyRef.current;
+      if (multi.commands.length > 0 && (!liveNow || multi.commands.some((c) => c.type === 'pause_listening' || c.type === 'resume_listening'))) {
         setTranscripts((prev) => [
           ...prev,
           {
@@ -1259,7 +1376,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
             timestamp: new Date().toISOString(),
           },
         ]);
-        speakDeterministicBoundary(medBoundary.message, effectiveLang);
+        speakDeterministicBoundary(medBoundary.message, effectiveLang, true);
         return true;
       }
 
@@ -1519,6 +1636,9 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       // 2. Initialize default-rate AudioContext & load AudioWorkletProcessor
       const audioCtx = new AudioContext();
       audioCtxRef.current = audioCtx;
+      const outGain = audioCtx.createGain();
+      outGain.connect(audioCtx.destination);
+      playbackGainRef.current = outGain;
       nextPlaybackTimeRef.current = audioCtx.currentTime;
 
       // Real-time 3-band FFT AnalyserNode for vocal visemes & lip-sync deformation
@@ -1551,43 +1671,10 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       wsRef.current = socket;
 
       socket.onopen = () => {
-        const calibration = loadUserCalibration();
         const memory = loadUserMemory();
-        const adaptivePrompt = buildAdaptiveSystemPrompt(calibration);
-        const memoryPrompt = buildMemorySystemPrompt(memory);
-        const warmHumanPrompt = `You are Stay, an authentic, warm, deeply human conversational body-double companion for adults with ADHD.
-You sound and feel like ChatGPT Voice: natural conversational pacing, casual contractions ("yeah", "I'm", "totally", "let's"), warm emotional validation, and genuine empathy.
-You are sitting right beside the user as a trusted friend helping them through task paralysis.
-Rules:
-- MULTILINGUAL CONVERSATION: You are multilingual. If the user speaks in Hindi, Spanish, French, German, Japanese, Chinese, Arabic, Portuguese, Hinglish, Spanglish, or any other language, seamlessly detect it and respond in THAT SAME LANGUAGE with natural conversational warmth and native authentic phrasing.
-- Speak naturally, gently, and warmly. Use spontaneous conversational backchannels ("Yeah, I totally hear you", "Ugh, that sounds exhausting", "Let's take all the pressure off").
-- Never sound robotic, preachy, or clinical. Never lecture on ADHD psychology or symptoms.
-- Keep spoken replies under 30 words so the conversation flows back and forth quickly without long monologues.
-- Default focus timer is ${calibration.preferredMinutes} minutes if the user asks for focus, or whatever duration they say (such as 20 or 25 minutes).
-- When they mention what they are avoiding, acknowledge how they feel, propose ONE ridiculously small first move (<60 seconds), and ask warmly if that feels doable.
-- Never diagnose ADHD or advise on medication or doses.
-- Call show_shape now and then with a plain object that matches the topic, so the orb visibly reflects the conversation.
-- You have native hands-free voice command awareness:
-  • If the user says "start timer", "start 20 minutes", or "let's do 15 min", invoke start_focus_timer with that duration.
-  • If the user says "break this down" or "make it smaller", invoke propose_coaching_plan with task_shrinking.
-  • If the user says "I'm done" or "I started", invoke record_session_outcome.
-  • If the user says "stay pause" or "hold on", gently acknowledge and pause.
-
-${memoryPrompt}
-
-${adaptivePrompt}`;
-
-        const lastSession = memory.recentSessionsSummary && memory.recentSessionsSummary[0];
-        let greeting = '';
-        if (memory.name && lastSession?.task) {
-          greeting = `Hey ${memory.name}! Welcome back. Last time we worked on "${lastSession.task}". How did that go, or what's one tiny thing we should tackle today?`;
-        } else if (memory.name) {
-          greeting = `Hey ${memory.name}! I'm right here with you. What's on your mind today? Let's make the first step ridiculously light.`;
-        } else if (lastSession?.task) {
-          greeting = `Welcome back! Last time we were working on "${lastSession.task}". Want to keep that momentum going, or pick something fresh?`;
-        } else {
-          greeting = "Hey! I'm Stay, sitting right here with you. What's one thing hanging over your head right now? We'll make the first move ridiculously easy.";
-        }
+        const persona = personaById(selectedVoiceRef.current);
+        const warmHumanPrompt = buildSystemPrompt(persona, memory);
+        const greeting = buildGreeting(persona, memory);
 
         const u3Config = buildUniversal3ProConfig(selectedLanguageRef.current);
         const langBase = selectedLanguageRef.current !== 'auto' && isAgentVerifiedLanguage(selectedLanguageRef.current) ? selectedLanguageRef.current.split('-')[0].toLowerCase() : null;
@@ -1597,121 +1684,14 @@ ${adaptivePrompt}`;
             session: {
               system_prompt: warmHumanPrompt,
               greeting,
+              // No turn_detection block: sending any turn_detection object overrides the provider's tuned defaults and
+              // measurably doubled reply lag (about 1.4 s to 3.5 s). Voice agent sessions use the defaults.
               input: {
-                keyterms: u3Config.keyterms_prompt.slice(0, 100),
+                keyterms: appKeyterms(),
                 voice_focus: 'near-field',
                 ...(langBase ? { language_codes: [langBase] } : {}),
-                turn_detection: { interrupt_response: true },
               },
-              tools: flattenTools([
-                {
-                  type: 'function',
-                  function: {
-                    name: 'propose_coaching_plan',
-                    description:
-                      'Decompose an overwhelming task into ONE ridiculous micro-step (<60s) with a personalized CBT strategy.',
-                    parameters: {
-                      type: 'object',
-                      properties: {
-                        taskText: { type: 'string' },
-                        barrierType: { type: 'string' },
-                        strategyKey: { type: 'string' },
-                        firstStep: { type: 'string' },
-                        timerMinutes: { type: 'number' },
-                      },
-                      required: ['taskText', 'firstStep'],
-                    },
-                  },
-                },
-                {
-                  type: 'function',
-                  function: {
-                    name: 'start_focus_timer',
-                    description:
-                      'Start a bounded focus timer sprint (e.g. 5, 10, 15, 20 minutes) with zero pressure.',
-                    parameters: {
-                      type: 'object',
-                      properties: {
-                        minutes: { type: 'number' },
-                        firstStep: { type: 'string' },
-                      },
-                      required: ['minutes', 'firstStep'],
-                    },
-                  },
-                },
-                {
-                  type: 'function',
-                  function: {
-                    name: 'record_session_outcome',
-                    description: 'Log whether the user started, partly started, or did not start.',
-                    parameters: {
-                      type: 'object',
-                      properties: {
-                        outcome: { type: 'string' },
-                      },
-                      required: ['outcome'],
-                    },
-                  },
-                },
-                {
-                  type: 'function',
-                  function: {
-                    name: 'show_shape',
-                    description:
-                      'Make the orb take the shape of a simple object that resonates with what the user is talking about right now (for example "ice cream", "house keys", "rocket", "volcano"). Call it when the topic changes or the user names something. Use one or two plain words.',
-                    parameters: {
-                      type: 'object',
-                      properties: { object: { type: 'string' } },
-                      required: ['object'],
-                    },
-                  },
-                },
-                {
-                  type: 'function',
-                  function: {
-                    name: 'predict_task_reality',
-                    description:
-                      'Calculate realistic initiation duration vs ADHD perceived time blindness.',
-                    parameters: {
-                      type: 'object',
-                      properties: {
-                        taskText: { type: 'string' },
-                      },
-                      required: ['taskText'],
-                    },
-                  },
-                },
-                {
-                  type: 'function',
-                  function: {
-                    name: 'brainstorm_starter_angles',
-                    description:
-                      'Brainstorm 3 zero-friction starter angles to bypass executive freeze.',
-                    parameters: {
-                      type: 'object',
-                      properties: {
-                        taskText: { type: 'string' },
-                      },
-                      required: ['taskText'],
-                    },
-                  },
-                },
-                {
-                  type: 'function',
-                  function: {
-                    name: 'synthesize_task_path',
-                    description:
-                      'Synthesize a structured 3-phase execution path for complex tasks.',
-                    parameters: {
-                      type: 'object',
-                      properties: {
-                        taskText: { type: 'string' },
-                      },
-                      required: ['taskText'],
-                    },
-                  },
-                },
-              ]),
+              tools: [APP_TOOL],
               output: {
                 voice: selectedVoiceRef.current || 'anna',
               },
@@ -1741,12 +1721,25 @@ ${adaptivePrompt}`;
           const worklet = new AudioWorkletNode(audioCtx, 'pcm-processor');
           workletNodeRef.current = worklet;
 
+          let duckHits = 0;
           worklet.port.onmessage = (e) => {
             const payload = e.data;
             if (!payload) return;
 
             if (payload.type === 'energy') {
               pushAudioLevels(payload.rms);
+              // Barge-in without waiting ~1 s for the server: sustained loud mic input while the agent is audible ducks it.
+              // (Echo cancellation is on; a stray blip never hard-stops anything, only quiets it briefly.)
+              if (activeSourcesRef.current.size > 0 && payload.rms > 0.3) {
+                duckHits += 1;
+                if (duckHits >= 2 && playbackGainRef.current) {
+                  playbackGainRef.current.gain.setTargetAtTime(0.18, audioCtx.currentTime, 0.02);
+                  if (duckTimerRef.current) clearTimeout(duckTimerRef.current);
+                  duckTimerRef.current = setTimeout(() => playbackGainRef.current?.gain.setTargetAtTime(1, audioCtx.currentTime, 0.08), 900);
+                }
+              } else {
+                duckHits = 0;
+              }
               return;
             }
 
@@ -1775,6 +1768,8 @@ ${adaptivePrompt}`;
 
         if (type === 'input.speech.started') {
           stopPlaybackQueue();
+          if (duckTimerRef.current) clearTimeout(duckTimerRef.current);
+          playbackGainRef.current?.gain.setTargetAtTime(1, audioCtxRef.current?.currentTime ?? 0, 0.01);
           if (backchannelTimerRef.current) {
             clearTimeout(backchannelTimerRef.current);
             backchannelTimerRef.current = null;
@@ -1835,51 +1830,6 @@ ${adaptivePrompt}`;
               playEarcon('resume');
               return;
             }
-            if (cmd.type === 'change_voice') {
-              setSelectedVoice(cmd.voiceId);
-              playEarcon('chime');
-            } else if (cmd.type === 'change_language') {
-              setSelectedLanguage(cmd.langCode);
-              playEarcon('chime');
-            } else if (cmd.type === 'open_voice_menu') {
-              optionsRef.current.onChangeVoiceRequested?.();
-            } else if (cmd.type === 'show_memory') {
-              optionsRef.current.onShowMemoryRequested?.();
-            } else if (cmd.type === 'show_history') {
-              optionsRef.current.onShowHistoryRequested?.();
-            } else if (cmd.type === 'open_training') {
-              optionsRef.current.onOpenTrainingRequested?.();
-            } else if (cmd.type === 'close_modals') {
-              optionsRef.current.onCloseModalsRequested?.();
-            } else if (cmd.type === 'switch_view') {
-              optionsRef.current.onSwitchViewRequested?.(cmd.mode);
-            } else if (cmd.type === 'navigate') {
-              optionsRef.current.onNavigateRequested?.(cmd.path, cmd.label);
-            } else if (cmd.type === 'open_grounding') {
-              optionsRef.current.onGroundingRequested?.();
-            } else if (cmd.type === 'toggle_quiet_mode') {
-              optionsRef.current.onToggleQuietModeRequested?.();
-            } else if (cmd.type === 'start_game') {
-              setTopicShape(5);
-              setActiveGame(cmd.game);
-              if (cmd.difficulty) setGameDifficulty(cmd.difficulty);
-            } else if (cmd.type === 'set_game_difficulty') {
-              setTopicShape(5);
-              setGameDifficulty(cmd.difficulty);
-            } else if (cmd.type === 'change_orb_color') {
-              setOrbColorTheme(cmd.colorTheme);
-            } else if (cmd.type === 'change_orb_shape') {
-              setTopicShape(cmd.shapeId);
-            } else if (cmd.type === 'synthesize_billion_shape') {
-              const s =
-                synthesizeGenerativeShape(cmd.concept) ||
-                buildProceduralBillionShape(cmd.concept, cmd.concept);
-              setGenerativeShape(s);
-              setTopicShape(8);
-            } else if (cmd.type === 'clear_chat') {
-              optionsRef.current.onClearChatRequested?.();
-              setTranscripts([]);
-            }
           }
 
           const crisis = detectCrisisSignal(text);
@@ -1936,174 +1886,32 @@ ${adaptivePrompt}`;
               setTopicShape(topic);
             }
 
-            // Multi-intent & hands-free voice command execution on finalized user turn
-            const multi = parseMultiIntentUtterance(text);
-            if (multi.commands.length > 0) {
-              for (const cmd of multi.commands) {
-                optionsRef.current.onVoiceCommandDetected?.(cmd);
-                if (cmd.type === 'pause_listening') {
-                  handsFreePausedRef.current = true;
-                  setIsHandsFreePaused(true);
-                  setVisualState('idle');
-                  stopPlaybackQueue();
-                  playEarcon('pause');
-                  return;
-                }
-                if (cmd.type === 'resume_listening') {
-                  handsFreePausedRef.current = false;
-                  setIsHandsFreePaused(false);
-                  setVisualState('listening');
-                  playEarcon('resume');
-                  return;
-                }
-                if (cmd.type === 'start_timer') {
-                  optionsRef.current.onStartTimerRequested?.(cmd.minutes, text);
-                  playEarcon('chime');
-                } else if (cmd.type === 'stop_timer') {
-                  playEarcon('pause');
-                } else if (cmd.type === 'record_outcome') {
-                  optionsRef.current.onOutcomeRecorded?.(cmd.outcome);
-                  playEarcon('chime');
-                } else if (cmd.type === 'change_voice') {
-                  setSelectedVoice(cmd.voiceId);
-                  playEarcon('chime');
-                } else if (cmd.type === 'change_language') {
-                  setSelectedLanguage(cmd.langCode);
-                  playEarcon('chime');
-                } else if (cmd.type === 'open_voice_menu') {
-                  optionsRef.current.onChangeVoiceRequested?.();
-                  playEarcon('chime');
-                } else if (cmd.type === 'show_memory') {
-                  optionsRef.current.onShowMemoryRequested?.();
-                  playEarcon('chime');
-                } else if (cmd.type === 'show_history') {
-                  optionsRef.current.onShowHistoryRequested?.();
-                  playEarcon('chime');
-                } else if (cmd.type === 'open_training') {
-                  optionsRef.current.onOpenTrainingRequested?.();
-                  playEarcon('chime');
-                } else if (cmd.type === 'close_modals') {
-                  optionsRef.current.onCloseModalsRequested?.();
-                  playEarcon('pause');
-                } else if (cmd.type === 'switch_view') {
-                  optionsRef.current.onSwitchViewRequested?.(cmd.mode);
-                  playEarcon('chime');
-                } else if (cmd.type === 'navigate') {
-                  optionsRef.current.onNavigateRequested?.(cmd.path, cmd.label);
-                  playEarcon('chime');
-                } else if (cmd.type === 'open_grounding') {
-                  optionsRef.current.onGroundingRequested?.();
-                  playEarcon('chime');
-                } else if (cmd.type === 'toggle_quiet_mode') {
-                  optionsRef.current.onToggleQuietModeRequested?.();
-                  playEarcon('chime');
-                } else if (cmd.type === 'start_game') {
-                  playEarcon('chime');
-                  setTopicShape(5);
-                  setActiveGame(cmd.game);
-                  if (cmd.difficulty) setGameDifficulty(cmd.difficulty);
-                } else if (cmd.type === 'set_game_difficulty') {
-                  playEarcon('chime');
-                  setTopicShape(5);
-                  setGameDifficulty(cmd.difficulty);
-                } else if (cmd.type === 'change_orb_color') {
-                  playEarcon('chime');
-                  setOrbColorTheme(cmd.colorTheme);
-                } else if (cmd.type === 'change_orb_shape') {
-                  playEarcon('chime');
-                  setTopicShape(cmd.shapeId);
-                } else if (cmd.type === 'synthesize_billion_shape') {
-                  playEarcon('chime');
-                  const synthesized =
-                    synthesizeGenerativeShape(cmd.concept) ||
-                    buildProceduralBillionShape(cmd.concept, cmd.concept);
-                  setGenerativeShape(synthesized);
-                  if (!multi.commands.some((c) => c.type === 'start_game')) {
-                    setTopicShape(8);
-                  }
-                } else if (cmd.type === 'web_research') {
-                  playEarcon('chime');
-                  setTopicShape(6);
-                  optionsRef.current.onWebResearchRequested?.(cmd.query);
-                } else if (cmd.type === 'calculate_time') {
-                  playEarcon('chime');
-                  const calculation = calculateTaskReality(text);
-                  setTranscripts((prev) => [
-                    ...prev,
-                    {
-                      id: `reality-${Date.now()}`,
-                      role: 'agent',
-                      text: `⏱️ ${calculation.spokenSummary}\n\n• Perceived time: ~${calculation.perceivedMinutes} min\n• Micro-entry move: ${calculation.microEntrySeconds}s\n• Recommended block: ${calculation.recommendedSprintMinutes} min\n• Momentum rate: ${calculation.inertiaBreakRate}%`,
-                      timestamp: new Date().toISOString(),
-                    },
-                  ]);
-                  speakDeterministicBoundary(calculation.spokenSummary);
-                  return;
-                } else if (cmd.type === 'brainstorm_angles') {
-                  playEarcon('chime');
-                  const brainstorm = brainstormStarterAngles(text);
-                  const formatted =
-                    `💡 3 Starter Angles for "${text}":\n\n` +
-                    brainstorm.angles
-                      .map((a, i) => `${i + 1}. **${a.name}** (~${a.timeSeconds}s)\n${a.prompt}`)
-                      .join('\n\n');
-                  setTranscripts((prev) => [
-                    ...prev,
-                    {
-                      id: `brainstorm-${Date.now()}`,
-                      role: 'agent',
-                      text: formatted,
-                      timestamp: new Date().toISOString(),
-                    },
-                  ]);
-                  speakDeterministicBoundary(brainstorm.spokenSummary);
-                  return;
-                } else if (cmd.type === 'synthesize_path') {
-                  playEarcon('chime');
-                  const path = synthesizeTaskPath(text);
-                  const formatted =
-                    `🧭 3-Phase Action Path for "${text}" (${path.totalSprintMinutes}m total):\n\n` +
-                    path.phases
-                      .map((p) => `Phase ${p.phase} · **${p.name}** (${p.durationMinutes}m)\n${p.action}`)
-                      .join('\n\n');
-                  setTranscripts((prev) => [
-                    ...prev,
-                    {
-                      id: `path-${Date.now()}`,
-                      role: 'agent',
-                      text: formatted,
-                      timestamp: new Date().toISOString(),
-                    },
-                  ]);
-                  speakDeterministicBoundary(path.spokenSummary);
-                  return;
-                } else if (cmd.type === 'clear_chat') {
-                  optionsRef.current.onClearChatRequested?.();
-                  setTranscripts([]);
-                  return;
-                }
-              }
-
-              // If user also expressed task/emotional context, propose plan right away
-              if (multi.conversationalContext) {
-                const instantPlan = buildDeterministicCoachPlan({ taskText: text });
-                optionsRef.current.onPlanProposed?.(instantPlan);
-              }
-            } else if (selectedLanguageRef.current === 'auto' && text.length > 3) {
-              // Real-time multilingual adaptation: If user naturally speaks another language, adapt provider instructions on the fly
+            // Only pause/resume are local and instant. Everything else is done by the agent with its single app tool,
+            // so there is exactly one executor and one voice per turn.
+            const localCmd = detectVoiceCommand(text);
+            if (localCmd?.type === 'pause_listening') {
+              handsFreePausedRef.current = true;
+              setIsHandsFreePaused(true);
+              setVisualState('idle');
+              stopPlaybackQueue();
+              playEarcon('pause');
+              return;
+            }
+            if (localCmd?.type === 'resume_listening') {
+              handsFreePausedRef.current = false;
+              setIsHandsFreePaused(false);
+              setVisualState('listening');
+              playEarcon('resume');
+              return;
+            }
+            if (selectedLanguageRef.current === 'auto' && text.length > 3) {
               const autoLang = detectTextLanguage(text, 'auto');
               if (autoLang !== 'en-GB') {
                 const langMatch = SUPPORTED_LANGUAGES.find((l) => l.code === autoLang);
                 const label = langMatch ? langMatch.label : autoLang;
                 const ws = wsRef.current;
                 if (ws && ws.readyState === WebSocket.OPEN && sessionReadyRef.current) {
-                  ws.send(
-                    JSON.stringify({
-                      type: 'conversation.message',
-                      role: 'system',
-                      content: `User is speaking in ${label} (${autoLang}). Reply in ${label}.`,
-                    })
-                  );
+                  ws.send(JSON.stringify({ type: 'conversation.message', role: 'system', content: `User is speaking ${label}. Reply in ${label}.` }));
                 }
               }
             }
@@ -2132,7 +1940,7 @@ ${adaptivePrompt}`;
               ]);
               // Genuinely audible and deterministic speech path:
               // speak the exact clinical boundary without requesting an LLM reply
-              speakDeterministicBoundary(medBoundary.message);
+              speakDeterministicBoundary(medBoundary.message, undefined, true);
             }
           }
           return;
