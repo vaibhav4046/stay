@@ -88,6 +88,8 @@ Other live results:
 
 **Parking lot and reply meter.** New `park` / `park_show` actions on the single app tool. Live probe (synthesized speech into a real agent session): "Park it, I need to call the dentist." -> park("call the dentist"); "Show me what I parked." -> park_show. The first attempt failed (the agent parked "the current task" with no text); the tool description was changed to say what value must hold, and it then passed 2/2. The voice sheet shows measured reply time on the user's device (server-heard end of speech -> first reply audio received); it is a readout, not a benchmark.
 
+**Comparison harness.** `scripts/voice-e2e/compare-bench.mjs` streams the same sentence in real time and times true end of speech -> first reply audio. Stay (AssemblyAI Voice Agent), 5 runs: p50 2539 ms, p90 2693 ms, min 2453, max 2693. OpenAI Realtime and Gemini Live: NOT MEASURED (no keys); their legs are written to the vendors' documented events and have not been run. The 1.4 s figure elsewhere in this document is measured from the server's own "speech stopped" event, which is later than true end of speech, so the two numbers are not comparable.
+
 ## Gates (after Part 5)
 
 - `tsc --noEmit`: 0 errors
