@@ -70,7 +70,13 @@ Next.js 15, React 19, TypeScript, Tailwind v4, Three.js (the dot field), Zod, js
 
 ## Latency: what is and is not true
 
-Measured here (`scripts/voice-e2e/cascade-bench.mjs`, 6 runs, one machine, synthesized speech): AssemblyAI streaming speech-to-text takes about 0.88 s from the end of speech to its end-of-turn event (p50, range 0.83 to 0.95 s); the shared GPT-OSS key returns its first token in about 0.3 s (p50); the streaming TTS endpoint produces first audio about 0.2 s after a Generate and Flush. Added up, a hand-built cascade is about 1.4 s, the same as the Voice Agent's measured floor of about 1.4 s. So Stay does **not** beat ChatGPT's voice mode or Google's live voice on speed, and no page here claims it does. Those two were not measured at all (no keys). Measured from the true end of the sentence (not the server's own "speech stopped" event), the Voice Agent took 2.5 s p50 (2.45 to 2.69 s, 5 runs) in `scripts/voice-e2e/compare-bench.mjs`; that stricter definition is the honest comparison basis. The same script times OpenAI Realtime and Gemini Live when `OPENAI_API_KEY` / `GEMINI_API_KEY` are in `.env.local`; without them they print NOT MEASURED. Those two legs follow the vendors' documented events but have never been run. Run the benches to see your own numbers.
+All figures are time from the true end of the spoken sentence to the first reply audio, measured here with synthesized speech streamed in real time (`scripts/voice-e2e/`). Not a human microphone, one machine, few runs.
+
+- **Stay today (AssemblyAI Voice Agent): 2.5 s p50** (2.45 to 2.69 s, 5 runs, `compare-bench.mjs`).
+- **Parts of a hand-built pipeline** (`cascade-bench.mjs`, 6 runs): speech-to-text end-of-turn 0.88 s p50, GPT-OSS first token 0.3 s p50, streaming text-to-speech first audio about 0.2 s. Added up that is about 1.4 s, so a hand-built pipeline should be roughly 1 s faster than the Voice Agent on the same definition. That is a sum of measured parts, not a measured end-to-end result.
+- **ChatGPT voice and Google live voice: not measured** (no keys). `compare-bench.mjs` times them when `OPENAI_API_KEY` / `GEMINI_API_KEY` are in `.env.local`; those two legs follow the vendors' documented events but have never been run.
+
+Stay does not claim to be faster than either. Earlier notes quoted 1.4 s for the Voice Agent; that was measured from the server's own "speech stopped" event, which fires later than the real end of speech, so it is not comparable.
 
 ## Not done
 
