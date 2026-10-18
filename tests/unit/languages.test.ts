@@ -1,9 +1,11 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, it, expect } from 'vitest';
 import {
   detectTextLanguage,
   buildLocalizedStayResponse,
   SUPPORTED_LANGUAGES,
-  AVAILABLE_VOICES,
+  AVAILABLE_VOICES, isAgentNativeLanguage,
 } from '@/lib/voice/useVoiceAgent';
 import { detectVoiceCommand } from '@/lib/voice/voiceCommands';
 import { buildDeterministicCoachPlan } from '@/lib/coach/strategies';
@@ -153,20 +155,26 @@ describe('Stay 32-Language Universal Voice Engine & Detection', () => {
     });
   });
 
-  it('verifies available voice personas and metadata', () => {
-    expect(AVAILABLE_VOICES.length).toBeGreaterThanOrEqual(6);
-    const ids = AVAILABLE_VOICES.map((v) => v.id);
-    expect(ids).toContain('anna');
-    expect(ids).toContain('oliver');
-    expect(ids).toContain('amanda');
-    expect(ids).toContain('charles');
-    expect(ids).toContain('rachel');
-    expect(ids).toContain('josh');
+  it('only offers voice ids the AssemblyAI Voice Agent API documents', () => {
+    const DOCUMENTED = ['alba', 'eve', 'george', 'jane', 'jean', 'mary', 'michael', 'anna', 'charles', 'paul', 'vera', 'giovanni', 'lola', 'juergen', 'rafael', 'estelle'];
+    for (const v of AVAILABLE_VOICES) expect(DOCUMENTED).toContain(v.id);
+    expect(AVAILABLE_VOICES.some((v) => v.gender === 'male')).toBe(true);
+    expect(AVAILABLE_VOICES.some((v) => v.gender === 'female')).toBe(true);
+    expect(AVAILABLE_VOICES.find((v) => v.id === 'charles')?.gender).toBe('male');
+  });
 
-    const anna = AVAILABLE_VOICES.find((v) => v.id === 'anna');
-    expect(anna?.gender).toBe('female');
-    const oliver = AVAILABLE_VOICES.find((v) => v.id === 'oliver');
-    expect(oliver?.gender).toBe('male');
+  it('pins only the documented Voice Agent languages; others stay on server auto-detect', () => {
+    for (const c of ['en-GB', 'es-ES', 'fr-FR', 'de-DE', 'it-IT', 'pt-PT']) expect(isAgentNativeLanguage(c)).toBe(true);
+    for (const c of ['hi-IN', 'ko-KR', 'ja-JP', 'zh-CN', 'ar-SA']) expect(isAgentNativeLanguage(c)).toBe(false);
+  });
+
+  it('keeps the live voice protocol on the documented contract (regression guard)', () => {
+    const src = fs.readFileSync(path.resolve(__dirname, '../../src/lib/voice/useVoiceAgent.ts'), 'utf8');
+    expect(src).not.toContain('UpdateConfiguration'); // not a protocol event -> invalid_format -> double engine
+    expect(src).not.toContain('instructions: instruction'); // no such session field
+    expect(src).not.toContain('!shouldTransmitPcmFrame'); // dropping frames starves server turn detection
+    expect(src).not.toContain('speech_model: u3Config'); // undocumented session field
+    expect(src).toContain('FATAL_SESSION_ERRORS'); // non-fatal session.error must not start a second engine
   });
 
   it('validates Compliant Multi-Key Rotation Pool, Semantic Cache, Prompt Compression, and Universal-3 Pro Config', () => {

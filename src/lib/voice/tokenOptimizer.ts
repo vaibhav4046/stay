@@ -19,7 +19,7 @@ export interface KeyPoolStatus {
 
 export interface TokenSaverTelemetry {
   speechModel: 'u3-rt-pro';
-  supportedLanguagesCount: 32;
+  supportedLanguagesCount: number;
   tokensSavedTotal: number;
   semanticCacheHits: number;
   localZeroTokenCommands: number;
@@ -273,12 +273,12 @@ export function buildUniversal3ProConfig(selectedLanguage = 'auto', selectedVoic
 export function getTokenSaverTelemetry(): TokenSaverTelemetry {
   return {
     speechModel: 'u3-rt-pro',
-    supportedLanguagesCount: 32,
+    supportedLanguagesCount: 9, // en es fr de it pt hi ko ja: verified live with scripts/voice-lang-probe
     tokensSavedTotal: tokensSavedCounter,
     semanticCacheHits: semanticCacheHitsCounter,
     localZeroTokenCommands: localZeroTokenCmdCounter,
     promptCompressionRatioPct: 72,
-    vadSilenceSavedPct: 48,
+    vadSilenceSavedPct: 0, // silence gating removed: it starved server-side turn detection
     lastResponseLatencyMs: lastLatencyMs,
     assemblyPool: assemblyPool.getStatus(),
     groqPool: groqPool.getStatus(),

@@ -92,7 +92,7 @@ describe('Hands-Free Voice Command Parser', () => {
   it('detects grounding, voice switching, quiet mode, and clear chat commands', () => {
     expect(parseVoiceCommand('Stay ground me')).toEqual({ type: 'open_grounding' });
     expect(parseVoiceCommand('help me breathe')).toEqual({ type: 'open_grounding' });
-    expect(parseVoiceCommand('Switch to male voice')).toEqual({ type: 'change_voice', voiceId: 'oliver' });
+    expect(parseVoiceCommand('Switch to male voice')).toEqual({ type: 'change_voice', voiceId: 'charles' });
     expect(parseVoiceCommand('Change voice to Anna')).toEqual({ type: 'change_voice', voiceId: 'anna' });
     expect(parseVoiceCommand('Switch voice')).toEqual({ type: 'open_voice_menu' });
     expect(parseVoiceCommand('Turn on quiet mode')).toEqual({ type: 'toggle_quiet_mode' });

@@ -268,10 +268,10 @@ export function StayVideoCardsShowcase() {
                 <span className="text-[0.68rem] font-bold uppercase tracking-widest text-[#006A67] bg-[#006A67]/10 px-2.5 py-0.5 rounded-full">
                   Conversational Reflex
                 </span>
-                <span className="text-xs font-mono text-ink-2">32 Languages Native</span>
+                <span className="text-xs font-mono text-ink-2">9 Languages Verified Live</span>
               </div>
               <h3 className="text-xl font-bold tracking-tight text-ink">
-                Natural Multi-Intent Voice in 32 Languages
+                Natural Multi-Intent Voice, Many Languages
               </h3>
               <p className="mt-2 text-xs sm:text-sm text-ink-2 leading-relaxed">
                 Speak how humans actually think. Express emotional overwhelm, request a focus game, and morph the Orb in a single breath without robotic menus or interruptions.

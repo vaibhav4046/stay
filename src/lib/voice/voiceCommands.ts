@@ -155,11 +155,12 @@ export function detectVoiceCommand(text: string): VoiceCommandAction {
 
   // 6. Change Voice ("change voice to oliver", "switch to male voice", "change voice to anna", "switch voice")
   const voiceMatch =
-    clean.match(/\b(?:change|switch|set)\s+(?:the\s+)?voice(?:\s+to)?\s+(anna|oliver|amanda|charles|rachel|josh|male|female)\b/i) ||
-    clean.match(/\b(?:change|switch|set|use)\s+(?:to\s+)?(anna|oliver|amanda|charles|rachel|josh|male|female)\s+voice\b/i);
+    clean.match(/\b(?:change|switch|set)\s+(?:the\s+)?voice(?:\s+to)?\s+(anna|vera|charles|paul|eve|alba|george|michael|oliver|amanda|rachel|josh|male|female)\b/i) ||
+    clean.match(/\b(?:change|switch|set|use)\s+(?:to\s+)?(anna|vera|charles|paul|eve|alba|george|michael|oliver|amanda|rachel|josh|male|female)\s+voice\b/i);
   if (voiceMatch && voiceMatch[1]) {
     const target = voiceMatch[1].toLowerCase();
-    const resolvedId = target === 'male' ? 'oliver' : target === 'female' ? 'anna' : target;
+    const LEGACY: Record<string, string> = { oliver: 'charles', amanda: 'eve', rachel: 'vera', josh: 'michael' };
+    const resolvedId = target === 'male' ? 'charles' : target === 'female' ? 'anna' : LEGACY[target] || target;
     return { type: 'change_voice', voiceId: resolvedId };
   }
   if (/\b(?:change voice|switch voice|voice settings|select voice|choose voice)\b/i.test(clean)) {
@@ -471,7 +472,7 @@ function detectShapeCommandFromText(
   if (billionMatch && billionMatch[1]) {
     const target = billionMatch[1].trim();
     if (
-      !/^(?:grid|workspace|orb|spanish|hindi|french|german|korean|japanese|english|male|female|anna|oliver|easy|medium|hard|quiet)$/i.test(
+      !/^(?:grid|workspace|orb|spanish|hindi|french|german|korean|japanese|english|male|female|anna|vera|charles|paul|eve|alba|george|michael|oliver|easy|medium|hard|quiet)$/i.test(
         target
       )
     ) {

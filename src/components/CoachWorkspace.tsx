@@ -1766,7 +1766,7 @@ export function CoachWorkspace({
             </div>
 
             <div className="pt-3 border-t border-line flex items-center justify-between">
-              <span className="text-xs text-ink-3">Voice commands: &ldquo;Switch to male voice&rdquo; · &ldquo;Change voice to Oliver&rdquo;</span>
+              <span className="text-xs text-ink-3">Voice commands: &ldquo;Switch to male voice&rdquo; · &ldquo;Change voice to Charles&rdquo;</span>
               <button
                 type="button"
                 onClick={() => setShowVoiceModal(false)}

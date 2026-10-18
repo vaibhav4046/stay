@@ -662,6 +662,8 @@ export function Signal({
   className?: string;
 }) {
   const [webglOk, setWebglOk] = useState(true);
+  const [sceneReady, setSceneReady] = useState(false);
+  const handleReady = useCallback(() => setSceneReady(true), []);
   const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
@@ -691,16 +693,35 @@ export function Signal({
       >
         {webglOk ? (
           <>
-            <SignalScene
-              state={state}
-              energy={energy}
-              bands={bands}
-              topicShape={topicShape === 8 ? 3 : topicShape}
-              reducedMotion={reducedMotion}
-              onUnsupported={handleUnsupported}
+            {/* Calm static placeholder until the first WebGL frame is drawn: no blank gap, no pop-in */}
+            <div
+              aria-hidden="true"
+              className="absolute inset-[18%] rounded-full"
+              style={{
+                background: 'radial-gradient(circle at 38% 32%, #bff3ec 0%, #5eead4 38%, #006A67 100%)',
+                opacity: sceneReady ? 0 : 0.55,
+                transition: 'opacity 600ms ease',
+              }}
             />
-            {/* Synchronized 60fps Spring-Physics Parametric Silk Vector Sculpture */}
-            <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+            <div
+              className="h-full w-full"
+              style={{ opacity: sceneReady ? 1 : 0, transition: 'opacity 600ms ease' }}
+            >
+              <SignalScene
+                state={state}
+                energy={energy}
+                bands={bands}
+                topicShape={topicShape === 8 ? 3 : topicShape}
+                reducedMotion={reducedMotion}
+                onUnsupported={handleUnsupported}
+                onReady={handleReady}
+              />
+            </div>
+            {/* Synchronized Spring-Physics Parametric Silk Vector Sculpture (shown only once the scene is live) */}
+            <div
+              className="absolute inset-0 pointer-events-none flex items-center justify-center"
+              style={{ opacity: sceneReady ? 1 : 0, transition: 'opacity 600ms ease' }}
+            >
               <ParametricMorphSculpture
                 state={state}
                 energy={energy}

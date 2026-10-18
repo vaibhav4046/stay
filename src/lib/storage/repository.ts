@@ -362,6 +362,16 @@ export async function appendAuditEvent(
   return event;
 }
 
+function readRawJson(key: string): unknown {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 export function exportAllUserDataJson(): string {
   const payload = {
     exportedAt: new Date().toISOString(),
@@ -371,33 +381,39 @@ export function exportAllUserDataJson(): string {
     coachSessions: getLocalSessions(),
     treatmentCheckins: getLocalCheckins(),
     auditEvents: getLocalAuditEvents(),
+    memory: readRawJson('stay_user_memory_v1'),
+    calibration: readRawJson('stay_user_calibration_v1'),
   };
   return JSON.stringify(payload, null, 2);
 }
 
-export async function deleteAllUserData(): Promise<void> {
-  if (typeof window !== 'undefined') {
-    window.localStorage.removeItem(STORAGE_KEYS.profile);
-    window.localStorage.removeItem(STORAGE_KEYS.sessions);
-    window.localStorage.removeItem(STORAGE_KEYS.checkins);
-    window.localStorage.removeItem(STORAGE_KEYS.audits);
+/** Config the user typed in (not personal data); kept so a wipe does not break their cloud setup. */
+const KEPT_CONFIG_KEYS = new Set(['stay_supabase_url', 'stay_supabase_anon_key']);
+
+function clearAllStayLocalData(): void {
+  if (typeof window === 'undefined') return;
+  const doomed: string[] = [];
+  for (let i = 0; i < window.localStorage.length; i++) {
+    const k = window.localStorage.key(i);
+    if (k && k.startsWith('stay_') && !KEPT_CONFIG_KEYS.has(k)) doomed.push(k);
   }
+  doomed.forEach((k) => window.localStorage.removeItem(k));
+}
+
+/** Wipes every local Stay record (profile, history, check-ins, memory, calibration, voice prefs) and, when signed in, the cloud rows. Throws if the cloud delete did not succeed. */
+export async function deleteAllUserData(): Promise<void> {
+  clearAllStayLocalData();
 
   const supabase = getSupabaseBrowserClient();
-  if (supabase) {
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData?.session?.access_token;
-      if (accessToken) {
-        await fetch('/api/account/delete', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-      }
-    } catch {
-      // Local storage is already purged
-    }
+  if (!supabase) return;
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  if (!accessToken) return;
+  const res = await fetch('/api/account/delete', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) {
+    throw new Error('Local data was deleted, but cloud records could not be deleted. Please try again.');
   }
 }

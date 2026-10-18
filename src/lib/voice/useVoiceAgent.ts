@@ -88,14 +88,36 @@ export interface AvailableVoice {
   description: string;
 }
 
+/** Voice ids are the exact ids the AssemblyAI Voice Agent API accepts (docs: Voices). */
 export const AVAILABLE_VOICES: AvailableVoice[] = [
   { id: 'anna', name: 'Anna', gender: 'female', accent: 'British', description: 'Calm, steadying British female voice' },
-  { id: 'oliver', name: 'Oliver', gender: 'male', accent: 'British', description: 'Warm, thoughtful British male voice' },
-  { id: 'amanda', name: 'Amanda', gender: 'female', accent: 'American', description: 'Supportive, conversational American female voice' },
-  { id: 'charles', name: 'Charles', gender: 'male', accent: 'American', description: 'Grounded, reassuring American male voice' },
-  { id: 'rachel', name: 'Rachel', gender: 'female', accent: 'American', description: 'Clear, gentle American female voice' },
-  { id: 'josh', name: 'Josh', gender: 'male', accent: 'American', description: 'Crisp, attentive American male voice' },
+  { id: 'vera', name: 'Vera', gender: 'female', accent: 'British', description: 'Clear, warm British female voice' },
+  { id: 'charles', name: 'Charles', gender: 'male', accent: 'British', description: 'Grounded, reassuring British male voice' },
+  { id: 'paul', name: 'Paul', gender: 'male', accent: 'British', description: 'Easygoing British male voice' },
+  { id: 'eve', name: 'Eve', gender: 'female', accent: 'American', description: 'Supportive, conversational American female voice' },
+  { id: 'alba', name: 'Alba', gender: 'female', accent: 'American', description: 'Gentle American female voice' },
+  { id: 'george', name: 'George', gender: 'male', accent: 'American', description: 'Warm, steady American male voice' },
+  { id: 'michael', name: 'Michael', gender: 'male', accent: 'American', description: 'Crisp, attentive American male voice' },
 ];
+
+/** Languages the docs list as pinnable via input.language_codes. Live probes (scripts/voice-lang-probe) show auto-detect also transcribes hi/ko/ja accurately, so everything else stays on auto-detect. */
+export const AGENT_NATIVE_LANGS = ['en', 'es', 'fr', 'de', 'it', 'pt'] as const;
+export function isAgentNativeLanguage(code: string): boolean {
+  return (AGENT_NATIVE_LANGS as readonly string[]).includes(code.split('-')[0].toLowerCase());
+}
+/** Browser TTS fallback only: which ids sound male. */
+const MALE_VOICE_IDS = ['charles', 'paul', 'george', 'michael'];
+
+/** The documented session.tools shape is flat ({type,name,description,parameters}); the code builds OpenAI-style wrapped tools. */
+function flattenTools(tools: Array<{ type: string; function?: Record<string, unknown> } & Record<string, unknown>>) {
+  return tools.map((t) => (t.function ? { type: 'function', ...t.function } : t));
+}
+
+/** session.error codes that mean the agent session cannot continue; everything else is logged and ignored. */
+const FATAL_SESSION_ERRORS = new Set([
+  'UNAUTHORIZED', 'FORBIDDEN', 'server_error', 'INTERNAL_ERROR', 'agent_init_failed', 'agent_timeout',
+  'session_expired', 'session_not_found', 'session_forbidden', 'at_capacity', 'concurrency_exceeded',
+]);
 
 export const TOPIC_SHAPE_LABELS: Record<number, { icon: string; label: string }> = {
   0: { icon: '🌊', label: 'Fluid Resonance' },
@@ -335,12 +357,26 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const [visualState, setVisualState] = useState<VoiceVisualState>('idle');
   const [isConnected, setIsConnected] = useState(false);
   const [audioEnergy, setAudioEnergy] = useState(0);
+  const lastAudioPushRef = useRef(0);
+  const lastAudioOverallRef = useRef(0);
   const [audioBands, setAudioBands] = useState<AudioSpectrumBands>({
     low: 0,
     mid: 0,
     high: 0,
     overall: 0,
   });
+
+  /** Hot audio path: at most ~20 React updates/s, and only when the level meaningfully changed.
+   *  The orb scene smooths between updates with frame-rate independent easing. */
+  const pushAudioLevels = useCallback((overall: number, bands?: { low: number; mid: number; high: number }) => {
+    const now = performance.now();
+    if (now - lastAudioPushRef.current < 50) return;
+    if (Math.abs(overall - lastAudioOverallRef.current) < 0.012) return;
+    lastAudioPushRef.current = now;
+    lastAudioOverallRef.current = overall;
+    setAudioEnergy(overall);
+    if (bands) setAudioBands({ ...bands, overall });
+  }, []);
   const [partialUserTranscript, setPartialUserTranscript] = useState('');
   const [transcripts, setTranscripts] = useState<VoiceTranscriptEntry[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -392,20 +428,10 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         // ignore
       }
     }
+    // output.voice is immutable once the session is ready (immutable_field), so restart cleanly to apply it.
     const ws = wsRef.current;
     if (ws && ws.readyState === WebSocket.OPEN && sessionReadyRef.current) {
-      ws.send(
-        JSON.stringify({
-          type: 'session.update',
-          session: {
-            output: {
-              type: 'audio',
-              voice: valid,
-              format: { encoding: 'audio/pcm', sample_rate: 24000 },
-            },
-          },
-        })
-      );
+      restartVoiceRef.current?.();
     }
   }, []);
 
@@ -429,20 +455,32 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     }
     const ws = wsRef.current;
     if (ws && ws.readyState === WebSocket.OPEN && sessionReadyRef.current) {
-      const langMatch = SUPPORTED_LANGUAGES.find((l) => l.code === lang);
-      const label = langMatch ? langMatch.label : lang;
-      const instruction =
-        lang === 'auto'
-          ? 'Universal auto language detection active. Seamlessly match whatever language or mix the user speaks in real-time.'
-          : `User has switched primary spoken language to ${label} (${lang}). Respond immediately and naturally in ${label}.`;
-      ws.send(
-        JSON.stringify({
-          type: 'session.update',
-          session: {
-            instructions: instruction,
-          },
-        })
-      );
+      {
+        const langMatch = SUPPORTED_LANGUAGES.find((l) => l.code === lang);
+        const label = langMatch ? langMatch.label : lang;
+        ws.send(
+          JSON.stringify({
+            type: 'session.update',
+            session: { input: { language_codes: lang !== 'auto' && isAgentNativeLanguage(lang) ? [lang.split('-')[0].toLowerCase()] : [] } },
+          })
+        );
+        ws.send(
+          JSON.stringify({
+            type: 'conversation.message',
+            role: 'system',
+            content:
+              lang === 'auto'
+                ? 'Match whatever language the user speaks, including mid-conversation switches.'
+                : `The user switched their spoken language to ${label}. Reply in ${label}.`,
+          })
+        );
+      }
+    } else if (speechRecRef.current) {
+      try {
+        speechRecRef.current.abort(); // onend restarts recognition with the new lang tag
+      } catch {
+        // ignore
+      }
     }
   }, []);
 
@@ -463,6 +501,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   });
 
   const wsRef = useRef<WebSocket | null>(null);
+  const restartVoiceRef = useRef<(() => void) | null>(null);
   const sessionReadyRef = useRef(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -599,7 +638,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         utterance.lang = detectedLang;
         const voices = window.speechSynthesis.getVoices();
         const langPrefix = detectedLang.split('-')[0].toLowerCase();
-        const isMale = ['oliver', 'charles', 'josh'].includes(selectedVoiceRef.current);
+        const isMale = MALE_VOICE_IDS.includes(selectedVoiceRef.current);
         const matchedVoice =
           voices.find((v) => {
             const name = v.name.toLowerCase();
@@ -608,13 +647,13 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
             if (isMale) {
               return (
                 name.includes('male') ||
-                name.includes('oliver') ||
+                name.includes('paul') ||
                 name.includes('george') ||
                 name.includes('david') ||
                 name.includes('daniel') ||
                 name.includes('guy') ||
                 name.includes('charles') ||
-                name.includes('josh')
+                name.includes('michael')
               );
             }
             return (
@@ -622,8 +661,8 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
               name.includes('anna') ||
               name.includes('samantha') ||
               name.includes('victoria') ||
-              name.includes('amanda') ||
-              name.includes('rachel') ||
+              name.includes('eve') ||
+              name.includes('vera') ||
               name.includes('natural')
             );
           }) ||
@@ -703,7 +742,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       sumSq += sample * sample;
     }
     const rms = Math.min(1, Math.sqrt(sumSq / pcm16.length) * 3.8);
-    setAudioEnergy((prev) => prev * 0.4 + rms * 0.6);
+    pushAudioLevels(rms);
 
     const audioBuffer = ctx.createBuffer(1, float32.length, 24000);
     audioBuffer.copyToChannel(float32, 0);
@@ -1320,7 +1359,8 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
             backchannelTimerRef.current = null;
           }
           setPartialUserTranscript(interim);
-          const energy = 0.25 + Math.random() * 0.25;
+          // No mic metering in browser-engine mode: derive a deterministic pulse from words recognised so far.
+          const energy = 0.22 + (interim.trim().split(/\s+/).length % 5) * 0.05;
           setAudioEnergy(energy);
           setAudioBands({
             low: energy * 0.95,
@@ -1465,7 +1505,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 You sound and feel like ChatGPT Voice: natural conversational pacing, casual contractions ("yeah", "I'm", "totally", "let's"), warm emotional validation, and genuine empathy.
 You are sitting right beside the user as a trusted friend helping them through task paralysis.
 Rules:
-- MULTILINGUAL CONVERSATION: You are fully multilingual across 32 languages. If the user speaks in Hindi, Spanish, French, German, Japanese, Chinese, Arabic, Portuguese, Hinglish, Spanglish, or any other language, seamlessly detect it and respond in THAT SAME LANGUAGE with natural conversational warmth and native authentic phrasing.
+- MULTILINGUAL CONVERSATION: You are multilingual. If the user speaks in Hindi, Spanish, French, German, Japanese, Chinese, Arabic, Portuguese, Hinglish, Spanglish, or any other language, seamlessly detect it and respond in THAT SAME LANGUAGE with natural conversational warmth and native authentic phrasing.
 - Speak naturally, gently, and warmly. Use spontaneous conversational backchannels ("Yeah, I totally hear you", "Ugh, that sounds exhausting", "Let's take all the pressure off").
 - Never sound robotic, preachy, or clinical. Never lecture on ADHD psychology or symptoms.
 - Keep spoken replies under 30 words so the conversation flows back and forth quickly without long monologues.
@@ -1494,32 +1534,21 @@ ${adaptivePrompt}`;
           greeting = "Hey! I'm Stay, sitting right here with you. What's one thing hanging over your head right now? We'll make the first move ridiculously easy.";
         }
 
-        // Native AssemblyAI Universal-3 Pro (u3-rt-pro) configuration with 32-language detection, speaker isolation, voice focus, and ADHD + multilingual keyterms
         const u3Config = buildUniversal3ProConfig(selectedLanguageRef.current);
-        try {
-          socket.send(
-            JSON.stringify({
-              type: 'UpdateConfiguration',
-              ...u3Config,
-              keyterms: u3Config.keyterms_prompt,
-            })
-          );
-        } catch {
-          // ignore if provider does not support frame
-        }
-
+        const langBase = selectedLanguageRef.current !== 'auto' && isAgentNativeLanguage(selectedLanguageRef.current) ? selectedLanguageRef.current.split('-')[0].toLowerCase() : null;
         socket.send(
           JSON.stringify({
             type: 'session.update',
             session: {
               system_prompt: warmHumanPrompt,
               greeting,
-              speech_model: u3Config.speech_model,
-              language_detection: u3Config.language_detection,
-              speaker_isolation: u3Config.speaker_isolation,
-              voice_focus: u3Config.voice_focus,
-              keyterms: u3Config.keyterms_prompt,
-              tools: [
+              input: {
+                keyterms: u3Config.keyterms_prompt.slice(0, 100),
+                voice_focus: 'near-field',
+                ...(langBase ? { language_codes: [langBase] } : {}),
+                turn_detection: { interrupt_response: true },
+              },
+              tools: flattenTools([
                 {
                   type: 'function',
                   function: {
@@ -1614,11 +1643,9 @@ ${adaptivePrompt}`;
                     },
                   },
                 },
-              ],
+              ]),
               output: {
-                type: 'audio',
                 voice: selectedVoiceRef.current || 'anna',
-                format: { encoding: 'audio/pcm', sample_rate: 24000 },
               },
             },
           })
@@ -1645,15 +1672,13 @@ ${adaptivePrompt}`;
           const source = audioCtx.createMediaStreamSource(stream);
           const worklet = new AudioWorkletNode(audioCtx, 'pcm-processor');
           workletNodeRef.current = worklet;
-          let latestRms = 0.05;
 
           worklet.port.onmessage = (e) => {
             const payload = e.data;
             if (!payload) return;
 
             if (payload.type === 'energy') {
-              latestRms = payload.rms;
-              setAudioEnergy((prev) => prev * 0.55 + payload.rms * 0.45);
+              pushAudioLevels(payload.rms);
               return;
             }
 
@@ -1664,7 +1689,6 @@ ${adaptivePrompt}`;
             ) {
               // Suppress mic audio chunks when hands-free listening is paused or gated by VAD silence saver
               if (handsFreePausedRef.current) return;
-              if (!shouldTransmitPcmFrame(latestRms)) return;
 
               const b64 = arrayBufferToBase64(payload.buffer);
               socket.send(
@@ -2007,10 +2031,9 @@ ${adaptivePrompt}`;
                 if (ws && ws.readyState === WebSocket.OPEN && sessionReadyRef.current) {
                   ws.send(
                     JSON.stringify({
-                      type: 'session.update',
-                      session: {
-                        instructions: `User is speaking in ${label} (${autoLang}). Seamlessly respond in ${label} with warm ADHD body-doubling support.`,
-                      },
+                      type: 'conversation.message',
+                      role: 'system',
+                      content: `User is speaking in ${label} (${autoLang}). Reply in ${label}.`,
                     })
                   );
                 }
@@ -2134,8 +2157,13 @@ ${adaptivePrompt}`;
         }
 
         if (type === 'session.error') {
-          console.warn('AssemblyAI session error, falling back to browser speech recognition', msg);
-          startNativeSpeechRecognition();
+          const code = String(msg.code || msg.error_code || '');
+          if (FATAL_SESSION_ERRORS.has(code) || !sessionReadyRef.current) {
+            console.warn('AssemblyAI session cannot continue; using browser speech recognition', code);
+            if (!speechRecRef.current) startNativeSpeechRecognition();
+          } else {
+            console.warn('AssemblyAI non-fatal session error ignored', code, msg.message);
+          }
           return;
         }
 
@@ -2146,7 +2174,7 @@ ${adaptivePrompt}`;
 
       socket.onerror = () => {
         console.warn('AssemblyAI WebSocket error, activating native speech recognition fallback');
-        startNativeSpeechRecognition();
+        if (!speechRecRef.current) startNativeSpeechRecognition();
       };
 
       socket.onclose = () => {
@@ -2216,15 +2244,9 @@ ${adaptivePrompt}`;
         const overall = Math.min(1, (low * 0.5 + mid * 0.3 + high * 0.2) * 2.2);
 
         if (overall > 0.02) {
-          setAudioBands({ low, mid, high, overall });
-          setAudioEnergy((prev) => prev * 0.4 + overall * 0.6);
+          pushAudioLevels(overall, { low, mid, high });
         } else {
-          setAudioBands((prev) => ({
-            low: prev.low * 0.85,
-            mid: prev.mid * 0.85,
-            high: prev.high * 0.85,
-            overall: prev.overall * 0.85,
-          }));
+          pushAudioLevels(0, { low: 0, mid: 0, high: 0 }); // scene release-easing handles the decay
         }
       }
       rafId = requestAnimationFrame(sample);

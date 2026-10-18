@@ -36,7 +36,7 @@ class PcmProcessor extends AudioWorkletProcessor {
     const normalizedEnergy = Math.min(1, rms * 4.5);
 
     this.frameCount++;
-    if (this.frameCount % 3 === 0) {
+    if (this.frameCount % 12 === 0) { // ~30 Hz is plenty; the scene interpolates between updates
       this.port.postMessage({
         type: 'energy',
         rms: normalizedEnergy,

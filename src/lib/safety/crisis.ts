@@ -43,40 +43,96 @@ export const UK_CRISIS_RESOURCES = [
   },
 ] as const;
 
+/** Lowercase, strip zero-width chars, unify quotes, collapse whitespace. */
+function normalizeSafetyText(input: string): string {
+  return (input || '')
+    .normalize('NFKC')
+    .replace(/[​-‍﻿]/g, '')
+    .replace(/[‘’ʼ`]/g, "'")
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** "k i l l  m y s e l f" / "kill-my.self" -> "killmyself" (defeats spacing evasion). */
+function squashSafetyText(normalized: string): string {
+  return normalized.replace(/[^\p{L}\p{N}]+/gu, '');
+}
+
+// English crisis phrasing. High recall on purpose: a false positive shows a kind resource card,
+// a false negative can leave someone in danger with a productivity timer.
 const CRISIS_PATTERNS: Array<{ regex: RegExp; label: string }> = [
-  { regex: /\b(kill\s+myself|killing\s+myself)\b/i, label: 'self-harm intent' },
-  { regex: /\b(end\s+my\s+life|ending\s+my\s+life|end\s+it\s+all)\b/i, label: 'ending life' },
-  { regex: /\b(suicide|suicidal)\b/i, label: 'suicidal thoughts' },
-  { regex: /\b(want\s+to\s+die|wanna\s+die|better\s+off\s+dead|wish\s+i\s+were\s+dead|wish\s+i\s+was\s+dead)\b/i, label: 'wanting to die' },
-  { regex: /\b(hurt\s+myself|harm\s+myself|self[\s-]?harm)\b/i, label: 'self-harm' },
-  { regex: /\b(overdose|take\s+all\s+my\s+pills|swallow\s+all\s+my\s+pills)\b/i, label: 'overdose risk' },
-  { regex: /\b(don'?t\s+want\s+to\s+be\s+alive|can'?t\s+keep\s+living|no\s+reason\s+to\s+live)\b/i, label: 'life safety risk' },
+  { regex: /\b(kill(?:ing)?\s+my\s?self|kill\s+me\s+now|unalive\s+(?:my\s?self|me)|un-alive)\b/i, label: 'self-harm intent' },
+  { regex: /(?<!\d\s?)\b(kms|kys)\b/i, label: 'self-harm shorthand' },
+  { regex: /\b(end(?:ing)?\s+my\s+(?:own\s+)?life|take\s+my\s+own\s+life|taking\s+my\s+own\s+life|end\s+it\s+all|finish\s+it\s+all)\b/i, label: 'ending life' },
+  { regex: /\b(?:thinking\s+(?:about|of)|feel(?:ing)?\s+like|going\s+to|gonna|want\s+to|planning\s+to|ready\s+to|about\s+to|need\s+to|should)\s+end(?:ing)?\s+(?:it|things|everything)\b/i, label: 'ending life' },
+  { regex: /\b(suicide|suicidal|suicid)/i, label: 'suicidal thoughts' },
+  { regex: /\b(?:want(?:ed)?\s+to\s+die|wanna\s+die|better\s+off\s+dead|wish\s+i\s+(?:were|was)\s+dead|wish\s+i\s+(?:could\s+)?(?:just\s+)?(?:die|disappear|never\s+wake\s+up)|wish\s+i\s+(?:wasn'?t|was\s+not|weren'?t)\s+(?:here|alive|born))\b/i, label: 'wanting to die' },
+  { regex: /\b(?:don'?t|do\s+not|dont|no\s+longer|never)\s+want\s+to\s+(?:live|be\s+alive|be\s+here|exist|wake\s+up|go\s+on|continue\s+living)\b/i, label: 'life safety risk' },
+  { regex: /\b(?:can'?t|cannot|won'?t)\s+(?:keep\s+living|go\s+on\s+living|live\s+like\s+this\s+anymore)\b/i, label: 'life safety risk' },
+  { regex: /\bno\s+(?:point|reason|purpose)\s+(?:in|to)\s+(?:living|live|going\s+on|being\s+alive|continuing)\b/i, label: 'life safety risk' },
+  { regex: /\b(?:want|going|gonna|plan(?:ning)?|ready)\s+to\s+disappear\b|\bdisappear\s+(?:forever|for\s+good)\b/i, label: 'wanting to disappear' },
+  { regex: /\b(?:better\s+off\s+without\s+me|everyone\s+(?:would|will)\s+be\s+better\s+off|world\s+(?:would|will)\s+be\s+better\s+without\s+me)\b/i, label: 'burden / hopelessness' },
+  { regex: /\b(hurt(?:ing)?\s+my\s?self|harm(?:ing)?\s+my\s?self|self[\s-]?harm|self[\s-]?injur)/i, label: 'self-harm' },
+  { regex: /\b(?:cut(?:ting)?|burn(?:ing)?|hang(?:ing)?|drown(?:ing)?|shoot(?:ing)?|stab(?:bing)?|poison(?:ing)?|starv(?:e|ing))\s+my\s?self\b(?!\s+(?:some\s+slack|in\s+(?:work|the\s+foot|tasks)|out\b))/i, label: 'self-harm method' },
+  { regex: /\bjump(?:ing)?\s+(?:off|from)\s+(?:a|the|my)\s+(?:bridge|building|roof|cliff|balcony|window|train)\b/i, label: 'self-harm method' },
+  { regex: /\b(overdos(?:e|ed|ing)|(?:took|taken|taking|swallowed|swallow)\s+(?:too\s+many|all\s+(?:of\s+)?my)\s+(?:pills|tablets|meds|medication))\b/i, label: 'overdose risk' },
 ];
+
+// Non-English crisis phrases (substring match; \b is meaningless outside Latin script).
+const MULTILINGUAL_CRISIS_REGEX = new RegExp(
+  [
+    // Hindi / Devanagari
+    'मरना चाहता', 'मरना चाहती', 'मर जाना चाहता', 'मर जाना चाहती', 'मर जाऊं', 'जीना नहीं चाहता', 'जीना नहीं चाहती', 'आत्महत्या', 'खुदकुशी', 'अपनी जान', 'ज़िंदगी खत्म', 'जिंदगी खत्म', 'जीने का कोई मतलब नहीं', 'खुद को मार', 'खुद को नुकसान', 'खुद को चोट',
+    // Hinglish / romanised Hindi
+    'mar\\s*jana\\s*chah', 'marna\\s*chah', 'mar\\s*jaana\\s*chah', 'khudkushi', 'khud\\s*kushi', 'atmahatya', 'jeena\\s*nahi\\s*chah', 'jeene\\s*ka\\s*koi\\s*matlab\\s*nahi', 'jaan\\s*de\\s*du', 'zindagi\\s*khatam', 'khud\\s*ko\\s*(?:maar|hurt|nuksan)',
+    // Spanish
+    'quiero\\s+morir', 'me\\s+quiero\\s+matar', 'quitarme\\s+la\\s+vida', 'no\\s+quiero\\s+vivir', 'acabar\\s+con\\s+mi\\s+vida', 'hacerme\\s+daño', 'autolesi', 'suicid',
+    // French
+    'je\\s+veux\\s+mourir', 'envie\\s+de\\s+mourir', 'me\\s+tuer', 'me\\s+suicider', 'mettre\\s+fin\\s+à\\s+(?:ma\\s+vie|mes\\s+jours)', 'plus\\s+envie\\s+de\\s+vivre', 'me\\s+faire\\s+du\\s+mal',
+    // German
+    'ich\\s+will\\s+sterben', 'umbringen', 'suizid', 'selbstmord', 'nicht\\s+mehr\\s+leben', 'mich\\s+töten', 'mir\\s+etwas\\s+antun', 'mich\\s+selbst\\s+verletzen',
+    // Italian / Portuguese
+    'voglio\\s+morire', 'uccidermi', 'togliermi\\s+la\\s+vita', 'non\\s+voglio\\s+più\\s+vivere', 'farmi\\s+del\\s+male', 'quero\\s+morrer', 'me\\s+matar', 'tirar\\s+minha\\s+vida', 'não\\s+quero\\s+mais\\s+viver', 'me\\s+machucar',
+    // Japanese / Chinese / Korean
+    '死にたい', '自殺', '消えたい', '生きていたくない', '死のう', 'リスカ', '自分を傷', '想死', '自杀', '不想活', '结束生命', '结束我的生命', '自残', '活不下去', '轻生', '結束生命', '죽고\\s*싶', '자살', '죽을래', '죽어버리', '살기\\s*싫', '자해',
+    // Arabic
+    'أريد أن أموت', 'اريد ان اموت', 'انتحار', 'أنتحر', 'أقتل نفسي', 'لا أريد أن أعيش', 'إيذاء نفسي',
+    // Russian / Ukrainian / Turkish / Dutch / Polish / Vietnamese / Indonesian
+    'хочу\\s+умереть', 'самоубийств', 'покончить\\s+с\\s+собой', 'убить\\s+себя', 'не\\s+хочу\\s+жить', 'хочу\\s+померти', 'самогубств', 'ölmek\\s+istiyorum', 'intihar', 'kendimi\\s+öldür', 'yaşamak\\s+istemiyorum', 'zelfmoord', 'niet\\s+meer\\s+leven', 'chcę\\s+umrzeć', 'samobójstw', 'muốn\\s+chết', 'tự\\s+tử', 'bunuh\\s+diri', 'ingin\\s+mati',
+    // Bengali / Tamil / Telugu / Thai / Hebrew / Greek
+    'আত্মহত্যা', 'মরতে\\s+চাই', 'தற்கொலை', 'சாக\\s+வேண்டும்', 'ఆత్మహత్య', 'చావాలని', 'ฆ่าตัวตาย', 'อยากตาย', 'להתאבד', 'רוצה\\s+למות', 'αυτοκτονία', 'θέλω\\s+να\\s+πεθάνω',
+  ].join('|'),
+  'iu'
+);
+
+// Spacing-evasion check on a letters-only form; only phrases with no innocent look-alikes.
+const SQUASHED_CRISIS_REGEX = /(killmyself|killingmyself|endmylife|endingmylife|takemyownlife|suicide|suicidal|hurtmyself|harmmyself)/;
+
+const MED_TERM =
+  '(?:elvanse|vyvanse|ritalin|concerta|medikinet|equasym|xaggitin|delmosart|methylphenidate|lisdexamfetamine|dexamfetamine|dextroamphetamine|amphetamines?|adderall|dexedrine|atomoxetine|strattera|guanfacine|intuniv|clonidine|modafinil|medications?|medicines?|meds|my\\s+(?:pills?|tablets?|capsules?|prescription|dose|dosage)|dos(?:e|es|age)|\\d+\\s*mg)';
+
+const MED_ADVICE_INTENT =
+  "(?:should\\s+i|can\\s+i|could\\s+i|may\\s+i|do\\s+i\\s+need|is\\s+it\\s+(?:ok|okay|safe|fine|alright|bad)|is\\s+(?:this|that|it)\\s+(?:safe|dangerous|normal|bad|too)|how\\s+(?:much|many)|too\\s+(?:much|many|high|low|strong)|maximum|max\\s+dose|safe\\s+to|(?:ok|okay)\\s+to|mix(?:ing)?|combin(?:e|ing)|with\\s+(?:alcohol|caffeine|coffee|ibuprofen|antidepressants?|cannabis|weed|energy\\s+drinks?)|double(?:d)?|triple|increas(?:e|ing)|decreas(?:e|ing)|lower(?:ing)?|rais(?:e|ing)|skip(?:ping)?\\s+(?:my|a|the|today)|stop(?:ping)?\\s+(?:taking|my|the|using)|quit(?:ting)?|wean|snort|crush|inject|side\\s*effects?|withdrawals?|interact|dangerous|(?:makes|making|made)\\s+me\\s+(?:feel\\s+)?(?:shaky|sick|dizzy|anxious|jittery))";
 
 const MEDICATION_ADVICE_PATTERNS: Array<{ regex: RegExp; label: string }> = [
   {
-    regex: /\b(?:should\s+i|can\s+i|ought\s+i\s+to|do\s+i)\s+(?:take|try|stop\s+taking|start\s+taking|double|increase|decrease|lower|raise|change|stop|skip|split|switch)\b.*?\b(?:dose|dosage|medication|meds|pill|pills|tablet|tablets|capsule|capsules|elvanse|vyvanse|ritalin|concerta|methylphenidate|lisdexamfetamine|adderall|atomoxetine|strattera|\d+\s*mg)\b/i,
-    label: 'medication dosing/intake query',
+    // advice-intent phrase within 80 chars of a medication term, either order
+    regex: new RegExp(`\\b${MED_ADVICE_INTENT}\\b[^.?!]{0,80}\\b${MED_TERM}\\b|\\b${MED_TERM}\\b[^.?!]{0,80}\\b${MED_ADVICE_INTENT}\\b`, 'i'),
+    label: 'medication dosing/safety query',
   },
   {
-    regex: /\b(?:what\s+dose|what\s+dosage|how\s+many\s+mg|how\s+much\s+mg|which\s+medication\s+should\s+i|what\s+medication\s+is\s+best|which\s+adhd\s+med)\b/i,
+    regex: /\b(?:what\s+dose|what\s+dosage|which\s+medication\s+should\s+i|what\s+medication\s+is\s+best|which\s+adhd\s+med|is\s+\d+\s*mg\s+too)\b/i,
     label: 'medication prescribing question',
-  },
-  {
-    regex: /\b(?:is\s+\d+\s*mg\s+too\s+(?:high|low|much|dangerous|safe)|extra\s+\d+\s*mg|double\s+(?:my\s+)?dose|double\s+(?:my\s+)?\d+\s*mg|stop\s+taking\s+my\s+(?:meds|medication|pills|elvanse|concerta|ritalin))\b/i,
-    label: 'dosage adjustment question',
-  },
-  {
-    regex: /\b(?:double|increase|decrease|lower|raise|cut\s+in\s+half)\s+(?:my\s+)?(?:\d+\s*mg\s+)?(?:dose|dosage)\b/i,
-    label: 'dose alteration',
   },
   {
     regex: /\b(?:take|taking)\s+\d+\s*mg\s+(?:or|and|\/)\s+\d+\s*mg\b/i,
     label: 'comparative dosing question',
   },
   {
-    regex: /\b(?:side\s+effects?\s+of|withdrawals?\s+from)\s+(?:elvanse|vyvanse|ritalin|concerta|methylphenidate|lisdexamfetamine|adderall|strattera|medication|meds)\b/i,
-    label: 'medication side effect query',
+    // non-English medication questions: med word + "may I / how much / increase" marker
+    regex: /(?=.*(?:medicamento|pastilla|dosis|médicament|comprimé|medikament|tablette|farmaco|compressa|दवा|दवाई|गोली|खुराक|药|薬|약|용량|用量))(?=.*(?:puedo|debo|más|aumentar|dois-je|puis-je|augmenter|kann\s+ich|soll\s+ich|mehr|erhöhen|posso|devo|aumentare|क्या\s+मैं|कितनी|बढ़ा|可以|能不能|应该|增加|减少|해도|먹어도|飲んでもいい|増や|減ら))/iu,
+    label: 'non-English medication query',
   },
 ];
 
@@ -87,37 +143,35 @@ export const MEDICAL_BOUNDARY_FIXED_MESSAGE =
   'Stay can log whether you took your prescribed treatment and any notes you want to show your clinician, but it cannot advise on medication choices, doses, or side effects. Please check your prescription label or speak with your prescribing clinician, GP, or pharmacist.';
 
 export function detectCrisisSignal(input: string): CrisisCheckResult {
-  const normalized = (input || '').trim();
+  const normalized = normalizeSafetyText(input);
   if (!normalized) {
     return { triggered: false, message: '' };
   }
 
   for (const item of CRISIS_PATTERNS) {
     if (item.regex.test(normalized)) {
-      return {
-        triggered: true,
-        matchedPhrase: item.label,
-        message: CRISIS_FIXED_MESSAGE,
-      };
+      return { triggered: true, matchedPhrase: item.label, message: CRISIS_FIXED_MESSAGE };
     }
+  }
+  if (MULTILINGUAL_CRISIS_REGEX.test(normalized)) {
+    return { triggered: true, matchedPhrase: 'multilingual crisis phrase', message: CRISIS_FIXED_MESSAGE };
+  }
+  if (SQUASHED_CRISIS_REGEX.test(squashSafetyText(normalized))) {
+    return { triggered: true, matchedPhrase: 'obfuscated crisis phrase', message: CRISIS_FIXED_MESSAGE };
   }
 
   return { triggered: false, message: '' };
 }
 
 export function detectMedicationAdviceRequest(input: string): MedicalBoundaryCheckResult {
-  const normalized = (input || '').trim();
+  const normalized = normalizeSafetyText(input);
   if (!normalized) {
     return { triggered: false, message: '' };
   }
 
   for (const item of MEDICATION_ADVICE_PATTERNS) {
     if (item.regex.test(normalized)) {
-      return {
-        triggered: true,
-        matchedPhrase: item.label,
-        message: MEDICAL_BOUNDARY_FIXED_MESSAGE,
-      };
+      return { triggered: true, matchedPhrase: item.label, message: MEDICAL_BOUNDARY_FIXED_MESSAGE };
     }
   }
 

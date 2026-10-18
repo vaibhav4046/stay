@@ -246,7 +246,7 @@ export function OrbCompanionView({
       case 'connecting':
         return 'Connecting 24kHz Universal-3 Pro voice...';
       case 'listening':
-        return voice.partialUserTranscript ? 'Listening (<15ms reflex)...' : 'Listening · Speak in any of 32 languages';
+        return voice.partialUserTranscript ? 'Listening (<15ms reflex)...' : 'Listening · Speak in your own language';
       case 'thinking':
         return 'Synthesizing micro-step & pre-drafting...';
       case 'speaking':
@@ -323,7 +323,7 @@ export function OrbCompanionView({
             title="Cycle 32-Language Auto Detection (Auto / Hindi / Korean / Spanish / English)"
             aria-label="Toggle language auto detection"
           >
-            {currentLang?.code === 'auto' ? '🌐 Auto (32L)' : `${currentLang?.flag || '🌐'} ${currentLang?.nativeName || currentLang?.label}`}
+            {currentLang?.code === 'auto' ? '🌐 Auto' : `${currentLang?.flag || '🌐'} ${currentLang?.nativeName || currentLang?.label}`}
           </button>
         </div>
 
@@ -1056,7 +1056,7 @@ export function OrbCompanionView({
                 className="inline-flex items-center gap-1 rounded-full bg-[#006A67]/10 px-2.5 py-0.5 font-semibold text-[#006A67]"
               >
                 <span>{detectedLangObj?.flag || '🌐'}</span>
-                <span>{detectedLangObj?.nativeName || detectedLangObj?.label || 'Auto (32L)'}</span>
+                <span>{detectedLangObj?.nativeName || detectedLangObj?.label || 'Auto'}</span>
                 <span className="font-mono opacity-75">({voice.detectedLanguageCode})</span>
               </span>
               <span
@@ -1133,7 +1133,7 @@ export function OrbCompanionView({
               </p>
             ) : (
               <p className="text-ink-2/75 text-[0.73rem]" data-testid="live-transcript-placeholder">
-                Speak or type in English, हिन्दी (Hindi), 한국어 (Korean), Español, or any of 32 languages — live transcription &amp; instant reaction appear here.
+                Speak or type in English, हिन्दी (Hindi), 한국어 (Korean), Español, and more — live transcription &amp; instant reaction appear here.
               </p>
             )}
 
@@ -1184,7 +1184,7 @@ export function OrbCompanionView({
             data-testid="task-input"
             placeholder={
               voice.isConnected
-                ? 'Speak naturally (32 languages), play a game, or command Stay...'
+                ? 'Speak naturally, play a game, or command Stay...'
                 : 'Speak or type in English, हिन्दी, 한국어, or say "I want to play a game"...'
             }
             value={typedMessage}

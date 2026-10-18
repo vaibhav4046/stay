@@ -11,6 +11,8 @@ interface Props {
   topicShape?: number;
   reducedMotion: boolean;
   onUnsupported: () => void;
+  /** Fired once, after the first frame has actually been drawn. */
+  onReady?: () => void;
 }
 
 interface CosmicPaletteConfig {
@@ -326,12 +328,16 @@ const FRAGMENT_SHADER = `
   }
 `;
 
-export default function SignalScene({ state, energy, bands, topicShape = 0, reducedMotion, onUnsupported }: Props) {
+export default function SignalScene({ state, energy, bands, topicShape = 0, reducedMotion, onUnsupported, onReady }: Props) {
+  const onReadyRef = useRef(onReady);
+  onReadyRef.current = onReady;
   const mountRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef(state);
   const energyRef = useRef(energy);
   const bandsRef = useRef(bands);
   const topicShapeRef = useRef(topicShape);
+  const onUnsupportedRef = useRef(onUnsupported);
+  onUnsupportedRef.current = onUnsupported;
   stateRef.current = state;
   energyRef.current = energy;
   bandsRef.current = bands;
@@ -353,13 +359,24 @@ export default function SignalScene({ state, energy, bands, topicShape = 0, redu
         powerPreference: 'high-performance',
       });
     } catch {
-      onUnsupported();
+      onUnsupportedRef.current();
       return;
     }
+    const onContextLost = (e: Event) => {
+      e.preventDefault();
+      onUnsupportedRef.current();
+    };
+    renderer.domElement.addEventListener('webglcontextlost', onContextLost);
 
-    const size = () => ({ w: mount.clientWidth || 320, h: mount.clientHeight || 320 });
+    // The orb is a sphere: always render a square, sized by the narrower side (a stale canvas height must not stretch it).
+    const size = () => {
+      const w = mount.clientWidth || 320;
+      const side = Math.min(w, mount.clientHeight || w);
+      return { w: side, h: side };
+    };
     let { w, h } = size();
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    let dpr = Math.min(window.devicePixelRatio, 2);
+    renderer.setPixelRatio(dpr);
     renderer.setSize(w, h);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.08;
@@ -450,8 +467,13 @@ export default function SignalScene({ state, energy, bands, topicShape = 0, redu
       initShape === 3 ? 1 : 0,
       initShape === 4 ? 1 : 0,
     ];
+    // Critically damped spring state per shape weight: smooth ease-in/out, no overshoot.
+    const weightVel = [0, 0, 0, 0, 0];
     let t = 0;
     let raf = 0;
+    let readyFired = false;
+    let frameMsEma = 16;
+    let framesSinceCheck = 0;
     const clock = new THREE.Clock();
 
     const targetPrimary = new THREE.Color();
@@ -494,18 +516,24 @@ export default function SignalScene({ state, energy, bands, topicShape = 0, redu
 
     const render = () => {
       const dt = Math.min(clock.getDelta(), 0.05);
+      // Frame-rate independent easing: same feel at 30, 60 or 144 Hz, and stable across hitches.
+      const ease = (rate: number) => 1 - Math.exp(-dt * rate);
+      // Fast attack when sound arrives, slower release so the shape settles instead of snapping.
+      const follow = (cur: number, target: number) => cur + (target - cur) * ease(target > cur ? 22 : 7);
       const activeShape = topicShapeRef.current || 0;
       const baseConfig = COSMIC_PALETTES[stateRef.current] || COSMIC_PALETTES.idle;
       const shapeOverride = (activeShape && TOPIC_PALETTE_OVERRIDES[activeShape]) || {};
       const config = { ...baseConfig, ...shapeOverride };
-      smoothEnergy += (energyRef.current - smoothEnergy) * 0.16;
+      smoothEnergy = follow(smoothEnergy, energyRef.current);
 
-      // Smoothly interpolate the 5 shape blend weights (critically-damped transition over ~750ms)
-      const morphRate = 1 - Math.exp(-dt * 6.0);
+      // Shape morph: critically damped spring (omega 8 => ~0.6 s settle, no overshoot).
+      const omega = 8;
       let weightSum = 0;
       for (let i = 0; i < 5; i++) {
         const targetW = activeShape === i ? 1.0 : 0.0;
-        weights[i] += (targetW - weights[i]) * morphRate;
+        const accel = (targetW - weights[i]) * omega * omega - 2 * omega * weightVel[i];
+        weightVel[i] += accel * dt;
+        weights[i] = Math.min(1, Math.max(0, weights[i] + weightVel[i] * dt));
         weightSum += weights[i];
       }
       if (weightSum > 0.0001) {
@@ -521,9 +549,9 @@ export default function SignalScene({ state, energy, bands, topicShape = 0, redu
       const targetMid = curBands ? curBands.mid : smoothEnergy * 0.65;
       const targetHigh = curBands ? curBands.high : smoothEnergy * 0.45;
 
-      smoothLow += (targetLow - smoothLow) * 0.2;
-      smoothMid += (targetMid - smoothMid) * 0.2;
-      smoothHigh += (targetHigh - smoothHigh) * 0.22;
+      smoothLow = follow(smoothLow, targetLow);
+      smoothMid = follow(smoothMid, targetMid);
+      smoothHigh = follow(smoothHigh, targetHigh);
 
       targetPrimary.setHex(config.primary);
       targetSecondary.setHex(config.secondary);
@@ -532,15 +560,16 @@ export default function SignalScene({ state, energy, bands, topicShape = 0, redu
       targetRim.setHex(config.rim);
       targetStar.setHex(config.star);
 
-      uniforms.uColorPrimary.value.lerp(targetPrimary, 0.1);
-      uniforms.uColorSecondary.value.lerp(targetSecondary, 0.1);
-      uniforms.uColorBase.value.lerp(targetBase, 0.1);
-      uniforms.uColorCore.value.lerp(targetCore, 0.1);
-      uniforms.uColorRim.value.lerp(targetRim, 0.1);
-      uniforms.uColorStar.value.lerp(targetStar, 0.1);
+      const colorK = ease(5);
+      uniforms.uColorPrimary.value.lerp(targetPrimary, colorK);
+      uniforms.uColorSecondary.value.lerp(targetSecondary, colorK);
+      uniforms.uColorBase.value.lerp(targetBase, colorK);
+      uniforms.uColorCore.value.lerp(targetCore, colorK);
+      uniforms.uColorRim.value.lerp(targetRim, colorK);
+      uniforms.uColorStar.value.lerp(targetStar, colorK);
 
-      uniforms.uSpeed.value += (config.speed - uniforms.uSpeed.value) * 0.08;
-      uniforms.uWaveAmp.value += (config.waveAmp - uniforms.uWaveAmp.value) * 0.08;
+      uniforms.uSpeed.value += (config.speed - uniforms.uSpeed.value) * ease(4);
+      uniforms.uWaveAmp.value += (config.waveAmp - uniforms.uWaveAmp.value) * ease(4);
       uniforms.uEnergy.value = smoothEnergy;
       uniforms.uLowBand.value = smoothLow;
       uniforms.uMidBand.value = smoothMid;
@@ -555,7 +584,7 @@ export default function SignalScene({ state, energy, bands, topicShape = 0, redu
         orbMesh.rotation.y = Math.sin(t * 0.35) * 0.12 * rotDecay;
         orbMesh.rotation.z = Math.sin(t * 0.25) * 0.04 * rotDecay;
 
-        auraMat.color.lerp(targetRim, 0.08);
+        auraMat.color.lerp(targetRim, ease(4));
         const auraScale = 1 + Math.sin(t * 1.2) * 0.04 + (smoothEnergy + smoothLow * 0.5) * 0.3;
         auraMesh.scale.set(auraScale, auraScale, 1);
         auraMat.opacity = 0.42 + smoothEnergy * 0.35;
@@ -564,8 +593,43 @@ export default function SignalScene({ state, energy, bands, topicShape = 0, redu
       }
 
       renderer.render(scene, camera);
+      if (!readyFired) {
+        readyFired = true;
+        onReadyRef.current?.();
+      }
+
+      // Adaptive resolution: if frames run long for ~1.5 s, step the pixel ratio down once per check.
+      frameMsEma += (dt * 1000 - frameMsEma) * 0.1;
+      if (++framesSinceCheck >= 90) {
+        framesSinceCheck = 0;
+        if (frameMsEma > 26 && dpr > 1) {
+          dpr = Math.max(1, dpr - 0.5);
+          renderer.setPixelRatio(dpr);
+          renderer.setSize(mount.clientWidth || 320, mount.clientHeight || 320);
+        }
+      }
       raf = requestAnimationFrame(render);
     };
+
+    // Only animate while on screen and the tab is visible (saves battery, avoids a huge catch-up dt on return).
+    let onScreen = true;
+    const start = () => {
+      if (raf || !onScreen || document.hidden) return;
+      clock.getDelta();
+      raf = requestAnimationFrame(render);
+    };
+    const stop = () => {
+      cancelAnimationFrame(raf);
+      raf = 0;
+    };
+    const onVisibility = () => (document.hidden ? stop() : start());
+    document.addEventListener('visibilitychange', onVisibility);
+    const io = new IntersectionObserver((entries) => {
+      onScreen = entries[0]?.isIntersecting ?? true;
+      if (onScreen) start();
+      else stop();
+    });
+    io.observe(mount);
 
     render();
 
@@ -579,6 +643,9 @@ export default function SignalScene({ state, energy, bands, topicShape = 0, redu
 
     return () => {
       cancelAnimationFrame(raf);
+      document.removeEventListener('visibilitychange', onVisibility);
+      renderer.domElement.removeEventListener('webglcontextlost', onContextLost);
+      io.disconnect();
       ro.disconnect();
       auraTexture.dispose();
       auraGeo.dispose();
@@ -590,7 +657,7 @@ export default function SignalScene({ state, energy, bands, topicShape = 0, redu
         mount.removeChild(renderer.domElement);
       }
     };
-  }, [reducedMotion, onUnsupported]);
+  }, [reducedMotion]);
 
   return (
     <div

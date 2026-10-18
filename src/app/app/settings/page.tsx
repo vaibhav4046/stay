@@ -15,6 +15,7 @@ export default function SettingsPage() {
   const [audits, setAudits] = useState<AuditEventRecord[]>([]);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleted, setDeleted] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => setAudits(getLocalAuditEvents()), []);
   if (!loaded) return null;
@@ -109,11 +110,17 @@ export default function SettingsPage() {
                   type="button"
                   className="btn btn-danger"
                   onClick={async () => {
-                    await deleteAllUserData();
-                    setDeleted(true);
-                    setConfirmDelete(false);
-                    setAudits([]);
-                    window.location.href = '/app/today';
+                    try {
+                      await deleteAllUserData();
+                      setDeleteError(null);
+                      setDeleted(true);
+                      setConfirmDelete(false);
+                      setAudits([]);
+                      window.setTimeout(() => { window.location.href = '/app/today'; }, 1200);
+                    } catch (e) {
+                      setDeleteError(e instanceof Error ? e.message : 'Deletion failed.');
+                      setConfirmDelete(false);
+                    }
                   }}
                   data-testid="delete-confirm"
                 >
@@ -127,6 +134,7 @@ export default function SettingsPage() {
           )}
         </div>
         {deleted && <p className="meta mt-3" role="status">All data deleted.</p>}
+        {deleteError && <p className="meta mt-3" style={{ color: "var(--color-danger)" }} role="alert">{deleteError}</p>}
       </section>
 
       <section className="card p-5 sm:p-6" aria-labelledby="audit-title">

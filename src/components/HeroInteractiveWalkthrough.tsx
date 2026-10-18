@@ -107,8 +107,8 @@ export function HeroInteractiveWalkthrough() {
       <div className="grid gap-6 pt-5 md:grid-cols-[140px_minmax(0,1fr)] items-center">
         {/* Signal state visualization */}
         <div className="flex flex-col items-center justify-center text-center">
-          <div className="w-28 h-28">
-            <Signal state={step.visualState} energy={step.visualState === 'speaking' ? 0.45 : 0.08} />
+          <div className="h-28 w-28 shrink-0 overflow-hidden">
+            <Signal state={step.visualState} size={112} hideLabel energy={step.visualState === 'speaking' ? 0.45 : 0.08} />
           </div>
           <span className="mt-2 text-[0.78rem] uppercase tracking-wider text-ink-3 font-mono">
             {step.visualState}
