@@ -34,7 +34,7 @@ Safety is deterministic and runs before any model: crisis wording (30+ languages
 
 ## What is verified (and how)
 
-- Unit tests: 383 passing (`npm test`). Typecheck clean.
+- Unit tests: 386 passing (`npm test`). Typecheck clean.
 - Browser tests: Playwright against the production build (`npm run test:e2e`); see the verification doc for the latest counts and the CSP, brain dump, routines and double-plan regression tests.
 - Voice, with a simulated speaker (`scripts/voice-e2e/sim-human.mjs`, synthesized voices plus room noise injected as the microphone):
 
@@ -52,7 +52,7 @@ Safety is deterministic and runs before any model: crisis wording (30+ languages
 
 - No comparison against ChatGPT voice or Google live voice: no keys were available, so nothing was measured. `scripts/voice-e2e/compare-bench.mjs` is ready for anyone who has them. Published figures are collected in `docs/RESEARCH_VOICE_LATENCY.md` with sources and are not Stay measurements.
 - The speakers are synthesized voices injected into a browser on one machine, a handful of runs per setting. No real-microphone, earphone or phone test yet.
-- Non-English fast voice (Spanish, French, German) works after the 2026-10-19 fix on a few turns each; Italian and Portuguese were not re-measured.
+- Non-English fast voice (Spanish, French, German, Italian, Portuguese) works after the 2026-10-19 fix; each was measured on only 3 turns, replies 1.3 to 4.3 s, so it is less proven than English.
 - Mistral and OpenAI keys were not tested live. The shared Groq free tier allows 8,000 tokens a minute on the main model; the server falls back to a smaller model, and a user's own key removes the limit.
 - Stay is not a medical device and says so. No clinical outcome is claimed.
 

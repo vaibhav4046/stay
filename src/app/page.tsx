@@ -173,7 +173,7 @@ export default function Home() {
             What we tested
           </h2>
           <ul className="mt-6 max-w-[66ch] space-y-3 text-ink-2">
-            <li><strong className="text-ink">Safety first.</strong> 383 unit tests and 57 browser tests pass. They include crisis wording in more than 30 languages against real phrasings and ordinary sentences that must not trigger, the medication boundary, and the rule that voice never deletes your data.</li>
+            <li><strong className="text-ink">Safety first.</strong> 386 unit tests and 57 browser tests pass. They include crisis wording in more than 30 languages against real phrasings and ordinary sentences that must not trigger, the medication boundary, and the rule that voice never deletes your data.</li>
             <li><strong className="text-ink">Patience.</strong> A simulated speaker trailed off mid-sentence for 2.3 seconds, in several accents with room noise. Stay waited in every run. The managed voice it replaced talked over the pause.</li>
             <li><strong className="text-ink">Honesty.</strong> Every number below comes from a script in the repository, and the tests that found our own mistakes are in it too.</li>
           </ul>

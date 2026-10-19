@@ -80,6 +80,7 @@ test.describe('The loop', () => {
     await runLoop(page, 'Reply to my landlord about the renewal');
     await page.goto('/app/history');
     await expect(page.getByText(/landlord/i).first()).toBeVisible();
+    await expect(page.getByTestId('week-tally')).toContainText(/of 1 block this week got started/);
   });
 
   test('a task typed on the landing page is handed to the app once, not through the URL', async ({ page }) => {

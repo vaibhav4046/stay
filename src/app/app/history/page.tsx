@@ -3,6 +3,7 @@
 import { useStayData } from '@/lib/storage/useStayData';
 import { BARRIER_DEFINITIONS, STRATEGY_DEFINITIONS } from '@/lib/coach/strategies';
 import { StrategyPatternSummary } from '@/components/StrategyPatternSummary';
+import { weekTally, weekTallyLine } from '@/lib/coach/weekTally';
 
 const OUTCOME_LABEL: Record<string, { text: string; color: string }> = {
   started: { text: 'Started', color: '#236B48' },
@@ -14,11 +15,13 @@ const OUTCOME_LABEL: Record<string, { text: string; color: string }> = {
 export default function HistoryPage() {
   const { sessions, checkins, loaded } = useStayData('app');
   if (!loaded) return null;
+  const week = weekTally(sessions);
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
       <section className="card p-5 sm:p-6" aria-labelledby="hist-title">
         <h1 id="hist-title" className="section-title">History</h1>
+        <p className="mt-2 text-ink-2" data-testid="week-tally">{weekTallyLine(week)}</p>
         {sessions.length === 0 ? (
           <p className="text-ink-2 mt-3">Nothing here yet. Start one small thing and it will show up here, even if it goes badly. That is still data.</p>
         ) : (
