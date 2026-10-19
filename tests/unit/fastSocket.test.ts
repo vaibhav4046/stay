@@ -73,6 +73,9 @@ describe('takeSpeakable', () => {
     expect(takeSpeakable('Okay.')).toBeNull();
     expect(takeSpeakable('Okay, let us open the tax folder. Then')).toEqual({ chunk: 'Okay, let us open the tax folder.', rest: 'Then' });
     expect(takeSpeakable('Version 3.5 is fine for now, truly')).toBeNull();
+    // the first chunk of a reply may end at a comma, so speech starts sooner
+    expect(takeSpeakable('Okay, let us open the tax folder, then sort it. Next', true)).toEqual({ chunk: 'Okay, let us open the tax folder,', rest: 'then sort it. Next' });
+    expect(takeSpeakable('Okay, sure', true)).toBeNull();
   });
 });
 

@@ -17,6 +17,7 @@ for (const line of fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf8').spl
 const RUNS = Number(process.argv[3] || 5);
 const pcm16 = fs.readFileSync(path.join(process.argv[2], 'en.pcm'));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const sleepUntil = (t) => sleep(Math.max(0, t - Date.now())); // pace against the clock: a fixed sleep drifts and inflates every latency
 const pct = (a, p) => { const s = [...a].sort((x, y) => x - y); return s[Math.min(s.length - 1, Math.floor(p * s.length))]; };
 
 // where real speech ends in the file (32 bytes per ms at 16 kHz)
@@ -45,9 +46,10 @@ async function streamAndTime({ send, bytesPerMs, audio, isFirstAudio, setHandler
     });
     const chunk = Math.round(bytesPerMs * 100);
     t0 = Date.now();
-    for (let i = 0; i < audio.length && !done; i += chunk) { send(audio.subarray(i, i + chunk)); await sleep(100); }
+    let k = 0;
+    for (let i = 0; i < audio.length && !done; i += chunk) { send(audio.subarray(i, i + chunk)); await sleepUntil(t0 + ++k * 100); }
     const sil = Buffer.alloc(chunk);
-    for (let i = 0; i < 100 && !done; i++) { send(sil); await sleep(100); }
+    for (let i = 0; i < 100 && !done; i++) { send(sil); await sleepUntil(t0 + ++k * 100); }
   });
 }
 

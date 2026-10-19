@@ -62,8 +62,9 @@ const TTS_URL = 'wss://streaming-tts.assemblyai.com/v1/ws';
 const MAX_HISTORY = 14;
 
 /** Splits streamed text into speakable chunks: a sentence end followed by space, once there is enough to say. */
-export function takeSpeakable(buffer: string): { chunk: string; rest: string } | null {
-  const m = /^([\s\S]{18,}?[.!?…。！？])(\s+|$)/.exec(buffer);
+export function takeSpeakable(buffer: string, first = false): { chunk: string; rest: string } | null {
+  // the first chunk of a reply may end at a comma or dash so speech starts a beat sooner; later chunks wait for a sentence end
+  const m = (first ? /^([\s\S]{14,}?[.!?…。！？,;:—])(\s+|$)/ : /^([\s\S]{18,}?[.!?…。！？])(\s+|$)/).exec(buffer);
   if (!m) return null;
   return { chunk: m[1].trim(), rest: buffer.slice(m[0].length) };
 }
@@ -424,7 +425,7 @@ export class FastSocket {
           }
           if (delta?.content) {
             pendingText += delta.content;
-            for (let part = takeSpeakable(pendingText); part; part = takeSpeakable(pendingText)) {
+            for (let part = takeSpeakable(pendingText, this.spoken === ''); part; part = takeSpeakable(pendingText, this.spoken === '')) {
               pendingText = part.rest;
               this.say(part.chunk, gen);
             }

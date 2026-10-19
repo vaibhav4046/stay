@@ -22,7 +22,7 @@ const ECHO = flag('--echo');
 const VOICE = opt('--voice', 'en-GB-RyanNeural');
 const TURNS = Number(opt('--turns', 4));
 const USE_LLM = !flag('--no-llm');
-const work = path.join(process.cwd(), 'test-results', 'sim-human');
+const work = path.join((await import('node:os')).tmpdir(), 'stay-sim-human'); // not under test-results: Playwright empties that folder
 fs.mkdirSync(work, { recursive: true });
 
 for (const line of fs.existsSync('.env.local') ? fs.readFileSync('.env.local', 'utf8').split(/\r?\n/) : []) {

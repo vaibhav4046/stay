@@ -16,6 +16,7 @@ const GROQ = process.env.GROQ_API_KEY;
 const RUNS = Number(process.argv[3] || 6);
 const pcm = fs.readFileSync(path.join(process.argv[2], 'en.pcm'));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const sleepUntil = (t) => sleep(Math.max(0, t - Date.now())); // pace against the clock: a fixed sleep drifts and inflates every latency
 const pct = (a, p) => { const s = [...a].sort((x, y) => x - y); return s.length ? s[Math.min(s.length - 1, Math.floor(p * s.length))] : NaN; };
 const summary = (a) => (a.length ? `n=${a.length} p50=${pct(a, 0.5)}ms p90=${pct(a, 0.9)}ms min=${Math.min(...a)} max=${Math.max(...a)}` : 'no samples');
 
@@ -40,9 +41,10 @@ async function sttRun() {
       if (m.type === 'Begin') {
         t0 = Date.now();
         const CH = 3200; // 100 ms
-        for (let i = 0; i < pcm.length && !done; i += CH) { ws.send(pcm.subarray(i, i + CH)); await sleep(100); }
+        let k = 0;
+        for (let i = 0; i < pcm.length && !done; i += CH) { ws.send(pcm.subarray(i, i + CH)); await sleepUntil(t0 + ++k * 100); }
         const sil = Buffer.alloc(CH);
-        for (let i = 0; i < 80 && !done; i++) { ws.send(sil); await sleep(100); }
+        for (let i = 0; i < 80 && !done; i++) { ws.send(sil); await sleepUntil(t0 + ++k * 100); }
       }
       if (m.type === 'Turn') {
         text = m.transcript || text;
