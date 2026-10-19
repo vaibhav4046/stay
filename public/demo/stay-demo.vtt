@@ -1,37 +1,37 @@
 WEBVTT
 
 1
-00:00:01.183 --> 00:00:10.447
+00:00:01.339 --> 00:00:10.603
 Stay is a voice companion for adults with ADHD. It helps you start the thing you have been avoiding, and it does not talk over your pauses.
 
 2
-00:00:11.559 --> 00:00:22.983
+00:00:11.746 --> 00:00:23.170
 Type or say what is in the way, and the dots become it. Overwhelmed is a tangle. Stuck is a staircase with one dot on the first step. Taxes are a coin.
 
 3
-00:00:24.756 --> 00:00:34.548
+00:00:25.106 --> 00:00:34.898
 In the app you just talk. This is a simulated person, so you can see exactly what happens. Replies start about a second after you stop.
 
 4
-00:00:40.032 --> 00:00:47.064
+00:00:40.405 --> 00:00:47.437
 People with ADHD pause mid-thought. Most voice assistants jump in. Stay waits.
 
 5
-00:01:15.238 --> 00:01:23.590
+00:01:19.664 --> 00:01:28.016
 Parked, in one second. It can also start timers, run routines, set check-ins and keep a list for today.
 
 6
-00:01:26.256 --> 00:01:36.552
+00:01:30.995 --> 00:01:41.291
 Everything on your mind, in any order. Stay picks one thing to start, a few for today, and the rest for later. No overdue, no guilt.
 
 7
-00:01:40.672 --> 00:01:49.792
+00:01:45.481 --> 00:01:54.601
 Routines give you one visible next step, each with its own timer. Check-ins nudge you softly, even when the tab is in the background.
 
 8
-00:01:51.947 --> 00:02:13.523
-We measured it with a simulated speaker. Replies in about 1.2 seconds, against 2.5 for the managed voice we replaced. It waited through the pause, noticed an interruption in about half a second, and never answered its own voice. We have not measured ChatGPT or Gemini, so we claim nothing against them.
+00:02:06.279 --> 00:02:27.663
+We measured it with a simulated speaker. Replies in about 1.3 seconds, against 2.8 for the managed voice we replaced. It waited through the pause, noticed an interruption in well under a second, and never answered its own voice. We have not measured ChatGPT or Gemini, so we claim nothing against them.
 
 9
-00:02:14.442 --> 00:02:19.962
+00:02:28.588 --> 00:02:34.108
 Stay. Open source, local-first, and built on AssemblyAI.
