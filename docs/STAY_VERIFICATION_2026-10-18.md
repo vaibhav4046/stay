@@ -130,3 +130,15 @@ Harness: `scripts/voice-e2e/sim-human.mjs` (injected microphone stream with room
 **Italian and Portuguese fast voice, production, same day (3 turns each, one run):** Italian replied on 3 of 3 turns (1.6, 1.9, 4.3 s; median 1.9 s), Portuguese on 3 of 3 (1.3, 1.6, 2.7 s; median 1.6 s). One Italian turn answered "Messo da parte." (the model parked the thought on "rimando da giorni...") instead of helping, the same over-eager tool use seen in Spanish. Third turns were the slowest in every language tried; the third-turn reply is a longer draft, so the first sentence takes longer to form.
 
 **History:** a plain weekly line, computed from the person's own blocks only (for example "3 of 4 blocks this week got started (1 partly)."), with unit tests and an e2e check. No streaks, no seeded sample data.
+
+**Full production benchmark, 2026-10-19 (70d7796; 3 runs per engine, 9 ordinary turns each, same simulated speaker and script; host busy with other work, so treat the spread as real):**
+
+| | Fast voice | Managed Voice Agent |
+|---|---|---|
+| Reply after you stop talking | median 1.35 s (1.23, 1.27, 1.30, 1.31, 1.35, 1.48, 1.54, 1.88, 2.20) | median 2.84 s (2.34, 2.44, 2.62, 2.68, 2.84, 2.88, 3.05, 3.08, 3.12) |
+| 2.3 s pause | waited 3 of 3 (answers 1.33, 1.39, 1.45 s) | talked into it 3 of 3 |
+| Interruption noticed | 0.82, 0.54, 0.57 s | 1.09, 1.01, 1.04 s |
+| Spoken "park it" | 3 of 3 parked; confirmed 3.3, 1.4, 1.3 s | 3 of 3 parked |
+| Stray transcripts | 0 of 26 | 0 of 27 |
+
+Limits: the managed agent's park confirmation and barge-in speech-queue figures in this harness were not comparable (the agent had already finished speaking, 0.1 s queued), so only the notice time is compared. The earlier table (1.24 s vs 2.49 s, quieter machine) is superseded by this one. Still synthesized voices on one machine; no ChatGPT or Google comparison.

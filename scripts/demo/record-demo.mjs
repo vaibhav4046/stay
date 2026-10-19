@@ -239,7 +239,7 @@ await page.locator('[data-testid="measured"] details').first().evaluate((d) => {
 await sleep(400);
 await page.locator('[data-testid="measured"] details table').first().scrollIntoViewIfNeeded();
 await sleep(600);
-n = await narrate('We measured it with a simulated speaker. Replies in about 1.2 seconds, against 2.5 for the managed voice we replaced. It waited through the pause, noticed an interruption in about half a second, and never answered its own voice. We have not measured ChatGPT or Gemini, so we claim nothing against them.');
+n = await narrate('We measured it with a simulated speaker. Replies in about 1.3 seconds, against 2.8 for the managed voice we replaced. It waited through the pause, noticed an interruption in well under a second, and never answered its own voice. We have not measured ChatGPT or Gemini, so we claim nothing against them.');
 await n.done;
 await sleep(500);
 await chap('');

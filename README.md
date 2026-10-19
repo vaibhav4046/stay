@@ -74,15 +74,15 @@ Next.js 15, React 19, TypeScript, Tailwind v4, Three.js (the dot field), Zod, js
 
 `scripts/voice-e2e/sim-human.mjs` drives the real app in a real browser. A simulated person (an LLM playing a scattered adult with ADHD, spoken by neural voices in several accents, mixed with room noise) is injected as the microphone stream; optionally Stay's own reply audio is fed back into the microphone, quieter and delayed, without the browser's echo cancellation (a worst case). Timing is from the true end of the speaker's speech to the first reply audio, measured outside the app.
 
-Same script, same voice (British, 3 ordinary turns, then a pause, an interruption and a spoken command):
+Same script, same voice (British, 3 ordinary turns, then a pause, an interruption and a spoken command), run against the live site on 2026-10-19: 3 runs of each engine, so 9 ordinary turns each:
 
 | | Fast voice (default) | Standard voice (managed agent) |
 |---|---|---|
-| Reply after you stop talking | median 1.24 s (0.79 to 1.26) | median 2.49 s (2.33 to 2.97) |
-| 2.3 s pause mid-thought | waited, then answered the finished thought in 1.2 s | talked into the pause |
-| Interruption | noticed after 0.56 s, heard the whole sentence | noticed after 0.94 s, heard "Wait, stop." |
-| "Park it: call the dentist" | parked, confirmed after 1.3 s | parked, confirmed after 2.9 s |
-| Stray transcripts with Stay's voice leaking into the mic | 0 in 20 | 1 in 10 (its own greeting) |
+| Reply after you stop talking | median 1.35 s (1.23 to 2.20) | median 2.84 s (2.34 to 3.12) |
+| 2.3 s pause mid-thought | waited in 3 of 3 runs, answered the finished thought in 1.3 to 1.5 s | talked into the pause in 3 of 3 runs |
+| Interruption | noticed after 0.82, 0.54 and 0.57 s | noticed after 1.09, 1.01 and 1.04 s |
+| "Park it: call the dentist" | parked in 3 of 3, confirmed after 3.3, 1.4 and 1.3 s | parked in 3 of 3 (confirmation time not comparable in this run; 2.9 s in an earlier run) |
+| Stray transcripts with Stay's voice leaking into the mic | 0 in 26 | 0 in 27 (1 in 10 in an earlier run) |
 
 Other runs: Australian and American voices and an LLM-written conversation gave fast-voice replies of 0.8 to 1.7 s; the 2.3 s pause was never talked over in any of the 6 fast runs after the fix. Fast voice speaks English, Spanish, French, German, Italian and Portuguese (non-English only worked from 2026-10-19, after a wrong-voice bug was found; Spanish, French, German, Italian and Portuguese were each re-measured on 3 turns on production, see the verification doc); other languages, and any failure of the fast parts, use the standard voice automatically. It uses your own reasoning key if you added one.
 

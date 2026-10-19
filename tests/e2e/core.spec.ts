@@ -263,7 +263,7 @@ test('the landing page shows measured results with their limits, and no claim ag
   const sec = page.getByTestId('measured');
   await expect(sec).toContainText('What we tested');
   await page.locator('summary', { hasText: 'Voice speed' }).click();
-  await expect(sec).toContainText('about 1.2 seconds');
+  await expect(sec).toContainText('about 1.3 seconds');
   await expect(sec).toContainText(/synthesized voices/i);
   await expect(sec).toContainText(/make no claim against them/i);
   await expect(page.getByText(/faster than chatgpt|beats chatgpt|better than google/i)).toHaveCount(0);

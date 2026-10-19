@@ -11,7 +11,7 @@ The recorded video is produced by `scripts/demo/record-demo.mjs` against the liv
 | 1:15 | Ask for too much, then interrupt | "Can you give me a really detailed plan for my whole week." Then, while it talks: "Wait, stop, just one tiny step please." It stops in about half a second. |
 | 1:35 | Park a thought | "Park it: I need to call the dentist." Confirmed in about 1.3 s; open Parked thoughts to show it. |
 | 1:50 | Today card, Brain dump sheet, Routine sheet | "Everything on your mind, in any order. Stay picks one thing to start, a few for today, and the rest for later. No overdue, no guilt." |
-| 2:10 | Reply-speed readout, then the README table | "Measured with a simulated speaker: about 1.2 seconds against 2.5 for the managed voice it replaced. Not measured: ChatGPT voice or Google live voice." |
+| 2:10 | Reply-speed readout, then the README table | "Measured with a simulated speaker: about 1.3 seconds against 2.8 for the managed voice it replaced. Not measured: ChatGPT voice or Google live voice." |
 | 2:25 | End card with the URL | "Stay. Open source, local-first, built on AssemblyAI." |
 
 ## If something goes wrong live

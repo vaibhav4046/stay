@@ -25,11 +25,11 @@ const COMPARE = [
 ];
 
 const MEASURED = [
-  { what: 'Reply after you stop talking', fast: 'about 1.2 seconds', old: 'about 2.5 seconds' },
+  { what: 'Reply after you stop talking', fast: 'about 1.3 seconds', old: 'about 2.8 seconds' },
   { what: 'You pause mid-thought for 2.3 seconds', fast: 'Waits for you', old: 'Talks over the pause' },
-  { what: 'You interrupt it', fast: 'Notices in about 0.6 seconds and hears the whole sentence', old: 'Notices in about 0.9 seconds and hears part of it' },
-  { what: '"Park it: call the dentist"', fast: 'Done and confirmed in about 1.3 seconds', old: 'Done, confirmed in about 2.9 seconds' },
-  { what: "Stay's own voice leaks into the microphone", fast: 'It never mistook itself for you (0 stray transcripts in 20)', old: 'It once transcribed its own greeting as if you had said it (1 in 10)' },
+  { what: 'You interrupt it', fast: 'Notices in 0.5 to 0.8 seconds', old: 'Notices in about 1.0 to 1.1 seconds' },
+  { what: '"Park it: call the dentist"', fast: 'Done and confirmed in 1.3 to 3.3 seconds', old: 'Done, confirmed in about 2.9 seconds (an earlier run)' },
+  { what: "Stay's own voice leaks into the microphone", fast: 'It never mistook itself for you (0 stray transcripts in 26)', old: 'None in 27 this time; it once transcribed its own greeting as if you had said it (1 in 10, an earlier run)' },
 ];
 
 const PROMISES = [

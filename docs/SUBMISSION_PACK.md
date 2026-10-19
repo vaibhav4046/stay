@@ -17,9 +17,9 @@ A voice companion for adults with ADHD that gets you from "I can't start" to a t
 
 Adults with ADHD rarely lack the wish to start. They get stuck at the threshold: too many steps, no clear first one, a wall of guilt. Stay is a voice-first companion built for that moment. You say the thing you are avoiding, in whatever mess it comes out; Stay names what makes it hard and gives you one step you can start in two minutes, then runs a short block with you and checks in when it ends.
 
-It is built around how people with ADHD actually talk. Stay waits through a 2.3 second mid-thought pause instead of talking over it. If you interrupt, it stops within about 0.6 seconds and hears the whole sentence. You can say "park it: call the dentist" and the thought is set aside so it stops competing with the one thing you are starting. A brain dump turns a pile of worries into one thing to start, a few for today, and the rest for later. Routines, reminders, a Today list and a pause button are all voice-controllable.
+It is built around how people with ADHD actually talk. Stay waits through a 2.3 second mid-thought pause instead of talking over it. If you interrupt, it notices within about 0.5 to 0.8 seconds. You can say "park it: call the dentist" and the thought is set aside so it stops competing with the one thing you are starting. A brain dump turns a pile of worries into one thing to start, a few for today, and the rest for later. Routines, reminders, a Today list and a pause button are all voice-controllable.
 
-The voice is AssemblyAI end to end. The default "fast voice" engine uses AssemblyAI streaming speech-to-text (`universal-3-6-pro`) straight from the browser, a chat model for the reply, and AssemblyAI streaming text-to-speech, and emits the same events as the Voice Agent API so one hook drives both. The managed Voice Agent API is kept as the automatic fallback. Both are measured with the same simulated speaker: fast voice replies in about 1.2 s, the managed agent in about 2.5 s.
+The voice is AssemblyAI end to end. The default "fast voice" engine uses AssemblyAI streaming speech-to-text (`universal-3-6-pro`) straight from the browser, a chat model for the reply, and AssemblyAI streaming text-to-speech, and emits the same events as the Voice Agent API so one hook drives both. The managed Voice Agent API is kept as the automatic fallback. Both are measured with the same simulated speaker: fast voice replies in about 1.3 s, the managed agent in about 2.8 s.
 
 Safety is deterministic and runs before any model: crisis wording (30+ languages) stops coaching and shows emergency numbers and a findahelpline fallback; medication and dose questions get a fixed reply that points to a prescriber. Data stays in the browser by default, with one-click export and delete. You can bring your own keys (Groq GPT-OSS, Mistral, OpenAI or any OpenAI-compatible address, and AssemblyAI) so the shared allowance is never a limit.
 
@@ -40,11 +40,11 @@ Safety is deterministic and runs before any model: crisis wording (30+ languages
 
 | | Fast voice | Managed agent |
 |---|---|---|
-| Reply after you stop talking | median 1.24 s | median 2.49 s |
-| 2.3 s pause mid-thought | waited, answered in 1.2 s | talked into the pause |
-| Interruption noticed | 0.56 s, whole sentence heard | 0.94 s, partial |
-| "Park it: call the dentist" confirmed | 1.3 s | 2.9 s |
-| Stray transcripts from its own voice | 0 in 20 | 1 in 10 |
+| Reply after you stop talking | median 1.35 s (n=9, 3 runs) | median 2.84 s (n=9, 3 runs) |
+| 2.3 s pause mid-thought | waited 3 of 3, answered in 1.3 to 1.5 s | talked into the pause 3 of 3 |
+| Interruption noticed | 0.54 to 0.82 s | 1.01 to 1.09 s |
+| "Park it: call the dentist" confirmed | 1.3 to 3.3 s | 2.9 s (earlier run) |
+| Stray transcripts from its own voice | 0 in 26 | 0 in 27 (1 in 10 earlier) |
 
 - Security: CSP on every route, SSRF guard with DNS resolution on custom provider addresses, rate limits, no shared cache of personal text.
 
