@@ -35,7 +35,7 @@ def utterance_len(s0):
     return round((tot_end - s0) / 1000, 1)
 
 out = {"label": sys.argv[2] if len(sys.argv) > 2 else "", "threshold": round(r["thr"], 4), "turns": {}}
-for name in ("u1", "u2", "u3", "pause_b", "ask"):
+for name in ("u1", "u2", "u3", "pause_b", "ask", "ask_long"):
     if name not in ev:
         continue
     st, en = ev[name]

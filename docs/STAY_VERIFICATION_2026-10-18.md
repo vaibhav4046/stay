@@ -142,3 +142,5 @@ Harness: `scripts/voice-e2e/sim-human.mjs` (injected microphone stream with room
 | Stray transcripts | 0 of 26 | 0 of 27 |
 
 Limits: the managed agent's park confirmation and barge-in speech-queue figures in this harness were not comparable (the agent had already finished speaking, 0.1 s queued), so only the notice time is compared. The earlier table (1.24 s vs 2.49 s, quieter machine) is superseded by this one. Still synthesized voices on one machine; no ChatGPT or Google comparison.
+
+**ChatGPT voice and Gemini Live comparison, 2026-10-19:** see `docs/BENCHMARK_REAL_PRODUCTS_2026-10-19.md`. Headline: Stay is slower on plain reply time (about 1.95 s vs ChatGPT 1.65 s, Gemini 1.4 s in the same rig) and more patient (waited through every mid-thought pause; the other two talked into them).

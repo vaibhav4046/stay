@@ -88,13 +88,15 @@ Other runs: Australian and American voices and an LLM-written conversation gave 
 
 Bugs this found and fixed: an English-language detector that mistook ordinary English words for Turkish, Finnish or Italian and made Stay reply in the wrong language; Stay talking into pauses (it now holds a turn that trails off with "um", "and", a comma); an unprompted tool call on ordinary talk (the prompt now says when to use the app tool); silence after a spoken command; a reply that never finished when the speech provider reported two flushes as one.
 
-**Honest limits.** The speakers are synthesized voices injected into the browser, not people in a room with earphones, on one machine, with a handful of runs per setting. ChatGPT voice and Google live voice are not measured (no keys); `compare-bench.mjs` times them when `OPENAI_API_KEY` / `GEMINI_API_KEY` are in `.env.local`, but those two parts of the script have never been run. Stay makes no claim against either.
+**Honest limits.** The speakers are synthesized voices injected into the browser, not people in a room, on one machine, with a handful of runs per setting.
+
+**Against ChatGPT voice and Gemini Live (measured 2026-10-19, same script, same fake-microphone path, same browser):** Gemini 3.8 Live was fastest (median about 1.4 s), ChatGPT voice about 1.65 s, Stay about 1.95 s in that rig, so Stay is the slowest of the three on plain reply time. Both ChatGPT and Gemini began talking into a 3-second mid-thought pause (after 1.5 to 2.1 s of silence) and ChatGPT cut in mid-sentence in both runs; Stay waited every time. ChatGPT talked for 9 to 20 s per turn, Stay 4 to 10 s. Interruption: Stay and Gemini about 0.4 s, ChatGPT 1.1 to 1.5 s. Method, raw reports and limits (free tiers, a playground for Gemini, no real microphone because this laptop's mic reads silence): `docs/BENCHMARK_REAL_PRODUCTS_2026-10-19.md`.
 
 ## Not done
 
 - A real-microphone and speaker test (echo, earphone buttons) and a phone GPU frame-rate check.
 - A Mistral or OpenAI key was not available to test live; the Groq path was tested with real keys, the others only through the shared request code and unit tests.
-- Side-by-side timing against ChatGPT voice and Google live voice (needs their API keys).
+- Timing against ChatGPT voice and Gemini Live on a real microphone, in a room, with paid tiers (the 2026-10-19 comparison used an injected fake microphone on free tiers); Perplexity voice was not reached.
 - Supabase Auth, Google sign-in and row-level security against a real project.
 - The Voice Agent API documents six languages; others work in practice (see the verification doc) but are not promised by the provider.
 

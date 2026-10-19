@@ -50,7 +50,7 @@ Safety is deterministic and runs before any model: crisis wording (30+ languages
 
 ## What is not claimed
 
-- No comparison against ChatGPT voice or Google live voice: no keys were available, so nothing was measured. `scripts/voice-e2e/compare-bench.mjs` is ready for anyone who has them. Published figures are collected in `docs/RESEARCH_VOICE_LATENCY.md` with sources and are not Stay measurements.
+- Against ChatGPT voice (Free) and Gemini 3.8 Live (AI Studio), measured on 2026-10-19 with the same simulated speaker through the same fake-microphone path: Stay is slower on plain reply time (about 1.95 s vs 1.65 s and 1.4 s) but waited through mid-thought pauses where both of the others started talking, and talks for 4 to 10 s instead of 9 to 20 s (ChatGPT). Not a real-microphone test, small samples, free tiers; see `docs/BENCHMARK_REAL_PRODUCTS_2026-10-19.md`. Published vendor figures are in `docs/RESEARCH_VOICE_LATENCY.md` and are not Stay measurements.
 - The speakers are synthesized voices injected into a browser on one machine, a handful of runs per setting. No real-microphone, earphone or phone test yet.
 - Non-English fast voice (Spanish, French, German, Italian, Portuguese) works after the 2026-10-19 fix; each was measured on only 3 turns, replies 1.3 to 4.3 s, so it is less proven than English.
 - Mistral and OpenAI keys were not tested live. The shared Groq free tier allows 8,000 tokens a minute on the main model; the server falls back to a smaller model, and a user's own key removes the limit.

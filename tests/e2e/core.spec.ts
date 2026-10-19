@@ -258,14 +258,16 @@ test('one typed task makes exactly one plan request and the card never jumps bac
   expect(planCalls).toHaveLength(1);
 });
 
-test('the landing page shows measured results with their limits, and no claim against other products', async ({ page }) => {
+test('the landing page shows measured results with their limits, including where Stay is slower than ChatGPT voice and Gemini Live', async ({ page }) => {
   await page.goto('/');
   const sec = page.getByTestId('measured');
   await expect(sec).toContainText('What we tested');
   await page.locator('summary', { hasText: 'Voice speed' }).click();
   await expect(sec).toContainText('about 1.3 seconds');
   await expect(sec).toContainText(/synthesized voices/i);
-  await expect(sec).toContainText(/make no claim against them/i);
+  await expect(sec.getByTestId('vs-products')).toBeVisible();
+  await expect(sec).toContainText(/Stay was not the fastest/i);
+  await expect(sec).toContainText(/not a microphone test/i);
   await expect(page.getByText(/faster than chatgpt|beats chatgpt|better than google/i)).toHaveCount(0);
 });
 

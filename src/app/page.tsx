@@ -32,6 +32,14 @@ const MEASURED = [
   { what: "Stay's own voice leaks into the microphone", fast: 'It never mistook itself for you (0 stray transcripts in 26)', old: 'None in 27 this time; it once transcribed its own greeting as if you had said it (1 in 10, an earlier run)' },
 ];
 
+const VERSUS = [
+  { what: 'Reply after you stop talking (median)', stay: 'about 1.95 seconds', chatgpt: 'about 1.65 seconds', gemini: 'about 1.4 seconds' },
+  { what: 'You pause mid-thought for about 3 seconds', stay: 'Waits for you', chatgpt: 'Starts talking after 1.8 to 2.1 seconds of silence', gemini: 'Starts talking after about 1.5 seconds of silence' },
+  { what: 'You say "Okay, maybe." and then keep going', stay: 'Waits', chatgpt: 'Jumped in mid-sentence, both runs', gemini: 'Waited' },
+  { what: 'You interrupt it', stay: 'Quiet in about 0.4 seconds', chatgpt: 'Quiet in 1.1 to 1.5 seconds', gemini: 'Quiet in about 0.4 seconds' },
+  { what: 'How long it talks back', stay: '4 to 10 seconds', chatgpt: '9 to 20 seconds', gemini: '8 to 9 seconds' },
+];
+
 const PROMISES = [
   { title: 'Your history stays on your device', body: 'Sessions and memory are stored in your browser. Download or delete all of it in Settings, in one tap.' },
   { title: 'No medication advice', body: 'Ask about a dose and Stay says it cannot help and points you to your prescriber or pharmacist.' },
@@ -210,7 +218,38 @@ export default function Home() {
               </table>
             </div>
             <p className="meta mt-5 max-w-[64ch]">
-              Honest limits: the speakers were synthesized voices played into the browser, not people in a room, and the numbers come from a handful of runs on one machine. Published figures for native speech-to-speech assistants are lower than ours (OpenAI claims 0.23 to 0.32 seconds for its app voice); we did not measure them and make no claim against them. Sources and the full comparison are in <code>docs/RESEARCH_VOICE_LATENCY.md</code>.
+              Honest limits: the speakers were synthesized voices played into the browser, not people in a room, and the numbers come from a handful of runs on one machine. Sources and the full comparison are in <code>docs/RESEARCH_VOICE_LATENCY.md</code>.
+            </p>
+
+            <h3 className="mt-10 font-display text-xl font-semibold" data-testid="vs-products">Next to ChatGPT voice and Gemini Live, same day, same script</h3>
+            <p className="mt-2 max-w-[64ch] text-ink-2">
+              We fed the same synthesized speaker, through the same fake-microphone path in the same browser, into ChatGPT voice (Free plan) and Gemini 3.8 Live (Google AI Studio), and timed each reply inside the page. Small samples, one laptop. Stay was not the fastest.
+            </p>
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full min-w-[34rem] border-collapse text-left text-[0.95rem]">
+                <caption className="sr-only">Stay, ChatGPT voice and Gemini Live, measured with the same simulated speaker</caption>
+                <thead>
+                  <tr className="border-b-2 border-ink">
+                    <th scope="col" className="py-2 pr-4 font-semibold"></th>
+                    <th scope="col" className="py-2 pr-4 font-semibold">Stay</th>
+                    <th scope="col" className="py-2 pr-4 font-semibold">ChatGPT voice</th>
+                    <th scope="col" className="py-2 font-semibold">Gemini 3.8 Live</th>
+                  </tr>
+                </thead>
+                <tbody className="[&_td]:border-b [&_td]:border-line [&_td]:py-3 [&_td]:pr-4 [&_th]:border-b [&_th]:border-line [&_th]:py-3 [&_th]:pr-4 [&_th]:text-left [&_th]:font-medium">
+                  {VERSUS.map((v) => (
+                    <tr key={v.what}>
+                      <th scope="row">{v.what}</th>
+                      <td>{v.stay}</td>
+                      <td>{v.chatgpt}</td>
+                      <td>{v.gemini}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="meta mt-4 max-w-[64ch]">
+              Not a microphone test: this laptop&apos;s microphone reads silence, so the speaker was injected as the microphone stream. Free tiers and a playground, not paid products. Method, raw reports and every limit: <code>docs/BENCHMARK_REAL_PRODUCTS_2026-10-19.md</code>.
             </p>
           </details>
         </section>
