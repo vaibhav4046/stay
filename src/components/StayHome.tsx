@@ -21,10 +21,11 @@ import { parseMultiIntentUtterance } from '@/lib/voice/voiceCommands';
 import { loadUserCalibration, recordSessionLearning } from '@/lib/coach/selfImprovement';
 import { buildMemorySystemPrompt, clearAllUserMemories, recordSessionMemory, removeUserMemoryFact } from '@/lib/coach/userMemory';
 import { useOrbShape } from '@/lib/orb/useOrbShape';
+import { useOrbPresence } from '@/lib/orb/useOrbPresence';
 import { useCrisisPanel } from '@/components/CrisisHelpPanel';
 import { GroundingPanel } from '@/components/GroundingPanel';
 import { OrbCognitiveGames } from '@/components/OrbCognitiveGames';
-import { Signal } from '@/components/Signal';
+import { Signal, hasWebGL } from '@/components/Signal';
 import { Sheet } from '@/components/Sheet';
 import { BrainDumpSheet } from '@/components/BrainDumpSheet';
 import { TodayCard } from '@/components/TodayCard';
@@ -238,6 +239,15 @@ export function StayHome({
   });
   const voiceRef = useRef(voice);
   voiceRef.current = voice;
+
+  // the orb turns into a person while Stay speaks (or when asked), and back to the topical shape when you talk
+  const presence = useOrbPresence({
+    topical: orb.target,
+    speaking: voice.visualState === 'speaking',
+    userTalking: !!voice.partialUserTranscript || voice.visualState === 'interrupted',
+  });
+  const [canShowFace, setCanShowFace] = useState(false); // the face is drawn in WebGL; without it the button would do nothing
+  useEffect(() => setCanShowFace(hasWebGL()), []);
 
   useEffect(() => {
     if (voice.isConnected) {
@@ -511,7 +521,7 @@ export function StayHome({
             state={visual}
             energy={voice.audioEnergy}
             bands={voice.audioBands}
-            shape={orb.target}
+            shape={presence.target}
             thinking={orb.thinking}
             colorTheme={voice.orbColorTheme}
             hideLabel
@@ -522,6 +532,11 @@ export function StayHome({
         <p className="meta" role="status" aria-live="polite" data-testid="orb-status">
           {status}
         </p>
+        {canShowFace && (
+          <button type="button" className="chip" aria-pressed={presence.pinned} aria-label="Show Stay's face" onClick={presence.togglePin} data-testid="face-toggle">
+            Face
+          </button>
+        )}
         {caption && (
           <p className="min-h-[3.5rem] max-w-[24ch] text-center font-display text-[1.6rem] font-medium leading-tight tracking-tight sm:max-w-[28ch] sm:text-[1.9rem]" data-testid="caption">
             {caption}

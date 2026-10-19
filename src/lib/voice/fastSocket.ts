@@ -367,6 +367,7 @@ export class FastSocket {
   private say(text: string, gen: number): void {
     if (!text || gen !== this.genId || this.tts?.readyState !== WebSocket.OPEN) return;
     if (this.spoken === '') this.emit({ type: 'reply.started' });
+    this.emit({ type: 'reply.text', text });
     this.spoken += (this.spoken ? ' ' : '') + text;
     this.sentFlushes++;
     this.tts.send(JSON.stringify({ type: 'Generate', text }));

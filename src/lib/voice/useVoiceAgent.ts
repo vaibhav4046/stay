@@ -36,6 +36,7 @@ import {
 } from '@/lib/coach/executiveEngine';
 import { buildDeterministicCoachPlan } from '@/lib/coach/strategies';
 import { analyzeStreamingUtterance, type RealtimeStreamingAnalysis } from '@/lib/coach/knowledge';
+import { lipSyncBus } from '@/lib/orb/lipSync';
 import { loadUserCalibration, buildAdaptiveSystemPrompt } from '@/lib/coach/selfImprovement';
 import {
   loadUserMemory,
@@ -704,6 +705,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       }
     }
     activeSourcesRef.current.clear();
+    lipSyncBus.reset();
     if (audioCtxRef.current) {
       nextPlaybackTimeRef.current = audioCtxRef.current.currentTime;
     }
@@ -873,6 +875,9 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     const startAt = Math.max(ctx.currentTime + 0.015, nextPlaybackTimeRef.current);
     source.start(startAt);
     nextPlaybackTimeRef.current = startAt + audioBuffer.duration;
+    // mouth sync for the orb's figure: after the audio is scheduled, so it can never delay playback
+    lipSyncBus.attachClock(ctx);
+    lipSyncBus.pushChunk(startAt, float32, 24000);
 
     activeSourcesRef.current.add(source);
     source.onended = () => {
@@ -932,6 +937,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       backchannelTimerRef.current = null;
     }
     analyserRef.current = null;
+    lipSyncBus.reset(); // a closed AudioContext's clock stops, so nothing may stay "audible"
     setAudioBands({ low: 0, mid: 0, high: 0, overall: 0 });
 
     if (audioCtxRef.current) {
@@ -2083,7 +2089,14 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           return;
         }
 
+        if (type === 'reply.text') {
+          // the sentence about to be spoken (fast voice only): vowel shapes for the figure's mouth
+          if (!medicationSuppressionRef.current) lipSyncBus.pushText(String(msg.text || ''));
+          return;
+        }
+
         if (type === 'reply.started') {
+          lipSyncBus.clearText();
           pendingToolResultsRef.current = [];
           if (!medicationSuppressionRef.current) {
             setVisualState('speaking');

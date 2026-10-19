@@ -29,7 +29,7 @@ const THEMES: Record<string, [string, string]> = {
   emerald: ['#34D399', '#047857'],
 };
 
-function hasWebGL(): boolean {
+export function hasWebGL(): boolean {
   try {
     const c = document.createElement('canvas');
     return Boolean(c.getContext('webgl2') || c.getContext('webgl'));
