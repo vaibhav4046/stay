@@ -20,7 +20,7 @@ export default function HistoryPage() {
       <section className="card p-5 sm:p-6" aria-labelledby="hist-title">
         <h1 id="hist-title" className="section-title">History</h1>
         {sessions.length === 0 ? (
-          <p className="text-ink-2 mt-3">No sessions yet. Your first one will show up here.</p>
+          <p className="text-ink-2 mt-3">Nothing here yet. Start one small thing and it will show up here, even if it goes badly. That is still data.</p>
         ) : (
           <ul className="mt-5 divide-y divide-line" data-testid="history-list">
             {sessions.map((s) => {

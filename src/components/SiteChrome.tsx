@@ -1,15 +1,17 @@
 import Link from 'next/link';
 import { StayWordmark } from '@/components/StayMark';
+import { UrgentHelpButton } from '@/components/UrgentHelpButton';
 
 export function SiteHeader() {
   return (
-    <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
+    <header className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-5 sm:px-8">
       <Link href="/" aria-label="Stay home">
         <StayWordmark />
       </Link>
-      <nav className="flex items-center gap-1 sm:gap-2" aria-label="Main">
-        <Link href="/privacy" className="btn btn-ghost">Privacy</Link>
-        <Link href="/app/today" className="btn btn-primary">Open Stay</Link>
+      <nav className="flex items-center gap-0.5 sm:gap-2" aria-label="Main">
+        <Link href="/privacy" className="btn btn-ghost hidden sm:inline-flex">Privacy</Link>
+        <UrgentHelpButton />
+        <Link href="/app/today" className="btn btn-primary !px-3 sm:!px-5">Open Stay</Link>
       </nav>
     </header>
   );

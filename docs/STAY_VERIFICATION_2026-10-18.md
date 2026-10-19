@@ -108,3 +108,17 @@ Harness: `scripts/voice-e2e/sim-human.mjs` (injected microphone stream with room
 - `vitest run`: 320 tests (17 files)
 - `next build`: all routes (adds /api/keys/check)
 - `playwright test`: see the latest run in the commit message
+
+## 2026-10-19: fast voice in Spanish, French and German (a real bug, found by the speaker simulation)
+
+**Found:** with the fast engine selected and a Spanish, French or German browser or language setting, Stay never answered. The simulated speaker got "first audio NONE" on every turn and only the English greeting was ever heard.
+
+**Cause:** the streaming text-to-speech service ties each voice to one language. The app opened a Spanish connection with the English voice `anna`, and the service answered `Voice 'anna' speaks english, but this connection serves spanish. Available: ['lola']`. The session then fell back to the managed agent without saying so. Voices per language: es `lola`, fr `estelle`, de `juergen` (it `giovanni` and pt `rafael` come from the persona list; those two were not re-probed live because the account's concurrent-session limit was hit during that probe).
+
+**Fix:** `fastVoiceFor()` picks the language's native voice (an English pick stays on English, a native voice is swapped out on English), and the opening line is spoken in that language. Unit-tested.
+
+**Re-measured (simulated speaker, 3 turns each, one run, small samples):** German replied on 3 of 3 turns (1.3, 1.6, 2.7 s); French on 2 of 3 in the first run (1.3, 1.1 s); Spanish on 1 of 3 in the first run (1.6 s), and on all 3 turns in a second run with the event timeline dumped. The "NONE" turns in the summary lines are partly a limit of how the harness windows turns, partly real. Treat non-English fast voice as working but less proven than English, which has the full benchmark.
+
+**Also found while testing:** the Groq free tier gives `openai/gpt-oss-120b` 8,000 tokens per minute. Repeated test traffic from one machine exhausted it and every fast-voice turn then failed silently with "quota". The server now falls back to `openai/gpt-oss-20b` (its own bucket) when the main model is out. Under real concurrent use this limit is the first thing a judge could hit; the own-key option in Settings removes it.
+
+**Tightened:** the model sometimes called `memory_add` on an emotional line ("I do not know what to write, it feels huge") and answers "Got it, I will remember" instead of helping. The tool description now says to save only on an explicit "remember" (re-measure pending).

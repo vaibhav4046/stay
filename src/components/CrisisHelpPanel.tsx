@@ -28,7 +28,7 @@ export function CrisisHelpProvider({ children }: { children: React.ReactNode }) 
   return (
     <CrisisContext.Provider value={{ openCrisisPanel }}>
       {children}
-      {!inApp && <button
+      {false && <button
         type="button"
         onClick={() => openCrisisPanel()}
         className="fixed bottom-4 right-4 z-40 btn btn-secondary text-[0.85rem]"

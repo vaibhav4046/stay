@@ -82,7 +82,7 @@ Same script, same voice (British, 3 ordinary turns, then a pause, an interruptio
 | "Park it: call the dentist" | parked, confirmed after 1.3 s | parked, confirmed after 2.9 s |
 | Stray transcripts with Stay's voice leaking into the mic | 0 in 20 | 1 in 10 (its own greeting) |
 
-Other runs: Australian and American voices and an LLM-written conversation gave fast-voice replies of 0.8 to 1.7 s; the 2.3 s pause was never talked over in any of the 6 fast runs after the fix. Fast voice speaks English, Spanish, French, German, Italian and Portuguese; other languages, and any failure of the fast parts, use the standard voice automatically. It uses your own reasoning key if you added one.
+Other runs: Australian and American voices and an LLM-written conversation gave fast-voice replies of 0.8 to 1.7 s; the 2.3 s pause was never talked over in any of the 6 fast runs after the fix. Fast voice speaks English, Spanish, French, German, Italian and Portuguese (non-English only worked from 2026-10-19, after a wrong-voice bug was found; Spanish, French and German were re-measured on a few turns, Italian and Portuguese were not, see the verification doc); other languages, and any failure of the fast parts, use the standard voice automatically. It uses your own reasoning key if you added one.
 
 Bugs this found and fixed: an English-language detector that mistook ordinary English words for Turkish, Finnish or Italian and made Stay reply in the wrong language; Stay talking into pauses (it now holds a turn that trails off with "um", "and", a comma); an unprompted tool call on ordinary talk (the prompt now says when to use the app tool); silence after a spoken command; a reply that never finished when the speech provider reported two flushes as one.
 

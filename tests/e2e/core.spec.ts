@@ -378,3 +378,72 @@ test.describe('Content Security Policy', () => {
     expect(violations).toEqual([]);
   });
 });
+
+test.describe('Judge feedback: blocks, trust copy, check-in, urgent help', () => {
+  test('a running block survives a reload and can be extended or shrunk', async ({ page }) => {
+    await onboard(page);
+    await page.getByTestId('task-input').fill('Sort the paperwork pile');
+    await page.getByTestId('send').click();
+    await expect(page.getByTestId('plan-card')).toBeVisible({ timeout: 20000 });
+    await page.getByTestId('start-timer').click();
+    await expect(page.getByTestId('clock')).toBeVisible();
+    await expect(page.getByTestId('orb-status')).toContainText('Focus block running');
+    await page.getByTestId('plus-five').click();
+    await page.reload();
+    await expect(page.getByTestId('clock')).toBeVisible();
+    await expect(page.getByTestId('note')).toContainText(/Welcome back/i);
+    await page.getByTestId('too-big').click();
+    await expect(page.getByTestId('plan-card')).toBeVisible({ timeout: 20000 });
+  });
+
+  test('a block that ended while you were away asks how it went', async ({ page }) => {
+    await onboard(page);
+    await page.evaluate(() => localStorage.setItem('stay_active_block', JSON.stringify({ plan: { spokenResponse: 'x', taskText: 'Sort the paperwork', barrierType: 'other', strategyKey: 'task_shrinking', strategyLabel: 'Make it tiny', firstStep: 'Pick up the top page', whyThisFits: 'x', timerMinutes: 10, checkinPrompt: 'x', safetyFlag: 'none' }, minutes: 10, endsAt: Date.now() - 60_000 })));
+    await page.reload();
+    await expect(page.getByTestId('outcome-card')).toBeVisible();
+  });
+
+  test('someday items are saved for later, can be shown and moved to today', async ({ page }) => {
+    await onboard(page);
+    await page.evaluate(() => localStorage.setItem('stay_today_list_v1', JSON.stringify([
+      { id: 'a', text: 'email the landlord', bucket: 'now', done: false, createdAt: new Date().toISOString() },
+      { id: 'b', text: 'call mum someday', bucket: 'later', done: false, createdAt: new Date().toISOString() },
+    ])));
+    await page.reload();
+    await page.getByTestId('later-toggle').click();
+    await expect(page.getByTestId('later-list')).toContainText('call mum someday');
+    await page.getByRole('button', { name: 'Move to today: call mum someday' }).click();
+    await expect(page.getByTestId('today-card')).toContainText('call mum someday');
+  });
+
+  test('urgent help is in the landing header, not floating over the page', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+    const btn = page.getByTestId('crisis-help-trigger');
+    await expect(btn).toBeVisible();
+    const box = await btn.boundingBox();
+    expect(box!.y).toBeLessThan(120); // in the header
+    expect(box!.height).toBeGreaterThanOrEqual(44);
+    await btn.click();
+    await expect(page.getByText('116 123').first()).toBeVisible();
+  });
+
+  test('the trust copy does not contradict itself, and the check-in hides medication questions for people who did not choose that', async ({ page }) => {
+    await onboard(page); // care context: managing on my own
+    await page.goto('/app/settings');
+    await expect(page.getByText(/100% offline/i)).toHaveCount(0);
+    await expect(page.getByText(/see Privacy/i).first()).toBeVisible();
+    await page.goto('/app/treatment');
+    await expect(page.getByText('Treatment today')).toHaveCount(0);
+    await page.getByTestId('checkin-submit').waitFor();
+  });
+
+  test('both comparison tables are readable on a phone without sideways scrolling', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    expect(overflow).toBeLessThanOrEqual(1);
+    await page.locator('summary', { hasText: 'Voice speed' }).click();
+    await expect(page.getByTestId('measured').getByText('Reply after you stop talking').first()).toBeVisible();
+  });
+});

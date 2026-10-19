@@ -5,7 +5,7 @@ import { TreatmentCheckinForm } from '@/components/TreatmentCheckinForm';
 import { computeAdherenceSummary } from '@/lib/coach/patterns';
 
 export default function TreatmentPage() {
-  const { checkins, loaded, addCheckin } = useStayData('app');
+  const { profile, checkins, loaded, addCheckin } = useStayData('app');
   if (!loaded) return null;
   const summary = computeAdherenceSummary(checkins.filter((c) => Date.now() - new Date(c.createdAt).getTime() < 14 * 86400000));
 
@@ -13,7 +13,7 @@ export default function TreatmentPage() {
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
       <div>
         <h1 className="section-title mb-5">Check-in</h1>
-        <TreatmentCheckinForm onSubmit={addCheckin} />
+        <TreatmentCheckinForm onSubmit={addCheckin} showTreatment={profile.careContext === 'medicated'} />
       </div>
       <section className="card p-5 sm:p-6 h-fit lg:mt-[3.25rem]" aria-labelledby="adh-title">
         <h2 id="adh-title" className="card-title">Last 14 days</h2>

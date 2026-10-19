@@ -169,6 +169,7 @@ export default function OrbParticles({ state, energy, bands, target, tint, think
     let dpr = Math.min(window.devicePixelRatio || 1, 2);
     renderer.setPixelRatio(dpr);
     renderer.setSize(px, px);
+    renderer.domElement.setAttribute('aria-hidden', 'true'); // decoration: the button around it carries the name
     renderer.domElement.style.display = 'block';
     renderer.domElement.style.outline = 'none';
     renderer.domElement.style.touchAction = 'none';

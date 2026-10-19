@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { StayWordmark } from '@/components/StayMark';
-import { useCrisisPanel } from '@/components/CrisisHelpPanel';
+import { UrgentHelpButton } from '@/components/UrgentHelpButton';
 
 const ICON = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' } as const;
 
@@ -17,7 +17,6 @@ const NAV = [
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { openCrisisPanel } = useCrisisPanel();
   return (
     <div className="min-h-[100dvh]">
       <header className="sticky top-0 z-30 border-b border-line bg-canvas/95 backdrop-blur-[2px]">
@@ -41,15 +40,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               );
             })}
           </nav>
-          <button
-            type="button"
-            onClick={() => openCrisisPanel()}
-            className="btn btn-secondary text-[0.85rem]"
-            style={{ minHeight: 36, padding: '0 0.8rem', color: '#B23A2E', borderColor: '#E3C3BE' }}
-            data-testid="crisis-help-trigger"
-          >
-            Urgent help
-          </button>
+          <UrgentHelpButton />
         </div>
       </header>
 

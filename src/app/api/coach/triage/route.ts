@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { detectCrisisSignal, detectMedicationAdviceRequest } from '@/lib/safety/crisis';
 import { callLlm, llmHeaders } from '@/lib/llm/provider';
-import { fallbackTriage, parseTriageReply, TRIAGE_SYSTEM } from '@/lib/coach/triage';
+import { enforceLater, fallbackTriage, parseTriageReply, TRIAGE_SYSTEM } from '@/lib/coach/triage';
 
 const Body = z.object({ text: z.string().min(2).max(2000) });
 
@@ -27,6 +27,6 @@ export async function POST(req: NextRequest) {
   });
   const hdr = { headers: llmHeaders(llm) };
   const fromModel = llm.ok ? parseTriageReply(llm.text) : null;
-  if (fromModel) return NextResponse.json({ ...fromModel, source: 'model' }, hdr);
+  if (fromModel) return NextResponse.json({ ...fromModel, items: enforceLater(fromModel.items, text), source: 'model' }, hdr);
   return NextResponse.json({ ...fallbackTriage(text), source: 'fallback' }, hdr);
 }

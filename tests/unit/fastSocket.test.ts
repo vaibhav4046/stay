@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { FastSocket, quickConfirmation, soundsUnfinished, takeSpeakable } from '@/lib/voice/fastSocket';
+import { FastSocket, fastVoiceFor, quickConfirmation, soundsUnfinished, takeSpeakable } from '@/lib/voice/fastSocket';
 
 // ---- a scripted AssemblyAI: STT sockets accept audio and are driven by the test; TTS sockets answer Flush with audio ----
 class FakeWS {
@@ -45,7 +45,7 @@ const tick = (n = 6) => new Promise((r) => { let i = 0; const f = () => (++i >= 
 let events: Array<Record<string, unknown>>;
 let fetchMock: ReturnType<typeof vi.fn>;
 async function open(opts: { tools?: boolean; greeting?: string; holdMs?: number } = {}) {
-  const s = new FastSocket({ sttToken: 'stt', ttsToken: 'tts', holdMs: opts.holdMs ?? 60, warmUp: false });
+  const s = new FastSocket({ sttToken: 'stt', ttsToken: 'tts', holdMs: opts.holdMs ?? 60, interruptHoldMs: opts.holdMs ?? 60, warmUp: false });
   events = [];
   s.onmessage = (e) => events.push(JSON.parse(e.data));
   await tick(2);
@@ -238,6 +238,26 @@ describe('FastSocket', () => {
     expect(events.find((e) => e.type === 'transcript.agent')?.text).toBe('Done.');
   });
 
+  it('after an interruption, a short fragment is held so the rest of the sentence is heard too', async () => {
+    FakeWS.auto = false; // Stay is mid-reply: audio has arrived and is still playing
+    fetchMock.mockImplementation(async () => sse(text('Here is a long reply that is being spoken right now.')));
+    const { stt, tts } = await open({ holdMs: 250 });
+    stt.push({ type: 'Turn', transcript: 'plan my week.', end_of_turn: true, turn_order: 0 });
+    await tick(12);
+    tts.push({ type: 'Audio', audio: 'A'.repeat(64000), flush_id: 0 }); // about 1.3 s of speech, so still playing
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    stt.push({ type: 'Turn', transcript: 'wait stop', end_of_turn: false, turn_order: 1 });
+    stt.push({ type: 'Turn', transcript: 'Wait, stop.', end_of_turn: true, turn_order: 1 });
+    await tick(8);
+    expect(fetchMock).toHaveBeenCalledTimes(1); // not answered yet: the fragment is being held
+    stt.push({ type: 'Turn', transcript: 'just one tiny step please.', end_of_turn: false, turn_order: 2 });
+    stt.push({ type: 'Turn', transcript: 'just one tiny step please.', end_of_turn: true, turn_order: 2 });
+    await tick(30);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const body = JSON.parse(fetchMock.mock.calls[1][1].body as string);
+    expect(body.messages.at(-1).content).toBe('Wait, stop. just one tiny step please.');
+  });
+
   it('a stray word while Stay talks does not interrupt it', async () => {
     fetchMock.mockResolvedValue(sse(text('This is a long reply that is being spoken right now.')));
     FakeWS.auto = false; // Stay is mid-sentence: audio has started but the reply is not finished
@@ -287,5 +307,19 @@ describe('FastSocket', () => {
     expect(closed).toBe(true);
     expect(stt.sent.some((d) => typeof d === 'string' && JSON.parse(d).type === 'Terminate')).toBe(true);
     expect(tts.sent.some((d) => typeof d === 'string' && JSON.parse(d).type === 'Terminate')).toBe(true);
+  });
+});
+
+describe('fastVoiceFor', () => {
+  it('uses the language native voice for non-English fast voice', () => {
+    expect(fastVoiceFor('anna', 'es')).toBe('lola');
+    expect(fastVoiceFor('anna', 'fr')).toBe('estelle');
+    expect(fastVoiceFor('anna', 'de')).toBe('juergen');
+    expect(fastVoiceFor('charles', 'pt')).toBe('rafael');
+  });
+  it('keeps an English pick and swaps a native voice out on English', () => {
+    expect(fastVoiceFor('vera', 'en')).toBe('vera');
+    expect(fastVoiceFor('lola', 'en')).toBe('anna');
+    expect(fastVoiceFor('', 'en')).toBe('anna');
   });
 });

@@ -81,6 +81,24 @@ export const TRIAGE_SYSTEM = [
   'Never give medical advice and never diagnose.',
 ].join('\n');
 
+const SOMEDAY_WORDS = /\b(someday|eventually|maybe|at some point|one day|when i can|next (?:week|month))\b/i;
+const tokens = (t: string) => new Set(t.toLowerCase().replace(/[^\p{L}\p{N} ]+/gu, ' ').split(/\s+/).filter((w) => w.length > 2));
+
+/**
+ * The model tends to tidy "call mum someday" into "Call mum" and then file it under today. Whatever wording of the original
+ * dump says someday, maybe, eventually or one day is always "later", whichever bucket the model chose.
+ */
+export function enforceLater(items: TriageItem[], dump: string): TriageItem[] {
+  const somedayParts = splitDump(dump).filter((p) => SOMEDAY_WORDS.test(p)).map(tokens);
+  if (somedayParts.length === 0 || items.length < 2) return items;
+  const out = items.map((it) => {
+    const t = tokens(it.text);
+    const hit = t.size > 0 && somedayParts.some((p) => [...t].filter((w) => p.has(w)).length / t.size >= 0.6);
+    return hit ? { ...it, bucket: 'later' as const } : it;
+  });
+  return normalizeTriage(out.some((i) => i.bucket === 'now') || out.every((i) => i.bucket === 'later') ? out : out.map((i, k) => (k === 0 ? { ...i, bucket: 'now' as const } : i)));
+}
+
 /** Pulls a JSON object out of a model reply and validates it; returns null if it is not usable. */
 export function parseTriageReply(raw: string): TriageResponse | null {
   const m = raw.match(/\{[\s\S]*\}/);

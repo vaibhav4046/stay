@@ -60,7 +60,7 @@ export default function SettingsPage() {
       <section className="card p-5 sm:p-6" aria-labelledby="auth-title">
         <h2 id="auth-title" className="card-title">Account &amp; Cloud Sync</h2>
         <p className="text-ink-2 mt-2 text-[0.95rem]">
-          Stay runs 100% offline and locally by default. Sign in with Google to securely synchronize your cognitive memory profile, ADHD triggers, and session history across your phone and desktop.
+          Your history lives on this device by default. Plans and voice go through a server to a language model and to AssemblyAI (see Privacy). Sign in only if you want your memory and session history synced between your phone and desktop; what syncs is exactly what History and Memory show.
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           {user ? (
@@ -83,7 +83,6 @@ export default function SettingsPage() {
               onClick={() => setShowAuthModal(true)}
               data-testid="settings-signin-btn"
             >
-              <span>🔐</span>
               <span>Sign in with Google</span>
             </button>
           )}

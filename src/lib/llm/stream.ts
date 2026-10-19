@@ -72,5 +72,8 @@ export async function openLlmStream(req: Request, call: LlmStreamCall): Promise<
     const backup = getNextGroqKey();
     if (backup && backup !== first) r = await openStream({ baseUrl: GROQ_BASE, key: backup, model: call.serverModel }, call);
   }
+  // each Groq model has its own per-minute token bucket: when the main one is spent, a smaller sibling still answers
+  const spare = process.env.GROQ_FALLBACK_MODEL || 'openai/gpt-oss-20b';
+  if (!r.res && r.error === 'quota' && spare !== call.serverModel) r = await openStream({ baseUrl: GROQ_BASE, key: first, model: spare }, call);
   return { res: r.res, source: 'server', error: r.error, userKeyError };
 }

@@ -6,7 +6,7 @@
   --color-recessed: #F1EFE9;
   --color-ink: #212422;
   --color-ink-2: #626B66;
-  --color-muted: #747A75;
+  --color-muted: #5C625E;
   --color-line: #E9E6DF;
   --color-line-strong: #D5D1C8;
   --color-accent: #006A67;
@@ -104,7 +104,7 @@ body {
 .chip {
   display: inline-flex;
   align-items: center;
-  min-height: 40px;
+  min-height: 44px;
   padding: 0.4rem 0.85rem;
   border-radius: 999px;
   border: 1px solid var(--color-line-strong);

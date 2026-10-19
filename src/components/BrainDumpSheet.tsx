@@ -92,7 +92,7 @@ export function BrainDumpSheet({ onClose, onStart, onCrisis, onSaved }: { onClos
               </section>
             );
           })}
-          <p className="meta mt-4">Saved to Today on this device. {phase.source === 'fallback' ? 'Sorted by wording, because the model was not available.' : ''}</p>
+          <p className="meta mt-4">Saved on this device. {phase.source === 'fallback' ? 'Sorted by wording, because the model was not available.' : ''}</p>
           <button type="button" className="btn btn-secondary mt-3" onClick={onClose}>Done</button>
         </div>
       )}

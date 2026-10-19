@@ -22,7 +22,7 @@ export interface AppActionArgs {
 export const APP_TOOL = {
   type: 'function',
   name: 'app',
-  description: 'Control the Stay app. Call when the user asks to open, change, start, stop, remember, forget, park or show something. One action per call. For park, value is the thought to set aside for later, in the user\'s words (park it: call the dentist -> value "call the dentist").',
+  description: 'Control the Stay app. Call only when the user explicitly asks to open, change, start, stop, remember, forget, park or show something. One action per call. Never save feelings, worries or what they are struggling with unless they say remember. For park, value is the thought to set aside for later, in the user\'s words (park it: call the dentist -> value "call the dentist").',
   parameters: {
     type: 'object',
     properties: {
@@ -63,7 +63,18 @@ export function buildSystemPrompt(persona: VoicePersona, memory: UserMemoryProfi
 }
 
 /** Greetings stay under ~8 words so the first thing the user hears never lasts longer than their patience. */
-export function buildGreeting(persona: VoicePersona, memory: UserMemoryProfile, resumed = false): string {
+const GREET_LOCAL: Record<string, { hi: (n: string) => string; resumed: string; ask: string }> = {
+  es: { hi: (n) => (n ? `Hola, ${n}.` : 'Hola.'), resumed: 'Sigo aquí contigo.', ask: '¿Qué estás posponiendo?' },
+  fr: { hi: (n) => (n ? `Salut ${n}.` : 'Salut.'), resumed: 'Je suis toujours là.', ask: 'Qu’est-ce que tu repousses ?' },
+  de: { hi: (n) => (n ? `Hallo ${n}.` : 'Hallo.'), resumed: 'Ich bin noch da.', ask: 'Was schiebst du gerade auf?' },
+  it: { hi: (n) => (n ? `Ciao ${n}.` : 'Ciao.'), resumed: 'Sono ancora qui.', ask: 'Cosa stai rimandando?' },
+  pt: { hi: (n) => (n ? `Olá, ${n}.` : 'Olá.'), resumed: 'Continuo aqui contigo.', ask: 'O que estás a adiar?' },
+};
+
+/** Opening line. A fast-voice session in another language greets in that language (the voice only speaks its own). */
+export function buildGreeting(persona: VoicePersona, memory: UserMemoryProfile, resumed = false, lang = 'en'): string {
+  const local = GREET_LOCAL[lang];
+  if (local) return resumed ? local.resumed : `${local.hi(memory.name ? clip(memory.name, 16) : '')} ${local.ask}`;
   if (resumed) return 'Still here with you.'; // all-day mode renewed the session: do not re-introduce
   const last = memory.recentSessionsSummary[0];
   if (memory.name && last) return `Welcome back, ${clip(memory.name, 16)}. How did ${clip(last.task, 28)} go?`;

@@ -37,11 +37,14 @@ function Rating({ label, value, onChange, id }: { label: string; value: number |
 
 export function TreatmentCheckinForm({
   onSubmit,
+  showTreatment = true,
 }: {
   onSubmit: (rec: Omit<TreatmentCheckinRecord, 'id' | 'userId' | 'createdAt'>) => Promise<unknown>;
+  /** The medication question is only for people who said they take prescribed medication. */
+  showTreatment?: boolean;
 }) {
   const { openCrisisPanel } = useCrisisPanel();
-  const [taken, setTaken] = useState<TakenStatus | null>(null);
+  const [taken, setTaken] = useState<TakenStatus | null>(showTreatment ? null : 'not_applicable');
   const [focus, setFocus] = useState<number | null>(null);
   const [sleep, setSleep] = useState<number | null>(null);
   const [sideEffects, setSideEffects] = useState(false);
@@ -78,7 +81,7 @@ export function TreatmentCheckinForm({
       <h2 id="checkin-title" className="card-title">Today&apos;s check-in</h2>
       <p className="meta mt-1">About 30 seconds. Stay logs this for you and your clinician. It never gives dosing advice.</p>
 
-      <fieldset className="mt-5">
+      {showTreatment && <fieldset className="mt-5">
         <legend className="label">Treatment today</legend>
         <div className="mt-2 flex flex-wrap gap-2">
           {TAKEN_OPTIONS.map((o) => (
@@ -94,7 +97,7 @@ export function TreatmentCheckinForm({
             </button>
           ))}
         </div>
-      </fieldset>
+      </fieldset>}
 
       <div className="mt-5 grid gap-5 sm:grid-cols-2">
         <Rating id="focus" label="Focus today" value={focus} onChange={setFocus} />

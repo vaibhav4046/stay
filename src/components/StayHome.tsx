@@ -32,7 +32,7 @@ import { RoutineSheet } from '@/components/RoutineSheet';
 import { ReminderSheet } from '@/components/ReminderSheet';
 import { takeDue } from '@/lib/reminders';
 import { showNotification } from '@/lib/reminders';
-import { addToday, loadToday, toggleToday, type TodayItem } from '@/lib/coach/todayList';
+import { addToday, loadToday, moveToday, toggleToday, type TodayItem } from '@/lib/coach/todayList';
 import { byokHeaders } from '@/lib/byok/config';
 import { loadParked, unparkThought, type ParkedItem } from '@/lib/coach/parkingLot';
 
@@ -399,6 +399,52 @@ export function StayHome({
     return () => window.clearInterval(id);
   }, []);
 
+  // restore first: it must read the stored block before the effect below can clear it
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem('stay_active_block');
+      if (!raw) return;
+      const b = JSON.parse(raw) as { plan: CoachPlanProposal; minutes: number; endsAt: number };
+      if (!b?.plan || typeof b.endsAt !== 'number' || Date.now() - b.endsAt > 6 * 3_600_000) return window.localStorage.removeItem('stay_active_block');
+      setPlan(b.plan);
+      setMinutes(b.minutes);
+      deadline.current = b.endsAt;
+      const left = Math.round((b.endsAt - Date.now()) / 1000);
+      if (left > 0) {
+        setRemaining(left);
+        setElapsed(b.minutes * 60 - left);
+        setRunning(true);
+        setStep('timer');
+        setNote(`Welcome back. Your block is still running, ${Math.max(1, Math.round(left / 60))} min left.`);
+      } else {
+        setStep('outcome');
+        setNote('Your block finished while you were away. How did it go?');
+      }
+    } catch {
+      // unreadable: start fresh
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // A block survives a reload or a closed tab: save it while it runs (and while its outcome is waiting), clear it otherwise.
+  const savedOnce = useRef(false);
+  useEffect(() => {
+    // the first run is the page loading: leave what is stored for the restore effect above to read
+    if (!savedOnce.current) {
+      savedOnce.current = true;
+      return;
+    }
+    try {
+      if ((step === 'timer' || step === 'outcome') && plan) {
+        window.localStorage.setItem('stay_active_block', JSON.stringify({ plan, minutes, endsAt: deadline.current }));
+      } else if (step === 'idle' || step === 'plan' || step === 'done') {
+        window.localStorage.removeItem('stay_active_block');
+      }
+    } catch {
+      // private mode: not remembered
+    }
+  }, [step, plan, minutes]);
+
   // arriving from onboarding or another screen: always start at the top, never mid-scroll
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -436,9 +482,11 @@ export function StayHome({
         ? { idle: 'Listening', connecting: 'Connecting', listening: 'Listening', thinking: 'Thinking', speaking: 'Speaking', interrupted: 'Listening', backchannel: 'Listening', saving: 'Saving', complete: 'Done', error: 'Voice unavailable' }[visual]
         : planLoading
           ? 'Thinking'
-          : quietMode
-            ? 'Type below'
-            : 'Tap the orb to talk';
+          : step === 'timer'
+            ? 'Focus block running'
+            : quietMode
+              ? 'Type below'
+              : 'Tap the orb to talk';
   const caption =
     voice.partialUserTranscript ||
     (planLoading ? '' : step === 'idle' ? lastAgent?.text : '') ||
@@ -538,7 +586,30 @@ export function StayHome({
             >
               Stop
             </button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => {
+                deadline.current += 5 * 60_000;
+                setMinutes((m) => m + 5);
+                say('Five more minutes');
+              }}
+              data-testid="plus-five"
+            >
+              +5 min
+            </button>
           </div>
+          <button
+            type="button"
+            className="btn btn-ghost mt-3"
+            onClick={() => {
+              setRunning(false);
+              void requestPlan(plan.taskText, 'task_shrinking');
+            }}
+            data-testid="too-big"
+          >
+            Too big? Make it smaller
+          </button>
         </section>
       )}
 
@@ -598,6 +669,7 @@ export function StayHome({
           }}
           onStart={(i) => void requestPlan(i.firstStep ? `${i.text}. First step: ${i.firstStep}` : i.text)}
           onOpenDump={() => setSheet('dump')}
+          onMove={(id) => setToday(moveToday(id, 'today'))}
         />
       )}
 

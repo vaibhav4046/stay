@@ -1,7 +1,7 @@
 'use client';
 
 import { byokHeaders } from '@/lib/byok/config';
-import { FastSocket, FAST_TTS_LANGUAGE } from '@/lib/voice/fastSocket';
+import { FastSocket, FAST_TTS_LANGUAGE, fastVoiceFor } from '@/lib/voice/fastSocket';
 import { loadParked, parkThought } from '@/lib/coach/parkingLot';
 import { addToday, loadToday, openToday } from '@/lib/coach/todayList';
 import { findRoutine, loadRoutines } from '@/lib/routines/routines';
@@ -400,6 +400,17 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const [isHandsFreePaused, setIsHandsFreePaused] = useState(false);
   const [selectedLanguage, setSelectedLanguageState] = useState<string>('auto');
   const selectedLanguageRef = useRef<string>('auto');
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem('stay_selected_language');
+      if (saved && saved !== 'auto') {
+        setSelectedLanguageState(saved);
+        selectedLanguageRef.current = saved;
+      }
+    } catch {
+      // private mode: auto
+    }
+  }, []);
   const [detectedLanguageCode, setDetectedLanguageCode] = useState<string>('en-GB');
   const [selectedVoice, setSelectedVoiceState] = useState<string>(() => {
     if (typeof window !== 'undefined') {
@@ -457,6 +468,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const setSelectedLanguage = useCallback((lang: string) => {
     setSelectedLanguageState(lang);
     selectedLanguageRef.current = lang;
+    try {
+      window.localStorage.setItem('stay_selected_language', lang);
+    } catch {
+      // private mode: not remembered
+    }
     if (lang !== 'auto') {
       setDetectedLanguageCode(lang);
     }
@@ -1783,7 +1799,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         const memory = loadUserMemory();
         const persona = personaById(selectedVoiceRef.current);
         const warmHumanPrompt = buildSystemPrompt(persona, memory);
-        const greeting = buildGreeting(persona, memory, renewingRef.current);
+        const greeting = buildGreeting(persona, memory, renewingRef.current, useFast ? fastLangBase : 'en');
         renewingRef.current = false;
 
         const langBase = selectedLanguageRef.current !== 'auto' && isAgentVerifiedLanguage(selectedLanguageRef.current) ? selectedLanguageRef.current.split('-')[0].toLowerCase() : null;
@@ -1802,7 +1818,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
               },
               tools: [APP_TOOL],
               output: {
-                voice: selectedVoiceRef.current || 'anna',
+                voice: useFast ? fastVoiceFor(selectedVoiceRef.current, fastLangBase) : selectedVoiceRef.current || 'anna',
               },
               ...(socket instanceof FastSocket ? { tts_language: FAST_TTS_LANGUAGE[fastLangBase] || 'english' } : {}),
             },

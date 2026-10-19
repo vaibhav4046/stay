@@ -19,7 +19,9 @@ const base = args[1] || 'http://localhost:3000';
 const flag = (n) => args.includes(n);
 const opt = (n, d) => (args.includes(n) ? args[args.indexOf(n) + 1] : d);
 const ECHO = flag('--echo');
-const VOICE = opt('--voice', 'en-GB-RyanNeural');
+const LANG = opt('--lang', 'en');
+const LANG_SETUP = { en: { voice: 'en-GB-RyanNeural', locale: 'en-GB' }, es: { voice: 'es-ES-AlvaroNeural', locale: 'es-ES' }, fr: { voice: 'fr-FR-HenriNeural', locale: 'fr-FR' }, de: { voice: 'de-DE-ConradNeural', locale: 'de-DE' }, it: { voice: 'it-IT-DiegoNeural', locale: 'it-IT' }, pt: { voice: 'pt-PT-DuarteNeural', locale: 'pt-PT' } };
+const VOICE = opt('--voice', LANG_SETUP[LANG]?.voice || 'en-GB-RyanNeural');
 const TURNS = Number(opt('--turns', 4));
 const USE_LLM = !flag('--no-llm');
 const work = path.join((await import('node:os')).tmpdir(), 'stay-sim-human'); // not under test-results: Playwright empties that folder
@@ -46,7 +48,15 @@ function speechPcm(text, voice = VOICE, rate = '+0%') {
 
 // ---- the human's mind -------------------------------------------------------------------------------------------------
 async function humanSays(history) {
-  const scripted = ['Um, I keep putting off replying to my landlord about the renewal.', 'I do not even know what to write, it feels huge.', 'Okay, maybe. What would the first sentence even be?', 'Yeah. Alright, I will try that now.'];
+  const SCRIPTS = {
+    en: ['Um, I keep putting off replying to my landlord about the renewal.', 'I do not even know what to write, it feels huge.', 'Okay, maybe. What would the first sentence even be?', 'Yeah. Alright, I will try that now.'],
+    es: ['Eh, llevo días sin contestarle a mi casero sobre la renovación del alquiler.', 'No sé ni qué escribir, me parece enorme.', 'Vale, quizá. ¿Cuál sería la primera frase?', 'Sí. Bueno, lo intento ahora mismo.'],
+    fr: ['Euh, je repousse depuis des jours ma réponse à mon propriétaire au sujet du renouvellement.', 'Je ne sais même pas quoi écrire, ça me paraît énorme.', 'D\'accord, peut-être. Quelle serait la première phrase ?', 'Oui. Bon, je m\'y mets tout de suite.'],
+    de: ['Ähm, ich schiebe seit Tagen die Antwort an meinen Vermieter wegen der Verlängerung auf.', 'Ich weiß nicht einmal, was ich schreiben soll, es wirkt riesig.', 'Okay, vielleicht. Wie wäre der erste Satz?', 'Ja. Gut, ich fange jetzt an.'],
+    it: ['Ehm, rimando da giorni la risposta al mio padrone di casa sul rinnovo.', 'Non so nemmeno cosa scrivere, mi sembra enorme.', 'Va bene, forse. Quale sarebbe la prima frase?', 'Sì. Okay, ci provo adesso.'],
+    pt: ['Hum, há dias que adio responder ao meu senhorio sobre a renovação.', 'Nem sei o que escrever, parece enorme.', 'Está bem, talvez. Qual seria a primeira frase?', 'Sim. Pronto, vou tentar agora.'],
+  };
+  const scripted = SCRIPTS[LANG] || SCRIPTS.en;
   if (!USE_LLM || !process.env.GROQ_API_KEY) return scripted[Math.min(history.filter((h) => h.who === 'human').length, scripted.length - 1)];
   const convo = history.map((h) => `${h.who === 'human' ? 'You' : 'Coach'}: ${h.text}`).join('\n');
   const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -67,7 +77,7 @@ async function humanSays(history) {
 // ---- browser with an injected microphone --------------------------------------------------------------------------------
 let browser;
 for (let i = 0; ; i++) { try { browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'], timeout: 60000 }); break; } catch (e) { if (i >= 3) throw e; console.log('browser launch timed out, retrying'); } }
-const ctx = await browser.newContext({ viewport: { width: 1200, height: 900 } });
+const ctx = await browser.newContext({ viewport: { width: 1200, height: 900 }, locale: LANG_SETUP[LANG]?.locale || 'en-GB' });
 const page = await ctx.newPage();
 await page.addInitScript(({ debug }) => {
   window.__stayFastDebug = debug;
@@ -181,6 +191,14 @@ for (let i = 0; i < TURNS; i++) {
   await sleep(600);
 }
 
+if (flag('--turns-only')) { // other languages: ordinary turns only (the pause, interruption and command lines are English)
+  latencies.sort((x, y) => x - y);
+  if (flag('--dump')) dump();
+  console.log(`
+SUMMARY engine=${engine} lang=${LANG}: ordinary-turn first audio ${latencies.length ? `median ${latencies[Math.floor(latencies.length / 2)]} ms (n=${latencies.length}; ${latencies.join(', ')})` : 'none'}`);
+  await browser.close();
+  process.exit(0);
+}
 // ---- scenario 2: a patient pause (must not be talked over) -----------------------------------------------------------------------
 {
   const tBefore = now();

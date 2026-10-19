@@ -16,6 +16,8 @@ export interface FastSocketConfig {
   sampleRate?: number;
   /** How long to wait after a turn that trails off ("and, uh,") before answering. Default 2200 ms. */
   holdMs?: number;
+  /** After an interruption, a short fragment ("Wait, stop.") is held this long in case the sentence continues. Default 900 ms. */
+  interruptHoldMs?: number;
   /** Words the speech-to-text should favour (names, product terms). Up to 100, each under 50 characters. */
   keyterms?: string[];
   /** Ping the chat route when the session starts so the first reply is not slowed by a cold function. Default true. */
@@ -34,6 +36,15 @@ export interface FastSession {
 type Json = Record<string, unknown>;
 type ChatMessage = { role: 'system' | 'user' | 'assistant' | 'tool'; content: string | null; tool_calls?: unknown[]; tool_call_id?: string };
 
+/** AssemblyAI TTS voices are tied to one language: an English voice on a Spanish connection is rejected. One native voice per language. */
+export const FAST_NATIVE_VOICE: Record<string, string> = { es: 'lola', fr: 'estelle', de: 'juergen', it: 'giovanni', pt: 'rafael' };
+/** The voice to open the TTS connection with: the person's pick when it speaks that language, else the language's native voice. */
+export function fastVoiceFor(selected: string, lang: string): string {
+  const native = FAST_NATIVE_VOICE[lang];
+  const isNative = Object.values(FAST_NATIVE_VOICE).includes(selected);
+  if (native) return native;
+  return isNative ? 'anna' : selected || 'anna';
+}
 export const FAST_TTS_LANGUAGE: Record<string, string> = { en: 'english', es: 'spanish', fr: 'french', de: 'german', it: 'italian', pt: 'portuguese' };
 /**
  * Actions whose result needs no explaining: after the app confirms it did them, Stay says one short line straight away
@@ -125,9 +136,11 @@ export class FastSocket {
   private carry = ''; // an unfinished thought, held while the person hesitates
   private holdTimer: ReturnType<typeof setTimeout> | undefined;
   private holds = 0;
+  private playEndAt = 0; // when the browser will have finished playing what it has received
+  private interrupted = false; // the current user turn began while Stay was speaking or about to
 
   constructor(cfg: FastSocketConfig) {
-    this.cfg = { sampleRate: 24000, holdMs: 2200, warmUp: true, ...cfg };
+    this.cfg = { sampleRate: 24000, holdMs: 2200, interruptHoldMs: 900, warmUp: true, ...cfg };
     queueMicrotask(() => {
       this.readyState = FastSocket.OPEN;
       this.onopen?.();
@@ -271,6 +284,8 @@ export class FastSocket {
       if (!this.inUserTurn) {
         if (this.agentSpeaking && text.split(/\s+/).length < 2) return;
         this.inUserTurn = true;
+        this.interrupted = this.agentSpeaking || Date.now() < this.playEndAt || this.spoken !== '';
+        this.playEndAt = 0;
         this.cancel();
         this.emit({ type: 'input.speech.started' });
       }
@@ -284,13 +299,16 @@ export class FastSocket {
     if (order === this.lastTurnOrder || !text) return; // the formatted re-send of a turn we already handled
     this.lastTurnOrder = order;
     const full = this.carry ? `${this.carry} ${text}` : text;
-    if (soundsUnfinished(full) && this.holds < 3) {
+    const unfinished = soundsUnfinished(full);
+    // someone who cuts in with "Wait, stop." usually has more to say: give the rest of the sentence a moment
+    const interruptHold = this.interrupted && !unfinished && full.split(/\s+/).length <= 5 && this.holds < 2;
+    if ((unfinished && this.holds < 3) || interruptHold) {
       // trailing off: keep the turn open and give them time to finish the thought
       this.holds++;
       this.carry = full;
       this.inUserTurn = true;
       if (this.holdTimer) clearTimeout(this.holdTimer);
-      this.holdTimer = setTimeout(() => this.finishTurn(order), this.cfg.holdMs);
+      this.holdTimer = setTimeout(() => this.finishTurn(order), unfinished ? this.cfg.holdMs : this.cfg.interruptHoldMs);
       return;
     }
     this.carry = full;
@@ -302,6 +320,7 @@ export class FastSocket {
     const text = this.carry;
     this.carry = '';
     this.holds = 0;
+    this.interrupted = false;
     this.holdTimer = undefined;
     if (!text) return;
     if (!this.inUserTurn) this.emit({ type: 'input.speech.started' });
@@ -335,6 +354,7 @@ export class FastSocket {
     if (this.staleCancels > 0) return; // audio of a reply that was cancelled, still in flight
     if (this.replyBaseId === null) this.replyBaseId = Number(m.flush_id);
     this.agentSpeaking = true;
+    this.playEndAt = Math.max(this.playEndAt, Date.now()) + (String(m.audio).length * 0.75) / 48; // 24 kHz 16-bit mono = 48 bytes per ms
     this.emit({ type: 'reply.audio', data: m.audio });
   }
 

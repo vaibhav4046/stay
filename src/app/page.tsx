@@ -24,6 +24,14 @@ const COMPARE = [
   { who: 'A general voice assistant', is: 'Answers anything.', stay: 'Does one job: getting you started, and it remembers what helped. We have not measured other assistants, so we claim nothing about their speed.' },
 ];
 
+const MEASURED = [
+  { what: 'Reply after you stop talking', fast: 'about 1.2 seconds', old: 'about 2.5 seconds' },
+  { what: 'You pause mid-thought for 2.3 seconds', fast: 'Waits for you', old: 'Talks over the pause' },
+  { what: 'You interrupt it', fast: 'Notices in about 0.6 seconds and hears the whole sentence', old: 'Notices in about 0.9 seconds and hears part of it' },
+  { what: '"Park it: call the dentist"', fast: 'Done and confirmed in about 1.3 seconds', old: 'Done, confirmed in about 2.9 seconds' },
+  { what: "Stay's own voice leaks into the microphone", fast: 'It never mistook itself for you (0 stray transcripts in 20)', old: 'It once transcribed its own greeting as if you had said it (1 in 10)' },
+];
+
 const PROMISES = [
   { title: 'Your history stays on your device', body: 'Sessions and memory are stored in your browser. Download or delete all of it in Settings, in one tap.' },
   { title: 'No medication advice', body: 'Ask about a dose and Stay says it cannot help and points you to your prescriber or pharmacist.' },
@@ -81,7 +89,16 @@ export default function Home() {
           <h2 id="compare" className="section-title max-w-[24ch]">
             Why not just use something else?
           </h2>
-          <div className="mt-8 overflow-x-auto">
+          <ul className="mt-8 space-y-4 md:hidden">
+            {COMPARE.map((c) => (
+              <li key={c.who} className="card p-4">
+                <p className="font-display text-lg font-semibold">{c.who}</p>
+                <p className="mt-2 text-ink-2"><span className="meta block">That is</span>{c.is}</p>
+                <p className="mt-2 text-ink-2"><span className="meta block">Stay is</span>{c.stay}</p>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-8 hidden overflow-x-auto md:block">
             <table className="w-full min-w-[40rem] border-collapse text-left text-[0.95rem]">
               <caption className="sr-only">How Stay differs from other tools</caption>
               <thead>
@@ -143,13 +160,22 @@ export default function Home() {
             What we tested
           </h2>
           <ul className="mt-6 max-w-[66ch] space-y-3 text-ink-2">
-            <li><strong className="text-ink">Safety first.</strong> 340 unit tests and 49 browser tests pass. They include crisis wording in more than 30 languages against real phrasings and ordinary sentences that must not trigger, the medication boundary, and the rule that voice never deletes your data.</li>
+            <li><strong className="text-ink">Safety first.</strong> 383 unit tests and 56 browser tests pass. They include crisis wording in more than 30 languages against real phrasings and ordinary sentences that must not trigger, the medication boundary, and the rule that voice never deletes your data.</li>
             <li><strong className="text-ink">Patience.</strong> A simulated speaker trailed off mid-sentence for 2.3 seconds, in several accents with room noise. Stay waited in every run. The managed voice it replaced talked over the pause.</li>
             <li><strong className="text-ink">Honesty.</strong> Every number below comes from a script in the repository, and the tests that found our own mistakes are in it too.</li>
           </ul>
           <details className="mt-8 max-w-4xl">
             <summary className="cursor-pointer font-display text-lg font-semibold">Voice speed, measured with a simulated speaker</summary>
-            <div className="mt-5 overflow-x-auto">
+            <ul className="mt-5 space-y-4 md:hidden">
+              {MEASURED.map((m) => (
+                <li key={m.what} className="card p-4">
+                  <p className="font-display font-semibold">{m.what}</p>
+                  <p className="mt-2 text-ink-2"><span className="meta block">Fast voice (default)</span>{m.fast}</p>
+                  <p className="mt-2 text-ink-2"><span className="meta block">The managed voice it replaced</span>{m.old}</p>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-5 hidden overflow-x-auto md:block">
               <table className="w-full min-w-[34rem] border-collapse text-left text-[0.95rem]">
                 <caption className="sr-only">Stay&apos;s two voice engines, measured with the same simulated speaker</caption>
                 <thead>
@@ -160,11 +186,13 @@ export default function Home() {
                   </tr>
                 </thead>
                 <tbody className="[&_td]:border-b [&_td]:border-line [&_td]:py-3 [&_td]:pr-4 [&_th]:border-b [&_th]:border-line [&_th]:py-3 [&_th]:pr-4 [&_th]:text-left [&_th]:font-medium">
-                  <tr><th scope="row">Reply after you stop talking</th><td className="tnum">about 1.2 seconds</td><td className="tnum">about 2.5 seconds</td></tr>
-                  <tr><th scope="row">You pause mid-thought for 2.3 seconds</th><td>Waits for you</td><td>Talks over the pause</td></tr>
-                  <tr><th scope="row">You interrupt it</th><td>Notices in about 0.6 seconds and hears the whole sentence</td><td>Notices in about 0.9 seconds and hears part of it</td></tr>
-                  <tr><th scope="row">&ldquo;Park it: call the dentist&rdquo;</th><td>Done and confirmed in about 1.3 seconds</td><td>Done, confirmed in about 2.9 seconds</td></tr>
-                  <tr><th scope="row">Stay&apos;s own voice leaks into the microphone</th><td>It never mistook itself for you (0 stray transcripts in 20)</td><td>It once transcribed its own greeting as if you had said it (1 in 10)</td></tr>
+                  {MEASURED.map((m) => (
+                    <tr key={m.what}>
+                      <th scope="row">{m.what}</th>
+                      <td>{m.fast}</td>
+                      <td>{m.old}</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>

@@ -1,71 +1,70 @@
-# AssemblyAI Hackathon #2 — Submission Pack (`docs/SUBMISSION_PACK.md`)
+# Submission pack: Stay (AssemblyAI Online Hackathon #2)
 
-## 1. Project Overview
+Everything here is checkable in the repo. Numbers come from `docs/STAY_VERIFICATION_2026-10-18.md` and `README.md`; limits are stated where the evidence stops.
 
-- **Project Name:** Stay
-- **Tagline:** Make starting easier. A voice-first task-initiation and treatment-adherence companion for adults with ADHD.
-- **Hackathon:** AssemblyAI Online Hackathon #2 (15–23 October 2026)
-- **Primary Category:** Voice Agents / Text-to-Speech / Healthcare & Productivity Support
-- **Submission Form:** [https://forms.gle/NtYDsi3bgqMDK29j9](https://forms.gle/NtYDsi3bgqMDK29j9)
-- **AssemblyAI Showcase:** [https://www.assemblyai.com/contact/showcase](https://www.assemblyai.com/contact/showcase)
+## Links
 
----
+- Live app: https://stay-two-swart.vercel.app
+- Repo: https://github.com/vaibhav4046/stay
+- Submission form: https://forms.gle/NtYDsi3bgqMDK29j9
 
-## 2. Core Proposition & Differentiation
+## One line
 
-Adults with ADHD do not avoid tasks out of laziness or lack of desire; they encounter severe friction at the **initiation threshold** due to working-memory saturation and executive-function paralysis.
+A voice companion for adults with ADHD that gets you from "I can't start" to a two-minute first step, then keeps you company through a short block.
 
-Most AI productivity tools either talk passively (chatbots that wait for prompts) or schedule infinitely without addressing initiation (to-do lists that generate guilt). Stay bridges this gap:
-1. **Voice-First Body Doubling:** The user speaks what they are avoiding; Stay identifies the specific barrier (`overwhelm`, `unclear_next_step`, `perfectionism_or_fear`, `boredom_or_distraction`, `low_energy`), applies an evidence-informed strategy (`task_shrinking`, `implementation_intention`, `reframing`, `timeboxing`), and shrinks the entry action to under two minutes.
-2. **Proactive Timer-End Check-In:** Using AssemblyAI's `reply.create` event, Stay speaks first when the timer ends, mirroring the proven support of a human body double.
-3. **Transparent Personal Pattern Learning:** Computes observational start rates with explicit sample sizes and denominators (e.g. *3 of 3 started*), rather than gamified streaks.
-4. **Clinician Bridge:** Generates a one-page, patient-curated appointment PDF summary (`jsPDF`) for short GP visits and specialist appointments.
-5. **Rigorous Safety Boundaries:** Pre-LLM deterministic crisis interception routing to UK emergency services (`999`, `NHS 111`, `Samaritans 116 123`), strict refusal of medication/dosing advice, and one-click data deletion.
+## Description (paste into the form)
 
----
+Adults with ADHD rarely lack the wish to start. They get stuck at the threshold: too many steps, no clear first one, a wall of guilt. Stay is a voice-first companion built for that moment. You say the thing you are avoiding, in whatever mess it comes out; Stay names what makes it hard and gives you one step you can start in two minutes, then runs a short block with you and checks in when it ends.
 
-## 3. How AssemblyAI Voice Agent API is Used
+It is built around how people with ADHD actually talk. Stay waits through a 2.3 second mid-thought pause instead of talking over it. If you interrupt, it stops within about 0.6 seconds and hears the whole sentence. You can say "park it: call the dentist" and the thought is set aside so it stops competing with the one thing you are starting. A brain dump turns a pile of worries into one thing to start, a few for today, and the rest for later. Routines, reminders, a Today list and a pause button are all voice-controllable.
 
-- **WebSocket Endpoint:** `wss://agents.assemblyai.com/v1/ws?token=<ephemeral_token>`
-- **Token Minting:** `GET https://agents.assemblyai.com/v1/token?expires_in_seconds=180` (server route `/api/voice/token` ensures API keys never touch the browser).
-- **Stored Voice Agent:** `agent_c70c56210f7c41548f7785d33dc6c8ab` with British voice `anna` (`24000` Hz PCM16).
-- **Custom LLM Integration:** Connected with Groq `openai/gpt-oss-120b` for ultra-low-latency voice turns.
-- **Client-Side Function Tools:**
-  - `propose_coaching_plan`: Updates the UI with shrunk first step, barrier, and strategy.
-  - `start_focus_timer`: Starts application-owned focus timer.
-  - `record_session_outcome`: Logs focus outcome (`started`, `partly_started`, `not_started`, `paused_or_stopped`).
-- **Audio Worklet Pipeline:** Custom `AudioWorkletProcessor` (`pcm-processor.js`) captures mic audio at native rates, downsamples cleanly to 24kHz mono PCM16, and computes RMS audio energy for the 3D **Stay Signal** instrument.
+The voice is AssemblyAI end to end. The default "fast voice" engine uses AssemblyAI streaming speech-to-text (`universal-3-6-pro`) straight from the browser, a chat model for the reply, and AssemblyAI streaming text-to-speech, and emits the same events as the Voice Agent API so one hook drives both. The managed Voice Agent API is kept as the automatic fallback. Both are measured with the same simulated speaker: fast voice replies in about 1.2 s, the managed agent in about 2.5 s.
 
----
+Safety is deterministic and runs before any model: crisis wording (30+ languages) stops coaching and shows emergency numbers and a findahelpline fallback; medication and dose questions get a fixed reply that points to a prescriber. Data stays in the browser by default, with one-click export and delete. You can bring your own keys (Groq GPT-OSS, Mistral, OpenAI or any OpenAI-compatible address, and AssemblyAI) so the shared allowance is never a limit.
 
-## 4. Verification & Testing Evidence
+## Where the AssemblyAI platform is used
 
-- **Unit Tests:** 24/24 passing (`vitest run --run`), including direct NextRequest integration tests verifying crisis and medication isolation.
-- **TypeScript:** Strict typecheck passing with zero errors (`tsc --noEmit`).
-- **Production Build:** Passes cleanly with optimized static/dynamic routes (`npm run build`).
-- **Playwright E2E:** 5/5 passing against live production (`https://stay-two-swart.vercel.app`):
-  1. Landing page renders proposition, interactive 45s walkthrough, and prominent safety disclaimers.
-  2. Crisis panel displays fixed UK emergency services (999, 111, 116 123, 85258).
-  3. Demo page full closed loop: task capture -> barrier -> plan -> focus timer -> outcome logging -> treatment check-in -> 1-page clinician PDF preview.
-  4. App onboarding gate, workspace, history, settings, and one-click data erasure.
-  5. Privacy and Terms routes load cleanly.
+| Piece | Use |
+|---|---|
+| Streaming STT v3, `universal-3-6-pro` | Browser-direct, ephemeral token minted by `/api/voice/fast-token`. End-of-turn about 0.31 s measured (vendor claim 307 ms reproduced). `keyterms_prompt` biases the app's own words. |
+| Streaming TTS | Browser-direct. Protocol was undocumented and found by probing; one voice per language (a wrong-voice bug for es/fr/de was found and fixed on 2026-10-19). |
+| Voice Agent API | Managed engine and automatic fallback; also the baseline in every comparison. |
+| Tokens | Server routes mint short-lived tokens; the account key never reaches the browser. Long sessions only on a user's own key. |
 
----
+## What is verified (and how)
 
-## 5. Live Links & Repository
+- Unit tests: 383 passing (`npm test`). Typecheck clean.
+- Browser tests: Playwright against the production build (`npm run test:e2e`); see the verification doc for the latest counts and the CSP, brain dump, routines and double-plan regression tests.
+- Voice, with a simulated speaker (`scripts/voice-e2e/sim-human.mjs`, synthesized voices plus room noise injected as the microphone):
 
-- **Live Production Application (Public):** [https://stay-two-swart.vercel.app](https://stay-two-swart.vercel.app)
-- **Interactive No-Login Demo (Public):** [https://stay-two-swart.vercel.app/demo](https://stay-two-swart.vercel.app/demo)
-- **GitHub Repository (Public):** [https://github.com/vaibhav4046/stay](https://github.com/vaibhav4046/stay)
+| | Fast voice | Managed agent |
+|---|---|---|
+| Reply after you stop talking | median 1.24 s | median 2.49 s |
+| 2.3 s pause mid-thought | waited, answered in 1.2 s | talked into the pause |
+| Interruption noticed | 0.56 s, whole sentence heard | 0.94 s, partial |
+| "Park it: call the dentist" confirmed | 1.3 s | 2.9 s |
+| Stray transcripts from its own voice | 0 in 20 | 1 in 10 |
 
----
+- Security: CSP on every route, SSRF guard with DNS resolution on custom provider addresses, rate limits, no shared cache of personal text.
 
-## 6. Hackathon Submission Form Fields Ready-to-Copy
+## What is not claimed
 
-- **Project Title:** Stay — Voice-First ADHD Task-Initiation & Adherence Companion
-- **Demo URL:** [https://stay-two-swart.vercel.app/demo](https://stay-two-swart.vercel.app/demo)
-- **GitHub URL:** [https://github.com/vaibhav4046/stay](https://github.com/vaibhav4046/stay)
-- **Description:** A voice-first ADHD support companion built with AssemblyAI Voice Agent API and Groq. Helps adults with ADHD turn avoidance paralysis into concrete sub-2-minute entry steps, speaks first at timer completion, logs personal strategy efficacy with honest denominators (no gamification), and exports a 1-page clinician appointment PDF. Features a 45-second interactive product walkthrough on the landing page, ChatGPT/Perplexity-style unified voice-and-text conversation, and deterministic safety gates that route crises directly to NHS emergency services and enforce clinical boundaries against medication advice.
-- **AssemblyAI Features Used:** AssemblyAI Voice Agent API (`wss://agents.assemblyai.com/v1/ws`), Stored Voice Agent `agent_c70c56210f7c41548f7785d33dc6c8ab` with British voice `anna` (24kHz mono PCM16), Groq custom LLM (`openai/gpt-oss-120b`), client-side function tools (`propose_coaching_plan`, `start_focus_timer`, `record_session_outcome`), proactive agent check-ins (`reply.create`), real-time barge-in interruption, and custom AudioWorklet PCM16 streaming.
+- No comparison against ChatGPT voice or Google live voice: no keys were available, so nothing was measured. `scripts/voice-e2e/compare-bench.mjs` is ready for anyone who has them. Published figures are collected in `docs/RESEARCH_VOICE_LATENCY.md` with sources and are not Stay measurements.
+- The speakers are synthesized voices injected into a browser on one machine, a handful of runs per setting. No real-microphone, earphone or phone test yet.
+- Non-English fast voice (Spanish, French, German) works after the 2026-10-19 fix on a few turns each; Italian and Portuguese were not re-measured.
+- Mistral and OpenAI keys were not tested live. The shared Groq free tier allows 8,000 tokens a minute on the main model; the server falls back to a smaller model, and a user's own key removes the limit.
+- Stay is not a medical device and says so. No clinical outcome is claimed.
 
+## Try it in three minutes
 
+1. Open the live app, tap the orb, allow the microphone, say: "Um, I keep putting off replying to my landlord."
+2. Pause mid-sentence for two seconds; Stay should wait. Then interrupt it while it speaks.
+3. Say "park it: call the dentist", then open More and look at Parked thoughts. Try the brain dump from the Today card.
+4. Open the reply-speed readout in the voice sheet: it shows your own measured time, not a claim.
+
+## Rubric mapping (my own reading, not the organisers' wording)
+
+- Use of AssemblyAI: streaming STT, streaming TTS and the Voice Agent API in one product, with measured differences.
+- Innovation: turn-taking tuned for ADHD speech (patience for pauses, whole-sentence barge-in), a dot-field interface that reshapes with what you say.
+- Real-world impact: a concrete moment (starting) and a short loop, with safety limits and no streaks or guilt mechanics.
+- Execution: shipped and live, tested, with the benchmark harness and its honest limits in the repo.
