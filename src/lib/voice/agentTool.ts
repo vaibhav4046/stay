@@ -9,6 +9,7 @@ import { type VoicePersona } from './personas';
 export const APP_ACTIONS = [
   'open', 'ground', 'timer_start', 'timer_stop', 'outcome', 'plan', 'shape', 'color', 'language', 'voice',
   'memory_add', 'memory_forget', 'memory_show', 'park', 'park_show', 'dump', 'list_add', 'list_show', 'routine', 'remind', 'quiet', 'game', 'pause', 'export_data', 'delete_data',
+  'dump_end', 'list_edit', 'plan_day', 'break_down', 'step_next', 'wrap_up', 'resume', 'style', 'learning',
 ] as const;
 export type AppActionName = (typeof APP_ACTIONS)[number];
 
@@ -22,14 +23,14 @@ export interface AppActionArgs {
 export const APP_TOOL = {
   type: 'function',
   name: 'app',
-  description: 'Control the Stay app. Call only when the user explicitly asks to open, change, start, stop, remember, forget, park or show something. One action per call. Never save feelings, worries or what they are struggling with unless they say remember. For park, value is the thought to set aside for later, in the user\'s words (park it: call the dentist -> value "call the dentist").',
+  description: 'Control the Stay app. Only when the user explicitly asks to open, change, start, stop, remember, forget, park, plan or show something. One action per call. Never save feelings or worries unless they say remember. When the result has "say", speak that line.',
   parameters: {
     type: 'object',
     properties: {
       action: { type: 'string', enum: [...APP_ACTIONS] },
       value: {
         type: 'string',
-        description: 'Target or text: screen (today, history, report, checkin, settings, privacy, memory, voice), language, voice name or gender/accent or random, colour (aurora, sunset, ocean, cyber, emerald, default), object for the orb, fact to remember or forget (or all), thought to park for later, item for the list for today, routine name (morning, leaving, evening), what to check on later, task, outcome (started, partly_started, not_started, paused), game (memory, focus, words) with optional easy/medium/hard, on/off',
+        description: 'Target or text: screen (today, history, report, checkin, settings, privacy, memory, voice), language, voice, colour, orb object, fact, thought to park, list item, routine (morning, leaving, evening), reminder ("call mum at 3pm"), task, outcome (started, partly_started, not_started, paused), game, on/off. list_edit: the spoken change ("move the bins to later", "that one is done"). plan_day: energy and time ("low energy, 2 hours"). break_down: the task. style: how to talk ("shorter", "call me Sam"). learning: on/off.',
       },
       minutes: { type: 'number' },
       step: { type: 'string', description: 'The first tiny step, when planning or starting a timer' },
@@ -51,14 +52,17 @@ export function memoryLine(m: UserMemoryProfile): string {
   return bits.length ? `Remember: ${bits.join('; ')}.` : '';
 }
 
-export function buildSystemPrompt(persona: VoicePersona, memory: UserMemoryProfile): string {
+/** What the person set (style block) and what Stay learned (one line) are optional and empty by default, so the base budget is unchanged. */
+export function buildSystemPrompt(persona: VoicePersona, memory: UserMemoryProfile, extra: { style?: string; learned?: string } = {}): string {
   return [
     `You are Stay, a calm friend who helps an adult with ADHD start tasks. Voice: ${persona.name}. ${persona.style}`,
     'One or two short sentences, at most 15 words. Never read lists aloud. Never talk over a pause.',
-    'Call the app tool when asked to open a screen, start or stop a timer, change voice or language, remember, forget, show memory, add to their list, brain dump, start a routine, check in later, or park a thought ("park it: call the dentist" = action park, value the thought). Never for ordinary talk. Confirm briefly.',
+    'Call the app tool when asked to open a screen, start or stop a timer, change voice or language, remember, forget, show memory, add to or change their list, brain dump (action dump), plan the day, break a task into steps, wrap up the day, resume yesterday, check in later, change how you talk, or park a thought ("park it: call the dentist" = action park, value the thought). Never for ordinary talk. After a tool, say its "say" line.',
     'If they ramble, name ONE two-minute first step; park the rest only if asked.',
+    extra.style,
     'Match their language. Not a therapist; never advise on medication.',
     memoryLine(memory),
+    extra.learned,
   ].filter(Boolean).join('\n');
 }
 

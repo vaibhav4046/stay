@@ -19,7 +19,7 @@ import { isAgentVerifiedLanguage, useVoiceAgent } from '@/lib/voice/useVoiceAgen
 import { useAssistantHardware } from '@/lib/voice/useAssistantHardware';
 import { parseMultiIntentUtterance } from '@/lib/voice/voiceCommands';
 import { loadUserCalibration, recordSessionLearning } from '@/lib/coach/selfImprovement';
-import { buildMemorySystemPrompt, clearAllUserMemories, recordSessionMemory, removeUserMemoryFact } from '@/lib/coach/userMemory';
+import { buildMemorySystemPrompt, loadUserMemory, recordSessionMemory } from '@/lib/coach/userMemory';
 import { useOrbShape } from '@/lib/orb/useOrbShape';
 import { useOrbPresence } from '@/lib/orb/useOrbPresence';
 import { useCrisisPanel } from '@/components/CrisisHelpPanel';
@@ -28,6 +28,12 @@ import { OrbCognitiveGames } from '@/components/OrbCognitiveGames';
 import { Signal, hasWebGL } from '@/components/Signal';
 import { Sheet } from '@/components/Sheet';
 import { BrainDumpSheet } from '@/components/BrainDumpSheet';
+import { MemorySheet } from '@/components/MemorySheet';
+import { DailyGreetingCard } from '@/components/DailyGreetingCard';
+import { buildDailyGreeting, countWinsYesterday, greetingCardDue, greetingSpokenDue, markGreetingDismissed, markGreetingSpoken, openFromBefore, type DailyGreeting, type OptionId } from '@/lib/coach/dailyGreeting';
+import { refreshLearnings } from '@/lib/coach/learnings';
+import { loadInstructions, styleLine } from '@/lib/coach/customInstructions';
+import { runAgenticAction } from '@/lib/voice/agenticActions';
 import { TodayCard } from '@/components/TodayCard';
 import { RoutineSheet } from '@/components/RoutineSheet';
 import { ReminderSheet } from '@/components/ReminderSheet';
@@ -109,6 +115,13 @@ export function StayHome({
   const [parked, setParked] = useState<ParkedItem[]>([]);
   const [grounding, setGrounding] = useState(false);
   const [usedVoice, setUsedVoice] = useState(false);
+  const sessionsRef = useRef(sessions);
+  sessionsRef.current = sessions;
+  const [daily, setDaily] = useState<DailyGreeting | null>(null);
+  const dailyRef = useRef<DailyGreeting | null>(null);
+  dailyRef.current = daily;
+  const quietRef = useRef(quietMode);
+  quietRef.current = quietMode;
   const deadline = useRef(0);
   const lastNudge = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -221,6 +234,13 @@ export function StayHome({
       onQuietModeChange(!quietMode);
     },
     onShapeRequested: (concept) => orb.request(concept),
+    getSessions: () => sessionsRef.current,
+    getDailyGreetingSpoken: () => {
+      const g = dailyRef.current;
+      if (quietRef.current || !g?.spoken || !greetingSpokenDue()) return null;
+      markGreetingSpoken(); // spoken once per day, on the first voice session
+      return g.spoken;
+    },
     onVoiceCommandDetected: (cmd) => {
       if (!cmd) return;
       if (cmd.type === 'stop_timer') {
@@ -239,6 +259,18 @@ export function StayHome({
   });
   const voiceRef = useRef(voice);
   voiceRef.current = voice;
+
+  // what Stay has worked out from your real blocks, re-derived whenever they change (a no-op while learning is off)
+  useEffect(() => {
+    refreshLearnings(sessions);
+  }, [sessions]);
+
+  // the calm first-open-of-the-day card; rebuilt as the day's real data (wins, what was left open) loads in
+  useEffect(() => {
+    if (!greetingCardDue()) return setDaily(null);
+    const now = new Date();
+    setDaily(buildDailyGreeting({ now, name: loadUserMemory().name, winsYesterday: countWinsYesterday(today, sessions, now), openFromBefore: openFromBefore(today, now), quiet: quietMode }));
+  }, [today, sessions, quietMode]);
 
   // the orb turns into a person while Stay speaks (or when asked), and back to the topical shape when you talk
   const presence = useOrbPresence({
@@ -312,6 +344,49 @@ export function StayHome({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [running, minutes, proactiveCheckins, plan]);
 
+  /** The agentic tools without a voice session: the same code the voice agent calls. */
+  const runLocal = useCallback(
+    (action: 'plan_day' | 'resume' | 'wrap_up') =>
+      runAgenticAction({ action }, {
+        now: () => new Date(),
+        lastUserSaid: () => '',
+        sessions: () => sessionsRef.current,
+        startTimer: (m) => startTimer(m),
+        proposePlan: (p) => {
+          setPlan(p);
+          setMinutes(p.timerMinutes || loadUserCalibration().preferredMinutes || 10);
+          setStep('plan');
+        },
+        todayChanged: () => setToday(loadToday()),
+        remindersChanged: () => say('Check-in set'),
+        note: () => undefined,
+      }),
+    [startTimer, say],
+  );
+
+  const pickGreetingOption = (id: OptionId) => {
+    markGreetingDismissed();
+    setDaily(null);
+    if (id === 'start_small') {
+      inputRef.current?.focus();
+      say('Type or say one small thing');
+    } else if (id === 'dump') {
+      setSheet('dump');
+      if (voiceRef.current.isConnected) voiceRef.current.startDump();
+    } else if (id === 'plan_day') {
+      if (voiceRef.current.isConnected) void voiceRef.current.sendUserTextMessage('Plan my day', { skipLocalPlan: true });
+      else setNote(String(runLocal('plan_day')?.say ?? ''));
+    } else if (id === 'resume') {
+      const r = runLocal('resume');
+      if (r && r.ok === false) setNote(String(r.say));
+    } else if (id === 'wrap') {
+      setNote(String(runLocal('wrap_up')?.say ?? ''));
+    } else if (id === 'sit_with_me') {
+      voiceRef.current.setCompanionMode(true);
+      if (!voiceRef.current.isConnected && !quietMode) void voiceRef.current.startVoiceSession();
+    }
+  };
+
   const requestPlan = useCallback(
     async (text: string, preferredStrategy?: CoachPlanProposal['strategyKey']) => {
       const t = text.trim();
@@ -328,7 +403,7 @@ export function StayHome({
             preferredStrategy,
             careContext,
             preferredMinutes: minutes,
-            userMemoryPrompt: buildMemorySystemPrompt(voiceRef.current.userMemory),
+            userMemoryPrompt: [styleLine(loadInstructions()), buildMemorySystemPrompt(voiceRef.current.userMemory)].filter(Boolean).join('\n').slice(0, 1990),
             strategyHistory,
           }),
         });
@@ -674,6 +749,10 @@ export function StayHome({
         </div>
       )}
 
+      {step === 'idle' && daily && (
+        <DailyGreetingCard greeting={daily} onPick={pickGreetingOption} onDismiss={() => (markGreetingDismissed(), setDaily(null))} />
+      )}
+
       {(step === 'idle' || step === 'done') && (
         <TodayCard
           items={today}
@@ -837,11 +916,17 @@ export function StayHome({
 
       {sheet === 'dump' && (
         <BrainDumpSheet
-          onClose={() => setSheet(null)}
+          onClose={() => (setSheet(null), voice.dismissDump())}
           onCrisis={(m) => (setSheet(null), triggerCrisis(m || CRISIS_FIXED_MESSAGE))}
           onSaved={() => setToday(loadToday())}
+          live={voice.dump}
+          voiceOn={voice.isConnected}
+          onTalk={() => voice.startDump()}
+          onFinishLive={voice.finishDump}
+          onCancelLive={voice.cancelDump}
           onStart={(i) => {
             setSheet(null);
+            voice.dismissDump();
             void requestPlan(i.firstStep ? `${i.text}. First step: ${i.firstStep}` : i.text);
           }}
         />
@@ -869,33 +954,7 @@ export function StayHome({
         </Sheet>
       )}
 
-      {sheet === 'memory' && (
-        <Sheet title="What Stay remembers" onClose={() => setSheet(null)}>
-          <p className="meta">Only what you said or finished. Stored on this device. You can remove anything.</p>
-          <ul className="mt-3 space-y-2" data-testid="memory-list">
-            {voice.userMemory.name && <li className="rounded-lg bg-recessed p-3">Your name: {voice.userMemory.name}</li>}
-            {voice.userMemory.facts.map((f, i) => (
-              <li key={`${f}-${i}`} className="flex items-start justify-between gap-2 rounded-lg bg-recessed p-3">
-                <span>{f}</span>
-                <button type="button" className="btn btn-ghost !px-2 !py-1" onClick={() => (removeUserMemoryFact(i), voice.refreshUserMemory())} aria-label="Remove">
-                  Remove
-                </button>
-              </li>
-            ))}
-            {voice.userMemory.recentSessionsSummary.slice(0, 6).map((s) => (
-              <li key={s.timestamp} className="rounded-lg bg-recessed p-3">
-                {s.task} · {s.outcome.replace('_', ' ')}
-              </li>
-            ))}
-            {!voice.userMemory.name && voice.userMemory.facts.length === 0 && voice.userMemory.recentSessionsSummary.length === 0 && (
-              <li className="text-ink-2">Nothing yet. Tell Stay what you are working on and it will remember.</li>
-            )}
-          </ul>
-          <button type="button" className="btn btn-danger mt-4" onClick={() => (clearAllUserMemories(), voice.refreshUserMemory())}>
-            Forget everything
-          </button>
-        </Sheet>
-      )}
+      {sheet === 'memory' && <MemorySheet memory={voice.userMemory} onChanged={voice.refreshUserMemory} onClose={() => setSheet(null)} />}
 
       {voice.topicShape === 5 && (
         <Sheet title="Game" onClose={() => voice.setTopicShape(0)}>

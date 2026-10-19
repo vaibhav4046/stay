@@ -63,12 +63,16 @@ const QUICK_PHRASE: Record<string, Record<'done' | 'parked' | 'saved' | 'added',
 };
 export function quickConfirmation(action: unknown, resultJson: string, ttsLanguage: string): string | null {
   const kind = typeof action === 'string' ? QUICK_KIND[action] : undefined;
-  if (!kind) return null;
+  let r: { ok?: boolean; say?: unknown; quick?: unknown };
   try {
-    if ((JSON.parse(resultJson) as { ok?: boolean }).ok !== true) return null;
+    r = JSON.parse(resultJson) as typeof r;
   } catch {
     return null;
   }
+  if (r.ok !== true) return null;
+  // a result may carry its own truthful line, built from what happened (English only; other languages use the fixed phrases)
+  if (r.quick === true && typeof r.say === 'string' && r.say.trim() && ttsLanguage === 'english') return r.say.trim().slice(0, 240);
+  if (!kind) return null;
   return (QUICK_PHRASE[ttsLanguage] ?? QUICK_PHRASE.english)[kind];
 }
 
@@ -138,6 +142,7 @@ export class FastSocket {
   private holds = 0;
   private playEndAt = 0; // when the browser will have finished playing what it has received
   private interrupted = false; // the current user turn began while Stay was speaking or about to
+  private captureOnly = false; // brain dump: hear and transcribe, but never answer
 
   constructor(cfg: FastSocketConfig) {
     this.cfg = { sampleRate: 24000, holdMs: 2200, interruptHoldMs: 900, warmUp: true, ...cfg };
@@ -165,6 +170,12 @@ export class FastSocket {
         break;
       case 'conversation.message':
         if (typeof m.content === 'string') this.notes = [...this.notes.slice(-4), m.content.slice(0, 300)];
+        break;
+      case 'capture.mode':
+        this.captureOnly = m.on === true;
+        break;
+      case 'reply.say':
+        if (typeof m.text === 'string' && m.text.trim()) this.speakOnly(m.text.trim().slice(0, 600)); // exact words, no model
         break;
       case 'reply.create':
         void this.generate(typeof m.instructions === 'string' ? m.instructions : undefined);
@@ -327,6 +338,7 @@ export class FastSocket {
     this.inUserTurn = false;
     this.emit({ type: 'input.speech.stopped' });
     this.emit({ type: 'transcript.user', text, item_id: `u-${order}` });
+    if (this.captureOnly) return; // capture mode: the person is rambling on purpose, so no reply and no history
     this.history = [...this.history, { role: 'user' as const, content: text }].slice(-MAX_HISTORY);
     void this.generate();
   }

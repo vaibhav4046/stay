@@ -5,12 +5,17 @@ import { FastSocket, FAST_TTS_LANGUAGE, fastVoiceFor } from '@/lib/voice/fastSoc
 import { loadParked, parkThought } from '@/lib/coach/parkingLot';
 import { addToday, loadToday, openToday } from '@/lib/coach/todayList';
 import { findRoutine, loadRoutines } from '@/lib/routines/routines';
-import { addReminder } from '@/lib/reminders';
+import { runAgenticAction, AGENTIC_ACTIONS } from '@/lib/voice/agenticActions';
+import { verifySpoken, type ToolOutcome } from '@/lib/voice/toolSelfCheck';
+import { useDumpCapture } from '@/lib/voice/useDumpCapture';
+import { loadInstructions, styleBlock } from '@/lib/coach/customInstructions';
+import { loadLearnings, learningsPromptLine } from '@/lib/coach/learnings';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
   AudioSpectrumBands,
   BarrierType,
   CoachPlanProposal,
+  CoachSessionRecord,
   SessionOutcome,
   StrategyKey,
   VoiceVisualState,
@@ -91,6 +96,10 @@ export interface UseVoiceAgentOptions {
   onWebResearchRequested?: (query: string) => void;
   /** The agent asked the orb to take the shape of something (its show_shape tool). */
   onShapeRequested?: (concept: string) => void;
+  /** Logged blocks, for the end-of-day wrap-up. */
+  getSessions?: () => CoachSessionRecord[];
+  /** The spoken first-open-of-the-day greeting if one is due (marks it spoken), else null. */
+  getDailyGreetingSpoken?: () => string | null;
 }
 
 export interface AvailableVoice {
@@ -638,6 +647,37 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const optionsRef = useRef(options);
   optionsRef.current = options;
 
+  // Voice brain dump (listening mode). Deps are lambdas: they reach helpers defined further down at call time.
+  const dumpCapture = useDumpCapture({
+    setCapture: (on) => {
+      const ws = wsRef.current as unknown;
+      if (ws instanceof FastSocket) ws.send(JSON.stringify({ type: 'capture.mode', on }));
+      else if (on) injectContext('Brain dump in progress. Stay completely silent and call no tools until told to stop.');
+    },
+    speakExact: (text) => {
+      const ws = wsRef.current;
+      if (ws && ws.readyState === WebSocket.OPEN && sessionReadyRef.current) {
+        const body = (ws as unknown) instanceof FastSocket ? { type: 'reply.say', text } : { type: 'reply.create', instructions: `Say exactly this, word for word, and nothing else: ${text}` };
+        ws.send(JSON.stringify(body));
+      } else speakDeterministicBoundary(text, undefined, true);
+    },
+    stopPlayback: () => stopPlaybackQueue(),
+    note: (content) => void injectContext(content),
+    showSheet: () => optionsRef.current.onShowDumpRequested?.(),
+    todayChanged: () => optionsRef.current.onTodayChanged?.(),
+    crisis: (message) => {
+      disconnectVoiceSession();
+      optionsRef.current.onCrisisDetected?.(message);
+    },
+    medication: (message) => optionsRef.current.onMedicalBoundaryDetected?.(message),
+    isManagedAgent: () => !!wsRef.current && !((wsRef.current as unknown) instanceof FastSocket),
+    isLive: () => !!wsRef.current && wsRef.current.readyState === WebSocket.OPEN && sessionReadyRef.current,
+  });
+  const dumpApiRef = useRef(dumpCapture);
+  dumpApiRef.current = dumpCapture;
+  /** What the last app tool call did, so the next spoken confirmation can be checked against it. */
+  const lastToolRef = useRef<(ToolOutcome & { at: number; checked: boolean }) | null>(null);
+
   const playEarcon = useCallback((type: 'pause' | 'resume' | 'chime') => {
     if (typeof window === 'undefined') return;
     try {
@@ -890,6 +930,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   }, []);
 
   const disconnectVoiceSession = useCallback(() => {
+    dumpApiRef.current.rescue(); // a dump in progress is kept, not lost
     sessionReadyRef.current = false;
     stopPlaybackQueue();
 
@@ -961,6 +1002,19 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       const o = optionsRef.current;
       const value = String(args.value ?? '').trim();
       const lower = value.toLowerCase();
+      if (AGENTIC_ACTIONS.has(args.action)) {
+        const r = runAgenticAction(args, {
+          now: () => new Date(),
+          lastUserSaid: () => lastUserSaidRef.current,
+          sessions: () => optionsRef.current.getSessions?.() ?? [],
+          startTimer: (m, step) => optionsRef.current.onStartTimerRequested?.(m, step),
+          proposePlan: (p) => optionsRef.current.onPlanProposed?.(p),
+          todayChanged: () => optionsRef.current.onTodayChanged?.(),
+          remindersChanged: () => optionsRef.current.onRemindersChanged?.(),
+          note: (c) => void injectContext(c),
+        });
+        if (r) return r;
+      }
       switch (args.action) {
         case 'open': {
           const screens: Record<string, [string, string]> = {
@@ -1043,9 +1097,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           o.onShowParkingRequested?.();
           return { ok: true, items: loadParked().slice(0, 6).map((i) => i.text) };
         }
-        case 'dump': {
-          o.onShowDumpRequested?.();
-          return { ok: true, note: 'Opened the brain dump. The person says or types everything on their mind there.' };
+        case 'dump': return { ok: true, quick: true, say: dumpApiRef.current.start() };
+        case 'dump_end': {
+          if (!dumpApiRef.current.isActive()) return { ok: false, error: 'no brain dump is running' };
+          dumpApiRef.current.finish();
+          return { ok: true, note: 'Sorting now; the sorted list is read back to the person.' };
         }
         case 'list_add': {
           if (!value) return { ok: false, error: 'value must be the item to add, e.g. buy milk' };
@@ -1062,13 +1118,6 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           if (!r) return { ok: false, error: 'no such routine', options: loadRoutines().map((x) => x.name) };
           o.onRoutineRequested?.(r.id);
           return { ok: true, routine: r.name, steps: r.steps.length, firstStep: r.steps[0].text };
-        }
-        case 'remind': {
-          const mins = args.minutes ?? Number((value || '').match(/\d+/)?.[0]);
-          if (!mins || mins < 1) return { ok: false, error: 'say after how many minutes' };
-          addReminder(mins, (value || '').replace(/\d+\s*(?:min(?:ute)?s?)?/i, '').trim() || 'Check in', Date.now());
-          o.onRemindersChanged?.();
-          return { ok: true, minutes: Math.round(mins) };
         }
         case 'quiet': o.onToggleQuietModeRequested?.(); return { ok: true };
         case 'game': {
@@ -1140,6 +1189,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
         if (name === 'app') {
           const result = runAppAction(rawArgs as unknown as AppActionArgs);
+          lastToolRef.current = { action: String((rawArgs as { action?: unknown }).action ?? ''), result: result as ToolOutcome['result'], at: Date.now(), checked: false };
           const ws = wsRef.current;
           if (ws && ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ type: 'tool.result', call_id: callId, result: JSON.stringify(result) }));
@@ -1500,6 +1550,8 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         return true;
       }
 
+      if (dumpApiRef.current.handleUtterance(clean)) return true; // typed while a dump is open: it joins the dump
+
       const ws = wsRef.current;
       if (ws && ws.readyState === WebSocket.OPEN && sessionReadyRef.current) {
         ws.send(JSON.stringify({ type: 'conversation.message', role: 'user', content: clean }));
@@ -1811,8 +1863,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       socket.onopen = () => {
         const memory = loadUserMemory();
         const persona = personaById(selectedVoiceRef.current);
-        const warmHumanPrompt = buildSystemPrompt(persona, memory);
-        const greeting = buildGreeting(persona, memory, renewingRef.current, useFast ? fastLangBase : 'en');
+        const warmHumanPrompt = buildSystemPrompt(persona, memory, { style: styleBlock(loadInstructions()), learned: learningsPromptLine(loadLearnings()) });
+        const greetLang = useFast ? fastLangBase : 'en';
+        // the first session of a day opens with the calm daily greeting (English; other languages keep their short native hello)
+        const dailyGreeting = !renewingRef.current && greetLang === 'en' ? optionsRef.current.getDailyGreetingSpoken?.() ?? null : null;
+        const greeting = dailyGreeting ?? buildGreeting(persona, memory, renewingRef.current, greetLang);
         renewingRef.current = false;
 
         const langBase = selectedLanguageRef.current !== 'auto' && isAgentVerifiedLanguage(selectedLanguageRef.current) ? selectedLanguageRef.current.split('-')[0].toLowerCase() : null;
@@ -2084,6 +2139,8 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
               // Genuinely audible and deterministic speech path:
               // speak the exact clinical boundary without requesting an LLM reply
               speakDeterministicBoundary(medBoundary.message, undefined, true);
+            } else if (dumpApiRef.current.handleUtterance(text)) {
+              return; // a brain dump is open (or was just asked for): this sentence belongs to it, and nothing else answers it
             }
           }
           return;
@@ -2091,14 +2148,14 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
         if (type === 'reply.text') {
           // the sentence about to be spoken (fast voice only): vowel shapes for the figure's mouth
-          if (!medicationSuppressionRef.current) lipSyncBus.pushText(String(msg.text || ''));
+          if (!medicationSuppressionRef.current && !dumpApiRef.current.isAgentMuted()) lipSyncBus.pushText(String(msg.text || ''));
           return;
         }
 
         if (type === 'reply.started') {
           lipSyncBus.clearText();
           pendingToolResultsRef.current = [];
-          if (!medicationSuppressionRef.current) {
+          if (!medicationSuppressionRef.current && !dumpApiRef.current.isAgentMuted()) {
             setVisualState('speaking');
           }
           return;
@@ -2110,8 +2167,8 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
             speechStoppedAtRef.current = 0;
             setReplyTimes((prev) => [...prev.slice(-19), ms]);
           }
-          if (medicationSuppressionRef.current) {
-            // Drop raw audio chunks from model to prevent any spoken dosing advice
+          if (medicationSuppressionRef.current || dumpApiRef.current.isAgentMuted()) {
+            // Drop raw audio chunks from model to prevent any spoken dosing advice (or any reply during a brain dump)
             return;
           }
           const b64 = String(msg.data || '');
@@ -2123,11 +2180,26 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         }
 
         if (type === 'transcript.agent') {
-          if (medicationSuppressionRef.current) {
+          if (medicationSuppressionRef.current || dumpApiRef.current.isAgentMuted()) {
             // Drop model transcript turn in favor of deterministic medical boundary turn
             return;
           }
           const text = String(msg.text || '').trim();
+          // self-check: the words just spoken must match what the last tool really did; if not, say the true line
+          const tool = lastToolRef.current;
+          if (text && tool && !tool.checked && Date.now() - tool.at < 20_000) {
+            tool.checked = true;
+            const verdict = verifySpoken(tool, text);
+            (globalThis as { __stayToolChecks?: unknown[] }).__stayToolChecks = [...((globalThis as { __stayToolChecks?: unknown[] }).__stayToolChecks ?? []).slice(-49), { action: tool.action, ok: verdict.ok, issue: verdict.issue, spoken: text.slice(0, 120) }];
+            if (!verdict.ok && verdict.correction) {
+              setTranscripts((prev) => [...prev, { id: `fix-${Date.now()}`, role: 'agent', text: verdict.correction as string, timestamp: new Date().toISOString() }]);
+              const ws = wsRef.current;
+              if (ws && ws.readyState === WebSocket.OPEN) {
+                const body = (ws as unknown) instanceof FastSocket ? { type: 'reply.say', text: verdict.correction } : { type: 'reply.create', instructions: `Say exactly this, word for word, and nothing else: ${verdict.correction}` };
+                ws.send(JSON.stringify(body));
+              }
+            }
+          }
           if (text) {
             setTranscripts((prev) => [
               ...prev,
@@ -2143,7 +2215,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         }
 
         if (type === 'tool.call') {
-          if (medicationSuppressionRef.current) {
+          if (medicationSuppressionRef.current || dumpApiRef.current.isAgentMuted()) {
             // Drop any tool call emitted by model during medication suppression
             return;
           }
@@ -2377,6 +2449,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     setGameDifficulty,
     userMemory,
     refreshUserMemory: () => setUserMemory(loadUserMemory()),
+    dump: dumpCapture.dump,
+    startDump: () => void dumpCapture.start(),
+    finishDump: dumpCapture.finish,
+    cancelDump: dumpCapture.cancel,
+    dismissDump: dumpCapture.dismiss,
     playEarcon,
     startVoiceSession,
     disconnectVoiceSession,

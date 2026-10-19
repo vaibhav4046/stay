@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_PERSONA_ID, PERSONAS, personaById, resolvePersona } from '@/lib/voice/personas';
+import { styleBlock, MAX_NOTES } from '@/lib/coach/customInstructions';
 import { APP_ACTIONS, APP_TOOL, buildGreeting, buildSystemPrompt, memoryLine } from '@/lib/voice/agentTool';
 import { DEFAULT_USER_MEMORY, type UserMemoryProfile } from '@/lib/coach/userMemory';
 import { LIBRARY } from '@/lib/orb/library';
@@ -46,10 +47,19 @@ describe('agent prompt, greeting and tool (latency budget)', () => {
   it('system prompt stays tiny: long prompts doubled reply time in measurement', () => {
     const empty = buildSystemPrompt(persona, DEFAULT_USER_MEMORY);
     const full = buildSystemPrompt(persona, withMemory({ name: 'Sam', roleOrField: 'product designer', facts: ['dog is called Biscuit', 'works best at 20 minutes', 'dreads tax paperwork', 'prefers mornings', 'sister is Ana'], recentSessionsSummary: [{ task: 'Reply to the landlord about the renewal', outcome: 'partly_started', minutes: 20, timestamp: '2026-10-18' }] }));
-    expect(empty.length).toBeLessThan(780);
-    expect(full.length).toBeLessThan(1130); // about 250 tokens with a full memory line
+    expect(empty.length).toBeLessThan(900); // was 780 before the planning, list-edit and style tools were named in the prompt (+120 chars)
+    expect(full.length).toBeLessThan(1250); // about 310 tokens with a full memory line (was 1130)
     expect(full).toContain('Biscuit');
     expect(full).toContain(persona.name);
+  });
+  it('style notes and learned lines fit a stated budget and never replace the safety line', () => {
+    const style = styleBlock({ preset: 'direct_kind', notes: 'x'.repeat(MAX_NOTES) });
+    const learned = 'Learned: Starting has gone best with shrinking the task: 4 of 5 blocks got started. Mornings have worked best: 4 of 5 blocks got started.';
+    const p = buildSystemPrompt(persona, DEFAULT_USER_MEMORY, { style, learned });
+    expect(p.length).toBeLessThan(1550); // worst case: full-length notes + two learnings, about 390 tokens
+    expect(p).toContain('never advise on medication');
+    expect(p.indexOf(style)).toBeLessThan(p.indexOf('never advise on medication')); // style comes before the safety line, not after it
+    expect(buildSystemPrompt(persona, DEFAULT_USER_MEMORY, { style: '', learned: '' })).toBe(buildSystemPrompt(persona, DEFAULT_USER_MEMORY));
   });
   it('a new user gets no invented memory line', () => expect(memoryLine(DEFAULT_USER_MEMORY)).toBe(''));
   it('greeting is short, and remembers a returning user', () => {
