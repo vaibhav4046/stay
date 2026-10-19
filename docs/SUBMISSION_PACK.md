@@ -6,6 +6,7 @@ Everything here is checkable in the repo. Numbers come from `docs/STAY_VERIFICAT
 
 - Live app: https://stay-two-swart.vercel.app
 - Repo: https://github.com/vaibhav4046/stay
+- Demo video: https://stay-two-swart.vercel.app/demo/stay-demo.mp4 (also embedded on the landing page, with captions)
 - Submission form: https://forms.gle/NtYDsi3bgqMDK29j9
 
 ## One line

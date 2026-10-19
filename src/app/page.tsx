@@ -53,6 +53,19 @@ export default function Home() {
       <main>
         <LandingHero />
 
+        <section className="mx-auto max-w-6xl px-5 py-12 sm:px-8" aria-labelledby="watch" data-testid="demo-video">
+          <h2 id="watch" className="section-title max-w-[26ch]">
+            Watch it in three minutes.
+          </h2>
+          <p className="mt-3 max-w-[62ch] text-ink-2">
+            Recorded on the live site. The speaker is a synthesized voice fed into the microphone and labelled as simulated on screen; Stay&apos;s replies are the real audio. Captions are on.
+          </p>
+          <video className="mt-6 w-full max-w-4xl rounded-2xl border border-line" controls preload="none" playsInline poster="/demo/stay-demo-poster.jpg" aria-describedby="watch">
+            <source src="/demo/stay-demo.mp4" type="video/mp4" />
+            <track kind="captions" src="/demo/stay-demo.vtt" srcLang="en" label="English" default />
+          </video>
+        </section>
+
         <section className="mx-auto max-w-6xl px-5 py-16 sm:px-8" aria-labelledby="how">
           <h2 id="how" className="section-title max-w-[22ch]">
             Three moves, about two minutes
@@ -160,7 +173,7 @@ export default function Home() {
             What we tested
           </h2>
           <ul className="mt-6 max-w-[66ch] space-y-3 text-ink-2">
-            <li><strong className="text-ink">Safety first.</strong> 383 unit tests and 56 browser tests pass. They include crisis wording in more than 30 languages against real phrasings and ordinary sentences that must not trigger, the medication boundary, and the rule that voice never deletes your data.</li>
+            <li><strong className="text-ink">Safety first.</strong> 383 unit tests and 57 browser tests pass. They include crisis wording in more than 30 languages against real phrasings and ordinary sentences that must not trigger, the medication boundary, and the rule that voice never deletes your data.</li>
             <li><strong className="text-ink">Patience.</strong> A simulated speaker trailed off mid-sentence for 2.3 seconds, in several accents with room noise. Stay waited in every run. The managed voice it replaced talked over the pause.</li>
             <li><strong className="text-ink">Honesty.</strong> Every number below comes from a script in the repository, and the tests that found our own mistakes are in it too.</li>
           </ul>

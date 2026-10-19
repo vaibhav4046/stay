@@ -203,6 +203,11 @@ await page.getByTestId('orb-button').click(); // stop listening before the typed
 await n.done;
 
 await chap('6  Brain dump');
+// the chips only show on the idle screen; after the voice scenes a plan may be showing, so start from a clean screen
+if (!(await page.getByTestId('chip-dump').isVisible().catch(() => false))) {
+  await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
+  await sleep(1500);
+}
 await page.getByTestId('chip-dump').click();
 await page.getByTestId('dump-input').pressSequentially('email the landlord, pay the council tax, call mum someday, the bins', { delay: 28 });
 n = await narrate('Everything on your mind, in any order. Stay picks one thing to start, a few for today, and the rest for later. No overdue, no guilt.');
@@ -228,7 +233,11 @@ await sleep(500);
 
 await chap('8  Measured, not promised');
 await page.goto(base + '/', { waitUntil: 'domcontentloaded', timeout: 60000 });
-await page.locator('#measured').scrollIntoViewIfNeeded();
+await page.getByTestId('measured').scrollIntoViewIfNeeded();
+// the table sits inside a collapsed section: open it so the numbers are what the video shows
+await page.locator('[data-testid="measured"] details').first().evaluate((d) => { d.open = true; });
+await sleep(400);
+await page.locator('[data-testid="measured"] details table').first().scrollIntoViewIfNeeded();
 await sleep(600);
 n = await narrate('We measured it with a simulated speaker. Replies in about 1.2 seconds, against 2.5 for the managed voice we replaced. It waited through the pause, noticed an interruption in about half a second, and never answered its own voice. We have not measured ChatGPT or Gemini, so we claim nothing against them.');
 await n.done;

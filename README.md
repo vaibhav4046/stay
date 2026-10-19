@@ -6,6 +6,8 @@ Built on the **AssemblyAI Voice Agent API** for the AssemblyAI Online Hackathon 
 
 Live: https://stay-two-swart.vercel.app
 
+Demo video (2.5 min, recorded on the live site; the speaker is a labelled synthesized voice): the "Watch it in three minutes" section on the landing page, or `public/demo/stay-demo.mp4`. Rebuild it with `node scripts/demo/record-demo.mjs`.
+
 ## What it does
 
 1. **Say it.** Talk or type. One task, said however it comes out.

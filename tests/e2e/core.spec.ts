@@ -268,6 +268,17 @@ test('the landing page shows measured results with their limits, and no claim ag
   await expect(page.getByText(/faster than chatgpt|beats chatgpt|better than google/i)).toHaveCount(0);
 });
 
+test('the landing page has the demo video with captions, and the files are served', async ({ page, request }) => {
+  await page.goto('/');
+  const video = page.getByTestId('demo-video').locator('video');
+  await expect(video).toHaveAttribute('controls', '');
+  await expect(video.locator('track[kind="captions"]')).toHaveCount(1);
+  for (const path of ['/demo/stay-demo.mp4', '/demo/stay-demo.vtt', '/demo/stay-demo-poster.jpg']) {
+    const res = await request.head(path);
+    expect(res.ok(), path).toBe(true);
+  }
+});
+
 test.describe('Brain dump and today list', () => {
   test('dump everything, get one thing to start, tick a win, and it persists', async ({ page }) => {
     await onboard(page);
