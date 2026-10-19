@@ -1,0 +1,60 @@
+{
+  "tag": "phone-4x",
+  "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "headless": true,
+  "cpuThrottle": 4,
+  "dpr": 2,
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "dots": 3200,
+  "sphere": {
+    "frames": 181,
+    "medianMs": 16.7,
+    "p95Ms": 18.1,
+    "p99Ms": 22.5,
+    "worstMs": 24.8,
+    "fpsAvg": 60,
+    "over33ms": 0,
+    "cpuMedianMs": 0.6,
+    "cpuP95Ms": 1.2,
+    "cpuWorstMs": 2
+  },
+  "morph": {
+    "frames": 168,
+    "medianMs": 16.7,
+    "p95Ms": 17.9,
+    "p99Ms": 18.3,
+    "worstMs": 18.5,
+    "fpsAvg": 60,
+    "over33ms": 0,
+    "cpuMedianMs": 0.8,
+    "cpuP95Ms": 1.1,
+    "cpuWorstMs": 1.9
+  },
+  "figureIdle": {
+    "frames": 181,
+    "medianMs": 16.8,
+    "p95Ms": 18.1,
+    "p99Ms": 24,
+    "worstMs": 25.4,
+    "fpsAvg": 60,
+    "over33ms": 0,
+    "cpuMedianMs": 0.5,
+    "cpuP95Ms": 0.9,
+    "cpuWorstMs": 5.4
+  },
+  "speaking": {
+    "frames": 241,
+    "medianMs": 16.6,
+    "p95Ms": 18.4,
+    "p99Ms": 20.1,
+    "worstMs": 20.9,
+    "fpsAvg": 60,
+    "over33ms": 0,
+    "cpuMedianMs": 0.5,
+    "cpuP95Ms": 1,
+    "cpuWorstMs": 1.9
+  }
+}

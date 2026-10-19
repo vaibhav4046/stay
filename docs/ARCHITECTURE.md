@@ -56,10 +56,12 @@ Own-key requests: https only, no URL credentials, redirects never followed, the 
 
 One field of 3,200 to 5,200 dots drawn with Three.js points. A shape is a different target for the same dots. Sources, fastest first: 38 hand-built shapes from a small signed-distance drawing language (tangle, stairs, battery, target, list, coin, envelope and others), an offline word table, the shape service, a deterministic rosette. Only dots are drawn.
 
+While Stay speaks the dots also pour into a person (hair, head, neck, shoulders) whose mouth follows the agent's real audio, with blinks, breath and head movement; transitions are springy and jelly-like. How it works, how to add shapes, and the measured frame times are in [THERAPIST_ORB.md](THERAPIST_ORB.md).
+
 ## Front end
 
 Mobile-first shell (bottom tab bar on phones, header on desktop, Urgent help always in the header). A service worker keeps the shell available offline. Content-Security-Policy restricts scripts, styles, fonts and connections to what the app uses.
 
 ## Tests and evidence
 
-378 unit tests (vitest), 50 browser tests (Playwright) and the voice harnesses in `scripts/voice-e2e/` (`sim-human.mjs`, `cascade-bench.mjs`, `compare-bench.mjs`, `force-endpoint-probe.mjs`, `fast-app-bench.mjs`). Raw outputs of the simulated-speaker runs are in `docs/bench-results/`. Method, sources and corrections are in `RESEARCH_VOICE_LATENCY.md` and `STAY_VERIFICATION_2026-10-18.md`.
+432 unit tests (vitest), 62 browser tests (Playwright, plus two opt-in capture runs) and the voice harnesses in `scripts/voice-e2e/` (`sim-human.mjs`, `cascade-bench.mjs`, `compare-bench.mjs`, `force-endpoint-probe.mjs`, `fast-app-bench.mjs`). Raw outputs of the simulated-speaker runs are in `docs/bench-results/`. Method, sources and corrections are in `RESEARCH_VOICE_LATENCY.md` and `STAY_VERIFICATION_2026-10-18.md`.

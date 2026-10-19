@@ -119,8 +119,16 @@ describe('FastSocket', () => {
     expect(stt.url).toContain('sample_rate=24000');
     expect(tts.url).toContain('voice=anna');
     expect(tts.url).toContain('language=english');
-    expect(types()).toEqual(['session.ready', 'reply.started', 'reply.audio', 'transcript.agent', 'reply.done']);
+    expect(types()).toEqual(['session.ready', 'reply.started', 'reply.text', 'reply.audio', 'transcript.agent', 'reply.done']);
     expect(events.find((e) => e.type === 'transcript.agent')?.text).toBe('Still here with you.');
+  });
+
+  it('announces each sentence as reply.text before its audio, for the figure lip sync (no added wait)', async () => {
+    await open({ greeting: 'Still here with you.' });
+    const order = types();
+    expect(events.find((e) => e.type === 'reply.text')?.text).toBe('Still here with you.');
+    expect(order.indexOf('reply.text')).toBeGreaterThan(order.indexOf('reply.started'));
+    expect(order.indexOf('reply.text')).toBeLessThan(order.indexOf('reply.audio'));
   });
 
   it('turns a spoken sentence into Voice Agent events, streams the model into speech, and records history', async () => {
