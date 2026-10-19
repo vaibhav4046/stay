@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { detectTextLanguage } from '@/lib/voice/useVoiceAgent';
+import { detectTextLanguage, MEMORY_CUE } from '@/lib/voice/useVoiceAgent';
 
 describe('detectTextLanguage never flips English speakers into another language', () => {
   const english = [
@@ -30,4 +30,13 @@ describe('detectTextLanguage never flips English speakers into another language'
   it.each(other)('%s -> %s', (t, code) => expect(detectTextLanguage(t, 'auto')).toBe(code));
 
   it('a manual choice always wins', () => expect(detectTextLanguage('hello there', 'fr-FR')).toBe('fr-FR'));
+});
+
+describe('MEMORY_CUE', () => {
+  it('lets explicit remember requests through and blocks the model guessing', () => {
+    expect(MEMORY_CUE.test('Please remember that I prefer short blocks')).toBe(true);
+    expect(MEMORY_CUE.test("Don't forget my landlord is called Sam")).toBe(true);
+    expect(MEMORY_CUE.test('I do not even know what to write, it feels huge.')).toBe(false);
+    expect(MEMORY_CUE.test('Um, I keep putting off replying to my landlord about the renewal.')).toBe(false);
+  });
 });

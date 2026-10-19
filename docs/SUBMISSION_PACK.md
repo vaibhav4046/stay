@@ -34,7 +34,7 @@ Safety is deterministic and runs before any model: crisis wording (30+ languages
 
 ## What is verified (and how)
 
-- Unit tests: 386 passing (`npm test`). Typecheck clean.
+- Unit tests: 387 passing (`npm test`). Typecheck clean.
 - Browser tests: Playwright against the production build (`npm run test:e2e`); see the verification doc for the latest counts and the CSP, brain dump, routines and double-plan regression tests.
 - Voice, with a simulated speaker (`scripts/voice-e2e/sim-human.mjs`, synthesized voices plus room noise injected as the microphone):
 

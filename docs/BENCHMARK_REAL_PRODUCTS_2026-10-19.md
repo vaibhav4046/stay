@@ -49,5 +49,11 @@ What this says, in plain terms:
 ## Known Stay weaknesses this exposed
 
 - It is slower than both on plain reply latency in this rig.
-- After "Wait, stop, just one tiny step please" Stay sometimes says nothing (no reply within 18 s in one run); ChatGPT and Gemini both answered the interruption (about 1.2 to 1.4 s after it ended).
-- Its memory feature wrote facts the speaker never said ("prefers 20-minute focus blocks over shorter sprints", "appreciates warm check-ins") into local memory during these runs. Local only, but invented.
+- After "Wait, stop, just one tiny step please" Stay stayed silent for 18 s in one run (the long request had just made it open the Brain Dump sheet). Two later clean trials answered the interruption 2.7 s and 1.7 s after it ended; ChatGPT and Gemini answered about 1.2 to 1.4 s after. So: answers, but slower than the other two, and a tool call can swallow the reply.
+- Its memory feature wrote facts the speaker never said ("prefers 20-minute focus blocks over shorter sprints", "appreciates warm check-ins") into local memory during these runs, because the model called the save-memory tool on its own. Fixed afterwards: a memory is saved only if the person's last words asked for it (`MEMORY_CUE`, unit-tested).
+- The model also called the save-memory tool with a drafted email subject line as a "fact"; the same guard blocks it.
+
+## Not reached
+
+- **Perplexity voice:** perplexity.ai cannot be scripted from this browser (an ExtensionsSettings policy blocks the automation extension there), so the injected-microphone method cannot run. Not measured.
+- **Why no latency speed-up was shipped:** speculative generation (start the model before the turn ends) can save at most about 0.15 s here, because AssemblyAI's end-of-turn already arrives about 0.31 s after speech ends, and it would double token use against an 8,000 tokens-per-minute free tier. Not worth it.

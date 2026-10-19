@@ -259,6 +259,9 @@ export const SUPPORTED_LANGUAGES: SupportedLanguage[] = [
 
 const LATIN_REGION: Record<string, string> = { es: 'es-ES', pt: 'pt-PT', fr: 'fr-FR', de: 'de-DE', it: 'it-IT', nl: 'nl-NL', sv: 'sv-SE', pl: 'pl-PL', tr: 'tr-TR', ro: 'ro-RO', id: 'id-ID', fi: 'fi-FI', hu: 'hu-HU' };
 
+/** A saved memory needs the person to ask for it (or state a fact about themselves); the model's own guesses are not stored. */
+export const MEMORY_CUE = /\b(?:remember|note (?:that|this)|make a note|don'?t forget|do not forget|keep in mind|save (?:that|this)|my name is|call me|i prefer|i work best|i(?:'m| am) (?:allergic|diagnosed|on)|mera naam|recuerda|souviens|merke)\b/i;
+
 /** Stop-words per Latin-script language, chosen to exclude words that are also ordinary English (on, come, he, for, an, die, per...). */
 const LATIN_STOPWORDS: Record<string, Set<string>> = {
   en: new Set('the a an and or but is are was were be been am i me my you your we our they them he she it its this that these those of to in on at for with from by about as not no yes do does did have has had will would can could should just so if then than what which who how why when where want need like get got going really very too also okay'.split(' ')),
@@ -559,6 +562,8 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   // Reply time as this device experiences it: the server heard you stop -> the first reply audio arrives here.
   const speechStoppedAtRef = useRef(0);
   const lastLoudAtRef = useRef(0);
+  /** What the person last said, so a saved memory can be checked against it (the model must not invent facts about them). */
+  const lastUserSaidRef = useRef('');
   // Fast voice (beta): own speech-to-text + chat model + text-to-speech instead of the managed Voice Agent.
   const [fastVoice, setFastVoiceState] = useState(true);
   const fastVoiceRef = useRef(true);
@@ -1005,6 +1010,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         }
         case 'memory_add': {
           if (!value) return { ok: false };
+          if (!MEMORY_CUE.test(lastUserSaidRef.current)) return { ok: false, error: 'not saved: the person did not ask to remember anything' };
           setUserMemory(addUserMemoryFact(value.slice(0, 160)));
           return { ok: true, saved: value.slice(0, 160) };
         }
@@ -1218,6 +1224,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       }
 
       // 2. Extract long-term memory from typed/spoken text
+      lastUserSaidRef.current = clean;
       const { profile: updatedMemory, extractedFact } = extractMemoriesFromUtterance(clean);
       if (extractedFact) {
         setUserMemory(updatedMemory);
@@ -2000,6 +2007,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
             ]);
 
             // Autonomous Long-term memory extraction from spoken utterance
+            lastUserSaidRef.current = text;
             const { profile: updatedMemory, extractedFact } = extractMemoriesFromUtterance(text);
             if (extractedFact) {
               setUserMemory(updatedMemory);
