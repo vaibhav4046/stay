@@ -3,7 +3,7 @@
  * under the same address rules. Used by fast voice, which needs tokens as they arrive.
  */
 import { getNextGroqKey, reportGroqKeyRateLimit } from '@/lib/voice/tokenOptimizer';
-import { allowServerUse, clientIp, classifyStatus, readUserLlm, GROQ_BASE, type LlmError, type LlmTarget } from './provider';
+import { allowServerUse, clientIp, classifyStatus, readUserLlm, userTargetUsable, GROQ_BASE, type LlmError, type LlmTarget } from './provider';
 
 export interface LlmStreamCall {
   messages: Array<Record<string, unknown>>;
@@ -55,9 +55,13 @@ export async function openLlmStream(req: Request, call: LlmStreamCall): Promise<
   const user = readUserLlm(req);
   let userKeyError: LlmError | undefined = req.headers.get('x-stay-llm-key') && !user ? 'bad_endpoint' : undefined;
   if (user) {
-    const r = await openStream(user, call);
-    if (r.res) return { res: r.res, source: 'user' };
-    userKeyError = r.error;
+    const blocked = await userTargetUsable(req, user);
+    if (blocked) userKeyError = blocked;
+    else {
+      const r = await openStream(user, call);
+      if (r.res) return { res: r.res, source: 'user' };
+      userKeyError = r.error;
+    }
   }
   if (!allowServerUse(clientIp(req))) return { res: null, source: 'server', error: 'rate_limited', userKeyError };
   const first = getNextGroqKey() || process.env.GROQ_API_KEY;

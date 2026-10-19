@@ -2,6 +2,7 @@
  * One place that talks to a chat-completions provider: the person's own (headers) or Stay's shared default.
  * Their key is used for that one request and never stored or logged.
  */
+import { lookup } from 'node:dns/promises';
 import { getNextGroqKey, reportGroqKeyRateLimit } from '@/lib/voice/tokenOptimizer';
 
 export type LlmError = 'invalid_key' | 'quota' | 'unreachable' | 'bad_endpoint' | 'rate_limited' | 'no_server_key' | 'other';
@@ -46,6 +47,63 @@ export function safeBaseUrl(raw: string): string | null {
   if (host.startsWith('[') || /^\d+\.\d+\.\d+\.\d+$/.test(host)) return null; // IP literals are never a real provider
   if (PRIVATE_V4.test(host)) return null;
   return `${u.origin}${u.pathname.replace(/\/+$/, '')}`;
+}
+
+/** True for loopback, private, link-local, CGNAT, benchmarking, multicast and reserved addresses, v4 and v6. Unparseable means unsafe. */
+export function isPrivateIp(ip: string): boolean {
+  const v = ip.toLowerCase();
+  if (v.includes(':')) {
+    if (v === '::' || v === '::1') return true;
+    const mapped = v.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
+    if (mapped) return isPrivateIp(mapped[1]);
+    return /^(fc|fd|fe[89ab]|ff)/.test(v);
+  }
+  const p = v.split('.').map(Number);
+  if (p.length !== 4 || p.some((n) => !Number.isInteger(n) || n < 0 || n > 255)) return true;
+  const [a, b] = p;
+  return a === 0 || a === 10 || a === 127 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127) || (a === 198 && (b === 18 || b === 19)) || a >= 224;
+}
+
+const PRESET_HOSTS = new Set(['api.groq.com', 'api.mistral.ai', 'api.openai.com']);
+const dnsCache = new Map<string, { ok: boolean; at: number }>();
+
+/**
+ * A public-looking name can still resolve to a private address (localtest.me, 127.0.0.1.nip.io, a rebinding domain).
+ * Before a request goes to someone else's address, resolve it and refuse if any answer is private.
+ */
+export async function resolvesPublic(host: string): Promise<boolean> {
+  if (PRESET_HOSTS.has(host)) return true;
+  const hit = dnsCache.get(host);
+  if (hit && Date.now() - hit.at < 60_000) return hit.ok;
+  let ok = false;
+  try {
+    const answers = await lookup(host, { all: true });
+    ok = answers.length > 0 && answers.every((a) => !isPrivateIp(a.address));
+  } catch {
+    ok = false;
+  }
+  dnsCache.set(host, { ok, at: Date.now() });
+  if (dnsCache.size > 500) dnsCache.delete(dnsCache.keys().next().value as string);
+  return ok;
+}
+
+const byokHits = new Map<string, number[]>();
+/** The person's own key skips the shared-key limit, but not all limits: 120 requests a minute per address stops an open relay. */
+export function allowByokUse(ip: string): boolean {
+  const now = Date.now();
+  const recent = (byokHits.get(ip) || []).filter((t) => now - t < 60_000);
+  if (recent.length >= 120) return false;
+  recent.push(now);
+  byokHits.set(ip, recent);
+  if (byokHits.size > 2000) byokHits.delete(byokHits.keys().next().value as string);
+  return true;
+}
+
+/** Everything that must hold before a request is sent to the person's own provider address. */
+export async function userTargetUsable(req: Request, t: LlmTarget): Promise<LlmError | null> {
+  if (!allowByokUse(clientIp(req))) return 'rate_limited';
+  if (!(await resolvesPublic(new URL(t.baseUrl).hostname))) return 'bad_endpoint';
+  return null;
 }
 
 export function readUserLlm(req: Request): LlmTarget | null {
@@ -116,9 +174,13 @@ export async function callLlm(req: Request, call: LlmCall): Promise<LlmResult> {
   let userKeyError: LlmError | undefined = hadUserHeaders && !user ? 'bad_endpoint' : undefined;
 
   if (user) {
-    const r = await post(user, call);
-    if (r.ok) return { ok: true, text: r.text, source: 'user' };
-    userKeyError = r.error;
+    const blocked = await userTargetUsable(req, user);
+    if (blocked) userKeyError = blocked;
+    else {
+      const r = await post(user, call);
+      if (r.ok) return { ok: true, text: r.text, source: 'user' };
+      userKeyError = r.error;
+    }
   }
 
   if (!allowServerUse(clientIp(req))) return { ok: false, text: '', source: 'server', error: 'rate_limited', userKeyError };
@@ -144,6 +206,8 @@ export function llmHeaders(r: LlmResult | null): Record<string, string> {
 export async function checkUserLlm(req: Request): Promise<{ ok: boolean; error?: LlmError; model?: string }> {
   const user = readUserLlm(req);
   if (!user) return { ok: false, error: 'bad_endpoint' };
+  const blocked = await userTargetUsable(req, user);
+  if (blocked) return { ok: false, error: blocked };
   const r = await post(user, { messages: [{ role: 'user', content: 'Reply with the single word OK.' }], maxTokens: 64, temperature: 0, serverModel: user.model, timeoutMs: 8000 });
   return r.ok ? { ok: true, model: user.model } : { ok: false, error: r.error };
 }

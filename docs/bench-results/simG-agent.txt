@@ -1,0 +1,66 @@
+engine=agent voice=en-GB-RyanNeural noise=on llm-human=false
+turn 1: human "Um, I keep putting off replying to my landlord about the renewal."
+        first audio 3129.75 ms after the human stopped; Stay: "That sounds heavy. Let's find the email first."
+turn 2: human "I do not even know what to write, it feels huge."
+        first audio 2918.541748046875 ms after the human stopped; Stay: "It is just one sentence. Can you open your email?"
+turn 3: human "Okay, maybe. What would the first sentence even be?"
+        first audio 2521.208251953125 ms after the human stopped; Stay: "Just say you received the notice. Do you want to try that?"
+pause test: Stay TALKED INTO the 2.3 s pause; reply to the finished thought after 10.416748046875 ms
+barge-in: interrupted 921 ms into the reply; Stay's audio kept arriving 1581 ms after I started talking; it heard: "Wait, stop, just one tiny step please."; then said: "That sounds like a lot. Let's start with the"
+command: tool=NONE; parked in app=nothing; reply after 6.375 ms
+stray transcripts (not the human's words): 0 of 9; unprompted replies: 0
+
+SUMMARY engine=agent: ordinary-turn first audio median 2918.541748046875 ms (n=3; 2521.208251953125, 2918.541748046875, 3129.75)
+TIME LIMIT
+
+=== timeline (s) ===
+   1.94 reply.started          
+   5.38 transcript.agent       Lady Lavender here. What are you putting off?
+   5.70 reply.done             
+   7.54 input.speech.started   
+  11.14 input.speech.stopped   
+  11.14 transcript.user        Um, I keep putting off replying to my landlord about the renewal.
+  11.14 reply.started          
+  16.27 transcript.agent       That sounds heavy. Let's find the email first.
+  16.57 reply.done             
+  19.04 input.speech.started   
+  21.94 input.speech.stopped   
+  21.94 transcript.user        I do not even know what to write. It feels huge.
+  21.94 reply.started          
+  27.61 transcript.agent       It is just one sentence. Can you open your email?
+  27.91 reply.done             
+  30.44 input.speech.started   
+  31.75 input.speech.stopped   
+  31.75 transcript.user        Okay, maybe.
+  31.75 reply.started          
+  32.64 input.speech.started   
+  34.64 input.speech.stopped   
+  34.64 transcript.user        What would the first sentence even be?
+  39.36 transcript.agent       Just say you received the notice. Do you want to try that?
+  39.60 reply.done             
+  43.24 input.speech.started   
+  48.13 input.speech.stopped   
+  48.15 transcript.user        I need to, um, send that email to my landlord and, uh,
+  48.15 reply.started          
+  50.85 input.speech.started   
+  52.45 input.speech.stopped   
+  52.45 transcript.agent       Let's just open
+  52.45 reply.done             
+  52.45 transcript.user        And I keep thinking about how to start it.
+  52.45 reply.started          
+  54.45 input.speech.started   
+  57.75 input.speech.stopped   
+  57.75 transcript.user        Can you give me a really detailed plan for my whole week, please?
+  60.91 input.speech.started   
+  64.97 input.speech.stopped   
+  64.97 transcript.agent       That sounds like a lot. Let's start with the
+  64.97 reply.done             
+  64.97 transcript.user        Wait, stop, just one tiny step please.
+  64.97 reply.started          
+  67.84 input.speech.started   
+  69.25 input.speech.stopped   
+  69.25 transcript.agent       Of course.
+  69.25 reply.done             
+  69.26 transcript.user        Park it, I need to call the dentist.
+  69.26 reply.started          
+agent audio frames: 2409 first 2.73 last 69.23

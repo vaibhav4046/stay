@@ -11,11 +11,7 @@ import { detectVoiceCommand } from '@/lib/voice/voiceCommands';
 import { buildDeterministicCoachPlan } from '@/lib/coach/strategies';
 import {
   CompliantKeyRotationPool,
-  getCachedCoachPlan,
-  setCachedCoachPlan,
   compressPromptForTokenEfficiency,
-  shouldTransmitPcmFrame,
-  buildUniversal3ProConfig,
 } from '@/lib/voice/tokenOptimizer';
 
 describe('Stay 32-Language Universal Voice Engine & Detection', () => {
@@ -179,7 +175,7 @@ describe('Stay 32-Language Universal Voice Engine & Detection', () => {
     expect(src).toContain('FATAL_SESSION_ERRORS'); // non-fatal session.error must not start a second engine
   });
 
-  it('validates Compliant Multi-Key Rotation Pool, Semantic Cache, Prompt Compression, and Universal-3 Pro Config', () => {
+  it('rotates shared keys away from a rate-limited one, and the prompt helper only collapses whitespace', () => {
     const pool = new CompliantKeyRotationPool('assemblyai', ['key_A,key_B,key_C']);
     expect(pool.getStatus().totalKeysConfigured).toBe(3);
     const k1 = pool.getNextHealthyKey();
@@ -190,26 +186,9 @@ describe('Stay 32-Language Universal Voice Engine & Detection', () => {
     // Next healthy key should skip key_C during cooldown
     expect(pool.getNextHealthyKey()).toBe('key_A');
 
-    const dummyPlan = buildDeterministicCoachPlan({
-      taskText: 'Write quarterly tax email',
-      barrierType: 'overwhelm',
-    });
-    setCachedCoachPlan('Write quarterly tax email', dummyPlan, 'overwhelm', 'en');
-    const cached = getCachedCoachPlan('write quarterly tax email!', 'overwhelm', 'en');
-    expect(cached?.firstStep).toBe(dummyPlan.firstStep);
-
     const compressed = compressPromptForTokenEfficiency('Please   help   me   with   this   task   now');
     expect(compressed).toBe('Please help me with this task now');
 
-    const silentRef = { current: 20 };
-    expect(shouldTransmitPcmFrame(0.001, silentRef)).toBe(false);
-    expect(shouldTransmitPcmFrame(0.04, silentRef)).toBe(true);
-
-    const u3Config = buildUniversal3ProConfig('auto', 'anna');
-    expect(u3Config.speech_model).toBe('u3-rt-pro');
-    expect(u3Config.language_detection).toBe(true);
-    expect(u3Config.speaker_isolation).toBe(true);
-    expect(u3Config.voice_focus).toBe(true);
   });
 });
 

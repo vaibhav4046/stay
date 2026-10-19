@@ -1,0 +1,74 @@
+engine=agent voice=en-GB-SoniaNeural noise=on llm-human=false
+turn 1: human "Um, I keep putting off replying to my landlord about the renewal."
+        first audio 2328.375 ms after the human stopped; Stay: "That sounds heavy. Let's start by finding the email."
+turn 2: human "I do not even know what to write, it feels huge."
+        first audio 2968.458251953125 ms after the human stopped; Stay: "It is a big feeling. Just open the email draft."
+turn 3: human "Okay, maybe. What would the first sentence even be?"
+        first audio 2490 ms after the human stopped; Stay: "Try just saying hello. Or we can park this if it feels too much."
+pause test: Stay TALKED INTO the 2.3 s pause; reply to the finished thought after 2671.916748046875 ms
+barge-in: Stay still had 99 ms of speech queued when I interrupted; it noticed me 944 ms after I started talking; it heard: "Wait, stop."; then said: "That is a lot. Let's just"
+command: tool=app {"action":"park","value":"call the dentist"}; parked in app=call the dentist; reply after 2904.375 ms
+stray transcripts (not the human's words): 0 of 11; unprompted replies: 0
+
+SUMMARY engine=agent: ordinary-turn first audio median 2490 ms (n=3; 2328.375, 2490, 2968.458251953125)
+TIME LIMIT
+
+=== timeline (s) ===
+   1.41 reply.started          
+   5.10 transcript.agent       Lady Lavender here. What are you putting off?
+   5.56 reply.done             
+   7.40 input.speech.started   
+  11.19 input.speech.stopped   
+  11.19 transcript.user        Um, I keep putting off replying to my landlord about the renewal.
+  11.19 reply.started          
+  16.40 transcript.agent       That sounds heavy. Let's start by finding the email.
+  16.70 reply.done             
+  19.19 input.speech.started   
+  22.29 input.speech.stopped   
+  22.29 transcript.user        I do not even know what to write. It feels huge.
+  22.29 reply.started          
+  27.32 transcript.agent       It is a big feeling. Just open the email draft.
+  27.61 reply.done             
+  30.39 input.speech.started   
+  31.69 input.speech.stopped   
+  31.69 transcript.user        Okay, maybe.
+  31.69 reply.started          
+  32.69 input.speech.started   
+  34.09 input.speech.stopped   
+  34.09 transcript.user        What would the first sentence even be?
+  39.62 transcript.agent       Try just saying hello. Or we can park this if it feels too much.
+  39.85 reply.done             
+  42.49 input.speech.started   
+  47.68 input.speech.stopped   
+  47.68 transcript.user        I need to, um, send that email to my landlord and, uh,
+  47.68 reply.started          
+  49.29 input.speech.started   
+  51.69 input.speech.stopped   
+  51.69 transcript.user        And I keep thinking about how to start it.
+  57.46 transcript.agent       Just type the landlord's name first. One tiny step at a time.
+  57.69 reply.done             
+  59.69 input.speech.started   
+  63.29 input.speech.stopped   
+  63.29 transcript.user        Can you give me a really detailed plan for my whole week, please?
+  63.29 reply.started          
+  65.86 input.speech.started   
+  66.99 input.speech.stopped   
+  67.00 transcript.agent       That is a lot. Let's just
+  67.00 reply.done             
+  67.00 transcript.user        Wait, stop.
+  67.00 reply.started          
+  67.99 input.speech.started   
+  68.89 input.speech.stopped   
+  68.89 transcript.user        Just one tiny step, please.
+  69.89 input.speech.started   
+  69.99 input.speech.stopped   
+  69.99 transcript.user        Park it.
+  70.99 input.speech.started   
+  71.79 input.speech.stopped   
+  71.79 transcript.user        You need to call the dentist.
+  73.45 tool.call              app {"action":"park","value":"call the dentist"}
+  73.48 reply.done             
+  73.48 reply.started          
+  78.93 transcript.agent       I have parked that for you. We can get back to the email whenever you are ready.
+  79.24 reply.done             
+agent audio frames: 2729 first 2.08 last 79.17

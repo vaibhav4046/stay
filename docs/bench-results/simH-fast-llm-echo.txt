@@ -1,0 +1,119 @@
+engine=fast +echo voice=en-US-JennyNeural noise=on llm-human=true
+turn 1: human "Um, I’ve been putting off cleaning out my inbox for weeks, and now it’"
+        first audio 1386.708251953125 ms after the human stopped; Stay: "Start by opening your email and selecting the first unread m"
+turn 2: human "And I keep wondering if I should actually finish that report first, be"
+        first audio 1403.333251953125 ms after the human stopped; Stay: "Let’s clear one email now. Then, if you’d like, we can park "
+turn 3: human "And maybe I should just grab a coffee first, because I’m already feeli"
+        first audio 1480.333251953125 ms after the human stopped; Stay: "Parked."
+turn 4: human "I guess I’ll just grab that coffee, maybe… then try one email, but I k"
+        first audio 1036.125 ms after the human stopped; Stay: "Take a two‑minute coffee break now—just sip, breathe, and en"
+pause test: Stay waited through the 2.3 s pause; reply to the finished thought after 1100.375 ms
+barge-in: interrupted 957 ms into the reply; Stay's audio kept arriving 1172 ms after I started talking; it heard: "Okay."; then said: "Spend two minutes writing three headings: 1) Landlord email "
+command: tool={"action":"park","value":"call the dentist"}; parked in app=call the dentist | grab a coffee | finish the report; reply after 854.166748046875 ms
+stray transcripts (not the human's words): 0 of 9; unprompted replies: 0
+
+SUMMARY engine=fast+echo: ordinary-turn first audio median 1403.333251953125 ms (n=4; 1036.125, 1386.708251953125, 1403.333251953125, 1480.333251953125)
+TIME LIMIT
+
+=== timeline (s) ===
+   3.78 session.ready          
+   3.78 reply.started          
+   4.86 transcript.agent       Lady Lavender here. What are you putting off?
+   4.86 reply.done             
+  11.34 input.speech.started   
+  11.34 transcript.user.delta  Um,
+  11.65 transcript.user.delta  Um, I put
+  12.93 transcript.user.delta  Um, I've been putting off cleaning out my
+  14.14 transcript.user.delta  Um, I've been putting off cleaning out my inbox for weeks.
+  15.53 transcript.user.delta  Um, I've been putting off cleaning out my inbox for weeks, a
+  16.74 input.speech.stopped   
+  16.74 transcript.user        Um, I've been putting off cleaning out my inbox for weeks, a
+  17.21 reply.started          
+  17.73 transcript.agent       Start by opening your email and selecting the first unread m
+  17.73 reply.done             
+  24.43 input.speech.started   
+  24.43 transcript.user.delta  And
+  25.63 transcript.user.delta  And I keep wondering if I should
+  26.83 transcript.user.delta  And I keep wondering if I should actually finish that report
+  28.13 transcript.user.delta  And I keep wondering if I should actually finish that report
+  29.44 transcript.user.delta  And I keep wondering if I should actually finish that report
+  30.43 input.speech.stopped   
+  30.43 transcript.user        And I keep wondering if I should actually finish that report
+  30.95 reply.started          
+  31.12 tool.call              {"action":"park","value":"finish the report"}
+  31.71 transcript.agent       Let’s clear one email now. Then, if you’d like, we can park 
+  31.72 reply.done             
+  38.04 input.speech.started   
+  38.04 transcript.user.delta  And
+  39.34 transcript.user.delta  And maybe I should just grab a
+  40.54 transcript.user.delta  And maybe I should just grab a coffee first, because
+  41.73 transcript.user.delta  And maybe I should just grab a coffee first, because I'm alr
+  43.04 transcript.user.delta  And maybe I should just grab a coffee first, because I'm alr
+  43.54 input.speech.stopped   
+  43.54 transcript.user        And maybe I should just grab a coffee first, because I'm alr
+  44.13 tool.call              {"action":"park","value":"grab a coffee"}
+  44.13 reply.started          
+  44.39 transcript.agent       Parked.
+  44.40 reply.done             
+  60.33 input.speech.started   
+  60.33 transcript.user.delta  I guess
+  61.64 transcript.user.delta  I guess I'll just grab that coffee
+  62.94 transcript.user.delta  I guess I'll just grab that coffee, maybe, then try
+  64.24 transcript.user.delta  I guess I'll just grab that coffee, maybe, then try one emai
+  65.44 transcript.user.delta  I guess I'll just grab that coffee, maybe, then try one emai
+  65.94 input.speech.stopped   
+  65.94 transcript.user        I guess I'll just grab that coffee, maybe, then try one emai
+  66.21 reply.started          
+  66.76 transcript.agent       Take a two‑minute coffee break now—just sip, breathe, and en
+  66.76 reply.done             
+  69.54 input.speech.started   
+  69.54 transcript.user.delta  I need to
+  70.83 transcript.user.delta  I need to, um, send that
+  72.04 transcript.user.delta  I need to, um, send that email to my landlord
+  72.93 transcript.user.delta  I need to, um, send that email to my landlord and, uh,
+  73.14 transcript.user.delta  I need to, um, send that email to my landlord and, uh,
+  73.23 transcript.user.delta  I need to, um, send that email to my landlord and, uh,
+  73.43 transcript.user.delta  I need to, um, send that email to my landlord and, uh,
+  73.63 transcript.user.delta  I need to, um, send that email to my landlord and, uh,
+  73.84 transcript.user.delta  I need to, um, send that email to my landlord and, uh,
+  76.13 transcript.user.delta  I need to, um, send that email to my landlord and, uh, and
+  77.34 transcript.user.delta  I need to, um, send that email to my landlord and, uh, And I
+  78.34 input.speech.stopped   
+  78.34 transcript.user        I need to, um, send that email to my landlord and, uh, and I
+  78.58 reply.started          
+  79.26 transcript.agent       Write a quick line: “Hi [Landlord], I hope you’re well.” The
+  79.26 reply.done             
+  81.03 input.speech.started   
+  81.03 transcript.user.delta  Can you
+  81.63 transcript.user.delta  Can you give me a reason
+  82.94 transcript.user.delta  Can you give me a really detailed plan for my
+  84.14 input.speech.stopped   
+  84.14 transcript.user        Can you give me a really detailed plan for my whole week, pl
+  84.61 reply.started          
+  85.23 transcript.agent       Start by listing three top priorities for this week—just the
+  85.23 reply.done             
+  85.93 input.speech.started   
+  85.93 input.speech.stopped   
+  85.93 transcript.user        Okay.
+  86.16 reply.started          
+  86.97 transcript.agent       Spend two minutes writing three headings: 1) Landlord email 
+  86.97 reply.done             
+  86.97 input.speech.started   
+  86.99 transcript.user.delta  Wait, so
+  88.24 transcript.user.delta  Wait, stop. Just one tiny
+  89.64 transcript.user.delta  Wait, stop. Just one tiny step, please.
+  89.94 input.speech.stopped   
+  89.94 transcript.user        Wait, stop. Just one tiny step, please.
+  90.39 reply.started          
+  90.84 transcript.agent       Set a timer for two minutes and draft the first sentence of 
+  90.84 reply.done             
+  91.05 input.speech.started   
+  91.05 transcript.user.delta  Park it. I need
+  92.33 transcript.user.delta  Park it. I need to call the dentist.
+  92.44 input.speech.stopped   
+  92.44 transcript.user        Park it. I need to call the dentist.
+  92.58 tool.call              {"action":"park","value":"call the dentist"}
+  92.58 reply.started          
+  92.83 transcript.agent       Parked.
+  92.83 reply.done             
+agent audio frames: 790 first 4.01 last 92.83

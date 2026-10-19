@@ -260,7 +260,8 @@ test('one typed task makes exactly one plan request and the card never jumps bac
 test('the landing page shows measured results with their limits, and no claim against other products', async ({ page }) => {
   await page.goto('/');
   const sec = page.getByTestId('measured');
-  await expect(sec).toContainText('Measured, not promised');
+  await expect(sec).toContainText('What we tested');
+  await page.locator('summary', { hasText: 'Voice speed' }).click();
   await expect(sec).toContainText('about 1.2 seconds');
   await expect(sec).toContainText(/synthesized voices/i);
   await expect(sec).toContainText(/make no claim against them/i);
@@ -341,5 +342,39 @@ test.describe('Routines, check-ins and the offline shell', () => {
   test('the app shell registers an offline service worker', async ({ page }) => {
     await page.goto('/app/today');
     await expect.poll(() => page.evaluate(async () => !!(await navigator.serviceWorker?.getRegistration())), { timeout: 15000 }).toBe(true);
+  });
+});
+
+test.describe('Content Security Policy', () => {
+  test('is sent, forbids framing and unknown connections, and nothing in the main flows violates it', async ({ page }) => {
+    const res = await page.request.get('/');
+    const csp = res.headers()['content-security-policy'] || '';
+    expect(csp).toContain("frame-ancestors 'none'");
+    expect(csp).toContain("object-src 'none'");
+    expect(csp).toMatch(/connect-src [^;]*wss:\/\/streaming\.assemblyai\.com/);
+    expect(csp).not.toMatch(/connect-src [^;]*\*[^.]/); // no wildcard connect
+
+    await page.addInitScript(() => {
+      // sessionStorage survives the page changes below, so every document's violations are kept
+      document.addEventListener('securitypolicyviolation', (e) => {
+        const list = JSON.parse(sessionStorage.getItem('csp') || '[]') as string[];
+        list.push(`${e.violatedDirective} ${e.blockedURI}`);
+        sessionStorage.setItem('csp', JSON.stringify(list));
+      });
+    });
+    await page.goto('/');
+    await page.getByTestId('hero-input').fill('taxes');
+    await page.waitForTimeout(1500);
+    await onboard(page);
+    await page.getByTestId('task-input').fill('Reply to my landlord');
+    await page.getByTestId('send').click();
+    await expect(page.getByTestId('plan-card')).toBeVisible({ timeout: 20000 });
+    await page.getByTestId('menu-button').click();
+    await page.getByRole('button', { name: 'Voice and language' }).click();
+    await page.waitForTimeout(500);
+    await page.goto('/app/settings');
+    await page.waitForTimeout(500);
+    const violations = await page.evaluate(() => JSON.parse(sessionStorage.getItem('csp') || '[]') as string[]);
+    expect(violations).toEqual([]);
   });
 });

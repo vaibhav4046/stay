@@ -1,13 +1,7 @@
 /**
- * Stay Token Optimizer, Semantic LRU Cache & Legitimate Multi-Key Failover Pool.
- *
- * Replaces any unsafe account-scraping ideas with a compliant, production-grade
- * multi-key rotation pool (`ASSEMBLYAI_API_KEYS` / `GROQ_API_KEYS`), content-hash
- * semantic response caching (0 tokens on cache hit), prompt compression (~72% token
- * reduction), and WebSocket VAD silence gating (~48% audio-second savings).
+ * Key rotation for the shared provider keys (ASSEMBLYAI_API_KEYS / GROQ_API_KEYS, comma-separated, or the single
+ * ASSEMBLYAI_API_KEY / GROQ_API_KEY): when one key is rate-limited it rests for a while and the next one is used.
  */
-
-import type { CoachPlanProposal } from '@/types/domain';
 
 export interface KeyPoolStatus {
   provider: 'assemblyai' | 'groq';
@@ -15,19 +9,6 @@ export interface KeyPoolStatus {
   activeKeyIndex: number;
   rotationsCount: number;
   rateLimitFailovers: number;
-}
-
-export interface TokenSaverTelemetry {
-  speechModel: 'u3-rt-pro';
-  supportedLanguagesCount: number;
-  tokensSavedTotal: number;
-  semanticCacheHits: number;
-  localZeroTokenCommands: number;
-  promptCompressionRatioPct: number;
-  vadSilenceSavedPct: number;
-  lastResponseLatencyMs: number;
-  assemblyPool: KeyPoolStatus;
-  groqPool: KeyPoolStatus;
 }
 
 interface KeyEntry {
@@ -129,158 +110,10 @@ export function reportGroqKeyRateLimit(key: string): void {
   groqPool.reportRateLimitOrError(key);
 }
 
-// Semantic Content-Hash LRU Cache for Coaching Plans (0 tokens on hit)
-const PLAN_CACHE_MAX = 64;
-const semanticPlanCache = new Map<string, CoachPlanProposal>();
-
-let tokensSavedCounter = 1420;
-let semanticCacheHitsCounter = 3;
-let localZeroTokenCmdCounter = 8;
-let lastLatencyMs = 9;
-
-export function normalizeSemanticKey(taskText: string, barrierType?: string, lang = 'en'): string {
-  const cleaned = taskText
-    .toLowerCase()
-    .replace(/\b(?:uh+|um+|erm|like|honestly|basically|actually|please|just|right now)\b/g, '')
-    .replace(/[^\p{L}\p{N}\s]/gu, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-  return `${lang}:${barrierType || 'auto'}:${cleaned.slice(0, 120)}`;
-}
-
-export function getCachedCoachPlan(
-  taskText: string,
-  barrierType?: string,
-  lang = 'en'
-): CoachPlanProposal | null {
-  const key = normalizeSemanticKey(taskText, barrierType, lang);
-  const hit = semanticPlanCache.get(key);
-  if (hit) {
-    semanticCacheHitsCounter++;
-    tokensSavedCounter += 480;
-    lastLatencyMs = 4;
-    return hit;
-  }
-  return null;
-}
-
-export function setCachedCoachPlan(
-  taskText: string,
-  plan: CoachPlanProposal,
-  barrierType?: string,
-  lang = 'en'
-): void {
-  const key = normalizeSemanticKey(taskText, barrierType, lang);
-  if (semanticPlanCache.size >= PLAN_CACHE_MAX) {
-    const oldestKey = semanticPlanCache.keys().next().value;
-    if (oldestKey) semanticPlanCache.delete(oldestKey);
-  }
-  semanticPlanCache.set(key, plan);
-}
-
-export function recordLocalZeroTokenExecution(latencyMs = 6, tokensSaved = 390): void {
-  localZeroTokenCmdCounter++;
-  tokensSavedCounter += tokensSaved;
-  lastLatencyMs = latencyMs;
-}
-
-/**
- * Compresses system/memory prompts by ~72% before transmitting to LLM/Voice WebSocket.
- */
+/** Collapses runs of blank lines and spaces in a prompt. That is all it does; it is not a compression scheme. */
 export function compressPromptForTokenEfficiency(rawPrompt: string): string {
-  const compressed = rawPrompt
+  return rawPrompt
     .replace(/\n{3,}/g, '\n\n')
     .replace(/[ \t]{2,}/g, ' ')
     .trim();
-  const savedChars = Math.max(0, rawPrompt.length - compressed.length);
-  if (savedChars > 0) {
-    tokensSavedCounter += Math.ceil(savedChars / 4);
-  }
-  return compressed;
-}
-
-const defaultSilentFrameCount = { current: 0 };
-
-/**
- * Voice Activity Detection (VAD) silence gate: skips transmitting empty PCM frames
- * when user has been silent for >12 consecutive frames, saving ~48% of streaming audio quota.
- */
-export function shouldTransmitPcmFrame(
-  rms: number,
-  silentFrameCount: { current: number } = defaultSilentFrameCount
-): boolean {
-  if (rms > 0.008) {
-    silentFrameCount.current = 0;
-    return true;
-  }
-  silentFrameCount.current += 1;
-  // Transmit first 10 silent frames (~400ms trailing silence for clean endpointing), then gate
-  if (silentFrameCount.current <= 10) {
-    return true;
-  }
-  // Keep alive every 25th frame
-  return silentFrameCount.current % 25 === 0;
-}
-
-/**
- * Builds the full AssemblyAI Universal-3 Pro (`u3-rt-pro`) configuration payload
- * with 32-language automatic language identification (LID), ADHD + multilingual keyterms,
- * speaker isolation, and ultra-low-latency turn endpointing (160ms).
- */
-export function buildUniversal3ProConfig(selectedLanguage = 'auto', selectedVoice = 'anna') {
-  return {
-    speech_model: 'u3-rt-pro',
-    language_detection: true,
-    language_code: selectedLanguage === 'auto' ? undefined : selectedLanguage,
-    language_confidence_threshold: 0.38,
-    end_of_turn_confidence_threshold: 0.45,
-    min_end_of_turn_silence_when_confident: 160,
-    max_turn_silence: 800,
-    speaker_isolation: true,
-    voice_focus: true,
-    format_turns: true,
-    keyterms_prompt: [
-      'Stay',
-      'ADHD',
-      'executive freeze',
-      'time blindness',
-      'dopamine',
-      'ice cream',
-      'lotus',
-      'letterform',
-      'play a game',
-      'Simon Pulse',
-      'Impulse Shield',
-      'Word Rally',
-      'difficulty easy',
-      'difficulty medium',
-      'difficulty hard',
-      'नमस्ते',
-      'हिन्दी',
-      'गेम खेलना है',
-      '안녕',
-      '한국어',
-      '게임',
-    ],
-    output: {
-      type: 'audio',
-      voice: selectedVoice || 'anna',
-      format: { encoding: 'audio/pcm', sample_rate: 24000 },
-    },
-  };
-}
-
-export function getTokenSaverTelemetry(): TokenSaverTelemetry {
-  return {
-    speechModel: 'u3-rt-pro',
-    supportedLanguagesCount: 9, // en es fr de it pt hi ko ja: verified live with scripts/voice-lang-probe
-    tokensSavedTotal: tokensSavedCounter,
-    semanticCacheHits: semanticCacheHitsCounter,
-    localZeroTokenCommands: localZeroTokenCmdCounter,
-    promptCompressionRatioPct: 72,
-    vadSilenceSavedPct: 0, // silence gating removed: it starved server-side turn detection
-    lastResponseLatencyMs: lastLatencyMs,
-    assemblyPool: assemblyPool.getStatus(),
-    groqPool: groqPool.getStatus(),
-  };
 }

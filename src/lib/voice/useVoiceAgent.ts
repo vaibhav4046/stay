@@ -55,11 +55,6 @@ import {
   buildProceduralBillionShape,
   type GenerativeShapeSpec,
 } from '@/lib/voice/generativeShapeEngine';
-import {
-  buildUniversal3ProConfig,
-  shouldTransmitPcmFrame,
-  getTokenSaverTelemetry,
-} from '@/lib/voice/tokenOptimizer';
 
 export type OrbColorTheme = 'default' | 'aurora' | 'sunset' | 'ocean' | 'cyber' | 'emerald';
 
@@ -1779,7 +1774,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
       // 4. Connect: either the managed Voice Agent socket, or fast voice (same events, built from STT + chat model + TTS)
       const socket: WebSocket = useFast
-        ? (new FastSocket({ sttToken: tokenJson.sttToken || '', ttsToken: tokenJson.ttsToken || '' }) as unknown as WebSocket)
+        ? (new FastSocket({ sttToken: tokenJson.sttToken || '', ttsToken: tokenJson.ttsToken || '', keyterms: appKeyterms() }) as unknown as WebSocket)
         : new WebSocket(`${tokenJson.wsUrl}?token=${encodeURIComponent(tokenJson.token || '')}`);
       setVoiceEngine(useFast ? 'fast' : 'agent');
       wsRef.current = socket;
@@ -1791,7 +1786,6 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         const greeting = buildGreeting(persona, memory, renewingRef.current);
         renewingRef.current = false;
 
-        const u3Config = buildUniversal3ProConfig(selectedLanguageRef.current);
         const langBase = selectedLanguageRef.current !== 'auto' && isAgentVerifiedLanguage(selectedLanguageRef.current) ? selectedLanguageRef.current.split('-')[0].toLowerCase() : null;
         socket.send(
           JSON.stringify({
@@ -2344,7 +2338,6 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     setActiveGame,
     gameDifficulty,
     setGameDifficulty,
-    tokenTelemetry: getTokenSaverTelemetry(),
     userMemory,
     refreshUserMemory: () => setUserMemory(loadUserMemory()),
     playEarcon,

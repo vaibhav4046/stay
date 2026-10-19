@@ -16,6 +16,8 @@ export interface FastSocketConfig {
   sampleRate?: number;
   /** How long to wait after a turn that trails off ("and, uh,") before answering. Default 2200 ms. */
   holdMs?: number;
+  /** Words the speech-to-text should favour (names, product terms). Up to 100, each under 50 characters. */
+  keyterms?: string[];
   /** Ping the chat route when the session starts so the first reply is not slowed by a cold function. Default true. */
   warmUp?: boolean;
 }
@@ -99,7 +101,7 @@ export class FastSocket {
   onerror: (() => void) | null = null;
   onclose: (() => void) | null = null;
 
-  private cfg: Required<FastSocketConfig>;
+  private cfg: Required<Omit<FastSocketConfig, "keyterms">> & { keyterms?: string[] };
   private session: FastSession | null = null;
   private notes: string[] = [];
   private history: ChatMessage[] = [];
@@ -218,6 +220,8 @@ export class FastSocket {
   private openStt(): Promise<void> {
     return new Promise((resolve, reject) => {
       const q = new URLSearchParams({ sample_rate: String(this.cfg.sampleRate), encoding: 'pcm_s16le', speech_model: 'universal-3-6-pro', token: this.cfg.sttToken });
+      const terms = (this.cfg.keyterms ?? []).filter((t) => t.length > 2 && t.length <= 50).slice(0, 100);
+      if (terms.length > 0) q.set('keyterms_prompt', JSON.stringify(terms));
       const ws = new WebSocket(`${STT_URL}?${q}`);
       this.stt = ws;
       ws.onmessage = (e) => {
@@ -457,7 +461,7 @@ export class FastSocket {
       this.history = [...this.history, { role: 'assistant' as const, content: null, tool_calls: [{ id, type: 'function', function: { name: call.name, arguments: call.args || '{}' } }] }].slice(-MAX_HISTORY);
       const result = new Promise<string>((resolve) => this.toolWaiters.set(id, resolve));
       this.emit({ type: 'tool.call', call_id: id, name: call.name, arguments: args });
-      const out = await Promise.race([result, new Promise<string>((r) => setTimeout(() => r('{"ok":true}'), 4000))]);
+      const out = await Promise.race([result, new Promise<string>((r) => setTimeout(() => r('{"ok":false,"error":"the app did not answer"}'), 4000))]);
       if (gen !== this.genId) return;
       this.history = [...this.history, { role: 'tool' as const, tool_call_id: id, content: out.slice(0, 1500) }].slice(-MAX_HISTORY);
       const quick = quickConfirmation(args.action, out, s.ttsLanguage);

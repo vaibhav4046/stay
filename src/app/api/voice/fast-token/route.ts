@@ -26,7 +26,8 @@ export async function POST(req: NextRequest) {
   const key = hasUserKey ? userKey : getNextAssemblyAiKey() || process.env.ASSEMBLYAI_API_KEY;
   if (!key) return NextResponse.json({ code: 'quota', error: 'Server voice credentials are not configured. Add your own AssemblyAI key in Settings, or use Quiet Text Mode.' }, { status: 503 });
 
-  const long = req.nextUrl.searchParams.get('long') === '1';
+  // three-hour sessions only on the person's own allowance; the shared one is capped at 30 minutes (all-day mode renews)
+  const long = req.nextUrl.searchParams.get('long') === '1' && hasUserKey;
   const url = `https://streaming.assemblyai.com/v3/token?expires_in_seconds=120&max_session_duration_seconds=${long ? 10800 : 1800}`;
   try {
     const mint = async () => {

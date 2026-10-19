@@ -1,76 +1,65 @@
-# Architecture Specification (`docs/ARCHITECTURE.md`)
+# Architecture
 
-## 1. High-Level System Architecture
+Stay is a Next.js 15 (App Router, React 19, TypeScript, Tailwind v4) web app. Almost everything runs in the browser; the server is a thin layer that holds keys, applies the safety gates and relays to a language model.
 
-```mermaid
-flowchart LR
-  subgraph Browser["Browser Client (Next.js App Router)"]
-    UI["Stay UI + Quiet Text Mode"]
-    Signal["Stay Signal (Three.js WebGL + SVG Fallback)"]
-    Audio["AudioWorklet 24kHz PCM16 + Playback Queue"]
-    Timer["Deterministic Focus Timer"]
-    PDF["Client PDF Generator (jsPDF)"]
-  end
-
-  subgraph NextServer["Next.js Server Route Handlers"]
-    TokenAPI["GET/POST /api/voice/token"]
-    CoachAPI["POST /api/coach/plan"]
-    DeleteAPI["POST /api/account/delete"]
-  end
-
-  subgraph External["External Services"]
-    AAI_REST["AssemblyAI Agents REST API\nhttps://agents.assemblyai.com"]
-    AAI_WS["AssemblyAI Voice Agent WebSocket\nwss://agents.assemblyai.com/v1/ws"]
-    Groq["Groq OpenAI-Compatible API\nopenai/gpt-oss-120b"]
-    Supabase["Supabase Auth + Postgres (RLS)\n+ Local Storage Fallback"]
-  end
-
-  UI --> TokenAPI
-  TokenAPI -->|"Server-only ASSEMBLYAI_API_KEY"| AAI_REST
-  AAI_REST -->|"Single-use ephemeral token"| TokenAPI
-  TokenAPI -->|"Token + Agent ID"| Audio
-  Audio <-->|"Bidirectional 24kHz PCM16 + Tool Calls"| AAI_WS
-  AAI_WS <-->|"Streaming Chat + Tool Definitions"| Groq
-  UI -->|"Text/Fallback Plan Request"| CoachAPI
-  CoachAPI -->|"Structured JSON Plan"| Groq
-  UI <--> Supabase
-  UI --> Timer
-  UI --> PDF
-  Audio -->|"Smoothed RMS Energy + State"| Signal
+```
+ microphone ──► AudioWorklet (24 kHz, 16-bit, 50 ms chunks)
+                      │
+                      ▼
+              FastSocket (src/lib/voice/fastSocket.ts)       emits the Voice Agent's own events,
+              ┌───────────────┬──────────────────┐            so the voice hook, tools, memory,
+              │ speech-to-text │  chat model      │  speech    safety and orb are shared by both engines
+              │ AssemblyAI v3  │  /api/voice/chat │  AssemblyAI
+              │ wss, browser-  │  (SSE, one `app` │  streaming TTS
+              │ direct, short- │  tool) -> Groq   │  wss, browser-direct
+              │ lived token    │  or your own key │  Generate / Flush / Cancel
+              └───────┬────────┴────────┬─────────┘
+                      │ turn events     │ reply text, tool calls
+                      ▼                 ▼
+              useVoiceAgent (hook) ── runAppAction ──► screens, timer, routines, today list,
+                      │                                  parking lot, check-ins, memory, orb
+                      ▼
+              playback queue ──► speakers          fallback: AssemblyAI Voice Agent (managed)
 ```
 
----
+## Voice
 
-## 2. Voice Pipeline Architecture
+* **Fast voice (default)** for English, Spanish, French, German, Italian and Portuguese. Speech-to-text is Universal-3.6 Pro streaming over a WebSocket opened by the browser with a token minted by `/api/voice/fast-token`. Turn handling is in `FastSocket`: partials drive the orb and captions, `end_of_turn` starts the reply, a turn that ends on "um", a connector or a comma is held for 2.2 s and merged with what follows (patience for ADHD pauses), two words over Stay's own speech cancel it, a single stray word does not.
+* **The brain** is `/api/voice/chat`: safety gates first (crisis, medication), then a streamed chat completion. Default model is `openai/gpt-oss-120b` on Groq; a person's own key (Groq, Mistral, OpenAI, any public https OpenAI-compatible address) is used first when present. One compact tool, `app`, carries every action so each extra capability does not add reply latency.
+* **Speech** is AssemblyAI streaming text-to-speech (protocol found by probing: `Generate`, `Flush`, `Cancel`, `Terminate`; audio is base64 PCM 24 kHz; voice and language are query parameters). The first clause of a reply is spoken as soon as it exists; simple actions are confirmed at once with a canned line instead of a second model call.
+* **Standard voice** is AssemblyAI's managed Voice Agent API. It is the automatic fallback when fast voice cannot start, and the engine for every other language.
 
-1. **Token Minting (`/api/voice/token`):**
-   - Browser requests a short-lived token before opening a voice session.
-   - Server validates rate limits and calls `GET https://agents.assemblyai.com/v1/token?expires_in_seconds=180&max_session_duration_seconds=600` with `Authorization: Bearer <ASSEMBLYAI_API_KEY>`.
-   - Returns `{ token, agentId, wsUrl: "wss://agents.assemblyai.com/v1/ws" }`.
-2. **Session Initialization:**
-   - Browser opens `wss://agents.assemblyai.com/v1/ws?token=<token>`.
-   - On `open`, sends `{"type": "session.update", "session": {"agent_id": "<agentId>"}}`.
-   - Waits for `session.ready` before streaming microphone audio.
-3. **Microphone Capture & Resampling (`public/pcm-processor.js`):**
-   - Uses default `AudioContext` sample rate so Firefox `echoCancellation: true` and Safari native rates work reliably.
-   - `AudioWorkletProcessor` resamples float32 audio to `24000` Hz mono, converts to signed 16-bit little-endian PCM (`Int16Array`), buffers ~50ms chunks (`1200` samples = `2400` bytes), base64-encodes them, and sends `{"type": "input.audio", "audio": "<base64>"}`.
-   - Also computes local RMS audio energy (`0.0–1.0`) to drive the **Stay Signal** 3D instrument smoothly.
-4. **Agent Audio Playback & Barge-In:**
-   - Incoming `reply.audio` chunks (`24000` Hz PCM16 base64) are decoded to `Float32Array` and scheduled gaplessly on the `AudioContext` timeline.
-   - When `input.speech.started` or `reply.done` (`status: "interrupted"`) arrives, all active `AudioBufferSourceNode` instances are immediately stopped and cleared, resetting the playback cursor for clean barge-in.
-5. **Client-Side Tool Execution:**
-   - Stored agent `agent_c70c56210f7c41548f7785d33dc6c8ab` declares three client-side tools:
-     - `propose_coaching_plan`: Populates the task, barrier, strategy, shrunk <2-minute first step, and recommended timer duration on screen.
-     - `start_focus_timer`: Starts the application-owned countdown timer.
-     - `record_session_outcome`: Logs the session outcome (`started`, `partly_started`, `not_started`, `paused_or_stopped`).
-   - Tool results are queued when `tool.call` arrives and sent as `{"type": "tool.result", "call_id": "...", "result": "...", "is_error": false}` after `reply.done` (`status !== "interrupted"`), matching the official AssemblyAI Voice Agent state machine.
-6. **Clean Session Teardown:**
-   - Sends `{"type": "session.end"}` on user stop, component unmount, and `window` `pagehide` before closing the WebSocket.
+## Safety layer
 
----
+`src/lib/safety/crisis.ts` is deterministic and multilingual. It runs in the browser on every transcript and typed message, and again on the server in `/api/coach/plan`, `/api/coach/triage`, `/api/voice/chat` and `/api/orb/shape` before any model sees the text. Crisis wording stops coaching and opens help; dose and medication questions get a fixed reply that points to a prescriber. Voice can never delete data: "delete my data" only opens Settings.
 
-## 3. Deterministic Safety & Fallback Guarantees
+## Data
 
-- **Pre-LLM Crisis Intercept:** Every user transcript and text input runs through `detectCrisisSignal()` (`src/lib/safety/crisis.ts`) *before* coaching plan generation. If triggered, any active voice session is ended (`session.end`), timers are paused, and the UK Crisis Help Panel is opened immediately.
-- **Pre-LLM Medication Dosing Intercept:** `detectMedicationAdviceRequest()` detects dosing/prescription requests and returns a fixed safe boundary message directing the user to their prescriber or pharmacist.
-- **Text-Only Parity:** Every action available via voice (task capture, barrier selection, strategy proposal via `/api/coach/plan`, timer control, outcome logging, treatment check-in, and clinician PDF export) works identically in Quiet Text Mode without microphone permissions.
+Everything a person creates is in `localStorage` under `stay_*` keys (profile, sessions, memory, calibration, voice preferences, today list, parked thoughts, routines, reminders, their own API keys) and is wiped by "Delete all my data". Optional Supabase sync is row-level-security protected and off by default. The server stores nothing about conversations.
+
+## Server routes
+
+| Route | Job |
+|---|---|
+| `/api/voice/fast-token` | Two short-lived AssemblyAI tokens (speech-to-text, text-to-speech); 30 min sessions on the shared key, 3 h on a person's own key |
+| `/api/voice/chat` | Streaming reply and tool calls; warm-up `GET` |
+| `/api/voice/token` | Voice Agent token (fallback engine) |
+| `/api/coach/plan` | First step, strategy and block length (no shared cache) |
+| `/api/coach/triage` | Brain dump into one thing now, a few for today, the rest later; deterministic fallback |
+| `/api/orb/shape` | Names the best emoji for a word the library does not have; only keywords, never sentences |
+| `/api/keys/check` | Tests a person's own key with one tiny call |
+| `/api/account/delete` | Deletes cloud rows when signed in |
+
+Own-key requests: https only, no URL credentials, redirects never followed, the host is resolved and refused if any answer is private (`src/lib/llm/provider.ts`), 120 requests a minute per address. Shared-key requests are limited per address. These limits are in-memory per server instance; a production deployment needs a shared store (stated here so nobody assumes otherwise).
+
+## The orb
+
+One field of 3,200 to 5,200 dots drawn with Three.js points. A shape is a different target for the same dots. Sources, fastest first: 38 hand-built shapes from a small signed-distance drawing language (tangle, stairs, battery, target, list, coin, envelope and others), an offline word table, the shape service, a deterministic rosette. Only dots are drawn.
+
+## Front end
+
+Mobile-first shell (bottom tab bar on phones, header on desktop, Urgent help always in the header). A service worker keeps the shell available offline. Content-Security-Policy restricts scripts, styles, fonts and connections to what the app uses.
+
+## Tests and evidence
+
+378 unit tests (vitest), 50 browser tests (Playwright) and the voice harnesses in `scripts/voice-e2e/` (`sim-human.mjs`, `cascade-bench.mjs`, `compare-bench.mjs`, `force-endpoint-probe.mjs`, `fast-app-bench.mjs`). Raw outputs of the simulated-speaker runs are in `docs/bench-results/`. Method, sources and corrections are in `RESEARCH_VOICE_LATENCY.md` and `STAY_VERIFICATION_2026-10-18.md`.

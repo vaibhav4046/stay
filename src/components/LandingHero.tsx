@@ -46,8 +46,7 @@ export function LandingHero() {
       <div className="order-2 lg:order-1">
         <h1 className="hero-title max-w-[17ch]">Start the thing you&apos;ve been avoiding.</h1>
         <p className="mt-5 max-w-[46ch] text-[1.12rem] leading-relaxed text-ink-2">
-          Tell Stay what you can&apos;t begin. It gives you one small first step, keeps you company for a short
-          block, and remembers what helped.
+          Say the thing you can&apos;t start. Stay turns it into a two-minute step and keeps you company while you do it.
         </p>
 
         <form

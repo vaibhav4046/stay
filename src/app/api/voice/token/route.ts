@@ -48,7 +48,7 @@ async function handleMintToken(req: NextRequest) {
 
   try {
     // all-day companion sessions may run up to 3 hours (the provider's cap); ordinary sessions 30 minutes
-    const long = req.nextUrl.searchParams.get('long') === '1';
+    const long = req.nextUrl.searchParams.get('long') === '1' && hasUserKey; // shared allowance: 30 minutes, renewed
     const url = `https://agents.assemblyai.com/v1/token?expires_in_seconds=180&max_session_duration_seconds=${long ? 10800 : 1800}`;
     let upstream = await fetch(url, {
       method: 'GET',

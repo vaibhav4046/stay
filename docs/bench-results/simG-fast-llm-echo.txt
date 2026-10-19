@@ -1,0 +1,125 @@
+engine=fast +echo voice=en-US-JennyNeural noise=on llm-human=true
+turn 1: human "Um, I've been putting off cleaning out my email inbox for weeks now, a"
+        first audio 1219.166748046875 ms after the human stopped; Stay: "Start by opening your inbox and marking any unread messages "
+turn 2: human "Maybe I should just do it, but I keep remembering I need to call Mom a"
+        first audio NONE after the human stopped; Stay: "Start by opening your inbox and marking any unread messages "
+turn 3: human "Um, I know I should open it, but I keep wondering if I’ll run out of c"
+        first audio 1171.416748046875 ms after the human stopped; Stay: "Park “call Mom about birthday cake”. Then grab a coffee, the"
+turn 4: human "Um, maybe I should just open it now before I forget… but I also need t"
+        first audio 1699.583251953125 ms after the human stopped; Stay: "Find your headphones, then open the inbox and clear two minu"
+pause test: Stay waited through the 2.3 s pause; reply to the finished thought after 1178.375 ms
+barge-in: interrupted 958 ms into the reply; Stay's audio kept arriving 0 ms after I started talking; it heard: "Wait, stop, just one tiny step please."; then said: ""
+command: tool={"action":"park","value":"call the dentist"}; parked in app=call the dentist | call Mom about birthday cake | grocery list; reply after 1815.166748046875 ms
+stray transcripts (not the human's words): 0 of 11; unprompted replies: 0
+
+SUMMARY engine=fast+echo: ordinary-turn first audio median 1219.166748046875 ms (n=3; 1171.416748046875, 1219.166748046875, 1699.583251953125)
+TIME LIMIT
+
+=== timeline (s) ===
+   2.95 session.ready          
+   2.95 reply.started          
+   3.96 transcript.agent       Lady Lavender here. What are you putting off?
+   3.96 reply.done             
+   3.96 input.speech.started   
+   3.96 transcript.user.delta  Hey,
+   5.78 input.speech.stopped   
+   5.78 transcript.user        eight
+  10.81 reply.started          
+  10.81 transcript.agent       Just breathe. What’s the first thing you’d like to begin?
+  10.81 reply.done             
+  11.41 input.speech.started   
+  11.41 transcript.user.delta  Um,
+  12.70 transcript.user.delta  Um, I've been putting off cleaning
+  14.00 transcript.user.delta  Um, I've been putting off cleaning out my email inbox for
+  15.30 transcript.user.delta  Um, I've been putting off cleaning out my email inbox for we
+  16.60 transcript.user.delta  Um, I've been putting off cleaning out my email inbox for we
+  17.61 input.speech.stopped   
+  17.61 transcript.user        Um, I've been putting off cleaning out my email inbox for we
+  18.10 reply.started          
+  18.28 tool.call              {"action":"park","value":"grocery list"}
+  19.31 transcript.agent       Start by opening your inbox and marking any unread messages 
+  19.31 reply.done             
+  33.00 input.speech.started   
+  33.00 transcript.user.delta  Maybe
+  34.31 transcript.user.delta  Maybe I should just do it.
+  35.61 transcript.user.delta  Maybe I should just do it, but I keep remembering I need
+  36.90 transcript.user.delta  Maybe I should just do it, but I keep remembering I need to 
+  37.71 input.speech.stopped   
+  37.71 transcript.user        Maybe I should just do it, but I keep remembering I need to 
+  38.01 reply.done             
+  66.10 input.speech.started   
+  66.10 transcript.user.delta  Um,
+  67.41 transcript.user.delta  Um, I know I should open it,
+  68.60 transcript.user.delta  Um, I know I should open it, but I keep wondering if
+  70.01 transcript.user.delta  Um, I know I should open it, but I keep wondering if I'll ru
+  71.11 input.speech.stopped   
+  71.11 transcript.user        Um, I know I should open it, but I keep wondering if I'll ru
+  71.48 reply.started          
+  72.06 transcript.agent       Park “call Mom about birthday cake”. Then grab a coffee, the
+  72.06 reply.done             
+  78.01 input.speech.started   
+  78.01 transcript.user.delta  Uh,
+  79.20 transcript.user.delta  Um, maybe I should just
+  80.51 transcript.user.delta  Um, maybe I should just open it now before I forget.
+  81.71 transcript.user.delta  Um, maybe I should just open it now before I forget, but I a
+  82.90 transcript.user.delta  Um, maybe I should just open it now before I forget, but I a
+  83.26 input.speech.stopped   
+  83.26 transcript.user        Um, maybe I should just open it now before I forget, but I a
+  83.81 tool.call              {"action":"park","value":"call Mom about birthday cake"}
+  84.17 reply.started          
+  84.63 transcript.agent       Find your headphones, then open the inbox and clear two minu
+  84.63 reply.done             
+  98.01 input.speech.started   
+  98.01 transcript.user.delta  I need
+  98.41 transcript.user.delta  I need to
+  99.70 transcript.user.delta  I need to, um, send that email.
+ 100.91 transcript.user.delta  I need to, um, send that email to my landlord and
+ 101.71 transcript.user.delta  I need to, um, send that email to my landlord and, uh,
+ 101.91 transcript.user.delta  I need to, um, send that email to my landlord and, uh,
+ 102.10 transcript.user.delta  I need to, um, send that email to my landlord and, uh,
+ 102.31 transcript.user.delta  I need to, um, send that email to my landlord and, uh,
+ 102.51 transcript.user.delta  I need to, um, send that email to my landlord and, uh,
+ 107.75 input.speech.stopped   
+ 107.75 transcript.user        I need to, um, send that email to my landlord and, uh,
+ 107.77 reply.started          
+ 107.78 transcript.agent       Grab your headphones, open the inbox, and spend two minutes 
+ 107.78 reply.done             
+ 108.31 input.speech.started   
+ 108.31 transcript.user.delta  and
+ 109.51 transcript.user.delta  And I keep thinking about how
+ 110.52 input.speech.stopped   
+ 110.53 transcript.user        And I keep thinking about how to start it.
+ 110.90 reply.started          
+ 111.42 transcript.agent       Start with “Hi [Landlord’s Name], I hope you’re well,” then 
+ 111.42 reply.done             
+ 111.72 input.speech.started   
+ 111.72 transcript.user.delta  Okay.
+ 112.10 input.speech.stopped   
+ 112.10 transcript.user        Okay.
+ 112.17 reply.done             
+ 116.60 input.speech.started   
+ 116.60 transcript.user.delta  Can
+ 117.91 transcript.user.delta  Can you give me a really detailed
+ 119.20 transcript.user.delta  Can you give me a really detailed plan for my whole week, pl
+ 119.62 input.speech.stopped   
+ 119.62 transcript.user        Can you give me a really detailed plan for my whole week, pl
+ 120.11 reply.started          
+ 120.72 transcript.agent       I can suggest a single two‑minute first step now—let’s pick 
+ 120.72 reply.done             
+ 120.81 input.speech.started   
+ 120.81 transcript.user.delta  Hi.
+ 125.40 transcript.user.delta  Wait.
+ 126.60 transcript.user.delta  Wait, stop. Just
+ 127.91 transcript.user.delta  Wait, stop, just one tiny step please.
+ 128.21 input.speech.stopped   
+ 128.21 transcript.user        Wait, stop, just one tiny step please.
+ 132.41 input.speech.started   
+ 132.41 transcript.user.delta  Park
+ 133.61 transcript.user.delta  Park it. I need to call
+ 134.61 input.speech.stopped   
+ 134.61 transcript.user        Park it, I need to call the dentist.
+ 135.19 tool.call              {"action":"park","value":"call the dentist"}
+ 135.58 reply.started          
+ 136.19 transcript.agent       All set—your dentist call is parked. Now, grab headphones an
+ 136.19 reply.done             
+agent audio frames: 848 first 3.15 last 136.16

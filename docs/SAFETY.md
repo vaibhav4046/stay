@@ -1,41 +1,22 @@
-# Safety & Clinical Boundaries (`docs/SAFETY.md`)
+# Safety and boundaries
 
-## 1. Fixed Crisis Protocol (UK Default)
+Stay is a self-help and self-tracking companion. It is not a medical device, does not diagnose ADHD or any condition, and does not replace a clinician.
 
-Stay is a task-initiation and self-tracking companion, **not** an emergency or crisis service.
+## What it will not do
 
-### Trigger Mechanism
-- Every spoken user transcript (`transcript.user` / `transcript.user.delta`) and every typed task or check-in note is checked by a deterministic regex/keyword classifier (`detectCrisisSignal` in `src/lib/safety/crisis.ts`) before any LLM planning call.
-- Matched signals include expressions of self-harm, suicide, wanting to end one's life, overdose intent, or immediate danger.
+* **No medication advice.** Dose, mixing, "is it safe" and "should I stop" questions get a fixed reply that points to a prescriber or pharmacist. The reply is fixed text, not model output, and the question never reaches a language model (`detectMedicationAdviceRequest`, checked in the browser and again in `/api/coach/plan`, `/api/coach/triage`, `/api/voice/chat`, `/api/orb/shape`).
+* **No diagnosis, no clinical claims.** Strategy statistics are the person's own counts, shown with the exact numbers and a warning when there are fewer than five sessions.
+* **No coaching in a crisis.** `detectCrisisSignal` is deterministic and multilingual (more than 30 languages, spaced-out and squashed spellings). When it fires, coaching stops, timers do not start, and help is shown: 999, NHS 111 and Samaritans 116 123, and findahelpline.com for anywhere outside the UK. The text is never sent to a language model, a shape service or into a list.
+* **Voice cannot delete data.** "Delete my data" by voice only opens Settings; the person presses the button.
+* **Shame-free language.** Unfinished items quietly move to "later". There is no overdue, no streak to lose.
 
-### Immediate Deterministic Action
-When a crisis signal is detected:
-1. Any active voice session is immediately terminated (`session.end`).
-2. Any running focus timer is paused.
-3. The LLM coach does **not** improvise therapeutic or crisis counselling.
-4. The fixed **Crisis Help Panel** opens immediately in the foreground with one-tap links and plain instructions:
-   - **Emergency Services (UK):** Call **999** or go to the nearest A&E if you or someone else is in immediate physical danger.
-   - **NHS Mental Health Services:** Call **111** (select the mental health option) for urgent mental health support.
-   - **Samaritans (24/7, free):** Call **116 123** or email `jo@samaritans.org`.
-   - **Crisis Text Line (Shout UK):** Text **SHOUT** to **85258**.
-   - **International:** If outside the UK, contact your local emergency number or visit `https://findahelpline.com`.
+## What is tested
 
----
+The crisis and medication detectors have unit tests with genuine phrasings in many languages and ordinary sentences that must not trigger; the HTTP routes are tested end to end (`tests/e2e/safetyAndPrivacy.spec.ts`); a crisis in a brain dump and in the orb shape service goes to help and never into a list or a picture.
 
-## 2. Medication & Dosing Guardrail
+## Known limits
 
-- Stay allows users to record **observational self-logs** (`taken`, `skipped`, `not_applicable`, `prefer_not_to_say`, focus rating, sleep quality, and plain-text notes for their clinician).
-- Stay **never**:
-  - Recommends starting, stopping, skipping, splitting, or doubling a dose.
-  - Suggests specific medications or compares stimulant/non-stimulant regimens.
-  - Interprets side effects clinically.
-- When `detectMedicationAdviceRequest()` detects a dosing or medication advice question (e.g., *"Should I take an extra 20mg?"*, *"Can I stop taking Elvanse?"*, *"What dose should I take?"*), Stay returns a fixed boundary response:
-  > *"Stay cannot advise on medication, doses, or side effects. Please check your prescription label or contact your prescribing clinician, GP, or pharmacist. If you feel unwell and need urgent medical advice, call NHS 111 or 999 in an emergency."*
-
----
-
-## 3. Non-Diagnostic & Evidence Boundary
-
-- Stay never screens for or diagnoses ADHD.
-- The Clinician Summary PDF includes a prominent footer and header disclaimer:
-  > *"User-generated self-tracking summary from Stay. Not a clinical assessment, diagnostic instrument, or medical device record."*
+* The detectors are word-based. They will miss some phrasings and will occasionally fire on innocent ones; they are a floor, not a clinical instrument.
+* Crisis resources are UK-first. Elsewhere the person is pointed to their local emergency number and findahelpline.com.
+* Stay has not been clinically trialled (see `STAY_ADHD_EVIDENCE_AND_LIMITS.md`).
+* Speech recognition and a language model can both be wrong; Stay says so rather than guessing, and never acts on a destructive voice command.

@@ -29,7 +29,7 @@ function allow(ip: string): boolean {
 const cache = new Map<string, string>();
 
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'local';
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'local';
   if (!allow(ip)) return NextResponse.json({ error: 'Too many shape requests.' }, { status: 429 });
 
   const parsed = BodySchema.safeParse(await req.json().catch(() => null));

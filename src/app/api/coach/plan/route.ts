@@ -15,11 +15,7 @@ import {
   detectMedicationAdviceRequest,
   UK_CRISIS_RESOURCES,
 } from '@/lib/safety/crisis';
-import {
-  getCachedCoachPlan,
-  setCachedCoachPlan,
-  compressPromptForTokenEfficiency,
-} from '@/lib/voice/tokenOptimizer';
+import { compressPromptForTokenEfficiency } from '@/lib/voice/tokenOptimizer';
 import { callLlm, llmHeaders } from '@/lib/llm/provider';
 import type { CoachPlanProposal } from '@/types/domain';
 
@@ -87,11 +83,7 @@ export async function POST(req: NextRequest) {
     strategyHistory: input.strategyHistory,
   });
 
-  // 2b. Check Semantic LRU Cache first (0 tokens spent on hit!)
-  const cached = getCachedCoachPlan(input.taskText, barrierType);
-  if (cached) {
-    return NextResponse.json(cached, { status: 200 });
-  }
+  // No plan cache: a shared cache keyed on the task text served one person's personalised plan to another person.
 
   const fallbackPlan = buildDeterministicCoachPlan({
     ...input,
@@ -176,7 +168,6 @@ Generate the JSON coaching plan.`);
       return NextResponse.json(fallbackPlan, { status: 200, ...hdr });
     }
 
-    setCachedCoachPlan(input.taskText, validated.data, barrierType);
     return NextResponse.json(validated.data, { status: 200, ...hdr });
   } catch {
     return NextResponse.json(fallbackPlan, { status: 200 });

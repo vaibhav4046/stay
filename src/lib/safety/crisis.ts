@@ -137,7 +137,7 @@ const MEDICATION_ADVICE_PATTERNS: Array<{ regex: RegExp; label: string }> = [
 ];
 
 export const CRISIS_FIXED_MESSAGE =
-  'Coaching has paused because what you shared sounds like you may be in crisis or unsafe. Stay is not a crisis service. Please reach out for immediate human support right now: call 999 in an emergency, call NHS 111 for urgent mental health help, or call Samaritans free on 116 123.';
+  'Coaching has paused because what you shared sounds like you may be in crisis or unsafe. Stay is not a crisis service. Please reach out for immediate human support right now: call 999 in an emergency, call NHS 111 for urgent mental health help, or call Samaritans free on 116 123. Outside the UK, call your local emergency number or visit findahelpline.com.';
 
 export const MEDICAL_BOUNDARY_FIXED_MESSAGE =
   'Stay can log whether you took your prescribed treatment and any notes you want to show your clinician, but it cannot advise on medication choices, doses, or side effects. Please check your prescription label or speak with your prescribing clinician, GP, or pharmacist.';

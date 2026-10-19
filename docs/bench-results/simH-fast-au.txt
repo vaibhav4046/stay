@@ -1,0 +1,110 @@
+engine=fast voice=en-AU-WilliamNeural noise=on llm-human=false
+turn 1: human "Um, I keep putting off replying to my landlord about the renewal."
+        first audio 1086.958251953125 ms after the human stopped; Stay: "Start a timer for two minutes, then open your email and type"
+turn 2: human "I do not even know what to write, it feels huge."
+        first audio 1333.25 ms after the human stopped; Stay: "Two‑minute step: write “Hi, I’d like to discuss the lease re"
+turn 3: human "Okay, maybe. What would the first sentence even be?"
+        first audio 1407.666748046875 ms after the human stopped; Stay: "“Hi [Landlord’s Name], I hope you’re well.”"
+pause test: Stay waited through the 2.3 s pause; reply to the finished thought after 1004.5 ms
+barge-in: interrupted 952 ms into the reply; Stay's audio kept arriving 0 ms after I started talking; it heard: ""; then said: ""
+command: tool={"action":"park","value":"Email landlord draft"}; parked in app=Email landlord draft; reply after NONE
+stray transcripts (not the human's words): 0 of 10; unprompted replies: 1
+
+SUMMARY engine=fast: ordinary-turn first audio median 1333.25 ms (n=3; 1086.958251953125, 1333.25, 1407.666748046875)
+TIME LIMIT
+
+=== timeline (s) ===
+   3.03 session.ready          
+   3.03 reply.started          
+   4.12 transcript.agent       Lady Lavender here. What are you putting off?
+   4.12 reply.done             
+  10.47 input.speech.started   
+  10.47 transcript.user.delta  Um,
+  10.96 transcript.user.delta  Um,
+  11.07 transcript.user.delta  Um, I
+  12.37 transcript.user.delta  Um, I keep putting off replying
+  13.56 transcript.user.delta  Um, I keep putting off replying to my landlord about the ren
+  14.06 input.speech.stopped   
+  14.06 transcript.user        Um, I keep putting off replying to my landlord about the ren
+  14.39 reply.started          
+  14.88 transcript.agent       Start a timer for two minutes, then open your email and type
+  14.88 reply.done             
+  21.26 input.speech.started   
+  21.26 transcript.user.delta  I just
+  22.47 transcript.user.delta  I do not even know what to write.
+  23.77 transcript.user.delta  I do not even know what to write. It feels huge.
+  24.28 input.speech.stopped   
+  24.28 transcript.user        I do not even know what to write. It feels huge.
+  24.84 reply.started          
+  26.05 transcript.agent       Two‑minute step: write “Hi, I’d like to discuss the lease re
+  26.05 reply.done             
+  33.67 input.speech.started   
+  33.67 transcript.user.delta  Okay.
+  34.87 transcript.user.delta  Okay, maybe.
+  34.98 input.speech.stopped   
+  34.99 transcript.user        Okay, maybe.
+  35.29 reply.started          
+  36.08 input.speech.started   
+  36.08 transcript.user.delta  What would the first
+  37.37 transcript.user.delta  What would the first sentence even be?
+  37.97 input.speech.stopped   
+  37.97 transcript.user        What would the first sentence even be?
+  38.10 reply.started          
+  38.44 transcript.agent       “Hi [Landlord’s Name], I hope you’re well.”
+  38.44 reply.done             
+  45.87 input.speech.started   
+  45.87 transcript.user.delta  I need
+  47.17 transcript.user.delta  I need to, um,
+  48.62 transcript.user.delta  I need to, um, send that email to my landlord.
+  49.98 transcript.user.delta  I need to, um, send that email to my landlord and, uh,
+  50.18 transcript.user.delta  I need to, um, send that email to my landlord and, uh,
+  50.38 transcript.user.delta  I need to, um, send that email to my landlord and, uh,
+  50.59 transcript.user.delta  I need to, um, send that email to my landlord and, uh,
+  50.79 transcript.user.delta  I need to, um, send that email to my landlord and, uh,
+  56.07 input.speech.stopped   
+  56.07 transcript.user        I need to, um, send that email to my landlord and, uh,
+  56.07 tool.call              {"action":"timer_start","minutes":2,"step":"Open email and paste the draft"}
+  56.07 reply.started          
+  56.08 transcript.agent       Done.
+  56.08 reply.done             
+  56.68 input.speech.started   
+  56.68 transcript.user.delta  and
+  57.97 transcript.user.delta  And I keep thinking about how to
+  58.77 input.speech.stopped   
+  58.77 transcript.user        and I keep thinking about how to start it.
+  58.94 reply.started          
+  59.35 transcript.agent       Copy the draft, paste it, then add your name—simple and done
+  59.35 reply.done             
+  77.67 input.speech.started   
+  77.67 transcript.user.delta  Can you
+  78.87 transcript.user.delta  Can you give me a really detailed
+  80.07 transcript.user.delta  Can you give me a really detailed plan for my whole week?
+  80.87 input.speech.stopped   
+  80.87 transcript.user        Can you give me a really detailed plan for my whole week, pl
+  81.33 reply.started          
+  81.92 transcript.agent       Two‑minute step: list three main tasks you want this week, t
+  81.92 reply.done             
+  87.57 input.speech.started   
+  87.57 transcript.user.delta  When?
+  87.87 transcript.user.delta  Wait,
+  89.07 transcript.user.delta  Wait, stop, just one
+  90.27 transcript.user.delta  Wait, stop, just one tiny step, please.
+  94.44 input.speech.stopped   
+  94.44 transcript.user        Wait, stop, just one tiny step, please.
+  94.44 reply.started          
+  94.44 transcript.agent       Two‑minute step: open your calendar and block Monday 9 am‑10
+  94.44 reply.done             
+  95.10 input.speech.started   
+  95.10 transcript.user.delta  Thank you.
+  95.57 input.speech.stopped   
+  95.57 transcript.user        Park it.
+  95.75 tool.call              {"action":"park","value":"Email landlord draft"}
+  95.75 reply.started          
+  96.02 transcript.agent       Parked.
+  96.02 reply.done             
+  96.67 input.speech.started   
+  96.67 transcript.user.delta  I need to call the dentist.
+  97.27 input.speech.stopped   
+  97.27 transcript.user        I need to call the dentist.
+  97.42 reply.done             
+agent audio frames: 934 first 3.26 last 96.02
