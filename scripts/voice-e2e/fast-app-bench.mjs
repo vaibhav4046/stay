@@ -18,7 +18,7 @@ for (const engine of engines) {
   page.on('pageerror', (e) => errors.push(String(e).slice(0, 120)));
   if (process.env.DEBUG) await page.addInitScript(() => { window.__stayFastDebug = true; });
   await page.goto(base + '/app/today');
-  await page.evaluate((e) => { localStorage.clear(); if (e === 'fast') localStorage.setItem('stay_fast_voice', '1'); }, engine);
+  await page.evaluate((e) => { localStorage.clear(); localStorage.setItem('stay_fast_voice', e === 'fast' ? '1' : '0'); }, engine);
   await page.reload();
   await page.getByTestId('care-self_managing').click();
   await page.getByTestId('onboarding-ack').click();

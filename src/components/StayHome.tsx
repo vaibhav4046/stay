@@ -660,8 +660,8 @@ export function StayHome({
           <label className="mt-5 flex cursor-pointer items-start gap-3" data-testid="fast-voice-row">
             <input type="checkbox" className="mt-1 h-5 w-5 accent-[#006A67]" checked={voice.fastVoice} onChange={(e) => voice.setFastVoice(e.target.checked)} data-testid="fast-voice-toggle" />
             <span>
-              <span className="label block">Fast voice (beta)</span>
-              <span className="meta block">Faster replies from separate speech, thinking and voice parts, and the thinking part uses your own key if you added one. Speaks English, Spanish, French, German, Italian and Portuguese.</span>
+              <span className="label block">Fast voice</span>
+              <span className="meta block">On by default. Faster replies, and it waits through your pauses and stops when you talk. The thinking part uses your own key if you added one. Speaks English, Spanish, French, German, Italian and Portuguese; other languages use the standard voice.</span>
             </span>
           </label>
           <p className="label mt-5">Reply speed on this device</p>

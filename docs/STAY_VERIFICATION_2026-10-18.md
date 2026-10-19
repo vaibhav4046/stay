@@ -98,9 +98,13 @@ Other live results:
 
 **Measured in the real app** (fake microphone, same sentence, in-app reply-speed readout = last moment the mic heard you -> first reply audio): Voice Agent 3.4, 3.3, 3.0 s (median 3.3 s); Fast voice 1.7, 1.3, 1.2 s (median 1.3 s). Three alternating runs each, one reply per run, synthesized speech. Not measured: real human voice, echo and earphones, languages other than English, long sessions, the Mistral/OpenAI paths.
 
+## Part 7. A simulated human, both engines (see README for the table)
+
+Harness: `scripts/voice-e2e/sim-human.mjs` (injected microphone stream with room noise, optional echo of Stay's own audio, LLM-written speaker lines, TTS voices en-GB, en-US, en-AU). Findings, in the order found: (1) Stay replied in Turkish to an English speaker: `detectTextLanguage` matched "ve" from "I've" and ordinary words such as "on", "come", "he" against other languages' word lists. Rewritten with distinctive letters, non-English stop-words only, a minimum count and share, and an English-evidence check; 20 unit tests including English sentences full of homographs. (2) The standard voice talked into a 2.3 s pause; fast voice did too until a turn that trails off ("and, uh,") is held for 2.2 s and merged with what follows (11 unit tests). (3) The model made unprompted app calls on ordinary talk and the follow-up reply could be empty, leaving Stay silent after a command; prompt tightened within the size budget, quick confirmations for simple actions (command reply 2.6 s -> 1.3 s), and a "Done." fallback. (4) The harness itself was wrong in places (counted audio frames as speech although the provider sends audio faster than it plays; read a transcript before it arrived; merged two lines); each was fixed and the numbers re-taken. Not covered: a real human in a room, earphones and the browser's own echo cancellation, languages other than English in the simulator, long sessions.
+
 ## Gates (after Part 5)
 
 - `tsc --noEmit`: 0 errors
-- `vitest run`: 282 tests (16 files)
+- `vitest run`: 320 tests (17 files)
 - `next build`: all routes (adds /api/keys/check)
-- `playwright test`: 40 passed (local production build)
+- `playwright test`: see the latest run in the commit message

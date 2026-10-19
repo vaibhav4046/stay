@@ -68,20 +68,25 @@ node scripts/voice-lang-probe/probe-tools-bargein.mjs <dir>
 
 Next.js 15, React 19, TypeScript, Tailwind v4, Three.js (the dot field), Zod, jsPDF (clinician summary), optional Supabase. LLM: Groq (`openai/gpt-oss-120b` for plans, `openai/gpt-oss-20b` for shape picking).
 
-## Latency: what is and is not true
+## Voice, measured with a simulated person
 
-All figures are time from the last moment the microphone heard the speaker to the first reply audio, measured in the real app with a fake microphone playing the same synthesized sentence (`scripts/voice-e2e/fast-app-bench.mjs`, which reads Stay's own reply-speed readout). Not a human voice, one machine, three runs per engine.
+`scripts/voice-e2e/sim-human.mjs` drives the real app in a real browser. A simulated person (an LLM playing a scattered adult with ADHD, spoken by neural voices in several accents, mixed with room noise) is injected as the microphone stream; optionally Stay's own reply audio is fed back into the microphone, quieter and delayed, without the browser's echo cancellation (a worst case). Timing is from the true end of the speaker's speech to the first reply audio, measured outside the app.
 
-| Engine | Runs (s) | Median |
+Same script, same voice (British, 3 ordinary turns, then a pause, an interruption and a spoken command):
+
+| | Fast voice (default) | Standard voice (managed agent) |
 |---|---|---|
-| Voice Agent (managed by AssemblyAI) | 3.4, 3.3, 3.0 | 3.3 s |
-| **Fast voice (beta)**: AssemblyAI streaming speech-to-text, your choice of chat model, AssemblyAI streaming text-to-speech | 1.7, 1.3, 1.2 | 1.3 s |
+| Reply after you stop talking | median 1.24 s (0.79 to 1.26) | median 2.49 s (2.33 to 2.97) |
+| 2.3 s pause mid-thought | waited, then answered the finished thought in 1.2 s | talked into the pause |
+| Interruption | noticed after 0.56 s, heard the whole sentence | noticed after 0.94 s, heard "Wait, stop." |
+| "Park it: call the dentist" | parked, confirmed after 1.3 s | parked, confirmed after 2.9 s |
+| Stray transcripts with Stay's voice leaking into the mic | 0 in 20 | 1 in 10 (its own greeting) |
 
-Fast voice is an opt-in switch (More > Voice and language). It speaks English, Spanish, French, German, Italian and Portuguese, runs the same app actions, safety gates and memory, and its thinking step uses your own key if you added one. It is not the default because it has had no real-microphone test (echo, earphones) and only three measured runs.
+Other runs: Australian and American voices and an LLM-written conversation gave fast-voice replies of 0.8 to 1.7 s; the 2.3 s pause was never talked over in any of the 6 fast runs after the fix. Fast voice speaks English, Spanish, French, German, Italian and Portuguese; other languages, and any failure of the fast parts, use the standard voice automatically. It uses your own reasoning key if you added one.
 
-Parts, measured separately (`cascade-bench.mjs`, 6 runs): speech-to-text end-of-turn 0.88 s p50, first model token 0.3 s p50, text-to-speech first audio about 0.2 s.
+Bugs this found and fixed: an English-language detector that mistook ordinary English words for Turkish, Finnish or Italian and made Stay reply in the wrong language; Stay talking into pauses (it now holds a turn that trails off with "um", "and", a comma); an unprompted tool call on ordinary talk (the prompt now says when to use the app tool); silence after a spoken command; a reply that never finished when the speech provider reported two flushes as one.
 
-**ChatGPT voice and Google live voice: not measured** (no keys). `compare-bench.mjs` times them when `OPENAI_API_KEY` / `GEMINI_API_KEY` are in `.env.local`; those two legs follow the vendors' documented events but have never been run. Stay does not claim to be faster than either.
+**Honest limits.** The speakers are synthesized voices injected into the browser, not people in a room with earphones, on one machine, with a handful of runs per setting. ChatGPT voice and Google live voice are not measured (no keys); `compare-bench.mjs` times them when `OPENAI_API_KEY` / `GEMINI_API_KEY` are in `.env.local`, but those two parts of the script have never been run. Stay makes no claim against either.
 
 ## Not done
 

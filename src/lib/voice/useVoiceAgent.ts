@@ -255,6 +255,26 @@ export const SUPPORTED_LANGUAGES: SupportedLanguage[] = [
   { code: 'te-IN', label: 'Telugu', flag: '🇮🇳', nativeName: 'తెలుగు' },
 ];
 
+const LATIN_REGION: Record<string, string> = { es: 'es-ES', pt: 'pt-PT', fr: 'fr-FR', de: 'de-DE', it: 'it-IT', nl: 'nl-NL', sv: 'sv-SE', pl: 'pl-PL', tr: 'tr-TR', ro: 'ro-RO', id: 'id-ID', fi: 'fi-FI', hu: 'hu-HU' };
+
+/** Stop-words per Latin-script language, chosen to exclude words that are also ordinary English (on, come, he, for, an, die, per...). */
+const LATIN_STOPWORDS: Record<string, Set<string>> = {
+  en: new Set('the a an and or but is are was were be been am i me my you your we our they them he she it its this that these those of to in on at for with from by about as not no yes do does did have has had will would can could should just so if then than what which who how why when where want need like get got going really very too also okay'.split(' ')),
+  es: new Set('el los las una unos unas por para con como tarea hacer empezar quiero puedo esta este que muy pero tengo estoy tambien porque donde cuando ahora necesito ayuda hola gracias soy eres somos'.split(' ')),
+  pt: new Set('não uma uns umas fazer você voce isso estou começar comecar muito mas tenho também porque onde quando agora preciso ajuda olá obrigado são'.split(' ')),
+  fr: new Set('je tu elle nous vous ils elles les une des du dans pour avec est sur veux faire mon ma mes pas que très mais suis bonjour merci aussi parce comment besoin aide'.split(' ')),
+  de: new Set('ich du er sie wir ihr der die das und nicht ein eine mit für machen ist bin habe auch aber sehr wie wo wann jetzt brauche hilfe danke hallo'.split(' ')),
+  it: new Set('il lo gli per non sono fare questo questa anche grazie ciao molto ma ho sto perché dove quando adesso bisogno aiuto cosa'.split(' ')),
+  nl: new Set('het een niet voor zijn hebben maar doen ik jij wij ze mijn heel ook hoe waar wanneer nu nodig hulp dank hallo'.split(' ')),
+  sv: new Set('jag och inte att som på är har vara också men mycket hur var när nu behöver hjälp tack hej'.split(' ')),
+  pl: new Set('nie się jest jak ale dla mam chcę muszę bardzo też gdzie kiedy teraz pomoc dziękuję cześć'.split(' ')),
+  tr: new Set('bir ve için çok değil ile bu ben sen biz ama evet hayır şimdi yardım teşekkürler merhaba istiyorum'.split(' ')),
+  ro: new Set('este pentru sunt care cum și foarte dar nu eu tu noi ajutor mulțumesc bună vreau'.split(' ')),
+  id: new Set('yang tidak ini itu untuk bisa saya ada akan dengan aku kamu kami tapi sangat bagaimana dimana kapan sekarang butuh bantuan terima kasih halo'.split(' ')),
+  fi: new Set('ja ei hän oli ovat mutta kun että minä sinä hyvin myös miten missä milloin nyt tarvitsen apua kiitos hei'.split(' ')),
+  hu: new Set('nem tudom ezt az ez és meg nincs kérem hogy egy van volt vagyok lesz én te mi nagyon hogyan hol mikor most kell segítség köszönöm szia'.split(' ')),
+};
+
 export function detectTextLanguage(text: string, manualPreference?: string): string {
   if (manualPreference && manualPreference !== 'auto') {
     return manualPreference;
@@ -291,55 +311,32 @@ export function detectTextLanguage(text: string, manualPreference?: string): str
     return 'ko-KR';
   }
 
-  // 2. High-confidence Western Latin & unique phonetic scripts
-  if (/[đĐăằắẳẵặơờớởỡợưừứửữựầấẩẫậềếểễệồốổỗộảạẻẹỉịỏọủụỳỷỹỵ]/i.test(text)) {
-    return 'vi-VN'; // Vietnamese unique characters
+  // 2. Latin-script languages. English text must never be mistaken for another language: the old word lists contained
+  // ordinary English words (on, come, he, for, ve from I've) and flipped English speakers into Turkish, Finnish or Italian.
+  // So: distinctive letters first, then stop-words that are not English words, with a minimum count and share.
+  const lower = text.replace(/[\u2018\u2019]/g, "'").toLowerCase();
+  if (/[đăằắẳẵặơờớởỡợưừứửữựầấẩẫậềếểễệồốổỗộảạẻẹỉịỏọủụỳỷỹỵ]/.test(lower)) return 'vi-VN';
+  if (/[¿¡ñ]/.test(lower)) return 'es-ES';
+  if (/[ãõ]/.test(lower)) return 'pt-PT';
+  if (/[œæ]/.test(lower)) return 'fr-FR';
+  if (/[ß]/.test(lower)) return 'de-DE';
+  if (/[ěščřžďťň]/.test(lower)) return 'cs-CZ';
+  if (/[őű]/.test(lower)) return 'hu-HU';
+  if (/[ąćęłśźż]/.test(lower)) return 'pl-PL';
+  if (/[ğış]/.test(lower)) return 'tr-TR';
+  if (/[șț]/.test(lower)) return 'ro-RO';
+
+  const words = lower.match(/[a-zà-ÿ']+/g) ?? [];
+  if (words.length < 2) return 'en-GB';
+  const english = words.filter((w) => LATIN_STOPWORDS.en.has(w)).length;
+  let best: { code: string; hits: number } | null = null;
+  for (const [code, set] of Object.entries(LATIN_STOPWORDS)) {
+    if (code === 'en') continue;
+    const hits = words.filter((w) => set.has(w)).length;
+    const enough = words.length <= 4 ? hits >= 2 && hits / words.length >= 0.5 : hits >= 3 && hits / words.length >= 0.25;
+    if (enough && hits > english * 2 && (!best || hits > best.hits)) best = { code, hits };
   }
-  if (/[¿¡ñ]/i.test(text) || /\b(?:el|la|los|las|un|una|de|en|por|para|con|como|tarea|hacer|empezar|quiero|puedo|esta)\b/i.test(text)) {
-    return 'es-ES'; // Spanish
-  }
-  if (/[ãõ]/i.test(text) || /\b(?:para|com|não|uma|fazer|como|você|isso|estou|começar)\b/i.test(text)) {
-    return 'pt-PT'; // Portuguese
-  }
-  if (/[œæ]/i.test(text) || /\b(?:je|tu|il|elle|nous|vous|ils|le|la|les|un|une|des|du|dans|pour|avec|est|sur|veux|faire|mon|mémoire)\b/i.test(text)) {
-    return 'fr-FR'; // French
-  }
-  if (/[äöüß]/i.test(text) || /\b(?:ich|du|er|sie|es|wir|ihr|der|die|das|und|nicht|ein|eine|mit|für|machen)\b/i.test(text)) {
-    return 'de-DE'; // German
-  }
-  if (/\b(?:il|lo|la|gli|le|per|con|non|sono|fare|questo|come|ciao|anche|grazie)\b/i.test(text)) {
-    return 'it-IT'; // Italian
-  }
-  if (/[ěščřžďťň]/i.test(text)) {
-    return 'cs-CZ'; // Czech
-  }
-  if (/[őű]/i.test(text) || /\b(?:nem|hogy|egy|van|volt|vagyok|lesz)\b/i.test(text)) {
-    return 'hu-HU'; // Hungarian
-  }
-  if (/[ąćęłńóśźż]/i.test(text) || /\b(?:nie|się|jest|jak|ale|dla)\b/i.test(text)) {
-    return 'pl-PL'; // Polish
-  }
-  if (/[çğıöşü]/i.test(text) || /\b(?:bir|ve|için|çok|değil|ile)\b/i.test(text)) {
-    return 'tr-TR'; // Turkish
-  }
-  if (/[ăâîșț]/i.test(text) || /\b(?:este|pentru|sunt|care|cum)\b/i.test(text)) {
-    return 'ro-RO'; // Romanian
-  }
-  if (/\b(?:het|een|niet|voor|zijn|hebben|over|maar|doen)\b/i.test(text)) {
-    return 'nl-NL'; // Dutch
-  }
-  if (/[å]/i.test(text) || /\b(?:jag|och|inte|att|som|på)\b/i.test(text)) {
-    return 'sv-SE'; // Swedish
-  }
-  if (/[æø]/i.test(text)) {
-    return 'no-NO'; // Norwegian / Danish
-  }
-  if (/\b(?:ja|on|ei|hän|oli|ovat|mutta|kun|että)\b/i.test(text)) {
-    return 'fi-FI'; // Finnish
-  }
-  if (/\b(?:yang|tidak|ini|itu|untuk|bisa|saya|ada|akan|dengan)\b/i.test(text)) {
-    return 'id-ID'; // Indonesian / Malay
-  }
+  if (best) return LATIN_REGION[best.code] ?? best.code;
 
   return 'en-GB';
 }
@@ -545,16 +542,18 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const speechStoppedAtRef = useRef(0);
   const lastLoudAtRef = useRef(0);
   // Fast voice (beta): own speech-to-text + chat model + text-to-speech instead of the managed Voice Agent.
-  const [fastVoice, setFastVoiceState] = useState(false);
-  const fastVoiceRef = useRef(false);
+  const [fastVoice, setFastVoiceState] = useState(true);
+  const fastVoiceRef = useRef(true);
+  const fastDisabledRef = useRef(false); // set when fast voice failed this page session: the managed agent takes over
   const [voiceEngine, setVoiceEngine] = useState<'fast' | 'agent' | null>(null);
   useEffect(() => {
     try {
-      const on = window.localStorage.getItem('stay_fast_voice') === '1';
+      const on = window.localStorage.getItem('stay_fast_voice') !== '0'; // fast voice is the default; '0' means the person turned it off
       fastVoiceRef.current = on;
       setFastVoiceState(on);
     } catch {
-      // private mode: off
+      fastVoiceRef.current = true;
+      setFastVoiceState(true);
     }
   }, []);
   const [replyTimes, setReplyTimes] = useState<number[]>([]);
@@ -1717,13 +1716,24 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       await audioCtx.audioWorklet.addModule('/pcm-processor.js');
 
       // 3. Mint ephemeral AssemblyAI tokens from our server routes
-      const fastLangBase = selectedLanguageRef.current === 'auto' ? 'en' : selectedLanguageRef.current.split('-')[0].toLowerCase();
-      const useFast = fastVoiceRef.current && Boolean(FAST_TTS_LANGUAGE[fastLangBase]);
+      // Fast voice understands six languages. On auto, the browser's language decides; anything else uses the managed agent,
+      // which detects the spoken language itself.
+      const uiLang = selectedLanguageRef.current === 'auto' ? (typeof navigator !== 'undefined' ? navigator.language : 'en') : selectedLanguageRef.current;
+      const fastLangBase = (uiLang || 'en').split('-')[0].toLowerCase();
+      let useFast = fastVoiceRef.current && !fastDisabledRef.current && Boolean(FAST_TTS_LANGUAGE[fastLangBase]);
       const longQuery = companionRef.current ? '?long=1' : '';
-      const tokenRes = await fetch(`/api/voice/${useFast ? 'fast-token' : 'token'}${longQuery}`, {
+      let tokenRes = await fetch(`/api/voice/${useFast ? 'fast-token' : 'token'}${longQuery}`, {
         method: 'POST',
         headers: byokHeaders(),
       });
+      if (useFast && !tokenRes.ok) {
+        const code = String(((await tokenRes.clone().json().catch(() => ({}))) as { code?: string }).code || '');
+        // out of allowance or a bad own key: say so. Anything else (provider down): quietly use the managed agent instead.
+        if (!['quota', 'invalid_user_key', 'rate_limited'].includes(code)) {
+          useFast = false;
+          tokenRes = await fetch(`/api/voice/token${longQuery}`, { method: 'POST', headers: byokHeaders() });
+        }
+      }
       if (!tokenRes.ok) {
         const errBody = await tokenRes.json().catch(() => ({}));
         throw new Error(
@@ -2109,6 +2119,14 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           }
 
           setVisualState('listening');
+          return;
+        }
+
+        if (type === 'session.error' && socket instanceof FastSocket) {
+          console.warn('fast voice failed, switching to the managed voice agent', msg.code);
+          fastDisabledRef.current = true;
+          disconnectVoiceSession();
+          window.setTimeout(() => restartVoiceRef.current?.(), 200);
           return;
         }
 

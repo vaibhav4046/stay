@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { FastSocket, takeSpeakable } from '@/lib/voice/fastSocket';
+import { FastSocket, quickConfirmation, soundsUnfinished, takeSpeakable } from '@/lib/voice/fastSocket';
 
 // ---- a scripted AssemblyAI: STT sockets accept audio and are driven by the test; TTS sockets answer Flush with audio ----
 class FakeWS {
@@ -44,8 +44,8 @@ const tick = (n = 6) => new Promise((r) => { let i = 0; const f = () => (++i >= 
 
 let events: Array<Record<string, unknown>>;
 let fetchMock: ReturnType<typeof vi.fn>;
-async function open(opts: { tools?: boolean; greeting?: string } = {}) {
-  const s = new FastSocket({ sttToken: 'stt', ttsToken: 'tts' });
+async function open(opts: { tools?: boolean; greeting?: string; holdMs?: number } = {}) {
+  const s = new FastSocket({ sttToken: 'stt', ttsToken: 'tts', holdMs: opts.holdMs ?? 60 });
   events = [];
   s.onmessage = (e) => events.push(JSON.parse(e.data));
   await tick(2);
@@ -74,6 +74,39 @@ describe('takeSpeakable', () => {
     expect(takeSpeakable('Okay, let us open the tax folder. Then')).toEqual({ chunk: 'Okay, let us open the tax folder.', rest: 'Then' });
     expect(takeSpeakable('Version 3.5 is fine for now, truly')).toBeNull();
   });
+});
+
+describe('quickConfirmation', () => {
+  it('confirms simple successful actions in the right language, and nothing else', () => {
+    expect(quickConfirmation('park', '{"ok":true}', 'english')).toBe('Parked.');
+    expect(quickConfirmation('park', '{"ok":true}', 'spanish')).toBe('Guardado para después.');
+    expect(quickConfirmation('timer_start', '{"ok":true,"x":1}', 'german')).toBe('Erledigt.');
+    expect(quickConfirmation('park', '{"ok":false}', 'english')).toBeNull(); // a failure needs the model to explain
+    expect(quickConfirmation('memory_show', '{"ok":true}', 'english')).toBeNull(); // information the person asked for
+    expect(quickConfirmation('voice', '{"ok":true}', 'english')).toBeNull();
+    expect(quickConfirmation('park', 'not json', 'english')).toBeNull();
+    expect(quickConfirmation('park', '{"ok":true}', 'klingon')).toBe('Parked.');
+  });
+});
+
+describe('soundsUnfinished', () => {
+  it.each([
+    'I need to, um, send that email to my landlord and, uh,',
+    'I keep thinking that',
+    'and then I',
+    'So I was going to um',
+    'I want to...',
+    'Maybe because',
+    'I need to,',
+  ])('unfinished: %s', (t) => expect(soundsUnfinished(t)).toBe(true));
+  it.each([
+    'I keep thinking about how to start it.',
+    'Can you give me one tiny step?',
+    'Okay, I will try that now.',
+    'Park it: I need to call the dentist.',
+    'I did that.',
+    'Stop!',
+  ])('finished: %s', (t) => expect(soundsUnfinished(t)).toBe(false));
 });
 
 describe('FastSocket', () => {
@@ -149,7 +182,60 @@ describe('FastSocket', () => {
     expect(events.filter((e) => e.type === 'input.speech.started')).toHaveLength(1);
   });
 
-  it('a single stray word while Stay talks does not interrupt it', async () => {
+  it('waits through a pause: a turn that trails off is held, and the finished thought is answered once, merged', async () => {
+    fetchMock.mockResolvedValue(sse(text('Okay, let us open the email draft.')));
+    const { stt } = await open({ holdMs: 400 });
+    stt.push({ type: 'Turn', transcript: 'I need to, um, send that email and, uh,', end_of_turn: false, turn_order: 0 });
+    stt.push({ type: 'Turn', transcript: 'I need to, um, send that email and, uh,', end_of_turn: true, turn_order: 0 });
+    await tick(10);
+    expect(fetchMock).not.toHaveBeenCalled(); // did not talk into the pause
+    expect(types()).not.toContain('transcript.user');
+    stt.push({ type: 'Turn', transcript: 'and I keep thinking', end_of_turn: false, turn_order: 1 });
+    stt.push({ type: 'Turn', transcript: 'and I keep thinking about how to start it.', end_of_turn: true, turn_order: 1 });
+    await tick(30);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(events.filter((e) => e.type === 'transcript.user')).toHaveLength(1);
+    expect(events.find((e) => e.type === 'transcript.user')?.text).toBe('I need to, um, send that email and, uh, and I keep thinking about how to start it.');
+    expect(events.filter((e) => e.type === 'input.speech.started')).toHaveLength(1);
+  });
+
+  it('answers anyway when the hesitation never ends (after the hold)', async () => {
+    fetchMock.mockResolvedValue(sse(text('Take your time, I am here with you.')));
+    const { stt } = await open({ holdMs: 40 });
+    stt.push({ type: 'Turn', transcript: 'I need to, um,', end_of_turn: true, turn_order: 0 });
+    await new Promise((r) => setTimeout(r, 120));
+    await tick(20);
+    expect(events.filter((e) => e.type === 'transcript.user')).toHaveLength(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('a simple command is confirmed at once, without a second model call', async () => {
+    fetchMock.mockResolvedValueOnce(sse({ choices: [{ delta: { tool_calls: [{ index: 0, id: 'p1', function: { name: 'app', arguments: '{"action":"park","value":"call the dentist"}' } }] } }] }));
+    const { s, stt, tts } = await open({ tools: true });
+    stt.push({ type: 'Turn', transcript: 'park it, call the dentist.', end_of_turn: true, turn_order: 0 });
+    await tick(12);
+    s.send(JSON.stringify({ type: 'tool.result', call_id: 'p1', result: '{"ok":true}' }));
+    await tick(30);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const spoken = tts.sent.filter((d): d is string => typeof d === 'string').map((d) => JSON.parse(d)).filter((m) => m.type === 'Generate').map((m) => m.text);
+    expect(spoken).toEqual(['Parked.']);
+    expect(events.find((e) => e.type === 'transcript.agent')?.text).toBe('Parked.');
+    expect(events.at(-1)?.type).toBe('reply.done');
+  });
+
+  it('never goes silent after a command: if the model has nothing to add, Stay says Done', async () => {
+    fetchMock
+      .mockResolvedValueOnce(sse({ choices: [{ delta: { tool_calls: [{ index: 0, id: 'm1', function: { name: 'app', arguments: '{\"action\":\"memory_show\"}' } }] } }] }))
+      .mockResolvedValueOnce(sse({ choices: [{ delta: {} }] }));
+    const { s, stt } = await open({ tools: true });
+    stt.push({ type: 'Turn', transcript: 'show my memory.', end_of_turn: true, turn_order: 0 });
+    await tick(12);
+    s.send(JSON.stringify({ type: 'tool.result', call_id: 'm1', result: '{\"ok\":true}' }));
+    await tick(30);
+    expect(events.find((e) => e.type === 'transcript.agent')?.text).toBe('Done.');
+  });
+
+  it('a stray word while Stay talks does not interrupt it', async () => {
     fetchMock.mockResolvedValue(sse(text('This is a long reply that is being spoken right now.')));
     FakeWS.auto = false; // Stay is mid-sentence: audio has started but the reply is not finished
     const { stt, tts } = await open();

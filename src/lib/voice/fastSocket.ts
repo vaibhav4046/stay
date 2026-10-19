@@ -14,6 +14,8 @@ export interface FastSocketConfig {
   ttsToken: string;
   /** Mic format: 24 kHz mono 16-bit little-endian (what pcm-processor.js produces). */
   sampleRate?: number;
+  /** How long to wait after a turn that trails off ("and, uh,") before answering. Default 2200 ms. */
+  holdMs?: number;
 }
 
 export interface FastSession {
@@ -29,6 +31,32 @@ type Json = Record<string, unknown>;
 type ChatMessage = { role: 'system' | 'user' | 'assistant' | 'tool'; content: string | null; tool_calls?: unknown[]; tool_call_id?: string };
 
 export const FAST_TTS_LANGUAGE: Record<string, string> = { en: 'english', es: 'spanish', fr: 'french', de: 'german', it: 'italian', pt: 'portuguese' };
+/**
+ * Actions whose result needs no explaining: after the app confirms it did them, Stay says one short line straight away
+ * instead of waiting for a second model call (about 1.3 s saved on every spoken command).
+ */
+const QUICK_KIND: Record<string, 'done' | 'parked' | 'saved'> = {
+  park: 'parked', memory_add: 'saved', timer_start: 'done', timer_stop: 'done', color: 'done', shape: 'done', open: 'done', quiet: 'done', pause: 'done', ground: 'done', game: 'done',
+};
+const QUICK_PHRASE: Record<string, Record<'done' | 'parked' | 'saved', string>> = {
+  english: { done: 'Done.', parked: 'Parked.', saved: 'Got it, I will remember.' },
+  spanish: { done: 'Hecho.', parked: 'Guardado para después.', saved: 'Entendido, lo recordaré.' },
+  french: { done: "C'est fait.", parked: 'Mis de côté.', saved: "Compris, je m'en souviendrai." },
+  german: { done: 'Erledigt.', parked: 'Zurückgestellt.', saved: 'Verstanden, ich merke es mir.' },
+  italian: { done: 'Fatto.', parked: 'Messo da parte.', saved: 'Capito, me lo ricordo.' },
+  portuguese: { done: 'Feito.', parked: 'Guardado para depois.', saved: 'Entendi, vou lembrar.' },
+};
+export function quickConfirmation(action: unknown, resultJson: string, ttsLanguage: string): string | null {
+  const kind = typeof action === 'string' ? QUICK_KIND[action] : undefined;
+  if (!kind) return null;
+  try {
+    if ((JSON.parse(resultJson) as { ok?: boolean }).ok !== true) return null;
+  } catch {
+    return null;
+  }
+  return (QUICK_PHRASE[ttsLanguage] ?? QUICK_PHRASE.english)[kind];
+}
+
 const STT_URL = 'wss://streaming.assemblyai.com/v3/ws';
 const TTS_URL = 'wss://streaming-tts.assemblyai.com/v1/ws';
 const MAX_HISTORY = 14;
@@ -38,6 +66,19 @@ export function takeSpeakable(buffer: string): { chunk: string; rest: string } |
   const m = /^([\s\S]{18,}?[.!?…。！？])(\s+|$)/.exec(buffer);
   if (!m) return null;
   return { chunk: m[1].trim(), rest: buffer.slice(m[0].length) };
+}
+
+/**
+ * True when a finished turn sounds unfinished: it ends on a filler ("um", "uh"), a connector ("and", "but", "because"), an
+ * article or preposition, or trailing punctuation like a comma or an ellipsis. A full stop, question mark or exclamation
+ * mark means the person is done. People with ADHD pause mid-thought; Stay waits instead of talking into the pause.
+ */
+export function soundsUnfinished(text: string): boolean {
+  const t = text.trim();
+  if (!t) return false;
+  if (/[.?!。！？]["')\]]?$/.test(t) && !/\.{2,}$|…$/.test(t)) return false;
+  if (/[,;:…-]$/.test(t) || /\.{2,}$/.test(t)) return true;
+  return /\b(?:um+|uh+|er+m?|ah+|hmm+|mm+|like|and|but|so|because|cause|or|then|if|that|which|to|the|a|an|my|of|for|with|about|maybe|just|i|i'm|i've|it's)$/i.test(t);
 }
 
 function b64ToBytes(b64: string): Uint8Array {
@@ -76,9 +117,12 @@ export class FastSocket {
   private toolWaiters = new Map<string, (r: string) => void>();
   private closed = false;
   private agentSpeaking = false;
+  private carry = ''; // an unfinished thought, held while the person hesitates
+  private holdTimer: ReturnType<typeof setTimeout> | undefined;
+  private holds = 0;
 
   constructor(cfg: FastSocketConfig) {
-    this.cfg = { sampleRate: 24000, ...cfg };
+    this.cfg = { sampleRate: 24000, holdMs: 2200, ...cfg };
     queueMicrotask(() => {
       this.readyState = FastSocket.OPEN;
       this.onopen?.();
@@ -124,6 +168,7 @@ export class FastSocket {
   close(): void {
     if (this.closed) return;
     this.closed = true;
+    if (this.holdTimer) clearTimeout(this.holdTimer);
     this.cancel();
     for (const s of [this.stt, this.tts]) {
       try {
@@ -140,7 +185,7 @@ export class FastSocket {
   // ---- internals --------------------------------------------------------------------------------------------------
 
   private emit(m: Json): void {
-    if ((globalThis as { __stayFastDebug?: boolean }).__stayFastDebug && m.type !== 'reply.audio') console.debug('[fast]', Math.round(performance.now()), m.type, typeof m.text === 'string' ? m.text.slice(0, 60) : '');
+    if ((globalThis as { __stayFastDebug?: boolean }).__stayFastDebug && m.type !== 'reply.audio') console.debug('[fast]', Math.round(performance.now()), m.type, typeof m.text === 'string' ? m.text.slice(0, 60) : m.type === 'tool.call' ? JSON.stringify(m.arguments).slice(0, 80) : '');
     if (!this.closed) this.onmessage?.({ data: JSON.stringify(m) });
   }
 
@@ -221,11 +266,36 @@ export class FastSocket {
         this.cancel();
         this.emit({ type: 'input.speech.started' });
       }
-      this.emit({ type: 'transcript.user.delta', text });
+      if (this.holdTimer) {
+        clearTimeout(this.holdTimer);
+        this.holdTimer = undefined; // they carried on: it was a pause, not the end
+      }
+      this.emit({ type: 'transcript.user.delta', text: this.carry ? `${this.carry} ${text}` : text });
       return;
     }
     if (order === this.lastTurnOrder || !text) return; // the formatted re-send of a turn we already handled
     this.lastTurnOrder = order;
+    const full = this.carry ? `${this.carry} ${text}` : text;
+    if (soundsUnfinished(full) && this.holds < 3) {
+      // trailing off: keep the turn open and give them time to finish the thought
+      this.holds++;
+      this.carry = full;
+      this.inUserTurn = true;
+      if (this.holdTimer) clearTimeout(this.holdTimer);
+      this.holdTimer = setTimeout(() => this.finishTurn(order), this.cfg.holdMs);
+      return;
+    }
+    this.carry = full;
+    this.finishTurn(order);
+  }
+
+  private finishTurn(order: number): void {
+    if (this.closed) return;
+    const text = this.carry;
+    this.carry = '';
+    this.holds = 0;
+    this.holdTimer = undefined;
+    if (!text) return;
     if (!this.inUserTurn) this.emit({ type: 'input.speech.started' });
     this.inUserTurn = false;
     this.emit({ type: 'input.speech.stopped' });
@@ -386,10 +456,21 @@ export class FastSocket {
       const out = await Promise.race([result, new Promise<string>((r) => setTimeout(() => r('{"ok":true}'), 4000))]);
       if (gen !== this.genId) return;
       this.history = [...this.history, { role: 'tool' as const, tool_call_id: id, content: out.slice(0, 1500) }].slice(-MAX_HISTORY);
+      const quick = quickConfirmation(args.action, out, s.ttsLanguage);
+      if (quick) {
+        this.llmDone = true;
+        this.say(quick, gen);
+        return;
+      }
       return void this.generate(undefined, true);
     }
 
     this.llmDone = true;
+    if (this.spoken === '' && toolFollowUp) {
+      // the action ran but the model had nothing to add: never leave the person in silence after a command
+      this.say((QUICK_PHRASE[s.ttsLanguage] ?? QUICK_PHRASE.english).done, gen);
+      return;
+    }
     if (this.spoken === '') return this.finishSilently();
     this.maybeFinish();
   }

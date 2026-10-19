@@ -228,18 +228,18 @@ test.describe('Parking lot and reply-speed readout', () => {
   });
 });
 
-test('fast voice is an opt-in switch in the voice sheet and the choice is remembered', async ({ page }) => {
+test('fast voice is on by default, can be switched off in the voice sheet, and the choice is remembered', async ({ page }) => {
   await onboard(page);
   await page.getByTestId('menu-button').click();
   await page.getByRole('button', { name: 'Voice and language' }).click();
   const t = page.getByTestId('fast-voice-toggle');
-  await expect(t).not.toBeChecked();
-  await t.check();
-  expect(await page.evaluate(() => localStorage.getItem('stay_fast_voice'))).toBe('1');
+  await expect(t).toBeChecked();
+  await t.uncheck();
+  expect(await page.evaluate(() => localStorage.getItem('stay_fast_voice'))).toBe('0');
   await page.reload();
   await page.getByTestId('menu-button').click();
   await page.getByRole('button', { name: 'Voice and language' }).click();
-  await expect(page.getByTestId('fast-voice-toggle')).toBeChecked();
+  await expect(page.getByTestId('fast-voice-toggle')).not.toBeChecked();
 });
 
 test('one typed task makes exactly one plan request and the card never jumps back after you start', async ({ page }) => {
@@ -255,4 +255,14 @@ test('one typed task makes exactly one plan request and the card never jumps bac
   await expect(page.getByTestId('clock')).toBeVisible();
   await expect(page.getByTestId('plan-card')).toHaveCount(0);
   expect(planCalls).toHaveLength(1);
+});
+
+test('the landing page shows measured results with their limits, and no claim against other products', async ({ page }) => {
+  await page.goto('/');
+  const sec = page.getByTestId('measured');
+  await expect(sec).toContainText('Measured, not promised');
+  await expect(sec).toContainText('about 1.2 seconds');
+  await expect(sec).toContainText(/synthesized voices/i);
+  await expect(sec).toContainText(/make no claim against them/i);
+  await expect(page.getByText(/faster than chatgpt|beats chatgpt|better than google/i)).toHaveCount(0);
 });
