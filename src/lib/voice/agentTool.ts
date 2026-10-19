@@ -8,7 +8,7 @@ import { type VoicePersona } from './personas';
 
 export const APP_ACTIONS = [
   'open', 'ground', 'timer_start', 'timer_stop', 'outcome', 'plan', 'shape', 'color', 'language', 'voice',
-  'memory_add', 'memory_forget', 'memory_show', 'park', 'park_show', 'quiet', 'game', 'pause', 'export_data', 'delete_data',
+  'memory_add', 'memory_forget', 'memory_show', 'park', 'park_show', 'dump', 'list_add', 'list_show', 'routine', 'remind', 'quiet', 'game', 'pause', 'export_data', 'delete_data',
 ] as const;
 export type AppActionName = (typeof APP_ACTIONS)[number];
 
@@ -29,7 +29,7 @@ export const APP_TOOL = {
       action: { type: 'string', enum: [...APP_ACTIONS] },
       value: {
         type: 'string',
-        description: 'Target or text: screen (today, history, report, checkin, settings, privacy, memory, voice), language, voice name or gender/accent or random, colour (aurora, sunset, ocean, cyber, emerald, default), object for the orb, fact to remember or forget (or all), thought to park for later, task, outcome (started, partly_started, not_started, paused), game (memory, focus, words) with optional easy/medium/hard, on/off',
+        description: 'Target or text: screen (today, history, report, checkin, settings, privacy, memory, voice), language, voice name or gender/accent or random, colour (aurora, sunset, ocean, cyber, emerald, default), object for the orb, fact to remember or forget (or all), thought to park for later, item for the list for today, routine name (morning, leaving, evening), what to check on later, task, outcome (started, partly_started, not_started, paused), game (memory, focus, words) with optional easy/medium/hard, on/off',
       },
       minutes: { type: 'number' },
       step: { type: 'string', description: 'The first tiny step, when planning or starting a timer' },
@@ -54,9 +54,9 @@ export function memoryLine(m: UserMemoryProfile): string {
 export function buildSystemPrompt(persona: VoicePersona, memory: UserMemoryProfile): string {
   return [
     `You are Stay, a calm friend who helps an adult with ADHD start tasks. Voice: ${persona.name}. ${persona.style}`,
-    'Speak one or two short sentences, at most 15 words. Never read lists aloud. Never talk over a pause or an um.',
-    'Call the app tool when asked to open a screen, start or stop a timer, change voice or language, remember, forget, show memory, or park a thought ("park it: call the dentist" = action park, value the thought). Never for ordinary talk about their task. Confirm briefly.',
-    'If they ramble several tasks, name ONE two-minute first step; park the others only if asked.',
+    'One or two short sentences, at most 15 words. Never read lists aloud. Never talk over a pause.',
+    'Call the app tool when asked to open a screen, start or stop a timer, change voice or language, remember, forget, show memory, add to their list, brain dump, start a routine, check in later, or park a thought ("park it: call the dentist" = action park, value the thought). Never for ordinary talk. Confirm briefly.',
+    'If they ramble, name ONE two-minute first step; park the rest only if asked.',
     'Match their language. Not a therapist; never advise on medication.',
     memoryLine(memory),
   ].filter(Boolean).join('\n');

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { CrisisHelpProvider } from '@/components/CrisisHelpPanel';
+import { RegisterServiceWorker } from '@/components/RegisterServiceWorker';
 
 export const metadata: Metadata = {
   title: 'Stay: start the thing you have been avoiding',
@@ -12,6 +13,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: '#FAF8F5',
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -27,6 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <CrisisHelpProvider>{children}</CrisisHelpProvider>
+        <RegisterServiceWorker />
       </body>
     </html>
   );

@@ -13,6 +13,11 @@ const Message = z.object({
 });
 const Body = z.object({ messages: z.array(Message).min(1).max(40), withTools: z.boolean().optional() });
 
+/** Warm-up: the voice session calls this when it starts so the first real turn does not pay for a cold function. */
+export async function GET() {
+  return new Response(null, { status: 204, headers: { 'Cache-Control': 'no-store' } });
+}
+
 /** Fast voice brain: streams the model's reply (and at most one app tool call). The safety gates run before any model. */
 export async function POST(req: NextRequest) {
   const parsed = Body.safeParse(await req.json().catch(() => null));

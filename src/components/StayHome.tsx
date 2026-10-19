@@ -25,6 +25,14 @@ import { useCrisisPanel } from '@/components/CrisisHelpPanel';
 import { GroundingPanel } from '@/components/GroundingPanel';
 import { OrbCognitiveGames } from '@/components/OrbCognitiveGames';
 import { Signal } from '@/components/Signal';
+import { Sheet } from '@/components/Sheet';
+import { BrainDumpSheet } from '@/components/BrainDumpSheet';
+import { TodayCard } from '@/components/TodayCard';
+import { RoutineSheet } from '@/components/RoutineSheet';
+import { ReminderSheet } from '@/components/ReminderSheet';
+import { takeDue } from '@/lib/reminders';
+import { showNotification } from '@/lib/reminders';
+import { addToday, loadToday, toggleToday, type TodayItem } from '@/lib/coach/todayList';
 import { byokHeaders } from '@/lib/byok/config';
 import { loadParked, unparkThought, type ParkedItem } from '@/lib/coach/parkingLot';
 
@@ -54,33 +62,6 @@ function chime() {
   } catch {
     // audio unavailable
   }
-}
-
-function Sheet({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
-  return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/30 sm:items-center" onClick={onClose}>
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-surface p-6 shadow-xl sm:rounded-3xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-display text-lg font-semibold">{title}</h2>
-          <button type="button" className="btn btn-ghost" onClick={onClose} aria-label="Close">
-            Close
-          </button>
-        </div>
-        {children}
-      </div>
-    </div>
-  );
 }
 
 export function StayHome({
@@ -119,7 +100,11 @@ export function StayHome({
   const [lastOutcome, setLastOutcome] = useState<SessionOutcome | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<string | null>(null);
-  const [sheet, setSheet] = useState<null | 'menu' | 'memory' | 'voice' | 'parking'>(null);
+  const [sheet, setSheet] = useState<null | 'menu' | 'memory' | 'voice' | 'parking' | 'dump' | 'routine' | 'remind'>(null);
+  const [routineId, setRoutineId] = useState<string | null>(null);
+  const routineByVoice = useRef(false);
+  const [today, setToday] = useState<TodayItem[]>([]);
+  useEffect(() => setToday(loadToday()), []);
   const [parked, setParked] = useState<ParkedItem[]>([]);
   const [grounding, setGrounding] = useState(false);
   const [usedVoice, setUsedVoice] = useState(false);
@@ -210,6 +195,10 @@ export function StayHome({
     onMedicalBoundaryDetected: (m) => setNote(m),
     onShowMemoryRequested: () => setSheet('memory'),
     onShowParkingRequested: () => (setParked(loadParked()), setSheet('parking')),
+    onShowDumpRequested: () => setSheet('dump'),
+    onRoutineRequested: (id) => (routineByVoice.current = true, setRoutineId(id), setSheet('routine')),
+    onRemindersChanged: () => say('Check-in set'),
+    onTodayChanged: () => setToday(loadToday()),
     onShowHistoryRequested: () => router.push('/app/history'),
     onCloseModalsRequested: () => {
       setSheet(null);
@@ -397,6 +386,24 @@ export function StayHome({
     else void voice.startVoiceSession();
   };
 
+  // due check-ins: a chime, a note you can read, a spoken nudge if the voice is live, a system notification if allowed
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      for (const r of takeDue()) {
+        chime();
+        setNote(`Check-in: ${r.text}`);
+        showNotification('Stay', r.text);
+        if (voiceRef.current.isConnected) voiceRef.current.speakProactively(`Gently remind the person: ${r.text}. Under 12 words, warm, no pressure.`);
+      }
+    }, 10_000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  // arriving from onboarding or another screen: always start at the top, never mid-scroll
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const reset = () => {
     setStep('idle');
     setPlan(null);
@@ -439,7 +446,7 @@ export function StayHome({
   const progress = step === 'timer' ? 1 - remaining / (minutes * 60) : 0;
 
   return (
-    <div className="mx-auto flex min-h-[calc(100dvh-9rem)] w-full max-w-xl flex-col items-center justify-between gap-4 pb-2">
+    <div className="mx-auto flex min-h-[calc(100dvh-11rem)] w-full max-w-xl flex-col items-center justify-between gap-4 pb-2 sm:min-h-[calc(100dvh-9rem)]">
       <h1 className="sr-only">Stay</h1>
 
       <div className="flex w-full flex-1 flex-col items-center">
@@ -450,7 +457,7 @@ export function StayHome({
           aria-label={voice.isConnected ? 'Stop listening' : 'Talk to Stay'}
           aria-pressed={voice.isConnected}
           data-testid="orb-button"
-          className="relative aspect-square w-[min(84vw,420px)] rounded-full outline-none focus-visible:ring-4 focus-visible:ring-accent/30"
+          className="relative aspect-square w-[min(74vw,36dvh,420px)] rounded-full outline-none focus-visible:ring-4 focus-visible:ring-accent/30 sm:w-[min(84vw,420px)]"
         >
           <Signal
             state={visual}
@@ -565,6 +572,35 @@ export function StayHome({
         </section>
       )}
 
+      {step === 'idle' && (
+        <div className="flex w-full flex-wrap justify-center gap-2" data-testid="state-chips" role="group" aria-label="Or start from how you feel">
+          {['I feel overwhelmed', "I'm stuck", 'I have no energy', "I can't focus"].map((c) => (
+            <button key={c} type="button" className="chip" onClick={() => submit(c)}>
+              {c}
+            </button>
+          ))}
+          <button type="button" className="chip" onClick={() => setSheet('dump')} data-testid="chip-dump">
+            Brain dump
+          </button>
+          <button type="button" className="chip" onClick={() => (routineByVoice.current = false, setRoutineId(null), setSheet('routine'))} data-testid="chip-routines">
+            Routines
+          </button>
+        </div>
+      )}
+
+      {(step === 'idle' || step === 'done') && (
+        <TodayCard
+          items={today}
+          onToggle={(id) => {
+            setToday(toggleToday(id));
+            say('Nice. That is a win.');
+            orb.feed('proud achievement', 'typed');
+          }}
+          onStart={(i) => void requestPlan(i.firstStep ? `${i.text}. First step: ${i.firstStep}` : i.text)}
+          onOpenDump={() => setSheet('dump')}
+        />
+      )}
+
       <form
         className="flex w-full items-center gap-2"
         onSubmit={(e) => {
@@ -590,7 +626,7 @@ export function StayHome({
           className="field h-12 flex-1"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="What are you avoiding?"
+          placeholder="Or type it here"
           aria-label="Tell Stay what you're avoiding"
           maxLength={280}
           data-testid="task-input"
@@ -611,6 +647,12 @@ export function StayHome({
             </button>
             <button type="button" className="btn btn-secondary justify-start" onClick={() => setSheet('voice')}>
               Voice and language
+            </button>
+            <button type="button" className="btn btn-secondary justify-start" onClick={() => (routineByVoice.current = false, setRoutineId(null), setSheet('routine'))}>
+              Routines
+            </button>
+            <button type="button" className="btn btn-secondary justify-start" onClick={() => setSheet('remind')} data-testid="remind-open">
+              Check-ins and reminders
             </button>
             <button type="button" className="btn btn-secondary justify-start" onClick={() => setSheet('memory')}>
               What Stay remembers
@@ -681,6 +723,41 @@ export function StayHome({
             ))}
           </div>
         </Sheet>
+      )}
+
+      {sheet === 'routine' && (
+        <RoutineSheet
+          initialId={routineId}
+          onClose={() => (setSheet(null), setRoutineId(null))}
+          onSpeak={(line) => {
+            // when the voice agent started the routine it is already announcing the first step
+            if (routineByVoice.current) {
+              routineByVoice.current = false;
+              return;
+            }
+            if (voiceRef.current.isConnected) voiceRef.current.speakProactively(`Read this step aloud in one short sentence: ${line}`);
+          }}
+          onComplete={(r) => {
+            const l = addToday([{ text: r.name, bucket: 'today' }]);
+            setToday(toggleToday(l[0].id));
+            say('Routine finished. That is a win.');
+            orb.feed('proud achievement', 'typed');
+          }}
+        />
+      )}
+
+      {sheet === 'remind' && <ReminderSheet onClose={() => setSheet(null)} onChanged={() => say('Check-in set')} />}
+
+      {sheet === 'dump' && (
+        <BrainDumpSheet
+          onClose={() => setSheet(null)}
+          onCrisis={(m) => (setSheet(null), triggerCrisis(m || CRISIS_FIXED_MESSAGE))}
+          onSaved={() => setToday(loadToday())}
+          onStart={(i) => {
+            setSheet(null);
+            void requestPlan(i.firstStep ? `${i.text}. First step: ${i.firstStep}` : i.text);
+          }}
+        />
       )}
 
       {sheet === 'parking' && (

@@ -3,6 +3,9 @@
 import { byokHeaders } from '@/lib/byok/config';
 import { FastSocket, FAST_TTS_LANGUAGE } from '@/lib/voice/fastSocket';
 import { loadParked, parkThought } from '@/lib/coach/parkingLot';
+import { addToday, loadToday, openToday } from '@/lib/coach/todayList';
+import { findRoutine, loadRoutines } from '@/lib/routines/routines';
+import { addReminder } from '@/lib/reminders';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
   AudioSpectrumBands,
@@ -76,6 +79,10 @@ export interface UseVoiceAgentOptions {
   onVoiceCommandDetected?: (command: VoiceCommandAction) => void;
   onShowMemoryRequested?: () => void;
   onShowParkingRequested?: () => void;
+  onShowDumpRequested?: () => void;
+  onRoutineRequested?: (routineId: string) => void;
+  onRemindersChanged?: () => void;
+  onTodayChanged?: () => void;
   onShowHistoryRequested?: () => void;
   onOpenTrainingRequested?: () => void;
   onCloseModalsRequested?: () => void;
@@ -1012,6 +1019,33 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         case 'park_show': {
           o.onShowParkingRequested?.();
           return { ok: true, items: loadParked().slice(0, 6).map((i) => i.text) };
+        }
+        case 'dump': {
+          o.onShowDumpRequested?.();
+          return { ok: true, note: 'Opened the brain dump. The person says or types everything on their mind there.' };
+        }
+        case 'list_add': {
+          if (!value) return { ok: false, error: 'value must be the item to add, e.g. buy milk' };
+          addToday([{ text: value, bucket: 'today' }]);
+          o.onTodayChanged?.();
+          return { ok: true, added: value.slice(0, 80) };
+        }
+        case 'list_show': {
+          o.onTodayChanged?.();
+          return { ok: true, open: openToday(loadToday()).slice(0, 5).map((i) => i.text) };
+        }
+        case 'routine': {
+          const r = findRoutine(value || '');
+          if (!r) return { ok: false, error: 'no such routine', options: loadRoutines().map((x) => x.name) };
+          o.onRoutineRequested?.(r.id);
+          return { ok: true, routine: r.name, steps: r.steps.length, firstStep: r.steps[0].text };
+        }
+        case 'remind': {
+          const mins = args.minutes ?? Number((value || '').match(/\d+/)?.[0]);
+          if (!mins || mins < 1) return { ok: false, error: 'say after how many minutes' };
+          addReminder(mins, (value || '').replace(/\d+\s*(?:min(?:ute)?s?)?/i, '').trim() || 'Check in', Date.now());
+          o.onRemindersChanged?.();
+          return { ok: true, minutes: Math.round(mins) };
         }
         case 'quiet': o.onToggleQuietModeRequested?.(); return { ok: true };
         case 'game': {

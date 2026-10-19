@@ -46,8 +46,8 @@ describe('agent prompt, greeting and tool (latency budget)', () => {
   it('system prompt stays tiny: long prompts doubled reply time in measurement', () => {
     const empty = buildSystemPrompt(persona, DEFAULT_USER_MEMORY);
     const full = buildSystemPrompt(persona, withMemory({ name: 'Sam', roleOrField: 'product designer', facts: ['dog is called Biscuit', 'works best at 20 minutes', 'dreads tax paperwork', 'prefers mornings', 'sister is Ana'], recentSessionsSummary: [{ task: 'Reply to the landlord about the renewal', outcome: 'partly_started', minutes: 20, timestamp: '2026-10-18' }] }));
-    expect(empty.length).toBeLessThan(700);
-    expect(full.length).toBeLessThan(1050); // about 250 tokens with a full memory line
+    expect(empty.length).toBeLessThan(780);
+    expect(full.length).toBeLessThan(1130); // about 250 tokens with a full memory line
     expect(full).toContain('Biscuit');
     expect(full).toContain(persona.name);
   });

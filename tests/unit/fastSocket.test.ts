@@ -45,7 +45,7 @@ const tick = (n = 6) => new Promise((r) => { let i = 0; const f = () => (++i >= 
 let events: Array<Record<string, unknown>>;
 let fetchMock: ReturnType<typeof vi.fn>;
 async function open(opts: { tools?: boolean; greeting?: string; holdMs?: number } = {}) {
-  const s = new FastSocket({ sttToken: 'stt', ttsToken: 'tts', holdMs: opts.holdMs ?? 60 });
+  const s = new FastSocket({ sttToken: 'stt', ttsToken: 'tts', holdMs: opts.holdMs ?? 60, warmUp: false });
   events = [];
   s.onmessage = (e) => events.push(JSON.parse(e.data));
   await tick(2);

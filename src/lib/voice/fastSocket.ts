@@ -16,6 +16,8 @@ export interface FastSocketConfig {
   sampleRate?: number;
   /** How long to wait after a turn that trails off ("and, uh,") before answering. Default 2200 ms. */
   holdMs?: number;
+  /** Ping the chat route when the session starts so the first reply is not slowed by a cold function. Default true. */
+  warmUp?: boolean;
 }
 
 export interface FastSession {
@@ -35,16 +37,16 @@ export const FAST_TTS_LANGUAGE: Record<string, string> = { en: 'english', es: 's
  * Actions whose result needs no explaining: after the app confirms it did them, Stay says one short line straight away
  * instead of waiting for a second model call (about 1.3 s saved on every spoken command).
  */
-const QUICK_KIND: Record<string, 'done' | 'parked' | 'saved'> = {
-  park: 'parked', memory_add: 'saved', timer_start: 'done', timer_stop: 'done', color: 'done', shape: 'done', open: 'done', quiet: 'done', pause: 'done', ground: 'done', game: 'done',
+const QUICK_KIND: Record<string, 'done' | 'parked' | 'saved' | 'added'> = {
+  list_add: 'added', dump: 'done', remind: 'done', park: 'parked', memory_add: 'saved', timer_start: 'done', timer_stop: 'done', color: 'done', shape: 'done', open: 'done', quiet: 'done', pause: 'done', ground: 'done', game: 'done',
 };
-const QUICK_PHRASE: Record<string, Record<'done' | 'parked' | 'saved', string>> = {
-  english: { done: 'Done.', parked: 'Parked.', saved: 'Got it, I will remember.' },
-  spanish: { done: 'Hecho.', parked: 'Guardado para después.', saved: 'Entendido, lo recordaré.' },
-  french: { done: "C'est fait.", parked: 'Mis de côté.', saved: "Compris, je m'en souviendrai." },
-  german: { done: 'Erledigt.', parked: 'Zurückgestellt.', saved: 'Verstanden, ich merke es mir.' },
-  italian: { done: 'Fatto.', parked: 'Messo da parte.', saved: 'Capito, me lo ricordo.' },
-  portuguese: { done: 'Feito.', parked: 'Guardado para depois.', saved: 'Entendi, vou lembrar.' },
+const QUICK_PHRASE: Record<string, Record<'done' | 'parked' | 'saved' | 'added', string>> = {
+  english: { done: 'Done.', parked: 'Parked.', saved: 'Got it, I will remember.', added: 'Added.' },
+  spanish: { done: 'Hecho.', parked: 'Guardado para después.', saved: 'Entendido, lo recordaré.', added: 'Añadido.' },
+  french: { done: "C'est fait.", parked: 'Mis de côté.', saved: "Compris, je m'en souviendrai.", added: 'Ajouté.' },
+  german: { done: 'Erledigt.', parked: 'Zurückgestellt.', saved: 'Verstanden, ich merke es mir.', added: 'Hinzugefügt.' },
+  italian: { done: 'Fatto.', parked: 'Messo da parte.', saved: 'Capito, me lo ricordo.', added: 'Aggiunto.' },
+  portuguese: { done: 'Feito.', parked: 'Guardado para depois.', saved: 'Entendi, vou lembrar.', added: 'Adicionado.' },
 };
 export function quickConfirmation(action: unknown, resultJson: string, ttsLanguage: string): string | null {
   const kind = typeof action === 'string' ? QUICK_KIND[action] : undefined;
@@ -123,7 +125,7 @@ export class FastSocket {
   private holds = 0;
 
   constructor(cfg: FastSocketConfig) {
-    this.cfg = { sampleRate: 24000, holdMs: 2200, ...cfg };
+    this.cfg = { sampleRate: 24000, holdMs: 2200, warmUp: true, ...cfg };
     queueMicrotask(() => {
       this.readyState = FastSocket.OPEN;
       this.onopen?.();
@@ -209,6 +211,7 @@ export class FastSocket {
       return this.fail('connection_failed');
     }
     this.emit({ type: 'session.ready' });
+    if (this.cfg.warmUp) void fetch('/api/voice/chat', { method: 'GET' }).catch(() => undefined); // warm the function while the greeting plays
     if (this.session.greeting) void this.speakOnly(this.session.greeting);
   }
 

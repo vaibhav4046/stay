@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { UK_CRISIS_RESOURCES } from '@/lib/safety/crisis';
 
 interface CrisisContextValue {
@@ -16,6 +17,8 @@ export function useCrisisPanel() {
 export function CrisisHelpProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState<string | undefined>();
+  const pathname = usePathname();
+  const inApp = pathname?.startsWith('/app'); // the app has its own Urgent help button in the header
 
   const openCrisisPanel = useCallback((r?: string) => {
     setReason(r);
@@ -25,7 +28,7 @@ export function CrisisHelpProvider({ children }: { children: React.ReactNode }) 
   return (
     <CrisisContext.Provider value={{ openCrisisPanel }}>
       {children}
-      <button
+      {!inApp && <button
         type="button"
         onClick={() => openCrisisPanel()}
         className="fixed bottom-4 right-4 z-40 btn btn-secondary text-[0.85rem]"
@@ -33,7 +36,7 @@ export function CrisisHelpProvider({ children }: { children: React.ReactNode }) 
         data-testid="crisis-help-trigger"
       >
         Urgent help
-      </button>
+      </button>}
       {open && <CrisisHelpPanel reason={reason} onClose={() => setOpen(false)} />}
     </CrisisContext.Provider>
   );

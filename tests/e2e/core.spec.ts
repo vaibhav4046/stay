@@ -266,3 +266,80 @@ test('the landing page shows measured results with their limits, and no claim ag
   await expect(sec).toContainText(/make no claim against them/i);
   await expect(page.getByText(/faster than chatgpt|beats chatgpt|better than google/i)).toHaveCount(0);
 });
+
+test.describe('Brain dump and today list', () => {
+  test('dump everything, get one thing to start, tick a win, and it persists', async ({ page }) => {
+    await onboard(page);
+    await page.getByTestId('chip-dump').click();
+    await page.getByTestId('dump-input').fill('email the landlord, pay the council tax, call mum someday, the bins');
+    await page.getByTestId('dump-sort').click();
+    await expect(page.getByTestId('dump-result')).toBeVisible({ timeout: 25000 });
+    await expect(page.getByTestId('dump-start')).toHaveCount(1); // exactly one thing to start
+    await page.getByTestId('dump-result').getByRole('button', { name: 'Done', exact: true }).click();
+    const card = page.getByTestId('today-card');
+    await expect(card).toBeVisible();
+    await expect(card).toContainText(/start here/i);
+    await page.getByTestId('today-check').first().click();
+    await expect(page.getByTestId('wins-count')).toContainText('1 win today');
+    await page.reload();
+    await expect(page.getByTestId('wins-count')).toContainText('1 win today');
+  });
+
+  test('a crisis in a brain dump goes to help, never into a list', async ({ page }) => {
+    await onboard(page);
+    await page.getByTestId('chip-dump').click();
+    await page.getByTestId('dump-input').fill('taxes, and I want to take my own life');
+    await page.getByTestId('dump-sort').click();
+    await expect(page.getByText('116 123').first()).toBeVisible({ timeout: 10000 });
+    expect(await page.evaluate(() => localStorage.getItem('stay_today_list_v1'))).toBeNull();
+  });
+
+  test('feeling chips start a plan, and the mobile bottom nav and urgent help are reachable', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await onboard(page);
+    await expect(page.getByTestId('bottom-nav')).toBeVisible();
+    await expect(page.getByTestId('crisis-help-trigger')).toBeVisible();
+    await page.getByRole('button', { name: 'I feel overwhelmed' }).click();
+    await expect(page.getByTestId('plan-card')).toBeVisible({ timeout: 20000 });
+  });
+});
+
+test.describe('Routines, check-ins and the offline shell', () => {
+  test('run the morning routine step by step and finish with a win', async ({ page }) => {
+    await onboard(page);
+    await page.getByTestId('chip-routines').click();
+    await page.getByTestId('routine-start-morning').click();
+    await expect(page.getByTestId('routine-step')).toContainText(/water/i);
+    for (let i = 0; i < 4; i++) await page.getByTestId('routine-next').click();
+    await expect(page.getByTestId('routine-step')).toContainText(/ONE thing/i);
+    await page.getByTestId('routine-next').click(); // Finish
+    await expect(page.getByTestId('wins-count')).toContainText('1 win today');
+  });
+
+  test('a custom routine can be written and run', async ({ page }) => {
+    await onboard(page);
+    await page.getByTestId('chip-routines').click();
+    await page.getByTestId('routine-new').click();
+    await page.getByTestId('routine-name').fill('Study session');
+    await page.getByTestId('routine-steps').fill(['water and snack - 3', 'phone in another room', 'open the notes - 2'].join('\n'));
+    await page.getByTestId('routine-save').click();
+    await expect(page.getByTestId('routine-list')).toContainText('Study session');
+    await expect(page.getByTestId('routine-list')).toContainText('3 steps');
+  });
+
+  test('a check-in that is due shows up, and a new one can be set', async ({ page }) => {
+    await onboard(page);
+    await page.evaluate(() => localStorage.setItem('stay_reminders_v1', JSON.stringify([{ id: 'r1', text: 'is the laundry on', dueAt: Date.now() - 1000 }])));
+    await page.reload();
+    await expect(page.getByTestId('note')).toContainText('Check-in: is the laundry on', { timeout: 20000 });
+    await page.getByTestId('menu-button').click();
+    await page.getByTestId('remind-open').click();
+    await page.getByTestId('remind-20').click();
+    await expect(page.getByTestId('reminder-list')).toContainText('20 min');
+  });
+
+  test('the app shell registers an offline service worker', async ({ page }) => {
+    await page.goto('/app/today');
+    await expect.poll(() => page.evaluate(async () => !!(await navigator.serviceWorker?.getRegistration())), { timeout: 15000 }).toBe(true);
+  });
+});
