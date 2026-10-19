@@ -26,7 +26,7 @@
   rig.play = (name) => new Promise((resolve) => {
     const el = rig.load(name); el.currentTime = 0;
     const ent = { name, voice: rig.voice };
-    el.onplaying = () => { ent.start = Date.now(); ent.speechEnd = ent.start + END[name] * 1000; };
+    el.onplaying = () => { if (!ent.start) { ent.start = Date.now(); ent.speechEnd = ent.start + END[name] * 1000; } };
     el.onended = () => { ent.end = Date.now(); rig.log.push(ent); resolve(ent); };
     ctx.resume().then(() => el.play());
   });
