@@ -29,6 +29,7 @@ export interface VoicePersona {
   voices: VoiceRef[];
   /** Part of the short, curated list at the top of the picker. */
   recommended: boolean;
+  nativeLang: SpeechLang | null;
 }
 
 const aai = (voice: string, lang: SpeechLang, locale: string, accent: string): VoiceRef => ({ engine: 'assemblyai', voice, lang, locale, accent });
@@ -39,8 +40,8 @@ const BRIT = (v: string) => aai(v, 'en', 'en-GB', 'British');
 const AMER = (v: string) => aai(v, 'en', 'en-US', 'American');
 const UNLABELLED = (v: string) => aai(v, 'en', 'en', 'English, accent not documented');
 
-type Seed = Omit<VoicePersona, 'lang' | 'recommended' | 'voices'> & { voices: VoiceRef[]; recommended?: boolean };
-const make = (s: Seed): VoicePersona => ({ ...s, lang: s.voices[0].lang, recommended: s.recommended ?? false });
+type Seed = Omit<VoicePersona, 'lang' | 'recommended' | 'voices' | 'nativeLang'> & { voices: VoiceRef[]; recommended?: boolean; nativeLang?: SpeechLang | null };
+const make = (s: Seed): VoicePersona => ({ ...s, lang: s.voices[0].lang, recommended: s.recommended ?? false, nativeLang: s.nativeLang ?? (s.voices[0].lang !== 'en' ? s.voices[0].lang : null) });
 
 export const PERSONAS: VoicePersona[] = [
   // British (AssemblyAI documents: anna, charles, paul, vera)
