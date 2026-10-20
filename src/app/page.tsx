@@ -1,162 +1,148 @@
 import Link from 'next/link';
 import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
-import { LandingHero } from '@/components/LandingHero';
-
-const STEPS = [
-  { title: 'Say it', body: 'Talk, or type if you are somewhere quiet. One task is enough, said however it comes out.' },
-  { title: 'Shrink it', body: 'Stay names what is making it hard and turns the task into one step you can start in two minutes.' },
-  { title: 'Start it', body: 'A short timer, a check-in when it ends, and a note of what helped, so next time starts easier.' },
-];
-
-const DAYS = [
-  { title: 'It waits through your pauses', body: 'You trail off. You say um. You restart. Stay holds the thought for a couple of seconds instead of answering half a sentence, and stops talking the moment you do.' },
-  { title: 'Brain dump', body: 'Say everything at once, in any order. Stay picks the one thing to start, a few for today, and puts the rest away. Nothing is ever overdue.' },
-  { title: 'Routines, one step at a time', body: 'Morning, leaving the house, winding down, or your own. One big step on screen, its own small timer, skip any of it.' },
-  { title: 'Check-ins that find you', body: '"Check in with me in 20 minutes." A soft chime and a line from Stay, even if the tab is in the background.' },
-  { title: 'Short blocks first', body: 'Ten minutes by default, longer when you are in flow. All-day mode keeps Stay beside you for hours, not minutes.' },
-  { title: 'Park it', body: '"Park it: call the dentist." The thought is saved, out of your head, and you are back on the task.' },
-];
-
-const COMPARE = [
-  { who: 'Goblin Tools', is: 'A free, typed task breaker.', stay: 'Spoken, with a timer and someone beside you while you do it.' },
-  { who: 'Tiimo and planners', is: 'A visual day you have to set up and keep up.', stay: 'No setup. You say what is in the way and it gives you the next step.' },
-  { who: 'Body-doubling with a person', is: 'A real human, at a time you booked.', stay: 'There at 11pm and on a bad day. Not a replacement for people.' },
-  { who: 'A general voice assistant', is: 'Answers anything.', stay: 'Does one job: getting you started, and it remembers what helped. We have not measured other assistants, so we claim nothing about their speed.' },
-];
-
-const MEASURED = [
-  { what: 'Reply after you stop talking', fast: 'about 1.3 seconds', old: 'about 2.8 seconds' },
-  { what: 'You pause mid-thought for 2.3 seconds', fast: 'Waits for you', old: 'Talks over the pause' },
-  { what: 'You interrupt it', fast: 'Notices in 0.5 to 0.8 seconds', old: 'Notices in about 1.0 to 1.1 seconds' },
-  { what: '"Park it: call the dentist"', fast: 'Done and confirmed in 1.3 to 3.3 seconds', old: 'Done, confirmed in about 2.9 seconds (an earlier run)' },
-  { what: "Stay's own voice leaks into the microphone", fast: 'It never mistook itself for you (0 stray transcripts in 26)', old: 'None in 27 this time; it once transcribed its own greeting as if you had said it (1 in 10, an earlier run)' },
-];
-
-const VERSUS = [
-  { what: 'Reply after you stop talking (median)', stay: 'about 1.95 seconds', chatgpt: 'about 1.65 seconds', gemini: 'about 1.4 seconds' },
-  { what: 'You pause mid-thought for about 3 seconds', stay: 'Waits for you', chatgpt: 'Starts talking after 1.8 to 2.1 seconds of silence', gemini: 'Starts talking after about 1.5 seconds of silence' },
-  { what: 'You say "Okay, maybe." and then keep going', stay: 'Waits', chatgpt: 'Jumped in mid-sentence, both runs', gemini: 'Waited' },
-  { what: 'You interrupt it', stay: 'Quiet in about 0.4 seconds', chatgpt: 'Quiet in 1.1 to 1.5 seconds', gemini: 'Quiet in about 0.4 seconds' },
-  { what: 'How long it talks back', stay: '4 to 10 seconds', chatgpt: '9 to 20 seconds', gemini: '8 to 9 seconds' },
-];
-
-const PROMISES = [
-  { title: 'Your history stays on your device', body: 'Sessions and memory are stored in your browser. Download or delete all of it in Settings, in one tap.' },
-  { title: 'No medication advice', body: 'Ask about a dose and Stay says it cannot help and points you to your prescriber or pharmacist.' },
-  { title: 'Not a diagnosis, not a clinician', body: 'Stay is a self-help companion. It never diagnoses and does not replace treatment.' },
-  { title: 'If you are in danger, it stops coaching', body: 'Crisis wording pauses everything and shows UK emergency numbers (999, NHS 111, Samaritans 116 123) and findahelpline.com for anywhere else.' },
-];
-
-const NOT_FOR = [
-  'Anyone in crisis. Press Urgent help, call 999, or Samaritans on 116 123. Stay is not a crisis service.',
-  'Anyone who wants a calendar or a full planner. Use Tiimo for that.',
-  'Anyone who wants advice about medication. Stay will always send you to a prescriber.',
-  'Anyone who needs proof it works. It has not been trialled. See below.',
-];
+import { PERSONAS } from '@/lib/voice/personas';
+import { Hero } from '@/components/landing/Hero';
+import { DemoPlayer } from '@/components/landing/DemoPlayer';
+import { Story } from '@/components/landing/Story';
+import { WeekExplorer } from '@/components/landing/WeekExplorer';
+import { Results } from '@/components/landing/Results';
+import { Artifacts } from '@/components/landing/Artifacts';
+import { Personas } from '@/components/landing/Personas';
+import { dotGlyph } from '@/components/landing/personaDots';
+import { Compare, Days, NotFor, Platforms, Promises, Receipts } from '@/components/landing/Sections';
+import { TRANSCRIPT } from '@/components/landing/transcript';
+import './landing.css';
 
 export default function Home() {
+  const glyphs = Object.fromEntries(PERSONAS.map((p) => [p.shape, dotGlyph(p.shape, 130)]));
+
   return (
     <>
-      <SiteHeader />
+      <SiteHeader anchors />
       <main>
-        <LandingHero />
+        <Hero />
 
-        <section className="mx-auto max-w-6xl px-5 py-12 sm:px-8" aria-labelledby="watch" data-testid="demo-video">
-          <h2 id="watch" className="section-title max-w-[26ch]">
-            Watch it in three minutes.
-          </h2>
-          <p className="mt-3 max-w-[62ch] text-ink-2">
-            Recorded on the live site. The speaker is a synthesized voice fed into the microphone and labelled as simulated on screen; Stay&apos;s replies are the real audio. Captions are on.
-          </p>
-          <video className="mt-6 w-full max-w-4xl rounded-2xl border border-line" controls preload="none" playsInline poster="/demo/stay-demo-poster.jpg" aria-describedby="watch">
-            <source src="/demo/stay-demo.mp4" type="video/mp4" />
-            <track kind="captions" src="/demo/stay-demo.vtt" srcLang="en" label="English" default />
-          </video>
-        </section>
-
-        <section className="mx-auto max-w-6xl px-5 py-16 sm:px-8" aria-labelledby="how">
-          <h2 id="how" className="section-title max-w-[22ch]">
-            Three moves, about two minutes
-          </h2>
-          <ol className="mt-8 grid gap-6 md:grid-cols-3">
-            {STEPS.map((s, i) => (
-              <li key={s.title} className="border-t-2 border-ink pt-4">
-                <p className="tnum font-display text-sm font-semibold text-ink-2">{i + 1}</p>
-                <h3 className="mt-1 font-display text-xl font-semibold">{s.title}</h3>
-                <p className="mt-2 max-w-[34ch] text-ink-2">{s.body}</p>
-              </li>
-            ))}
-          </ol>
-          <p className="meta mt-8 max-w-[62ch]">
-            Speak in your own language. We tested live voice with synthesized speech in 23 languages; AssemblyAI documents six (English, Spanish, French, German, Italian, Portuguese), and the fast voice speaks those six. Others use the standard voice or your browser&apos;s speech recognition.
-          </p>
-        </section>
-
-        <section className="mx-auto max-w-6xl px-5 py-16 sm:px-8" aria-labelledby="days" data-testid="days">
-          <h2 id="days" className="section-title max-w-[26ch]">
-            Made for how ADHD days actually go
-          </h2>
-          <dl className="mt-8 grid gap-x-12 gap-y-9 md:grid-cols-2 lg:grid-cols-3">
-            {DAYS.map((d) => (
-              <div key={d.title}>
-                <dt className="font-display text-lg font-semibold">{d.title}</dt>
-                <dd className="mt-1 max-w-[40ch] text-ink-2">{d.body}</dd>
+        <section id="watch" className="lp-night lp-band" aria-labelledby="watch-title" data-testid="demo-video">
+          <div className="lp-wrap">
+            <p className="eyebrow lp-eyebrow-night">The demo</p>
+            <h2 id="watch-title" className="section-title lp-night-title max-w-[26ch]">Watch it in under three minutes.</h2>
+            <p className="lp-night-copy mt-3 max-w-[62ch]">
+              Recorded on the live site. The speaker is a synthesized voice fed into the microphone and labelled as simulated on screen; Stay&apos;s replies are the real audio. Captions are on. This recording was made before the side-by-side with ChatGPT voice and Gemini Live, so its closing line about not having measured them is out of date; the comparison is below.
+            </p>
+          </div>
+          <div className="lp-player-bleed">
+            <DemoPlayer />
+          </div>
+          <div className="lp-wrap">
+            <details className="lp-details lp-transcript">
+              <summary>Read the transcript</summary>
+              <div className="lp-details-body">
+                <ol>
+                  {TRANSCRIPT.map((c) => (
+                    <li key={c.start}>
+                      <time className="tnum">{c.start}</time>
+                      <p>{c.text}</p>
+                    </li>
+                  ))}
+                </ol>
               </div>
-            ))}
-          </dl>
-        </section>
-
-        <section className="mx-auto max-w-6xl px-5 py-16 sm:px-8" aria-labelledby="compare" data-testid="compare">
-          <h2 id="compare" className="section-title max-w-[24ch]">
-            Why not just use something else?
-          </h2>
-          <ul className="mt-8 space-y-4 md:hidden">
-            {COMPARE.map((c) => (
-              <li key={c.who} className="card p-4">
-                <p className="font-display text-lg font-semibold">{c.who}</p>
-                <p className="mt-2 text-ink-2"><span className="meta block">That is</span>{c.is}</p>
-                <p className="mt-2 text-ink-2"><span className="meta block">Stay is</span>{c.stay}</p>
-              </li>
-            ))}
-          </ul>
-          <div className="mt-8 hidden overflow-x-auto md:block">
-            <table className="w-full min-w-[40rem] border-collapse text-left text-[0.95rem]">
-              <caption className="sr-only">How Stay differs from other tools</caption>
-              <thead>
-                <tr className="border-b-2 border-ink">
-                  <th scope="col" className="py-2 pr-4 font-semibold">Instead of</th>
-                  <th scope="col" className="py-2 pr-4 font-semibold">That is</th>
-                  <th scope="col" className="py-2 font-semibold">Stay is</th>
-                </tr>
-              </thead>
-              <tbody className="[&_td]:border-b [&_td]:border-line [&_td]:py-3 [&_td]:pr-4 [&_th]:border-b [&_th]:border-line [&_th]:py-3 [&_th]:pr-4 [&_th]:text-left [&_th]:font-medium">
-                {COMPARE.map((c) => (
-                  <tr key={c.who}>
-                    <th scope="row">{c.who}</th>
-                    <td>{c.is}</td>
-                    <td>{c.stay}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            </details>
           </div>
         </section>
 
-        <section className="mx-auto max-w-6xl px-5 py-16 sm:px-8" aria-labelledby="trust">
+        <section id="flow" className="lp-section lp-wrap" aria-labelledby="how">
+          <p className="eyebrow">How a session flows</p>
+          <h2 id="how" className="section-title max-w-[22ch]">
+            Five moves, about two minutes to start
+          </h2>
+          <Story />
+          <p className="meta mt-10 max-w-[62ch]">
+            Speak in your own language. We tested live voice with synthesized speech: 23 languages were heard correctly and 8 were not; AssemblyAI documents six (English, Spanish, French, German, Italian, Portuguese), and the fast voice speaks those six. Others use the standard voice or your browser&apos;s speech recognition.
+          </p>
+        </section>
+
+        <section id="days" className="lp-section lp-wrap" aria-labelledby="days-title" data-testid="days">
+          <p className="eyebrow">What it does</p>
+          <h2 id="days-title" className="section-title max-w-[26ch]">
+            Made for how ADHD days actually go
+          </h2>
+          <Days />
+        </section>
+
+        <section id="artifacts" className="lp-section lp-tint" aria-labelledby="art-title">
+          <div className="lp-wrap">
+            <p className="eyebrow">What you get</p>
+            <h2 id="art-title" className="section-title max-w-[26ch]">
+              Small things you can hold, not a dashboard to maintain
+            </h2>
+            <p className="mt-3 max-w-[62ch] text-ink-2">
+              These four are interactive, built from the same data shapes the app uses and filled with invented examples. Nothing here is a real person&apos;s record.
+            </p>
+            <Artifacts />
+            <h3 className="sub-title mt-16">Sixteen voices, each with a face made of dots</h3>
+            <p className="mt-2 max-w-[62ch] text-ink-2">While you are talking to Stay, ask for a voice by name, or say &ldquo;surprise me&rdquo;. Each takes on its own orb shape.</p>
+            <div className="mt-6">
+              <Personas personas={PERSONAS} glyphs={glyphs} />
+            </div>
+          </div>
+        </section>
+
+        <section id="week" className="lp-section lp-wrap" aria-labelledby="week-title">
+          <p className="eyebrow">Your week</p>
+          <h2 id="week-title" className="section-title max-w-[24ch]">
+            See what actually helps you start
+          </h2>
+          <p className="mt-3 max-w-[62ch] text-ink-2">
+            Stay logs every block with the exact count behind it, so you can see your own patterns and decide for yourself. No streaks, no score. Explore a sample below.
+          </p>
+          <div className="mt-8">
+            <WeekExplorer />
+          </div>
+        </section>
+
+        <section id="measured" className="lp-night lp-band" aria-labelledby="measured-title" data-testid="measured">
+          <div className="lp-wrap">
+            <p className="eyebrow lp-eyebrow-night">Measured, with the limits</p>
+            <h2 id="measured-title" className="section-title lp-night-title max-w-[24ch]">
+              What we tested
+            </h2>
+            <ul className="lp-night-copy mt-6 max-w-[66ch] space-y-3">
+              <li><strong className="lp-night-strong">Safety first.</strong> 386 unit tests and 57 browser tests pass. They include crisis wording in more than 30 languages against real phrasings and ordinary sentences that must not trigger, the medication boundary, and the rule that voice never deletes your data.</li>
+              <li><strong className="lp-night-strong">Patience.</strong> A simulated speaker trailed off mid-sentence for 2.3 seconds, in several accents with room noise. Stay waited in every run. The managed voice it replaced talked over the pause.</li>
+              <li><strong className="lp-night-strong">Honesty.</strong> Every number below comes from a script in the repository, and the tests that found our own mistakes are in it too.</li>
+            </ul>
+            <div className="mt-12">
+              <Results />
+            </div>
+          </div>
+        </section>
+
+        <section id="receipts" className="lp-section lp-wrap" aria-labelledby="receipts-title">
+          <p className="eyebrow">What measuring found wrong</p>
+          <h2 id="receipts-title" className="section-title max-w-[26ch]">
+            The receipts, including the embarrassing ones
+          </h2>
+          <Receipts />
+        </section>
+
+        <section className="lp-section lp-wrap" aria-labelledby="compare" data-testid="compare">
+          <p className="eyebrow">Alternatives</p>
+          <h2 id="compare" className="section-title max-w-[24ch]">
+            Why not just use something else?
+          </h2>
+          <Compare />
+        </section>
+
+        <section className="lp-section lp-wrap" aria-labelledby="trust">
+          <p className="eyebrow">Trust</p>
           <h2 id="trust" className="section-title max-w-[22ch]">
             Built to be trusted with a hard day
           </h2>
-          <dl className="mt-8 grid gap-x-12 gap-y-8 md:grid-cols-2">
-            {PROMISES.map((p) => (
-              <div key={p.title}>
-                <dt className="font-display text-lg font-semibold">{p.title}</dt>
-                <dd className="mt-1 max-w-[46ch] text-ink-2">{p.body}</dd>
-              </div>
-            ))}
-          </dl>
+          <Promises />
         </section>
 
-        <section className="mx-auto max-w-6xl px-5 py-16 sm:px-8" aria-labelledby="evidence" data-testid="evidence">
+        <section className="lp-section lp-wrap" aria-labelledby="evidence" data-testid="evidence">
+          <p className="eyebrow">Evidence</p>
           <h2 id="evidence" className="section-title max-w-[26ch]">
             What the research says, and what it does not
           </h2>
@@ -176,103 +162,32 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-6xl px-5 py-16 sm:px-8" aria-labelledby="measured" data-testid="measured">
-          <h2 id="measured" className="section-title max-w-[24ch]">
-            What we tested
-          </h2>
-          <ul className="mt-6 max-w-[66ch] space-y-3 text-ink-2">
-            <li><strong className="text-ink">Safety first.</strong> 386 unit tests and 57 browser tests pass. They include crisis wording in more than 30 languages against real phrasings and ordinary sentences that must not trigger, the medication boundary, and the rule that voice never deletes your data.</li>
-            <li><strong className="text-ink">Patience.</strong> A simulated speaker trailed off mid-sentence for 2.3 seconds, in several accents with room noise. Stay waited in every run. The managed voice it replaced talked over the pause.</li>
-            <li><strong className="text-ink">Honesty.</strong> Every number below comes from a script in the repository, and the tests that found our own mistakes are in it too.</li>
-          </ul>
-          <details className="mt-8 max-w-4xl">
-            <summary className="cursor-pointer font-display text-lg font-semibold">Voice speed, measured with a simulated speaker</summary>
-            <ul className="mt-5 space-y-4 md:hidden">
-              {MEASURED.map((m) => (
-                <li key={m.what} className="card p-4">
-                  <p className="font-display font-semibold">{m.what}</p>
-                  <p className="mt-2 text-ink-2"><span className="meta block">Fast voice (default)</span>{m.fast}</p>
-                  <p className="mt-2 text-ink-2"><span className="meta block">The managed voice it replaced</span>{m.old}</p>
-                </li>
-              ))}
-            </ul>
-            <div className="mt-5 hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[34rem] border-collapse text-left text-[0.95rem]">
-                <caption className="sr-only">Stay&apos;s two voice engines, measured with the same simulated speaker</caption>
-                <thead>
-                  <tr className="border-b-2 border-ink">
-                    <th scope="col" className="py-2 pr-4 font-semibold"></th>
-                    <th scope="col" className="py-2 pr-4 font-semibold">Fast voice (default)</th>
-                    <th scope="col" className="py-2 font-semibold">The managed voice it replaced</th>
-                  </tr>
-                </thead>
-                <tbody className="[&_td]:border-b [&_td]:border-line [&_td]:py-3 [&_td]:pr-4 [&_th]:border-b [&_th]:border-line [&_th]:py-3 [&_th]:pr-4 [&_th]:text-left [&_th]:font-medium">
-                  {MEASURED.map((m) => (
-                    <tr key={m.what}>
-                      <th scope="row">{m.what}</th>
-                      <td>{m.fast}</td>
-                      <td>{m.old}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p className="meta mt-5 max-w-[64ch]">
-              Honest limits: the speakers were synthesized voices played into the browser, not people in a room, and the numbers come from a handful of runs on one machine. Sources and the full comparison are in <code>docs/RESEARCH_VOICE_LATENCY.md</code>.
-            </p>
-
-            <h3 className="mt-10 font-display text-xl font-semibold" data-testid="vs-products">Next to ChatGPT voice and Gemini Live, same day, same script</h3>
-            <p className="mt-2 max-w-[64ch] text-ink-2">
-              We fed the same synthesized speaker, through the same fake-microphone path in the same browser, into ChatGPT voice (Free plan) and Gemini 3.8 Live (Google AI Studio), and timed each reply inside the page. Small samples, one laptop. Stay was not the fastest.
-            </p>
-            <div className="mt-4 overflow-x-auto">
-              <table className="w-full min-w-[34rem] border-collapse text-left text-[0.95rem]">
-                <caption className="sr-only">Stay, ChatGPT voice and Gemini Live, measured with the same simulated speaker</caption>
-                <thead>
-                  <tr className="border-b-2 border-ink">
-                    <th scope="col" className="py-2 pr-4 font-semibold"></th>
-                    <th scope="col" className="py-2 pr-4 font-semibold">Stay</th>
-                    <th scope="col" className="py-2 pr-4 font-semibold">ChatGPT voice</th>
-                    <th scope="col" className="py-2 font-semibold">Gemini 3.8 Live</th>
-                  </tr>
-                </thead>
-                <tbody className="[&_td]:border-b [&_td]:border-line [&_td]:py-3 [&_td]:pr-4 [&_th]:border-b [&_th]:border-line [&_th]:py-3 [&_th]:pr-4 [&_th]:text-left [&_th]:font-medium">
-                  {VERSUS.map((v) => (
-                    <tr key={v.what}>
-                      <th scope="row">{v.what}</th>
-                      <td>{v.stay}</td>
-                      <td>{v.chatgpt}</td>
-                      <td>{v.gemini}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p className="meta mt-4 max-w-[64ch]">
-              Not a microphone test: this laptop&apos;s microphone reads silence, so the speaker was injected as the microphone stream. Free tiers and a playground, not paid products. Method, raw reports and every limit: <code>docs/BENCHMARK_REAL_PRODUCTS_2026-10-19.md</code>.
-            </p>
-          </details>
+        <section id="platforms" className="lp-section lp-tint" aria-labelledby="platforms-title">
+          <div className="lp-wrap">
+            <p className="eyebrow">Where it runs</p>
+            <h2 id="platforms-title" className="section-title max-w-[26ch]">
+              What exists today, and what does not
+            </h2>
+            <p className="mt-3 max-w-[62ch] text-ink-2">A tick here means it is in the repository and works. Anything else says so plainly.</p>
+            <Platforms />
+          </div>
         </section>
 
-        <section className="mx-auto max-w-6xl px-5 py-16 sm:px-8" aria-labelledby="notfor" data-testid="not-for">
+        <section className="lp-section lp-wrap" aria-labelledby="notfor" data-testid="not-for">
+          <p className="eyebrow">Honest edges</p>
           <h2 id="notfor" className="section-title max-w-[22ch]">
             Who Stay is not for
           </h2>
-          <ul className="mt-6 max-w-[62ch] list-disc space-y-2 pl-5 text-ink-2">
-            {NOT_FOR.map((t) => (
-              <li key={t}>{t}</li>
-            ))}
-          </ul>
-          <h3 className="mt-12 font-display text-xl font-semibold">Where it goes next</h3>
-          <p className="mt-2 max-w-[62ch] text-ink-2">
-            Free to use today. Running it costs real money per hour of talking (speech-to-text, speech and a language model), which is why you can bring your own keys. The next step is a small pilot with a university disability service or ADHD coaches, to measure what matters: whether people actually start.
-          </p>
+          <NotFor />
         </section>
 
-        <section className="mx-auto max-w-6xl px-5 pb-8 pt-10 sm:px-8">
-          <div className="flex flex-col items-start justify-between gap-6 rounded-[28px] bg-ink px-8 py-10 text-white sm:flex-row sm:items-center">
-            <h2 className="font-display text-2xl font-semibold leading-tight sm:max-w-[18ch] sm:text-3xl">Ready when you are.</h2>
-            <Link href="/app/today" className="btn btn-primary !bg-white !text-ink hover:!bg-recessed" data-testid="cta-open">
+        <section className="lp-wrap lp-cta-wrap">
+          <div className="lp-cta lp-night">
+            <div>
+              <h2 className="font-display text-2xl font-semibold leading-tight sm:text-3xl">Ready when you are.</h2>
+              <p className="lp-night-copy mt-2 max-w-[40ch]">One small thing is enough. Say it badly; Stay will wait.</p>
+            </div>
+            <Link href="/app/today" className="btn lp-cta-btn" data-testid="cta-open">
               Open Stay
             </Link>
           </div>

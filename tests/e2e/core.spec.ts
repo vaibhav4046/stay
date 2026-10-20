@@ -273,11 +273,13 @@ test('the landing page shows measured results with their limits, including where
   await expect(page.getByText(/faster than chatgpt|beats chatgpt|better than google/i)).toHaveCount(0);
 });
 
-test('the landing page has the demo video with captions, and the files are served', async ({ page, request }) => {
+test('the landing page has the demo video with a captions track, custom controls, and the files are served', async ({ page, request }) => {
   await page.goto('/');
   const video = page.getByTestId('demo-video').locator('video');
-  await expect(video).toHaveAttribute('controls', '');
   await expect(video.locator('track[kind="captions"]')).toHaveCount(1);
+  await expect(video).toHaveAttribute('poster', '/demo/stay-demo-poster.jpg');
+  await expect(page.getByTestId('player-bigplay')).toBeVisible(); // our controls replace the browser's once the page is interactive
+  await expect(page.getByTestId('player-captions')).toHaveAttribute('aria-pressed', 'true');
   for (const path of ['/demo/stay-demo.mp4', '/demo/stay-demo.vtt', '/demo/stay-demo-poster.jpg']) {
     const res = await request.head(path);
     expect(res.ok(), path).toBe(true);
