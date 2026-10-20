@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stay</title>
+<link rel="stylesheet" href="src/theme.css">
+<link rel="stylesheet" href="src/popup.css">
+</head>
+<body>
+<main>
+  <header><span class="orb" aria-hidden="true"></span><h1>Stay</h1></header>
+  <p id="next" class="meta">No check-in set.</p>
+  <form id="park" autocomplete="off">
+    <label for="thought">Park a thought</label>
+    <div class="row"><input id="thought" maxlength="140" placeholder="Oh, and I also need to&hellip;"><button type="submit" class="primary">Park</button></div>
+  </form>
+  <p id="status" class="meta" role="status"></p>
+  <div class="row">
+    <button id="voice" type="button" class="primary">Talk to Stay</button>
+    <button id="open" type="button">Open Stay</button>
+  </div>
+</main>
+<script src="src/shared.js"></script>
+<script src="src/popup.js"></script>
+</body>
+</html>

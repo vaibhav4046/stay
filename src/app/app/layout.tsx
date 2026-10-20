@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { StayWordmark } from '@/components/StayMark';
 import { UrgentHelpButton } from '@/components/UrgentHelpButton';
+import { InstallPrompt } from '@/components/InstallPrompt';
 
 const ICON = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' } as const;
 
@@ -44,7 +45,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-4 sm:px-8 sm:py-8 sm:pb-12">{children}</main>
+      <main className="mx-auto max-w-6xl px-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-4 sm:px-8 sm:py-8 sm:pb-12">
+        <InstallPrompt />
+        {children}
+      </main>
 
       <nav
         aria-label="App"

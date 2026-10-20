@@ -1,0 +1,34 @@
+{
+  "color": {
+    "canvas": "#FAF8F5",
+    "surface": "#FFFFFF",
+    "recessed": "#F1EFE9",
+    "ink": "#212422",
+    "ink2": "#626B66",
+    "muted": "#5C625E",
+    "line": "#E9E6DF",
+    "lineStrong": "#D5D1C8",
+    "accent": "#006A67",
+    "accentHover": "#005653",
+    "accentSoft": "#E4F0EF",
+    "success": "#236B48",
+    "caution": "#9A6318",
+    "danger": "#B23A2E"
+  },
+  "dark": {
+    "canvas": "#161817",
+    "surface": "#1E2120",
+    "ink": "#ECEAE4",
+    "accent": "#4FB3AE"
+  },
+  "orb": {
+    "from": "#0E9F9A",
+    "to": "#2F5BD8"
+  },
+  "app": {
+    "name": "Stay",
+    "tagline": "Start the thing you have been avoiding.",
+    "origin": "https://stay-two-swart.vercel.app",
+    "startPath": "/app/today?voice=auto"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "stay-extension",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Stay for Chrome and Edge (Manifest V3).",
+  "scripts": {
+    "build": "node build.mjs",
+    "build:dev": "node build.mjs --dev",
+    "test": "node --test test/shared.test.mjs",
+    "verify": "node test/verify.mjs"
+  }
+}

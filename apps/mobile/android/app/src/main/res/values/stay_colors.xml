@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="stayCanvas">#FAF8F5</color>
+    <color name="stayAccent">#006A67</color>
+    <color name="stayInk">#212422</color>
+</resources>

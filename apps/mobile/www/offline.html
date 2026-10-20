@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stay</title>
+<style>
+  :root { --canvas: #FAF8F5; --ink: #212422; --ink-2: #626B66; --accent: #006A67; }
+  @media (prefers-color-scheme: dark) { :root { --canvas: #161817; --ink: #ECEAE4; --ink-2: #A5ABA6; --accent: #4FB3AE; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--canvas); color: var(--ink);
+         font-family: -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif; padding: env(safe-area-inset-top) 1.5rem env(safe-area-inset-bottom); }
+  main { max-width: 24rem; text-align: center; }
+  h1 { font-size: 1.3rem; margin: 0 0 .5rem; }
+  p { color: var(--ink-2); line-height: 1.6; margin: 0 0 1.5rem; }
+  button { font: inherit; font-weight: 600; border: 0; border-radius: 12px; padding: .8rem 1.5rem; background: var(--accent); color: #fff; }
+  @media (prefers-color-scheme: dark) { button { color: #0b1110; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Stay can't reach the internet</h1>
+  <p>Your tasks, memory and reminders live on this phone and are safe. Voice and planning need a connection.</p>
+  <button id="retry" type="button">Try again</button>
+</main>
+<script>
+  const go = () => { location.href = '/app/today'; };
+  document.getElementById('retry').addEventListener('click', go);
+  window.addEventListener('online', go);
+</script>
+</body>
+</html>

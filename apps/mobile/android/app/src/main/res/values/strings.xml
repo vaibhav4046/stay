@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Stay</string>
+    <string name="title_activity_main">Stay</string>
+    <string name="package_name">app.stay.mobile</string>
+    <string name="custom_url_scheme">app.stay.mobile</string>
+    <string name="shortcut_talk">Talk</string>
+    <string name="shortcut_talk_long">Talk to Stay</string>
+    <string name="shortcut_focus">Focus 20m</string>
+    <string name="shortcut_focus_long">Start a 20 minute block</string>
+    <string name="shortcut_ground">Ground me</string>
+    <string name="shortcut_ground_long">Ground me</string>
+</resources>

@@ -1,7 +1,7 @@
 /* Stay service worker: the app shell keeps opening with no connection. History, memory and the Today list are local anyway;
  * voice and plans need the network, and say so. API calls are never cached. */
-const CACHE = 'stay-shell-v1';
-const SHELL = ['/app/today', '/manifest.webmanifest', '/icons/icon-192.png'];
+const CACHE = 'stay-shell-v2';
+const SHELL = ['/app/today', '/offline.html', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-maskable-192.png'];
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -31,7 +31,7 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => undefined);
           return res;
         })
-        .catch(() => caches.match(req).then((hit) => hit || caches.match('/app/today'))),
+        .catch(() => caches.match(req).then((hit) => hit || caches.match('/app/today').then((shell) => shell || caches.match('/offline.html')))),
     );
     return;
   }

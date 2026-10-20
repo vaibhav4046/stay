@@ -1,0 +1,60 @@
+{
+  "name": "stay-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Stay for desktop: the voice-first ADHD companion in a tray-resident Electron shell.",
+  "author": "Vaibhav Lalwani <115102797+vaibhav4046@users.noreply.github.com>",
+  "license": "MIT",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "start:local": "electron . --local",
+    "icons": "node ../shared/generate.mjs",
+    "test": "node --test test/config.test.mjs",
+    "smoke": "node test/smoke.mjs",
+    "pack": "electron-builder --dir",
+    "dist:win": "electron-builder --win",
+    "dist:mac": "electron-builder --mac",
+    "dist:linux": "electron-builder --linux"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.51.0",
+    "electron": "^44.9.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "app.stay.desktop",
+    "productName": "Stay",
+    "copyright": "Stay",
+    "directories": { "output": "dist", "buildResources": "build" },
+    "files": ["src/**/*", "assets/**/*", "package.json"],
+    "artifactName": "Stay-${version}-${os}-${arch}.${ext}",
+    "win": {
+      "target": ["nsis", "portable"],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "Stay"
+    },
+    "mac": {
+      "target": ["dmg", "zip"],
+      "icon": "build/icon.icns",
+      "category": "public.app-category.healthcare-fitness",
+      "hardenedRuntime": true,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "Stay listens only while you are talking to it, to turn what you say into one small first step."
+      }
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "icon": "build/icon.png",
+      "category": "Utility",
+      "synopsis": "Voice-first ADHD companion"
+    }
+  }
+}

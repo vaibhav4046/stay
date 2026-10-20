@@ -36,6 +36,7 @@ import { showNotification } from '@/lib/reminders';
 import { addToday, loadToday, moveToday, toggleToday, type TodayItem } from '@/lib/coach/todayList';
 import { byokHeaders } from '@/lib/byok/config';
 import { loadParked, unparkThought, type ParkedItem } from '@/lib/coach/parkingLot';
+import { emitHost, onHostCommand } from '@/lib/host';
 
 type Step = 'idle' | 'plan' | 'timer' | 'outcome' | 'done';
 
@@ -267,6 +268,34 @@ export function StayHome({
     onStartTimer: (m) => startTimer(m),
   });
 
+  // the PWA shortcut "Brain dump" opens /app/today?action=dump
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('action') === 'dump') setSheet('dump');
+  }, []);
+
+  // Native wrappers (desktop tray/hotkey, mobile, extension) watch these and send commands back; see src/lib/host.ts.
+  useEffect(() => {
+    if (running) emitHost({ type: 'timer-started', minutes, endsAt: deadline.current });
+    else emitHost({ type: 'timer-stopped' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [running]);
+  useEffect(() => emitHost({ type: 'voice-state', live: voice.isConnected }), [voice.isConnected]);
+  useEffect(
+    () =>
+      onHostCommand((c) => {
+        const v = voiceRef.current;
+        if (c.type === 'voice-start' && !v.isConnected) void v.startVoiceSession();
+        else if (c.type === 'voice-stop' && v.isConnected) v.disconnectVoiceSession();
+        else if (c.type === 'voice-toggle') {
+          if (v.isConnected) v.disconnectVoiceSession();
+          else void v.startVoiceSession();
+        }
+        else if (c.type === 'grounding') setGrounding(true);
+        else if (c.type === 'timer') startTimer(c.minutes);
+      }),
+    [startTimer],
+  );
+
   // The orb listens to the conversation: partial speech (instant shapes only) and each finished turn.
   useEffect(() => {
     const t = voice.partialUserTranscript;
@@ -301,6 +330,7 @@ export function StayHome({
         setRunning(false);
         setStep('outcome');
         chime();
+        emitHost({ type: 'timer-ended' });
         if (proactiveCheckins && plan) {
           voice.speakProactively(
             `The user's ${minutes}-minute focus timer just ended. Speak first: in under 20 words, warmly ask whether they got started on "${plan.firstStep}". When they answer, call record_session_outcome.`,
@@ -402,6 +432,7 @@ export function StayHome({
       for (const r of takeDue()) {
         chime();
         setNote(`Check-in: ${r.text}`);
+        emitHost({ type: 'reminder-due', id: r.id, text: r.text });
         showNotification('Stay', r.text);
         if (voiceRef.current.isConnected) voiceRef.current.speakProactively(`Gently remind the person: ${r.text}. Under 12 words, warm, no pressure.`);
       }
