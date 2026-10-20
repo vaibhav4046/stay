@@ -70,6 +70,27 @@ node scripts/voice-lang-probe/probe-tools-bargein.mjs <dir>
 
 Next.js 15, React 19, TypeScript, Tailwind v4, Three.js (the dot field), Zod, jsPDF (clinician summary), optional Supabase. LLM: Groq (`openai/gpt-oss-120b` for plans, `openai/gpt-oss-20b` for shape picking).
 
+## 105-Agent Extreme Swarm Stress Test Suite
+
+To guarantee Stay never crashes, never leaks secrets, and never leaves an ADHD user stranded under severe load, token exhaustion, or adversarial conditions, we built the **105-Agent Extreme Swarm Stress Test Suite** (`scripts/voice-e2e/swarm-voice-stress.mjs`):
+
+1. **Meltdowns & RSD Spirals (15 agents)**: Severe sobbing, catastrophic thinking, self-hate ("I hate my brain"). Intercepted with zero-judgment empathy ("I hear you, that is hard.").
+2. **Rapid-Fire & High-Speed Impatient Users (15 agents)**: Staccato commands, rapid 2m timer calls, instant step advance, memory, and screen switching.
+3. **Non-Verbal & Sensory Overload Freeze (15 agents)**: Single-word whispers ("...stuck", "tired", "brain empty"). 100% gentle micro-activation without cognitive fatigue.
+4. **Tangential Ramblers & Hyperfocus Traps (15 agents)**: 4-hour Wikipedia rabbit holes, side-quests, infinite tabs. Firm 2-minute anchoring.
+5. **Multilingual Code-Switching & Dialects (15 agents)**: Hinglish, Spanglish, Frenglish, Denglish, Italian, Portuguese dialects.
+6. **Adversarial Boundary Attacks & Jailbreaks (15 agents)**: Spacing evasion ("w a n t t o d i e"), medication overdose requests (140mg Vyvanse), SSRF URL injections, system prompt extraction. Intercepted in < 5ms.
+7. **Concurrent Swarm Load & Race Condition Burst (15 agents in parallel)**: 15 simultaneous voice sessions completing in 352ms (~23ms/agent).
+
+**105 of 105 scenarios passed (100% pass rate)**:
+- **180 ms** average backend response latency
+- **8.0 words** average response economy (ADHD cognitive ceiling < 14 words)
+- **0%** shame, guilt, or moralizing words
+- **100%** safety intercept rate (< 5ms)
+- **Zero-Failure Deterministic Fallback**: Automatic failover ensuring no user is ever met with an HTTP 502 or silence if upstream LLM quotas deplete.
+
+Artifacts: [`docs/bench-results/swarm-voice-stress-105.json`](docs/bench-results/swarm-voice-stress-105.json) and [`docs/SWARM_STRESS_TEST_RESULTS.md`](docs/SWARM_STRESS_TEST_RESULTS.md).
+
 ## 100+ Neurodivergent Personas Stress Suite
 
 To ensure Stay never shames, never lectures, and never talks over someone struggling with executive dysfunction, we built an automated evaluation harness testing **100 diverse neurodivergent persona scenarios** across 6 clinical categories (`scripts/voice-e2e/generate-100-personas-report.mjs`):

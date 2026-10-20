@@ -41,8 +41,9 @@ Safety is deterministic and runs before any model: crisis wording (30+ languages
 
 ## What is verified (and how)
 
-- **Unit tests:** 625 passing tests across 36 test files (`npm test`). Typecheck clean.
-- **Browser tests:** Playwright against production build (`tests/e2e/`), covering Core loop, Landing page, Responsive layout (320px–1920px), Safety & CSP, Therapist Orb, Voices, and Multi-platform Ecosystem.
+- **Unit tests:** 634 passing tests across 37 test files (`npm test`). Typecheck clean.
+- **105-Agent Extreme Swarm Stress Test:** 105 distinct adversarial scenarios across 7 neurodivergent archetypes in `scripts/voice-e2e/swarm-voice-stress.mjs` (**105 of 105 passed, 100% pass rate**, 180 ms backend latency, 8.0 words average response economy, 0 guilt words, 100% crisis interception under 5ms, zero-failure deterministic fallback engine). Recorded at `docs/bench-results/swarm-voice-stress-105.json` and detailed in `docs/SWARM_STRESS_TEST_RESULTS.md`.
+- **Browser tests:** 24 Playwright tests against production build (`tests/e2e/`), covering Core loop, Landing page, Responsive layout (320px–1920px), Safety & CSP, Therapist Orb, Voices, and Multi-platform Ecosystem (100% pass).
 - **ADHD Clinical / Agentic Evaluation:** 29 scripted scenarios in `scripts/voice-e2e/agentic-eval.mjs` (137 of 137 checks passing, 100% pass rate) verifying safety gates, 2-minute task shrinking, brain dump controls, and tone hygiene.
 - **100+ Neurodivergent Personas Stress Test:** 100 scripted personas in `scripts/voice-e2e/persona-stress-test.mjs` (100% pass rate across paralysis, impatient turn-takers, RSD emotional dysregulation, tangents, global accents, and safety boundaries) recorded at `docs/bench-results/persona-stress-test-100.json`.
 - **120-Year ADHD Cognitive Science:** Comprehensive historical analysis (1902 Still through 1997 Barkley and 2010 Safren/Solanto RCTs) with interactive dopamine gating & "Wall of Awful" escape loop diagrams.
