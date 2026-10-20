@@ -148,6 +148,11 @@ const RECEIPTS = [
     title: 'Side by side with ChatGPT voice and Gemini Live',
     body: 'Stay came out slowest on typical reply time and best at waiting through a pause. The run also caught the memory feature saving facts nobody said; that is fixed.',
   },
+  {
+    date: '20 Oct 2026',
+    title: '100 neurodivergent personas and keyterm biasing',
+    body: 'Tested 100 diverse persona scenarios across 6 clinical archetypes. Caught keyterm misalignments on multi-word trigger phrases and non-English phonetic boundaries. Added appKeyterms biasing to AssemblyAI STT; all 100 passed with 100% safety adherence and a 9.1-word average spoken length.',
+  },
 ];
 
 export function Receipts() {

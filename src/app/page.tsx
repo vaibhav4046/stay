@@ -8,6 +8,7 @@ import { WeekExplorer } from '@/components/landing/WeekExplorer';
 import { Results } from '@/components/landing/Results';
 import { VoiceBenchmarkArena } from '@/components/landing/VoiceBenchmarkArena';
 import { PersonaStressTestExplorer } from '@/components/landing/PersonaStressTestExplorer';
+import { AssemblyAiArchitecture } from '@/components/landing/AssemblyAiArchitecture';
 import { AdhdScienceHistory } from '@/components/landing/AdhdScienceHistory';
 import { NeuralOrbArtifact } from '@/components/landing/NeuralOrbArtifact';
 import { Artifacts } from '@/components/landing/Artifacts';
@@ -129,6 +130,9 @@ export default function Home() {
 
         {/* 100+ Neurodivergent Personas Stress Test Explorer */}
         <PersonaStressTestExplorer />
+
+        {/* AssemblyAI Real-Time Voice Pipeline Architecture */}
+        <AssemblyAiArchitecture />
 
         <section id="receipts" className="lp-section lp-wrap" aria-labelledby="receipts-title">
           <p className="eyebrow">What measuring found wrong</p>
