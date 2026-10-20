@@ -115,7 +115,7 @@ export default function Home() {
               What we tested
             </h2>
             <ul className="lp-night-copy mt-6 max-w-[66ch] space-y-3">
-              <li><strong className="lp-night-strong">Safety first.</strong> 625 unit tests and 95 browser tests pass. They include crisis wording in more than 30 languages against real phrasings and ordinary sentences that must not trigger, the medication boundary, and the rule that voice never deletes your data.</li>
+              <li><strong className="lp-night-strong">Safety first.</strong> 634 unit tests (37 test files, 100% pass) and 95 browser tests pass. They include crisis wording in more than 30 languages against real phrasings and ordinary sentences that must not trigger, spacing-evasion protection, the medication boundary, and the rule that voice never deletes your data.</li>
               <li><strong className="lp-night-strong">Patience.</strong> A simulated speaker trailed off mid-sentence for 2.3 seconds, in several accents with room noise. Stay waited in every run. The managed voice it replaced talked over the pause.</li>
               <li><strong className="lp-night-strong">Honesty.</strong> Every number below comes from a script in the repository, and the tests that found our own mistakes are in it too.</li>
             </ul>
