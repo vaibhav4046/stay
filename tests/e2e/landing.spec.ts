@@ -213,13 +213,13 @@ test.describe('Landing: scroll story and artifacts', () => {
     await expect(c).toContainText('in 10 min');
   });
 
-  test('the sixteen voices filter to the five native accents', async ({ page }) => {
+  test('the voices filter to the native accents', async ({ page }) => {
     await open(page);
     const p = page.getByTestId('personas');
     await p.scrollIntoViewIfNeeded();
-    await expect(p.getByTestId('persona')).toHaveCount(16);
+    await expect(p.getByTestId('persona')).toHaveCount(22);
     await p.getByRole('button', { name: /Native accent/ }).click();
-    await expect(p.getByTestId('persona')).toHaveCount(5);
+    await expect(p.getByTestId('persona')).toHaveCount(7);
     await expect(p).toContainText('Native Italian voice');
   });
 });

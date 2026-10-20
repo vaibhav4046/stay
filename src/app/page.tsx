@@ -79,7 +79,7 @@ export default function Home() {
               These four are interactive, built from the same data shapes the app uses and filled with invented examples. Nothing here is a real person&apos;s record.
             </p>
             <Artifacts />
-            <h3 className="sub-title mt-16">Sixteen voices, each with a face made of dots</h3>
+            <h3 className="sub-title mt-16">Twenty-two voices, each with a face made of dots</h3>
             <p className="mt-2 max-w-[62ch] text-ink-2">While you are talking to Stay, ask for a voice by name, or say &ldquo;surprise me&rdquo;. Each takes on its own orb shape.</p>
             <div className="mt-6">
               <Personas personas={PERSONAS} glyphs={glyphs} />

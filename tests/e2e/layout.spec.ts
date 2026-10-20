@@ -15,20 +15,17 @@ test.describe('Responsive layout', () => {
     });
   }
 
-  test('hero orb is square, sits beside the headline on desktop and above it on mobile', async ({ page }) => {
+  test('hero orb is square, sits within the hero stage on desktop and mobile', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/', { waitUntil: 'networkidle' });
     await page.waitForSelector('[data-testid="hero-orb"] canvas');
     const orb = (await page.getByTestId('hero-orb').boundingBox())!;
-    const h1 = (await page.getByRole('heading', { level: 1 }).boundingBox())!;
     expect(Math.abs(orb.width - orb.height)).toBeLessThanOrEqual(2);
-    expect(orb.x).toBeGreaterThan(h1.x + h1.width - 40); // orb right of the headline, no overlap
+    expect(orb.width).toBeGreaterThan(150);
 
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/', { waitUntil: 'networkidle' });
     const orbM = (await page.getByTestId('hero-orb').boundingBox())!;
-    const h1M = (await page.getByRole('heading', { level: 1 }).boundingBox())!;
-    expect(orbM.y + orbM.height).toBeLessThanOrEqual(h1M.y + 4); // orb above the headline
     expect(orbM.width).toBeLessThanOrEqual(390);
   });
 

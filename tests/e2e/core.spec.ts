@@ -31,9 +31,10 @@ test.describe('Landing', () => {
     await page.waitForSelector('[data-testid="hero-orb"] canvas');
     await expect(page.getByTestId('hero-start')).toBeVisible();
     await expect(page.getByText(/not a diagnosis/i).first()).toBeVisible();
-    for (const banned of ['Interactive Preview', 'Try the demo', 'Guided preview', 'example data', 'AGI']) {
+    for (const banned of ['Interactive Preview', 'Try the demo', 'Guided preview', 'example data']) {
       await expect(page.getByText(banned, { exact: false })).toHaveCount(0);
     }
+    await expect(page.getByText(/\bAGI\b/)).toHaveCount(0);
     expect((await page.request.get('/demo')).status()).toBe(404);
   });
 
