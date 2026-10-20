@@ -10,34 +10,34 @@
   },
   "dots": 5200,
   "sphere": {
-    "frames": 180,
+    "frames": 181,
     "medianMs": 16.6,
-    "p95Ms": 18,
-    "p99Ms": 24.6,
-    "worstMs": 26,
+    "p95Ms": 17.9,
+    "p99Ms": 18.2,
+    "worstMs": 18.4,
     "fpsAvg": 60,
     "over33ms": 0,
-    "cpuMedianMs": 0.2,
-    "cpuP95Ms": 0.3,
-    "cpuWorstMs": 0.4
+    "cpuMedianMs": 0.1,
+    "cpuP95Ms": 0.2,
+    "cpuWorstMs": 0.3
   },
   "morph": {
-    "frames": 168,
-    "medianMs": 16.7,
-    "p95Ms": 17.7,
-    "p99Ms": 20.2,
-    "worstMs": 36.2,
-    "fpsAvg": 59.7,
-    "over33ms": 1,
-    "cpuMedianMs": 0.2,
-    "cpuP95Ms": 0.3,
-    "cpuWorstMs": 0.4
+    "frames": 169,
+    "medianMs": 16.6,
+    "p95Ms": 17.8,
+    "p99Ms": 18.1,
+    "worstMs": 18.2,
+    "fpsAvg": 60,
+    "over33ms": 0,
+    "cpuMedianMs": 0.1,
+    "cpuP95Ms": 0.2,
+    "cpuWorstMs": 1.1
   },
   "figureIdle": {
     "frames": 180,
-    "medianMs": 16.6,
-    "p95Ms": 17.9,
-    "p99Ms": 18.4,
+    "medianMs": 16.5,
+    "p95Ms": 17.8,
+    "p99Ms": 18,
     "worstMs": 18.5,
     "fpsAvg": 60,
     "over33ms": 0,
@@ -48,13 +48,13 @@
   "speaking": {
     "frames": 241,
     "medianMs": 16.6,
-    "p95Ms": 17.7,
-    "p99Ms": 18.1,
-    "worstMs": 18.2,
+    "p95Ms": 17.8,
+    "p99Ms": 18.3,
+    "worstMs": 18.4,
     "fpsAvg": 60,
     "over33ms": 0,
     "cpuMedianMs": 0.1,
     "cpuP95Ms": 0.2,
-    "cpuWorstMs": 0.4
+    "cpuWorstMs": 0.2
   }
 }
