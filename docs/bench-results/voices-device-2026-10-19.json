@@ -1,0 +1,34 @@
+{
+  "date": "2026-10-19T17:17:04.122Z",
+  "machine": "Windows 11, OneCore voices",
+  "results": [
+    {
+      "voice": "Heera",
+      "wer": 0,
+      "errors": 0,
+      "refWords": 76,
+      "wallMsPerSentence": [
+        1270,
+        1013,
+        952,
+        1303,
+        1012
+      ],
+      "misses": []
+    },
+    {
+      "voice": "Ravi",
+      "wer": 0,
+      "errors": 0,
+      "refWords": 76,
+      "wallMsPerSentence": [
+        1303,
+        1368,
+        953,
+        1437,
+        1635
+      ],
+      "misses": []
+    }
+  ]
+}

@@ -130,16 +130,18 @@ test.describe('Menu and memory', () => {
   });
 });
 
-test('the voice sheet lists all 16 named voices, honest about which are native accents', async ({ page }) => {
+test('the voice sheet shows four recommended voices and every other voice, honest about which are native accents', async ({ page }) => {
   await onboard(page);
   await page.getByTestId('menu-button').click();
   await page.getByRole('button', { name: 'Voice and language' }).click();
   const dialog = page.getByRole('dialog');
+  await expect(dialog.getByTestId('voice-recommended').locator('[data-testid^="voice-"][data-usable]')).toHaveCount(4);
+  await dialog.getByTestId('voice-more').locator('summary').click();
   await expect(dialog.getByText('Captain Crumpet', { exact: true })).toBeVisible();
   await expect(dialog.getByText('Goblin Mode Gus', { exact: true })).toBeVisible();
   await expect(dialog.getByText('Native Spanish voice').first()).toBeVisible();
   await expect(dialog.getByText('British voice').first()).toBeVisible();
-  expect(await dialog.locator('button.chip', { hasText: /voice/i }).count()).toBeGreaterThanOrEqual(16);
+  expect(await dialog.locator('[data-testid^="voice-"][data-usable]').count()).toBe(22);
 });
 
 test('two people on two browsers never see each other’s history', async ({ browser }: { browser: Browser }) => {

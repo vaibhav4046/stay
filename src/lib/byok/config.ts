@@ -10,10 +10,13 @@ export interface ByokConfig {
   model: string;
   baseUrl: string;
   assemblyKey: string;
+  /** Azure AI Speech key and region for the optional accent voices (Indian English, Mexican Spanish). Sent only to /api/voice/tts. */
+  ttsKey: string;
+  ttsRegion: string;
 }
 
 export const BYOK_STORAGE_KEY = 'stay_byok';
-export const EMPTY_BYOK: ByokConfig = { provider: 'default', llmKey: '', model: '', baseUrl: '', assemblyKey: '' };
+export const EMPTY_BYOK: ByokConfig = { provider: 'default', llmKey: '', model: '', baseUrl: '', assemblyKey: '', ttsKey: '', ttsRegion: '' };
 
 export function loadByok(): ByokConfig {
   try {
@@ -26,6 +29,8 @@ export function loadByok(): ByokConfig {
       model: typeof p.model === 'string' ? p.model : '',
       baseUrl: typeof p.baseUrl === 'string' ? p.baseUrl : '',
       assemblyKey: typeof p.assemblyKey === 'string' ? p.assemblyKey : '',
+      ttsKey: typeof p.ttsKey === 'string' ? p.ttsKey : '',
+      ttsRegion: typeof p.ttsRegion === 'string' ? p.ttsRegion : '',
     };
   } catch {
     return EMPTY_BYOK;
@@ -67,4 +72,11 @@ export function byokHeaders(config: ByokConfig = loadByok()): Record<string, str
   }
   if (config.assemblyKey.trim()) h['x-stay-aai-key'] = config.assemblyKey.trim();
   return h;
+}
+
+/** Headers for /api/voice/tts only (kept out of byokHeaders so the speech key never rides along on chat or token calls). Empty when no key is set. */
+export function ttsHeaders(config: ByokConfig = loadByok()): Record<string, string> {
+  const key = config.ttsKey.trim();
+  const region = config.ttsRegion.trim().toLowerCase();
+  return key && region ? { 'x-stay-tts-key': key, 'x-stay-tts-region': region } : {};
 }

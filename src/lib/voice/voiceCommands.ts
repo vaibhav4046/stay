@@ -3,6 +3,8 @@
  * Allows users to control timers, pause/resume listening, break down tasks,
  * toggle quiet mode, change voices, and inspect memory / history completely hands-free.
  */
+import { resolvePersona } from '@/lib/voice/personas';
+
 
 export type VoiceCommandAction =
   | { type: 'pause_listening' }
@@ -156,6 +158,14 @@ export function detectVoiceCommand(text: string): VoiceCommandAction {
     const LEGACY: Record<string, string> = { oliver: 'charles', amanda: 'eve', rachel: 'vera', josh: 'michael' };
     const resolvedId = target === 'male' ? 'charles' : target === 'female' ? 'anna' : LEGACY[target] || target;
     return { type: 'change_voice', voiceId: resolvedId };
+  }
+  // by accent ("use the Indian voice", "switch to Mexican Spanish", "a female Indian English voice") or by persona name ("change voice to Chaiwala Blitz")
+  const accentVoice = clean.match(/\b(?:change|switch|set|use|speak|talk)\b[^.?!]{0,30}?\b((?:(?:male|female)\s+)?(?:indian(?:\s+english)?|mexican(?:\s+spanish)?))\b/i);
+  const namedVoice = clean.match(/\b(?:change|switch|set)\s+(?:the\s+)?voice\s+to\s+(?:the\s+)?(.{2,40}?)\s*$/i) || clean.match(/\b(?:use|switch\s+to)\s+(?:the\s+)?(.{2,40}?)\s+voice\s*$/i);
+  const wantedVoice = accentVoice?.[1] ?? namedVoice?.[1];
+  if (wantedVoice) {
+    const persona = resolvePersona(wantedVoice);
+    if (persona) return { type: 'change_voice', voiceId: persona.id };
   }
   if (/\b(?:change voice|switch voice|voice settings|select voice|choose voice)\b/i.test(clean)) {
     return { type: 'open_voice_menu' };

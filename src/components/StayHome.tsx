@@ -27,6 +27,9 @@ import { GroundingPanel } from '@/components/GroundingPanel';
 import { OrbCognitiveGames } from '@/components/OrbCognitiveGames';
 import { Signal, hasWebGL } from '@/components/Signal';
 import { Sheet } from '@/components/Sheet';
+import { VoicePicker } from '@/components/VoicePicker';
+import { resolvePersona } from '@/lib/voice/personas';
+import { voiceNeeds } from '@/lib/voice/tts/caps';
 import { BrainDumpSheet } from '@/components/BrainDumpSheet';
 import { TodayCard } from '@/components/TodayCard';
 import { RoutineSheet } from '@/components/RoutineSheet';
@@ -212,8 +215,7 @@ export function StayHome({
     onGroundingRequested: () => setGrounding(true),
     onChangeVoiceRequested: (voiceId) => {
       if (voiceId) {
-        voiceRef.current?.setSelectedVoice(voiceId);
-        say(`Voice: ${voiceId}`);
+        sayVoice(voiceId);
       } else setSheet('voice');
     },
     onToggleQuietModeRequested: () => {
@@ -230,8 +232,7 @@ export function StayHome({
         voiceRef.current?.setSelectedLanguage(cmd.langCode);
         say(`Language: ${cmd.langName}`);
       } else if (cmd.type === 'change_voice') {
-        voiceRef.current?.setSelectedVoice(cmd.voiceId);
-        say(`Voice: ${cmd.voiceId}`);
+        sayVoice(cmd.voiceId);
       } else if (cmd.type === 'break_down') {
         voiceRef.current?.sendUserTextMessage('Can you break this down into an ultra-micro step?');
       }
@@ -239,6 +240,14 @@ export function StayHome({
   });
   const voiceRef = useRef(voice);
   voiceRef.current = voice;
+  /** Switch voice by name or accent and say what happened: the persona's name, or why it cannot speak on this device yet. */
+  const sayVoice = (query: string) => {
+    const wanted = resolvePersona(query);
+    const needs = wanted ? voiceNeeds(wanted) : null;
+    if (needs) return say(needs);
+    const picked = voiceRef.current?.setSelectedVoice(query);
+    say(picked ? `Voice: ${picked.name}` : 'No voice by that name');
+  };
 
   // the orb turns into a person while Stay speaks (or when asked), and back to the topical shape when you talk
   const presence = useOrbPresence({
@@ -774,18 +783,7 @@ export function StayHome({
 
       {sheet === 'voice' && (
         <Sheet title="Voice and language" onClose={() => setSheet(null)}>
-          <p className="label">Voice</p>
-          <p className="meta mt-1">Say a name to switch, like &ldquo;change voice to Captain Crumpet&rdquo;, or &ldquo;a female American voice&rdquo;. Only the voices marked native have a real Spanish, French, German, Italian or Portuguese accent; the rest are British or American voices with a personality.</p>
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            {voice.availableVoices.map((v) => (
-              <button key={v.id} type="button" className="chip justify-start" aria-pressed={voice.selectedVoice === v.id} onClick={() => voice.setSelectedVoice(v.id)}>
-                <span>
-                  <span className="block font-medium">{v.name}</span>
-                  <span className="meta block">{v.gender === 'female' ? 'Female' : 'Male'} · {v.accent}</span>
-                </span>
-              </button>
-            ))}
-          </div>
+          <VoicePicker selected={voice.selectedVoice} onSelect={(id) => voice.setSelectedVoice(id)} fastVoice={voice.fastVoice} />
           <label className="mt-5 flex cursor-pointer items-start gap-3" data-testid="fast-voice-row">
             <input type="checkbox" className="mt-1 h-5 w-5 accent-[#006A67]" checked={voice.fastVoice} onChange={(e) => voice.setFastVoice(e.target.checked)} data-testid="fast-voice-toggle" />
             <span>

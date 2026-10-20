@@ -8,6 +8,7 @@
  * 0.3 s + first synthesized audio 0.2 s add up to about 1.4 s. This class is how that sum is realised and checked.
  */
 import { byokHeaders } from '@/lib/byok/config';
+import type { TtsConnection } from '@/lib/voice/tts/types';
 
 export interface FastSocketConfig {
   sttToken: string;
@@ -22,6 +23,8 @@ export interface FastSocketConfig {
   keyterms?: string[];
   /** Ping the chat route when the session starts so the first reply is not slowed by a cold function. Default true. */
   warmUp?: boolean;
+  /** Speak through another engine (browser or Azure voice) instead of AssemblyAI's TTS socket. See src/lib/voice/tts. */
+  ttsConnect?: () => TtsConnection;
 }
 
 export interface FastSession {
@@ -112,12 +115,12 @@ export class FastSocket {
   onerror: (() => void) | null = null;
   onclose: (() => void) | null = null;
 
-  private cfg: Required<Omit<FastSocketConfig, "keyterms">> & { keyterms?: string[] };
+  private cfg: Required<Omit<FastSocketConfig, "keyterms" | "ttsConnect">> & { keyterms?: string[]; ttsConnect?: () => TtsConnection };
   private session: FastSession | null = null;
   private notes: string[] = [];
   private history: ChatMessage[] = [];
   private stt: WebSocket | null = null;
-  private tts: WebSocket | null = null;
+  private tts: WebSocket | TtsConnection | null = null;
   private inUserTurn = false;
   private lastTurnOrder = -1;
   private genId = 0;
@@ -161,7 +164,7 @@ export class FastSocket {
         void this.start((m.session || {}) as Json);
         break;
       case 'input.audio':
-        if (this.stt?.readyState === WebSocket.OPEN && typeof m.audio === 'string') this.stt.send(b64ToBytes(m.audio));
+        if (this.stt?.readyState === WebSocket.OPEN && typeof m.audio === 'string' && !(this.tts as TtsConnection | null)?.muteMic) this.stt.send(b64ToBytes(m.audio)); // muteMic: a browser voice cannot be heard around, so the mic is closed while it talks
         break;
       case 'conversation.message':
         if (typeof m.content === 'string') this.notes = [...this.notes.slice(-4), m.content.slice(0, 300)];
@@ -255,9 +258,9 @@ export class FastSocket {
     return new Promise((resolve, reject) => {
       const s = this.session as FastSession;
       const q = new URLSearchParams({ token: this.cfg.ttsToken, voice: s.voice, language: s.ttsLanguage });
-      const ws = new WebSocket(`${TTS_URL}?${q}`);
+      const ws: WebSocket | TtsConnection = this.cfg.ttsConnect ? this.cfg.ttsConnect() : new WebSocket(`${TTS_URL}?${q}`);
       this.tts = ws;
-      ws.onmessage = (e) => {
+      ws.onmessage = (e: { data: unknown }) => {
         if (typeof e.data !== 'string') return;
         const m = JSON.parse(e.data) as Json;
         if (m.type === 'Begin') resolve();
