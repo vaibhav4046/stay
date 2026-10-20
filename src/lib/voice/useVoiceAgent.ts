@@ -1,7 +1,7 @@
 'use client';
 
 import { byokHeaders } from '@/lib/byok/config';
-import { FastSocket, FAST_TTS_LANGUAGE, fastVoiceFor } from '@/lib/voice/fastSocket';
+import { FastSocket, FAST_TTS_LANGUAGE } from '@/lib/voice/fastSocket';
 import { loadParked, parkThought } from '@/lib/coach/parkingLot';
 import { addToday, loadToday, openToday } from '@/lib/coach/todayList';
 import { findRoutine, loadRoutines } from '@/lib/routines/routines';
@@ -15,7 +15,10 @@ import type {
   StrategyKey,
   VoiceVisualState,
 } from '@/types/domain';
-import { PERSONAS, personaById, resolvePersona, type VoicePersona } from '@/lib/voice/personas';
+import { NATIVE_PERSONA_FOR_LANG, PERSONAS, personaById, resolvePersona, type VoicePersona } from '@/lib/voice/personas';
+import { agentVoiceFor, personaAfterLanguageChange, planSpeech } from '@/lib/voice/tts/plan';
+import { cachedTtsCaps, refreshTtsCaps, voiceNeeds } from '@/lib/voice/tts/caps';
+import { createTtsConnection } from '@/lib/voice/tts';
 import { APP_TOOL, appKeyterms, buildGreeting, buildSystemPrompt, type AppActionArgs } from '@/lib/voice/agentTool';
 import {
   detectCrisisSignal,
@@ -111,8 +114,7 @@ export const AVAILABLE_VOICES: AvailableVoice[] = PERSONAS.map((p) => ({
 }));
 
 /** Language -> the voice with that native accent. Voices cannot change mid-session, so switching restarts cleanly. */
-export const NATIVE_VOICE_FOR_LANG: Record<string, string> = { es: 'lola', fr: 'estelle', de: 'juergen', it: 'giovanni', pt: 'rafael' };
-const NATIVE_VOICE_IDS = Object.values(NATIVE_VOICE_FOR_LANG);
+export const NATIVE_VOICE_FOR_LANG: Record<string, string> = NATIVE_PERSONA_FOR_LANG;
 
 /**
  * Languages verified end to end against the live AssemblyAI Voice Agent (scripts/voice-lang-probe): a spoken sentence
@@ -451,8 +453,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const setSelectedVoice = useCallback((query: string): VoicePersona | null => {
     const persona = resolvePersona(query, selectedVoiceRef.current);
     if (!persona) return null;
+    if (voiceNeeds(persona)) return null; // needs an Azure key or a device voice: the caller says why (see voiceNeeds)
     setSelectedVoiceState(persona.id);
     selectedVoiceRef.current = persona.id;
+    const convLang = (selectedLanguageRef.current === 'auto' ? (typeof navigator !== 'undefined' ? navigator.language : 'en') : selectedLanguageRef.current).split('-')[0].toLowerCase();
+    if (persona.lang !== convLang) setSelectedLanguage(SUPPORTED_LANGUAGES.find((l) => l.code.startsWith(persona.lang))?.code ?? persona.lang);
     if (typeof window !== 'undefined') {
       try {
         localStorage.setItem('stay_selected_voice', persona.id);
@@ -492,18 +497,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         // ignore
       }
     }
-    const base = lang.split('-')[0].toLowerCase();
-    const wantVoice = NATIVE_VOICE_FOR_LANG[base];
-    const curVoice = selectedVoiceRef.current;
-    let voiceChanged = false;
-    if (wantVoice && curVoice !== wantVoice && (!NATIVE_VOICE_IDS.includes(curVoice) || NATIVE_VOICE_FOR_LANG[base] !== curVoice)) {
-      selectedVoiceRef.current = wantVoice;
-      setSelectedVoiceState(wantVoice);
-      voiceChanged = true;
-    } else if (!wantVoice && NATIVE_VOICE_IDS.includes(curVoice)) {
-      selectedVoiceRef.current = 'anna';
-      setSelectedVoiceState('anna');
-      voiceChanged = true;
+    const nextVoice = personaAfterLanguageChange(selectedVoiceRef.current, lang === 'auto' ? (typeof navigator !== 'undefined' && navigator.language) || 'en' : lang);
+    const voiceChanged = nextVoice !== selectedVoiceRef.current;
+    if (voiceChanged) {
+      selectedVoiceRef.current = nextVoice;
+      setSelectedVoiceState(nextVoice);
     }
     const ws = wsRef.current;
     const wsLive = !!ws && ws.readyState === WebSocket.OPEN && sessionReadyRef.current;
@@ -557,6 +555,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       };
     }
   });
+
+  // which voices this device and these settings can speak with (browser voices load asynchronously)
+  useEffect(() => {
+    void refreshTtsCaps();
+  }, []);
 
   const wsRef = useRef<WebSocket | null>(null);
   const restartVoiceRef = useRef<(() => void) | null>(null);
@@ -1011,6 +1014,9 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           return { ok: true, language: l.label };
         }
         case 'voice': {
+          const want = resolvePersona(value, selectedVoiceRef.current);
+          const needs = want ? voiceNeeds(want) : null;
+          if (needs) return { ok: false, error: needs };
           const p = setSelectedVoice(value);
           return p ? { ok: true, voice: p.name, note: p.voiceLabel } : { ok: false, error: 'no such voice', options: PERSONAS.map((x) => x.name) };
         }
@@ -1779,6 +1785,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       const uiLang = selectedLanguageRef.current === 'auto' ? (typeof navigator !== 'undefined' ? navigator.language : 'en') : selectedLanguageRef.current;
       const fastLangBase = (uiLang || 'en').split('-')[0].toLowerCase();
       let useFast = fastVoiceRef.current && !fastDisabledRef.current && Boolean(FAST_TTS_LANGUAGE[fastLangBase]);
+      const speech = planSpeech(selectedVoiceRef.current, fastLangBase, cachedTtsCaps());
       const longQuery = companionRef.current ? '?long=1' : '';
       let tokenRes = await fetch(`/api/voice/${useFast ? 'fast-token' : 'token'}${longQuery}`, {
         method: 'POST',
@@ -1803,7 +1810,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
       // 4. Connect: either the managed Voice Agent socket, or fast voice (same events, built from STT + chat model + TTS)
       const socket: WebSocket = useFast
-        ? (new FastSocket({ sttToken: tokenJson.sttToken || '', ttsToken: tokenJson.ttsToken || '', keyterms: appKeyterms() }) as unknown as WebSocket)
+        ? (new FastSocket({ sttToken: tokenJson.sttToken || '', ttsToken: tokenJson.ttsToken || '', keyterms: appKeyterms(), ttsConnect: speech.ref.engine === 'assemblyai' ? undefined : () => createTtsConnection(speech.ref, speech.browserVoiceName)! }) as unknown as WebSocket)
         : new WebSocket(`${tokenJson.wsUrl}?token=${encodeURIComponent(tokenJson.token || '')}`);
       setVoiceEngine(useFast ? 'fast' : 'agent');
       wsRef.current = socket;
@@ -1831,7 +1838,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
               },
               tools: [APP_TOOL],
               output: {
-                voice: useFast ? fastVoiceFor(selectedVoiceRef.current, fastLangBase) : selectedVoiceRef.current || 'anna',
+                voice: useFast ? speech.assemblyVoice : agentVoiceFor(selectedVoiceRef.current),
               },
               ...(socket instanceof FastSocket ? { tts_language: FAST_TTS_LANGUAGE[fastLangBase] || 'english' } : {}),
             },

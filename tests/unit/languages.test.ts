@@ -152,8 +152,10 @@ describe('Stay 32-Language Universal Voice Engine & Detection', () => {
   });
 
   it('only offers voice ids the AssemblyAI Voice Agent API documents', () => {
-    const DOCUMENTED = ['alba', 'eve', 'george', 'jane', 'jean', 'mary', 'michael', 'anna', 'charles', 'paul', 'vera', 'giovanni', 'lola', 'juergen', 'rafael', 'estelle'];
-    for (const v of AVAILABLE_VOICES) expect(DOCUMENTED).toContain(v.id);
+    // documented on the provider's voices page, plus iris and reid: accepted by the live TTS endpoint (probed 2026-10-19) but not documented
+    const DOCUMENTED = ['alba', 'eve', 'george', 'jane', 'jean', 'mary', 'michael', 'anna', 'charles', 'paul', 'vera', 'giovanni', 'lola', 'juergen', 'rafael', 'estelle', 'iris', 'reid'];
+    const ACCENT_ENGINE_PERSONAS = ['cardamom', 'chaiwala', 'taco', 'mariachi']; // Azure or browser voices, never sent to AssemblyAI
+    for (const v of AVAILABLE_VOICES) expect([...DOCUMENTED, ...ACCENT_ENGINE_PERSONAS]).toContain(v.id);
     expect(AVAILABLE_VOICES.some((v) => v.gender === 'male')).toBe(true);
     expect(AVAILABLE_VOICES.some((v) => v.gender === 'female')).toBe(true);
     expect(AVAILABLE_VOICES.find((v) => v.id === 'charles')?.gender).toBe('male');

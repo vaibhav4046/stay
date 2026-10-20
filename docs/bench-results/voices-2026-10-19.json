@@ -1,0 +1,314 @@
+{
+  "date": "2026-10-19T17:34:21.028Z",
+  "sttModel": "",
+  "sentences": {
+    "en": [
+      "Let's pick one small thing and do it for just two minutes.",
+      "You don't have to finish the whole report today, only open the document and write the title.",
+      "Great job, that counts as a real start, so take a slow breath and keep going.",
+      "If the landlord email feels heavy, we can write one sentence together, then stop.",
+      "Your timer is set for twenty minutes, and I'll tell you when the first ten have passed."
+    ],
+    "es": [
+      "Elijamos una cosa pequeña y hagámosla solo dos minutos.",
+      "No tienes que terminar todo el informe hoy, solo abre el documento y escribe el título.",
+      "Buen trabajo, eso cuenta como un comienzo de verdad, así que respira despacio y sigue.",
+      "Si el correo del casero te pesa, podemos escribir una sola frase juntos y parar.",
+      "El temporizador está puesto en veinte minutos, y te aviso cuando pasen los primeros diez."
+    ],
+    "fr": [
+      "Choisissons une petite chose et faisons-la seulement deux minutes.",
+      "Tu n'as pas à finir tout le rapport aujourd'hui, ouvre juste le document et écris le titre.",
+      "Bravo, ça compte comme un vrai début, alors respire doucement et continue.",
+      "Si l'e-mail au propriétaire te pèse, on peut écrire une seule phrase ensemble, puis s'arrêter.",
+      "Le minuteur est réglé sur vingt minutes, et je te préviens quand les dix premières seront passées."
+    ],
+    "de": [
+      "Suchen wir uns eine kleine Sache aus und machen sie nur zwei Minuten lang.",
+      "Du musst den ganzen Bericht nicht heute fertig machen, öffne einfach das Dokument und schreibe den Titel.",
+      "Gut gemacht, das zählt als echter Anfang, also atme langsam durch und mach weiter.",
+      "Wenn dir die E-Mail an den Vermieter schwerfällt, schreiben wir zusammen nur einen Satz und hören dann auf.",
+      "Der Timer ist auf zwanzig Minuten gestellt, und ich sage Bescheid, wenn die ersten zehn vorbei sind."
+    ],
+    "it": [
+      "Scegliamo una cosa piccola e facciamola solo per due minuti.",
+      "Non devi finire tutto il rapporto oggi, apri soltanto il documento e scrivi il titolo.",
+      "Bravo, questo conta come un vero inizio, quindi respira piano e continua.",
+      "Se l'email al padrone di casa ti pesa, possiamo scrivere una sola frase insieme e poi fermarci.",
+      "Il timer è impostato su venti minuti, e ti avviso quando saranno passati i primi dieci."
+    ],
+    "pt": [
+      "Vamos escolher uma coisa pequena e fazer só por dois minutos.",
+      "Você não precisa terminar o relatório inteiro hoje, só abra o documento e escreva o título.",
+      "Muito bem, isso conta como um começo de verdade, então respire devagar e continue.",
+      "Se o e-mail para o proprietário está pesado, podemos escrever só uma frase juntos e parar.",
+      "O cronômetro está marcado para vinte minutos, e eu aviso quando os primeiros dez passarem."
+    ]
+  },
+  "results": [
+    {
+      "voice": "anna",
+      "persona": "Lady Lavender",
+      "lang": "en",
+      "accent": "British",
+      "sentences": 5,
+      "wer": 0,
+      "errors": 0,
+      "refWords": 76,
+      "ttfaMedianMs": 227,
+      "ttfaMaxMs": 244,
+      "connectMedianMs": 701,
+      "misses": []
+    },
+    {
+      "voice": "charles",
+      "persona": "Captain Crumpet",
+      "lang": "en",
+      "accent": "British",
+      "sentences": 5,
+      "wer": 0,
+      "errors": 0,
+      "refWords": 76,
+      "ttfaMedianMs": 231,
+      "ttfaMaxMs": 234,
+      "connectMedianMs": 678,
+      "misses": []
+    },
+    {
+      "voice": "paul",
+      "persona": "Biscuit Blitz",
+      "lang": "en",
+      "accent": "British",
+      "sentences": 5,
+      "wer": 0,
+      "errors": 0,
+      "refWords": 76,
+      "ttfaMedianMs": 204,
+      "ttfaMaxMs": 396,
+      "connectMedianMs": 562,
+      "misses": []
+    },
+    {
+      "voice": "vera",
+      "persona": "Marmite Sprocket",
+      "lang": "en",
+      "accent": "British",
+      "sentences": 5,
+      "wer": 0,
+      "errors": 0,
+      "refWords": 76,
+      "ttfaMedianMs": 195,
+      "ttfaMaxMs": 208,
+      "connectMedianMs": 598,
+      "misses": []
+    },
+    {
+      "voice": "jane",
+      "persona": "Waffle Wizard",
+      "lang": "en",
+      "accent": "American",
+      "sentences": 5,
+      "wer": 0,
+      "errors": 0,
+      "refWords": 76,
+      "ttfaMedianMs": 230,
+      "ttfaMaxMs": 237,
+      "connectMedianMs": 671,
+      "misses": []
+    },
+    {
+      "voice": "eve",
+      "persona": "Countdown Cookie",
+      "lang": "en",
+      "accent": "American",
+      "sentences": 5,
+      "wer": 0,
+      "errors": 0,
+      "refWords": 76,
+      "ttfaMedianMs": 204,
+      "ttfaMaxMs": 224,
+      "connectMedianMs": 614,
+      "misses": []
+    },
+    {
+      "voice": "george",
+      "persona": "Porch Light",
+      "lang": "en",
+      "accent": "American",
+      "sentences": 5,
+      "wer": 0,
+      "errors": 0,
+      "refWords": 76,
+      "ttfaMedianMs": 213,
+      "ttfaMaxMs": 223,
+      "connectMedianMs": 607,
+      "misses": []
+    },
+    {
+      "voice": "michael",
+      "persona": "Pancake Paladin",
+      "lang": "en",
+      "accent": "American",
+      "sentences": 5,
+      "wer": 0,
+      "errors": 0,
+      "refWords": 76,
+      "ttfaMedianMs": 234,
+      "ttfaMaxMs": 280,
+      "connectMedianMs": 680,
+      "misses": []
+    },
+    {
+      "voice": "alba",
+      "persona": "Arcade Gremlin",
+      "lang": "en",
+      "accent": "American",
+      "sentences": 5,
+      "wer": 0,
+      "errors": 0,
+      "refWords": 76,
+      "ttfaMedianMs": 193,
+      "ttfaMaxMs": 238,
+      "connectMedianMs": 582,
+      "misses": []
+    },
+    {
+      "voice": "mary",
+      "persona": "Velvet Scalpel",
+      "lang": "en",
+      "accent": "American",
+      "sentences": 5,
+      "wer": 0,
+      "errors": 0,
+      "refWords": 76,
+      "ttfaMedianMs": 221,
+      "ttfaMaxMs": 246,
+      "connectMedianMs": 638,
+      "misses": []
+    },
+    {
+      "voice": "jean",
+      "persona": "Pumpkin Pixel",
+      "lang": "en",
+      "accent": "American",
+      "sentences": 5,
+      "wer": 0,
+      "errors": 0,
+      "refWords": 76,
+      "ttfaMedianMs": 226,
+      "ttfaMaxMs": 244,
+      "connectMedianMs": 664,
+      "misses": []
+    },
+    {
+      "voice": "iris",
+      "persona": "Lantern Iris",
+      "lang": "en",
+      "accent": "English, accent not documented",
+      "sentences": 5,
+      "wer": 0,
+      "errors": 0,
+      "refWords": 76,
+      "ttfaMedianMs": 229,
+      "ttfaMaxMs": 242,
+      "connectMedianMs": 669,
+      "misses": []
+    },
+    {
+      "voice": "reid",
+      "persona": "Compass Reid",
+      "lang": "en",
+      "accent": "English, accent not documented",
+      "sentences": 5,
+      "wer": 0,
+      "errors": 0,
+      "refWords": 76,
+      "ttfaMedianMs": 209,
+      "ttfaMaxMs": 225,
+      "connectMedianMs": 627,
+      "misses": []
+    },
+    {
+      "voice": "lola",
+      "persona": "Couch Rocket",
+      "lang": "es",
+      "accent": "Spanish",
+      "sentences": 5,
+      "wer": 0.014285714285714285,
+      "errors": 1,
+      "refWords": 70,
+      "ttfaMedianMs": 225,
+      "ttfaMaxMs": 233,
+      "connectMedianMs": 622,
+      "misses": [
+        "Si el correo del casero te pesa, podemos escribir una sola frase juntos y parar.  =>  que el correo del casero te pesa podemos escribir una sola frase juntos y parar"
+      ]
+    },
+    {
+      "voice": "estelle",
+      "persona": "Croissant Bandit",
+      "lang": "fr",
+      "accent": "French",
+      "sentences": 5,
+      "wer": 0.041666666666666664,
+      "errors": 3,
+      "refWords": 72,
+      "ttfaMedianMs": 230,
+      "ttfaMaxMs": 243,
+      "connectMedianMs": 647,
+      "misses": [
+        "Tu n'as pas à finir tout le rapport aujourd'hui, ouvre juste le document et écris le titre.  =>  tu n'as pas à finir tout le rapport aujourd'hui ouvre juste ce document et écris le titre",
+        "Si l'e-mail au propriétaire te pèse, on peut écrire une seule phrase ensemble, puis s'arrêter.  =>  si l'email au propriétaire te pèse on peut écrire une seule phrase ensemble puis s'arrêter"
+      ]
+    },
+    {
+      "voice": "juergen",
+      "persona": "Professor Pretzel",
+      "lang": "de",
+      "accent": "German",
+      "sentences": 5,
+      "wer": 0.04938271604938271,
+      "errors": 4,
+      "refWords": 81,
+      "ttfaMedianMs": 224,
+      "ttfaMaxMs": 229,
+      "connectMedianMs": 643,
+      "misses": [
+        "Suchen wir uns eine kleine Sache aus und machen sie nur zwei Minuten lang.  =>  suchen wir uns eine kleine sache aus machen sie nur zwei minuten lang",
+        "Gut gemacht, das zählt als echter Anfang, also atme langsam durch und mach weiter.  =>  gemacht das zählt als echter anfang also atme langsam durch und mach weiter",
+        "Der Timer ist auf zwanzig Minuten gestellt, und ich sage Bescheid, wenn die ersten zehn vorbei sind.  =>  timer ist auf zwanzig minuten gestellt und ich sag bescheid wenn die ersten zehn vorbei sind"
+      ]
+    },
+    {
+      "voice": "giovanni",
+      "persona": "Fettuccine Maestro",
+      "lang": "it",
+      "accent": "Italian",
+      "sentences": 5,
+      "wer": 0,
+      "errors": 0,
+      "refWords": 70,
+      "ttfaMedianMs": 228,
+      "ttfaMaxMs": 233,
+      "connectMedianMs": 673,
+      "misses": []
+    },
+    {
+      "voice": "rafael",
+      "persona": "Goblin Mode Gus",
+      "lang": "pt",
+      "accent": "Portuguese",
+      "sentences": 5,
+      "wer": 0.0684931506849315,
+      "errors": 5,
+      "refWords": 73,
+      "ttfaMedianMs": 194,
+      "ttfaMaxMs": 237,
+      "connectMedianMs": 657,
+      "misses": [
+        "Se o e-mail para o proprietário está pesado, podemos escrever só uma frase juntos e parar.  =>  se o email pro proprietário está pesado podemos escrever só uma frase juntos e parar",
+        "O cronômetro está marcado para vinte minutos, e eu aviso quando os primeiros dez passarem.  =>  o cronômetro tá marcado para vinte minutos e eu aviso quando os primeiros dez passarem"
+      ]
+    }
+  ]
+}
