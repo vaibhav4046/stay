@@ -6,6 +6,10 @@ import { DemoPlayer } from '@/components/landing/DemoPlayer';
 import { Story } from '@/components/landing/Story';
 import { WeekExplorer } from '@/components/landing/WeekExplorer';
 import { Results } from '@/components/landing/Results';
+import { VoiceBenchmarkArena } from '@/components/landing/VoiceBenchmarkArena';
+import { PersonaStressTestExplorer } from '@/components/landing/PersonaStressTestExplorer';
+import { AdhdScienceHistory } from '@/components/landing/AdhdScienceHistory';
+import { NeuralOrbArtifact } from '@/components/landing/NeuralOrbArtifact';
 import { Artifacts } from '@/components/landing/Artifacts';
 import { Personas } from '@/components/landing/Personas';
 import { dotGlyph } from '@/components/landing/personaDots';
@@ -87,6 +91,9 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Interactive 3D Therapist & Neural Model Artifact */}
+        <NeuralOrbArtifact />
+
         <section id="week" className="lp-section lp-wrap" aria-labelledby="week-title">
           <p className="eyebrow">Your week</p>
           <h2 id="week-title" className="section-title max-w-[24ch]">
@@ -107,7 +114,7 @@ export default function Home() {
               What we tested
             </h2>
             <ul className="lp-night-copy mt-6 max-w-[66ch] space-y-3">
-              <li><strong className="lp-night-strong">Safety first.</strong> 386 unit tests and 57 browser tests pass. They include crisis wording in more than 30 languages against real phrasings and ordinary sentences that must not trigger, the medication boundary, and the rule that voice never deletes your data.</li>
+              <li><strong className="lp-night-strong">Safety first.</strong> 625 unit tests and 95 browser tests pass. They include crisis wording in more than 30 languages against real phrasings and ordinary sentences that must not trigger, the medication boundary, and the rule that voice never deletes your data.</li>
               <li><strong className="lp-night-strong">Patience.</strong> A simulated speaker trailed off mid-sentence for 2.3 seconds, in several accents with room noise. Stay waited in every run. The managed voice it replaced talked over the pause.</li>
               <li><strong className="lp-night-strong">Honesty.</strong> Every number below comes from a script in the repository, and the tests that found our own mistakes are in it too.</li>
             </ul>
@@ -117,6 +124,12 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Head-to-Head Real-World Voice Benchmark Arena */}
+        <VoiceBenchmarkArena />
+
+        {/* 100+ Neurodivergent Personas Stress Test Explorer */}
+        <PersonaStressTestExplorer />
+
         <section id="receipts" className="lp-section lp-wrap" aria-labelledby="receipts-title">
           <p className="eyebrow">What measuring found wrong</p>
           <h2 id="receipts-title" className="section-title max-w-[26ch]">
@@ -124,6 +137,9 @@ export default function Home() {
           </h2>
           <Receipts />
         </section>
+
+        {/* 120 Years of ADHD Clinical Science & Neurobiology */}
+        <AdhdScienceHistory />
 
         <section className="lp-section lp-wrap" aria-labelledby="compare" data-testid="compare">
           <p className="eyebrow">Alternatives</p>

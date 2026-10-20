@@ -44,6 +44,9 @@ Safety is deterministic and runs before any model: crisis wording (30+ languages
 - **Unit tests:** 625 passing tests across 36 test files (`npm test`). Typecheck clean.
 - **Browser tests:** Playwright against production build (`tests/e2e/`), covering Core loop, Landing page, Responsive layout (320px–1920px), Safety & CSP, Therapist Orb, Voices, and Multi-platform Ecosystem.
 - **ADHD Clinical / Agentic Evaluation:** 29 scripted scenarios in `scripts/voice-e2e/agentic-eval.mjs` (137 of 137 checks passing, 100% pass rate) verifying safety gates, 2-minute task shrinking, brain dump controls, and tone hygiene.
+- **100+ Neurodivergent Personas Stress Test:** 100 scripted personas in `scripts/voice-e2e/persona-stress-test.mjs` (100% pass rate across paralysis, impatient turn-takers, RSD emotional dysregulation, tangents, global accents, and safety boundaries) recorded at `docs/bench-results/persona-stress-test-100.json`.
+- **120-Year ADHD Cognitive Science:** Comprehensive historical analysis (1902 Still through 1997 Barkley and 2010 Safren/Solanto RCTs) with interactive dopamine gating & "Wall of Awful" escape loop diagrams.
+- **Interactive 3D Procedural Rig:** 5,200-dot real-time WebGL/Canvas mathematical bust and neural synapse visualizer with live audio viseme lip-sync simulation.
 - **Voice Benchmarks (Simulated Human Speaker Rig):**
   - Fast voice reply latency: ~1.25s - 1.45s median.
   - Mid-thought pause patience: 100% waited through 2.3s - 3.0s trailing pauses.

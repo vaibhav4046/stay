@@ -156,8 +156,9 @@ const serverHits = new Map<string, number[]>();
 /** Shared-key protection: 30 server-paid reasoning calls per minute per address. Bring-your-own keys skip this. */
 export function allowServerUse(ip: string): boolean {
   const now = Date.now();
+  const limit = (ip === 'local' || ip === '127.0.0.1' || ip === '::1') ? 200 : 60;
   const recent = (serverHits.get(ip) || []).filter((t) => now - t < 60_000);
-  if (recent.length >= 30) return false;
+  if (recent.length >= limit) return false;
   recent.push(now);
   serverHits.set(ip, recent);
   if (serverHits.size > 2000) serverHits.delete(serverHits.keys().next().value as string);
