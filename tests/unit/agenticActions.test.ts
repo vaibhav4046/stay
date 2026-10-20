@@ -189,3 +189,22 @@ describe('voice entry to the brain dump', () => {
   });
   it('returns null for actions that are not its own', () => expect(runAgenticAction({ action: 'park', value: 'x' }, ctx())).toBeNull());
 });
+
+describe('dump controls tolerate natural lead-in words', () => {
+  it('"actually, never mind" and "oh wait, scratch that" are controls, not content', async () => {
+    const { classifyDumpUtterance } = await import('@/lib/coach/dumpSession');
+    expect(classifyDumpUtterance('Actually, never mind.').kind).toBe('cancel');
+    expect(classifyDumpUtterance('Oh wait, scratch that').kind).toBe('scratch');
+    expect(classifyDumpUtterance('okay remove the dentist')).toMatchObject({ kind: 'drop' });
+    expect(classifyDumpUtterance('I should never mind the small stuff but the taxes matter').kind).toBe('chunk');
+  });
+});
+
+describe('memory_add fact fallback', () => {
+  it('uses the person\'s words when the model passes only the cue', async () => {
+    const { factFromUtterance } = await import('@/lib/voice/agenticActions');
+    expect(factFromUtterance('remember', 'Please remember that I work best in the mornings.')).toBe('that I work best in the mornings'.replace(/^that /, ''));
+    expect(factFromUtterance('works best in the mornings', 'remember that I work best in the mornings')).toBe('works best in the mornings');
+    expect(factFromUtterance('', "Don't forget my dog is called Biscuit")).toBe('my dog is called Biscuit');
+  });
+});

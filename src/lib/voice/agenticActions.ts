@@ -49,6 +49,16 @@ function writeList(list: TodayItem[]): boolean {
   }
 }
 
+/**
+ * The fact to save for "remember that I work best in the mornings". The model sometimes passes just the cue word as the value, so a
+ * value that is empty or only a cue is replaced by what the person actually said, minus the cue. Still needs MEMORY_CUE upstream.
+ */
+export function factFromUtterance(value: string, said: string): string {
+  const v = value.trim();
+  if (v.length >= 6 && !/^(?:remember|note|that|this|save|keep in mind|don'?t forget)[\s.]*$/i.test(v)) return v;
+  return said.replace(/^\s*(?:please |can you |could you )?(?:remember|note|make a note|keep in mind|don'?t forget|do not forget|save)(?: that| this)?\s*/i, '').replace(/[.!?\s]+$/, '').slice(0, 160);
+}
+
 export const AGENTIC_ACTIONS = new Set(['list_edit', 'plan_day', 'break_down', 'step_next', 'wrap_up', 'resume', 'style', 'learning', 'remind']);
 
 /** Runs one of the agentic actions. Returns null for any other action (the hook handles those). */

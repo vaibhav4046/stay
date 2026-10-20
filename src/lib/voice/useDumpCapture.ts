@@ -59,16 +59,23 @@ export function useDumpCapture(deps: DumpDeps) {
     if (sortTimer.current) clearTimeout(sortTimer.current);
     nudgeTimer.current = sortTimer.current = null;
   };
+  /**
+   * Capture stays on a moment after a dump ends. The sentence that ended it ("that's it", "never mind") is still being delivered to
+   * the socket, and if capture were already off the model would answer it ("that's it" got read as "wrap up my day").
+   */
+  const releaseSoon = (ms = 700) => setTimeout(() => {
+    if (!active.current) d.current.setCapture(false);
+  }, ms);
   const publish = () => setDump({ phase: 'listening', items: captureItems(parts.current) });
 
   const finish = useCallback(async () => {
     if (!active.current) return;
     active.current = false;
     clearTimers();
-    d.current.setCapture(false);
     const heard = captureItems(parts.current);
     if (heard.length === 0) {
       muteAgent.current = false;
+      releaseSoon();
       setDump(DUMP_OFF);
       d.current.speakExact('I did not hear anything to sort. Say I need to dump my head whenever you are ready.');
       return;
@@ -89,11 +96,13 @@ export function useDumpCapture(deps: DumpDeps) {
       const json = (await res.json()) as TriageResponse & { safety?: 'crisis' | 'medication'; source?: string };
       if (json.safety === 'crisis') {
         muteAgent.current = false;
+        releaseSoon(0);
         setDump(DUMP_OFF);
         return d.current.crisis(CRISIS_FIXED_MESSAGE);
       }
       if (json.safety === 'medication') {
         muteAgent.current = false;
+        releaseSoon(0);
         setDump(DUMP_OFF);
         return d.current.medication(detectMedicationAdviceRequest(text).message);
       }
@@ -110,6 +119,7 @@ export function useDumpCapture(deps: DumpDeps) {
     const trimmed = kept < heard.length ? ` That was a lot, so I sorted the first ${kept} things. Tell me the rest after.` : '';
     const line = `${readBackLine(final.items)}${trimmed}`;
     muteAgent.current = false;
+    releaseSoon(0);
     setDump({ phase: 'done', items: final.items.map((i) => i.text), result: final, source, readBack: line });
     d.current.speakExact(line);
     d.current.note(`Just read back to the person (already saved to their list): ${final.items.map((i) => `${i.text} [${i.bucket}]`).join('; ').slice(0, 400)}. If they ask to change it, use list_edit.`);
@@ -146,6 +156,7 @@ export function useDumpCapture(deps: DumpDeps) {
     active.current = false;
     clearTimers();
     muteAgent.current = false;
+    d.current.setCapture(false);
     const heard = captureItems(parts.current);
     parts.current = [];
     if (heard.length === 0) return setDump(DUMP_OFF);
@@ -161,7 +172,7 @@ export function useDumpCapture(deps: DumpDeps) {
     clearTimers();
     parts.current = [];
     muteAgent.current = false;
-    d.current.setCapture(false);
+    releaseSoon();
     setDump(DUMP_OFF);
     if (say) d.current.speakExact('Okay, I dropped that. Nothing was saved.');
   }, []);

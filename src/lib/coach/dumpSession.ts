@@ -14,9 +14,11 @@ export type DumpControl =
 
 const FILLER = /\b(?:um+|uh+|er+m?|hmm+|you know|i mean|like,|sort of|kind of|basically|literally|so yeah|anyway)\b[,.]?\s*/gi;
 const END = /(?:^|[\s,.;])(?:okay[, ]+|ok[, ]+|right[, ]+|so[, ]+)?(?:that'?s (?:it|all|everything|the lot)|that is (?:it|all|everything)|i'?m (?:done|finished)|i am (?:done|finished)|all done|(?:i'?m )?done now|sort (?:it|them|that|this|those)(?: out| for me)?(?: please)?|go ahead and sort|please sort|finished)[\s.!?]*$/i;
-const CANCEL = /^\s*(?:okay[, ]+)?(?:cancel(?: (?:this|that|the dump|the brain dump))?|never ?mind|forget (?:it|that|all that)|scrap (?:it|that|all that)|stop the (?:brain )?dump)[\s.!?]*$/i;
-const SCRATCH = /^\s*(?:scratch that|undo that|delete that|take that back|ignore that|remove that)[\s.!?]*$/i;
-const DROP = /^\s*(?:remove|delete|drop|scratch|forget|take off|cross off|not)\s+(?:the |my |that )?(.{3,60}?)(?:\s+(?:off|from the (?:dump|list)))?[\s.!?]*$/i;
+/** Natural speech leads into a control with a word or two ("actually, never mind", "oh wait, scratch that"). */
+const LEAD = String.raw`^\s*(?:(?:actually|no|oh|sorry|wait|um|uh|hmm|okay|ok|so|yeah|right|hey|please)[, ]+)*`;
+const CANCEL = new RegExp(LEAD + String.raw`(?:cancel(?: (?:this|that|the dump|the brain dump))?|never ?mind|forget (?:it|that|all that)|scrap (?:it|that|all that)|stop the (?:brain )?dump)[\s.!?]*$`, 'i');
+const SCRATCH = new RegExp(LEAD + String.raw`(?:scratch that|undo that|delete that|take that back|ignore that|remove that)[\s.!?]*$`, 'i');
+const DROP = /^\s*(?:okay |ok |actually |oh )?(?:remove|delete|drop|scratch|forget|take off|cross off|not)\s+(?:the |my |that )?(.{3,60}?)(?:\s+(?:off|from the (?:dump|list)))?[\s.!?]*$/i;
 
 const START = /\b(?:(?:i )?(?:need|want|have|got|gotta|going) to (?:dump|empty|unload|offload|download) (?:my|the|all (?:of )?my) (?:head|brain|mind)|brain ?dump|dump (?:my|the) (?:head|brain|mind)|empty (?:out )?(?:my|the) (?:head|brain|mind)|get (?:it|everything|all of it|it all) out of my (?:head|brain|mind)|let me (?:ramble|vent|download|unload)|everything(?:'s| is) (?:spinning|swirling|in my head))\b/i;
 

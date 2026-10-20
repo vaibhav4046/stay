@@ -5,7 +5,7 @@ import { FastSocket, FAST_TTS_LANGUAGE, fastVoiceFor } from '@/lib/voice/fastSoc
 import { loadParked, parkThought } from '@/lib/coach/parkingLot';
 import { addToday, loadToday, openToday } from '@/lib/coach/todayList';
 import { findRoutine, loadRoutines } from '@/lib/routines/routines';
-import { runAgenticAction, AGENTIC_ACTIONS } from '@/lib/voice/agenticActions';
+import { runAgenticAction, AGENTIC_ACTIONS, factFromUtterance } from '@/lib/voice/agenticActions';
 import { verifySpoken, type ToolOutcome } from '@/lib/voice/toolSelfCheck';
 import { useDumpCapture } from '@/lib/voice/useDumpCapture';
 import { loadInstructions, styleBlock } from '@/lib/coach/customInstructions';
@@ -1071,8 +1071,10 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         case 'memory_add': {
           if (!value) return { ok: false };
           if (!MEMORY_CUE.test(lastUserSaidRef.current)) return { ok: false, error: 'not saved: the person did not ask to remember anything' };
-          setUserMemory(addUserMemoryFact(value.slice(0, 160)));
-          return { ok: true, saved: value.slice(0, 160) };
+          const fact = factFromUtterance(value, lastUserSaidRef.current);
+          if (fact.length < 3) return { ok: false, error: 'say what to remember' };
+          setUserMemory(addUserMemoryFact(fact));
+          return { ok: true, saved: fact };
         }
         case 'memory_forget': {
           if (!value || /^(all|everything)$/.test(lower)) { o.onShowMemoryRequested?.(); return { ok: true, note: 'Opened memory; the user confirms clearing it there.' }; }
