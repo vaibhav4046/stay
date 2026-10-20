@@ -74,7 +74,7 @@ const CRISIS_PATTERNS: Array<{ regex: RegExp; label: string }> = [
   { regex: /\b(?:want|going|gonna|plan(?:ning)?|ready)\s+to\s+disappear\b|\bdisappear\s+(?:forever|for\s+good)\b/i, label: 'wanting to disappear' },
   { regex: /\b(?:better\s+off\s+without\s+me|everyone\s+(?:would|will)\s+be\s+better\s+off|world\s+(?:would|will)\s+be\s+better\s+without\s+me)\b/i, label: 'burden / hopelessness' },
   { regex: /\b(hurt(?:ing)?\s+my\s?self|harm(?:ing)?\s+my\s?self|self[\s-]?harm|self[\s-]?injur)/i, label: 'self-harm' },
-  { regex: /\b(?:cut(?:ting)?|burn(?:ing)?|hang(?:ing)?|drown(?:ing)?|shoot(?:ing)?|stab(?:bing)?|poison(?:ing)?|starv(?:e|ing))\s+my\s?self\b(?!\s+(?:some\s+slack|in\s+(?:work|the\s+foot|tasks)|out\b))/i, label: 'self-harm method' },
+  { regex: /\b(?:cut(?:ting)?|burn(?:ing)?|hang(?:ing)?|drown(?:ing)?|shoot(?:ing)?|stab(?:bing)?|poison(?:ing)?|starv(?:e|ing))\s+my\s?self\b(?!\s+(?:some\s+slack|in\s+(?:work|the\s+foot|tasks)|out\b))|\bcut(?:ting)?\s+(?:my\s+)?wrists?\b/i, label: 'self-harm method' },
   { regex: /\bjump(?:ing)?\s+(?:off|from)\s+(?:a|the|my)\s+(?:bridge|building|roof|cliff|balcony|window|train)\b/i, label: 'self-harm method' },
   { regex: /\b(overdos(?:e|ed|ing)|(?:took|taken|taking|swallowed|swallow)\s+(?:too\s+many|all\s+(?:of\s+)?my)\s+(?:pills|tablets|meds|medication))\b/i, label: 'overdose risk' },
 ];
@@ -107,13 +107,13 @@ const MULTILINGUAL_CRISIS_REGEX = new RegExp(
 );
 
 // Spacing-evasion check on a letters-only form; only phrases with no innocent look-alikes.
-const SQUASHED_CRISIS_REGEX = /(killmyself|killingmyself|endmylife|endingmylife|takemyownlife|suicide|suicidal|hurtmyself|harmmyself)/;
+const SQUASHED_CRISIS_REGEX = /(killmyself|killingmyself|endmylife|endingmylife|takemyownlife|suicide|suicidal|hurtmyself|harmmyself|wanttodie|wannadie|cutmywrists)/;
 
 const MED_TERM =
   '(?:elvanse|vyvanse|ritalin|concerta|medikinet|equasym|xaggitin|delmosart|methylphenidate|lisdexamfetamine|dexamfetamine|dextroamphetamine|amphetamines?|adderall|dexedrine|atomoxetine|strattera|guanfacine|intuniv|clonidine|modafinil|medications?|medicines?|meds|my\\s+(?:pills?|tablets?|capsules?|prescription|dose|dosage)|dos(?:e|es|age)|\\d+\\s*mg)';
 
 const MED_ADVICE_INTENT =
-  "(?:should\\s+i|can\\s+i|could\\s+i|may\\s+i|do\\s+i\\s+need|is\\s+it\\s+(?:ok|okay|safe|fine|alright|bad)|is\\s+(?:this|that|it)\\s+(?:safe|dangerous|normal|bad|too)|how\\s+(?:much|many)|too\\s+(?:much|many|high|low|strong)|maximum|max\\s+dose|safe\\s+to|(?:ok|okay)\\s+to|mix(?:ing)?|combin(?:e|ing)|with\\s+(?:alcohol|caffeine|coffee|ibuprofen|antidepressants?|cannabis|weed|energy\\s+drinks?)|double(?:d)?|triple|increas(?:e|ing)|decreas(?:e|ing)|lower(?:ing)?|rais(?:e|ing)|skip(?:ping)?\\s+(?:my|a|the|today)|stop(?:ping)?\\s+(?:taking|my|the|using)|quit(?:ting)?|wean|snort|crush|inject|side\\s*effects?|withdrawals?|interact|dangerous|(?:makes|making|made)\\s+me\\s+(?:feel\\s+)?(?:shaky|sick|dizzy|anxious|jittery))";
+  "(?:should\\s+i|can\\s+i|could\\s+i|may\\s+i|do\\s+i\\s+need|is\\s+it\\s+(?:ok|okay|safe|fine|alright|bad)|is\\s+(?:this|that|it)\\s+(?:safe|dangerous|normal|bad|too)|how\\s+(?:much|many)|too\\s+(?:much|many|high|low|strong)|maximum|max\\s+dose|safe\\s+to|(?:ok|okay)\\s+to|mix(?:ing)?|combin(?:e|ing)|with\\s+(?:alcohol|caffeine|coffee|ibuprofen|antidepressants?|cannabis|weed|energy\\s+drinks?)|double(?:d)?|triple|increas(?:e|ing)|decreas(?:e|ing)|lower(?:ing)?|rais(?:e|ing)|skip(?:ping)?\\s+(?:my|a|the|today)|stop(?:ping)?\\s+(?:taking|my|the|using)|quit(?:ting)?|wean|snort|crush|inject|side\\s*effects?|withdrawals?|interact|dangerous|what\\s+happens\\s+if\\s+(?:i|someone)\\s+(?:take|takes|took)|all\\s+at\\s+once|(?:makes|making|made)\\s+me\\s+(?:feel\\s+)?(?:shaky|sick|dizzy|anxious|jittery))";
 
 const MEDICATION_ADVICE_PATTERNS: Array<{ regex: RegExp; label: string }> = [
   {
