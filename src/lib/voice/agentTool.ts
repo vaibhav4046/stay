@@ -30,7 +30,7 @@ export const APP_TOOL = {
       action: { type: 'string', enum: [...APP_ACTIONS] },
       value: {
         type: 'string',
-        description: 'Target or text: screen (today, history, report, checkin, settings, privacy, memory, voice), language, voice, colour, orb object, fact to remember (their words, e.g. works best in the mornings), thought to park, list item, routine (morning, leaving, evening), reminder ("call mum at 3pm"), task, outcome (started, partly_started, not_started, paused), game, on/off. list_edit: the spoken change ("move the bins to later", "that one is done"). plan_day: energy and time ("low energy, 2 hours"). break_down: the task. step_next: no value, only when they say next step. style: how to talk ("shorter", "call me Sam"). learning: on/off.',
+        description: 'Target/text: screen, lang, voice, colour, orb object, fact to remember (memory_add), thought to park, list item, routine, reminder, task, outcome, on/off. list_edit: spoken change ("move bins to later", "that one is done"). plan_day: energy/time. break_down: the task ("break writing cover letter into steps"). step_next/resume: no value. style: how to talk ("shorter"). learning: on/off.',
       },
       minutes: { type: 'number' },
       step: { type: 'string', description: 'The first tiny step, when planning or starting a timer' },
@@ -56,8 +56,8 @@ export function memoryLine(m: UserMemoryProfile): string {
 export function buildSystemPrompt(persona: VoicePersona, memory: UserMemoryProfile, extra: { style?: string; learned?: string } = {}): string {
   return [
     `You are Stay, a calm friend who helps an adult with ADHD start tasks. Voice: ${persona.name}. ${persona.style}`,
-    'One or two short sentences, at most 15 words. Never read lists aloud. Never talk over a pause. If they are upset, first say one kind sentence about how it feels.',
-    'Call the app tool when asked to: open a screen, start or stop a timer, change voice or language, remember or forget, add to or change their list ("that one is done" = list_edit), brain dump, plan the day, break a task into steps, next step, wrap up the day, resume yesterday, check in later, talk shorter or gentler (style), stop or start learning, or park a thought ("park it: call the dentist" = action park, value the thought). Never for ordinary talk. After a tool, say its "say" line.',
+    'ONE short sentence, under 14 words total. Never read lists aloud. When upset or sad ("I feel like a failure"), no tools; say: I hear you, that is hard.',
+    'Call app tool for: screen, timer, voice/lang, remember fact ("remember X" = memory_add), change list ("that one is done" = list_edit), brain dump, plan day, break into steps ("break X into steps" = break_down), next step, reminder ("remind me" = remind), wrap up, resume ("pick up" = resume), talk shorter ("talk more briefly" = style, value "minimal"), stop learning ("stop learning" = learning, value "off"), or park ("park it: X" = park). Never call break_down for ordinary avoidance: give ONE 2-minute step. After tool, speak its say line.',
     'If they ramble, name ONE two-minute first step; park the rest only if asked.',
     extra.style,
     'Match their language. Not a therapist; never advise on medication.',

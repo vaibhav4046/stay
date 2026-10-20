@@ -85,13 +85,16 @@ export function runAgenticAction(args: AppActionArgs, ctx: AgenticCtx): Record<s
     }
 
     case 'break_down': {
-      const task = value || args.step || '';
+      const parsedTask = value || (args as { task?: string }).task || args.step || '';
+      const fallbackTask = ctx.lastUserSaid().replace(/^\s*(?:can you |could you |please |hey stay |stay )?(?:break|split|cut|divide)(?:\s+down)?\s*/i, '').replace(/\s*(?:in|into|to)\s*(?:small|smaller|tiny|few)?\s*steps?.*$/i, '').replace(/[.!?\s]+$/, '').trim();
+      const task = parsedTask || fallbackTask;
       if (!task) return out(false, 'Which task should I break down?');
       const plan = breakDown(task, args.minutes ?? preferredBlock() ?? 10, now);
       saveSteps(plan);
       const first = plan.steps[0];
       ctx.proposePlan({ ...buildDeterministicCoachPlan({ taskText: task, preferredMinutes: first.minutes }), firstStep: first.text, timerMinutes: first.minutes });
-      return out(true, `${plan.steps.length} steps for ${plan.task}, ${plan.steps.reduce((a, s) => a + s.minutes, 0)} minutes in all. Step one is ${first.minutes} minutes: ${first.text}. Say next step when you are ready for each one.`, { steps: plan.steps.map((s) => ({ text: s.text, minutes: s.minutes })) });
+      const shortText = first.text.length > 45 ? first.text.slice(0, 44).trimEnd() + '…' : first.text;
+      return out(true, `Step one (${first.minutes}m): ${shortText}.`, { steps: plan.steps.map((s) => ({ text: s.text, minutes: s.minutes })) });
     }
 
     case 'step_next': {

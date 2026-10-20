@@ -120,6 +120,8 @@ function b64ToBytes(b64: string): Uint8Array {
 }
 
 export class FastSocket {
+  private lastToolOk = true;
+  private lastToolSay?: string;
   static readonly OPEN = 1;
   readyState = 0;
   onopen: (() => void) | null = null;
@@ -610,6 +612,10 @@ export class FastSocket {
       const out = await Promise.race([result, new Promise<string>((r) => setTimeout(() => r('{"ok":false,"error":"the app did not answer"}'), 4000))]);
       if (gen !== this.genId) return;
       this.history = [...this.history, { role: 'tool' as const, tool_call_id: id, content: out.slice(0, 1500) }].slice(-MAX_HISTORY);
+      let parsedOut: { ok?: boolean; say?: string; error?: string } = {};
+      try { parsedOut = JSON.parse(out); } catch {}
+      this.lastToolOk = parsedOut.ok !== false;
+      this.lastToolSay = typeof parsedOut.say === 'string' ? parsedOut.say : parsedOut.error;
       const quick = quickConfirmation(args.action, out, s.ttsLanguage);
       if (quick) {
         this.llmDone = true;
@@ -622,7 +628,8 @@ export class FastSocket {
     this.llmDone = true;
     if (this.spoken === '' && toolFollowUp) {
       // the action ran but the model had nothing to add: never leave the person in silence after a command
-      this.say((QUICK_PHRASE[s.ttsLanguage] ?? QUICK_PHRASE.english).done, gen);
+      const fallback = this.lastToolOk === false ? (this.lastToolSay || "I could not do that.") : (QUICK_PHRASE[s.ttsLanguage] ?? QUICK_PHRASE.english).done;
+      this.say(fallback, gen);
       return;
     }
     if (this.spoken === '') return this.finishSilently();

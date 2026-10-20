@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
   const r = await openLlmStream(req, {
     messages,
     tools,
-    maxTokens: 220,
+    maxTokens: 75,
     temperature: 0.5,
     serverModel: process.env.GROQ_VOICE_MODEL || 'openai/gpt-oss-120b',
     timeoutMs: 6000,
