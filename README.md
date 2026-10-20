@@ -152,7 +152,7 @@ Built on a zero-asset procedural dot engine:
 
 ## Verification Suite
 
-- **Vitest Unit Tests**: **625 / 625 passed (100%)** across 36 test files (`npm test`).
+- **Vitest Unit Tests**: **634 / 634 passed (100%)** across 37 test files (`npm test`).
 - **Playwright E2E Tests**: **95 / 95 passed (100%)** across 8 test suites (`npx playwright test`).
 - **Typecheck**: `tsc --noEmit` clean (0 errors).
 - **Production Build**: `next build` clean across all 23 static and dynamic routes.
