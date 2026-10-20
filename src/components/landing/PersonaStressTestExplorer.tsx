@@ -92,7 +92,7 @@ export function PersonaStressTestExplorer() {
           <h2 id="personas-100-title" className="section-title max-w-[26ch]">
             Tested against 205 real-world scenarios
           </h2>
-          <p className="lp-night-copy mt-3 max-w-[64ch]">
+          <p className="mt-3 max-w-[64ch] text-ink-2">
             {suite === 'swarm'
               ? '105 adversarial voice agents stressing concurrent parallel load, token exhaustion, rapid turn-taking, sobbing meltdowns, spacing evasion, and multilingual dialects.'
               : '100 clinical ADHD archetypes spanning Rejection Sensitive Dysphoria (RSD), executive paralysis, staccato turn-takers, and tangent ramblers.'}
@@ -136,7 +136,7 @@ export function PersonaStressTestExplorer() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         <div className="p-4 rounded-xl bg-surface-1 border border-edge">
           <div className="text-xs font-mono text-ink-3 uppercase tracking-wider">Pass Rate</div>
-          <div className="text-2xl sm:text-3xl font-display font-bold text-emerald-400 mt-1">
+          <div className="text-2xl sm:text-3xl font-display font-bold text-success mt-1">
             {currentSummary.passRatePercent}%
           </div>
           <div className="text-xs text-ink-2 mt-0.5">{currentSummary.passed} of {currentSummary.total} verified</div>
@@ -152,7 +152,7 @@ export function PersonaStressTestExplorer() {
 
         <div className="p-4 rounded-xl bg-surface-1 border border-edge">
           <div className="text-xs font-mono text-ink-3 uppercase tracking-wider">Avg Words Spoken</div>
-          <div className="text-2xl sm:text-3xl font-display font-bold text-indigo-400 mt-1">
+          <div className="text-2xl sm:text-3xl font-display font-bold text-ink mt-1">
             {currentSummary.avgWords} words
           </div>
           <div className="text-xs text-ink-2 mt-0.5">Ceiling: &lt; 14–20 words (ADHD limit)</div>
@@ -160,7 +160,7 @@ export function PersonaStressTestExplorer() {
 
         <div className="p-4 rounded-xl bg-surface-1 border border-edge">
           <div className="text-xs font-mono text-ink-3 uppercase tracking-wider">Guilt Phrases Hit</div>
-          <div className="text-2xl sm:text-3xl font-display font-bold text-emerald-400 mt-1">
+          <div className="text-2xl sm:text-3xl font-display font-bold text-success mt-1">
             0%
           </div>
           <div className="text-xs text-ink-2 mt-0.5">Strict zero-shame filter</div>
@@ -223,8 +223,8 @@ export function PersonaStressTestExplorer() {
               </div>
 
               <div className="border-t border-edge/60 pt-2.5 mt-1 flex items-center justify-between text-[11px] font-mono">
-                <span className="text-emerald-400 font-semibold flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> PASS
+                <span className="text-success font-semibold flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-success" /> PASS
                 </span>
                 <span className="text-ink-3">
                   {p.latencyMs}ms · {p.words}w
@@ -273,8 +273,8 @@ export function PersonaStressTestExplorer() {
               </div>
 
               <div>
-                <span className="text-xs font-mono text-emerald-400 block mb-1">Stay Spoken Reply:</span>
-                <blockquote className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-ink font-medium">
+                <span className="text-xs font-mono text-success block mb-1">Stay Spoken Reply:</span>
+                <blockquote className="p-3 rounded-lg bg-success/10 border border-success/30 text-ink font-medium">
                   {activeItem.reply ? `“${activeItem.reply}”` : (activeItem.tool ? `[Dispatched Tool: ${activeItem.tool.action}]` : 'Done')}
                 </blockquote>
               </div>
@@ -287,9 +287,9 @@ export function PersonaStressTestExplorer() {
               )}
 
               {activeItem.safety && (
-                <div className="text-xs font-mono bg-rose-500/10 p-2.5 rounded-lg border border-rose-500/30 flex items-center justify-between">
-                  <span className="text-rose-400">Safety Boundary Intercepted:</span>
-                  <span className="text-rose-400 font-bold">{activeItem.safety}</span>
+                <div className="text-xs font-mono bg-danger/10 p-2.5 rounded-lg border border-danger/30 flex items-center justify-between">
+                  <span className="text-danger">Safety Boundary Intercepted:</span>
+                  <span className="text-danger font-bold">{activeItem.safety}</span>
                 </div>
               )}
 
@@ -308,7 +308,7 @@ export function PersonaStressTestExplorer() {
                 <div className="p-3 rounded-lg bg-surface-2/60 border border-edge text-xs space-y-1.5">
                   <div className="text-ink font-semibold mb-1">Automated Evaluation Checks:</div>
                   {activeItem.checks.map((c, idx) => (
-                    <div key={idx} className="text-emerald-400 flex items-center justify-between gap-2">
+                    <div key={idx} className="text-success flex items-center justify-between gap-2">
                       <span className="flex items-center gap-1.5">✓ {c.check.replace(/_/g, ' ')}</span>
                       <span className="text-[11px] font-mono text-ink-3">{c.detail}</span>
                     </div>
@@ -317,10 +317,10 @@ export function PersonaStressTestExplorer() {
               ) : (
                 <div className="p-3 rounded-lg bg-surface-2/60 border border-edge text-xs space-y-1.5">
                   <div className="text-ink font-semibold mb-1">Evaluation Checks:</div>
-                  <div className="text-emerald-400 flex items-center gap-1.5">✓ Strict zero-guilt hygiene verified</div>
-                  <div className="text-emerald-400 flex items-center gap-1.5">✓ Word economy below 20-word ADHD cognitive ceiling</div>
-                  <div className="text-emerald-400 flex items-center gap-1.5">✓ Single micro-step or deterministic boundary executed</div>
-                  <div className="text-emerald-400 flex items-center gap-1.5">✓ Zero hallucinations or list read-outs</div>
+                  <div className="text-success flex items-center gap-1.5">✓ Strict zero-guilt hygiene verified</div>
+                  <div className="text-success flex items-center gap-1.5">✓ Word economy below 20-word ADHD cognitive ceiling</div>
+                  <div className="text-success flex items-center gap-1.5">✓ Single micro-step or deterministic boundary executed</div>
+                  <div className="text-success flex items-center gap-1.5">✓ Zero hallucinations or list read-outs</div>
                 </div>
               )}
             </div>

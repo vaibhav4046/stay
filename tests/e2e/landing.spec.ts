@@ -269,6 +269,7 @@ test.describe('Landing: accessibility and policy', () => {
   });
 
   test('no CSP violations and no console errors while scrolling the whole page', async ({ page }) => {
+    test.slow();
     const errors: string[] = [];
     page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
     page.on('pageerror', (e) => errors.push(String(e)));

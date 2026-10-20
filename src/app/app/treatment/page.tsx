@@ -3,10 +3,11 @@
 import { useStayData } from '@/lib/storage/useStayData';
 import { TreatmentCheckinForm } from '@/components/TreatmentCheckinForm';
 import { computeAdherenceSummary } from '@/lib/coach/patterns';
+import { PageSkeleton } from '@/components/PageSkeleton';
 
 export default function TreatmentPage() {
   const { profile, checkins, loaded, addCheckin } = useStayData('app');
-  if (!loaded) return null;
+  if (!loaded) return <PageSkeleton variant="treatment" />;
   const summary = computeAdherenceSummary(checkins.filter((c) => Date.now() - new Date(c.createdAt).getTime() < 14 * 86400000));
 
   return (

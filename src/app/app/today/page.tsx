@@ -4,11 +4,12 @@ import { useStayData } from '@/lib/storage/useStayData';
 import { Onboarding } from '@/components/Onboarding';
 import { StayHome } from '@/components/StayHome';
 import { StrategyPatternSummary } from '@/components/StrategyPatternSummary';
+import { PageSkeleton } from '@/components/PageSkeleton';
 
 export default function TodayPage() {
   const { profile, sessions, loaded, updateProfile, addSession } = useStayData('app');
 
-  if (!loaded) return null;
+  if (!loaded) return <PageSkeleton variant="today" />;
   if (!profile.onboardingCompleted) return <Onboarding onDone={updateProfile} />;
 
   return (

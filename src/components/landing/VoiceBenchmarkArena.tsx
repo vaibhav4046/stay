@@ -69,7 +69,7 @@ export function VoiceBenchmarkArena() {
           <h2 id="arena-title" className="section-title max-w-[24ch]">
             Stay vs. ChatGPT Voice and Gemini Live
           </h2>
-          <p className="lp-night-copy mt-3 max-w-[58ch]">
+          <p className="mt-3 max-w-[58ch] text-ink-2">
             Standard voice assistants are optimized for general conversation. Stay is clinically engineered for neurodivergent turn-taking. Here is how they compare when measured side-by-side with identical speech scripts on the same machine.
           </p>
         </div>
@@ -119,7 +119,7 @@ export function VoiceBenchmarkArena() {
                   User says: &ldquo;I need to write this email to my boss... but um... [2.5s trailing silence]... where do I start?&rdquo;
                 </h3>
               </div>
-              <span className="px-2.5 py-1 text-xs rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
+              <span className="px-2.5 py-1 text-xs rounded-full bg-success/10 text-success border border-success/20 font-medium">
                 Stay Waits Cleanly
               </span>
             </div>
@@ -127,19 +127,19 @@ export function VoiceBenchmarkArena() {
             <div className="space-y-4">
               <div className="space-y-1">
                 <div className="flex justify-between text-xs font-mono">
-                  <span className="text-emerald-400 font-bold flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse" /> Stay (Fast Voice)
+                  <span className="text-success font-bold flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-success inline-block animate-pulse" /> Stay (Fast Voice)
                   </span>
                   <span className="text-ink-2">Waited through entire 2.5s silence → Replied at 1.43s after end of thought</span>
                 </div>
-                <div className="h-7 w-full bg-surface-2 rounded-lg flex overflow-hidden border border-emerald-500/30">
-                  <div className="w-[35%] bg-emerald-500/20 border-r border-emerald-500/40 flex items-center px-2 text-[11px] font-mono text-emerald-300">
+                <div className="h-7 w-full bg-surface-2 rounded-lg flex overflow-hidden border border-success/30">
+                  <div className="w-[35%] bg-success/20 border-r border-success/40 flex items-center px-2 text-[11px] font-mono text-success font-medium">
                     User Speaking
                   </div>
-                  <div className="w-[45%] bg-surface-3 flex items-center justify-center text-[11px] font-mono text-ink-3">
+                  <div className="w-[45%] bg-surface-2 flex items-center justify-center text-[11px] font-mono text-ink-3">
                     [2.5s Trailing Pause — Stay Listens Silently]
                   </div>
-                  <div className="w-[20%] bg-emerald-500/40 flex items-center px-2 text-[11px] font-mono text-emerald-200">
+                  <div className="w-[20%] bg-success/30 flex items-center px-2 text-[11px] font-mono text-success font-semibold">
                     Replied: 12 words
                   </div>
                 </div>
@@ -147,19 +147,19 @@ export function VoiceBenchmarkArena() {
 
               <div className="space-y-1">
                 <div className="flex justify-between text-xs font-mono">
-                  <span className="text-rose-400 font-bold flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-rose-400 inline-block" /> ChatGPT Voice (Free)
+                  <span className="text-danger font-bold flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-danger inline-block" /> ChatGPT Voice (Free)
                   </span>
-                  <span className="text-rose-400 font-medium">Interrupted at 1.8s mid-pause! Talked over user!</span>
+                  <span className="text-danger font-medium">Interrupted at 1.8s mid-pause! Talked over user!</span>
                 </div>
-                <div className="h-7 w-full bg-surface-2 rounded-lg flex overflow-hidden border border-rose-500/30">
-                  <div className="w-[35%] bg-rose-500/20 border-r border-rose-500/40 flex items-center px-2 text-[11px] font-mono text-rose-300">
+                <div className="h-7 w-full bg-surface-2 rounded-lg flex overflow-hidden border border-danger/30">
+                  <div className="w-[35%] bg-danger/20 border-r border-danger/40 flex items-center px-2 text-[11px] font-mono text-danger font-medium">
                     User Speaking
                   </div>
-                  <div className="w-[25%] bg-surface-3 flex items-center justify-center text-[10px] font-mono text-ink-3">
+                  <div className="w-[25%] bg-surface-2 flex items-center justify-center text-[10px] font-mono text-ink-3">
                     Silence
                   </div>
-                  <div className="w-[40%] bg-rose-500/50 flex items-center px-2 text-[11px] font-mono text-rose-100 font-semibold">
+                  <div className="w-[40%] bg-danger/25 flex items-center px-2 text-[11px] font-mono text-danger font-semibold">
                     Cut in prematurely (64 words monologue)
                   </div>
                 </div>
@@ -167,19 +167,19 @@ export function VoiceBenchmarkArena() {
 
               <div className="space-y-1">
                 <div className="flex justify-between text-xs font-mono">
-                  <span className="text-amber-400 font-bold flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" /> Gemini 3.8 Live
+                  <span className="text-caution font-bold flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-caution inline-block" /> Gemini 3.8 Live
                   </span>
-                  <span className="text-amber-400 font-medium">Interrupted at 1.5s into pause!</span>
+                  <span className="text-caution font-medium">Interrupted at 1.5s into pause!</span>
                 </div>
-                <div className="h-7 w-full bg-surface-2 rounded-lg flex overflow-hidden border border-amber-500/30">
-                  <div className="w-[35%] bg-amber-500/20 border-r border-amber-500/40 flex items-center px-2 text-[11px] font-mono text-amber-300">
+                <div className="h-7 w-full bg-surface-2 rounded-lg flex overflow-hidden border border-caution/30">
+                  <div className="w-[35%] bg-caution/20 border-r border-caution/40 flex items-center px-2 text-[11px] font-mono text-caution font-medium">
                     User Speaking
                   </div>
-                  <div className="w-[20%] bg-surface-3 flex items-center justify-center text-[10px] font-mono text-ink-3">
+                  <div className="w-[20%] bg-surface-2 flex items-center justify-center text-[10px] font-mono text-ink-3">
                     Silence
                   </div>
-                  <div className="w-[45%] bg-amber-500/50 flex items-center px-2 text-[11px] font-mono text-amber-100 font-semibold">
+                  <div className="w-[45%] bg-caution/25 flex items-center px-2 text-[11px] font-mono text-caution font-semibold">
                     Cut in prematurely (35 words)
                   </div>
                 </div>
@@ -197,24 +197,24 @@ export function VoiceBenchmarkArena() {
                   AI is midway through speaking. User interrupts: &ldquo;Wait, stop! Change of plan.&rdquo;
                 </h3>
               </div>
-              <span className="px-2.5 py-1 text-xs rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
+              <span className="px-2.5 py-1 text-xs rounded-full bg-success/10 text-success border border-success/20 font-medium">
                 Stay Cuts Off in 0.40s
               </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-              <div className="p-4 rounded-xl bg-surface-2 border border-emerald-500/30">
-                <div className="text-xs font-mono text-emerald-400 font-bold">Stay Fast Voice</div>
+              <div className="p-4 rounded-xl bg-surface-2 border border-success/30">
+                <div className="text-xs font-mono text-success font-bold">Stay Fast Voice</div>
                 <div className="text-2xl font-bold font-display text-ink mt-2">0.38s – 0.45s</div>
                 <p className="text-xs text-ink-2 mt-1">Instant silent cut. Flushes chunk queue under 450ms. Zero voice bleeding.</p>
               </div>
-              <div className="p-4 rounded-xl bg-surface-2 border border-rose-500/30">
-                <div className="text-xs font-mono text-rose-400 font-bold">ChatGPT Voice</div>
+              <div className="p-4 rounded-xl bg-surface-2 border border-danger/30">
+                <div className="text-xs font-mono text-danger font-bold">ChatGPT Voice</div>
                 <div className="text-2xl font-bold font-display text-ink mt-2">1.07s – 1.50s</div>
                 <p className="text-xs text-ink-2 mt-1">Keeps blabbering for over a second after interruption before detecting barge-in.</p>
               </div>
-              <div className="p-4 rounded-xl bg-surface-2 border border-amber-500/30">
-                <div className="text-xs font-mono text-amber-400 font-bold">Gemini Live</div>
+              <div className="p-4 rounded-xl bg-surface-2 border border-caution/30">
+                <div className="text-xs font-mono text-caution font-bold">Gemini Live</div>
                 <div className="text-2xl font-bold font-display text-ink mt-2">0.43s</div>
                 <p className="text-xs text-ink-2 mt-1">Good native cutoff, but can sometimes glitch on rapid successive turns.</p>
               </div>
@@ -231,38 +231,38 @@ export function VoiceBenchmarkArena() {
                   User prompt: &ldquo;I keep putting off cleaning my garage.&rdquo;
                 </h3>
               </div>
-              <span className="px-2.5 py-1 text-xs rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
+              <span className="px-2.5 py-1 text-xs rounded-full bg-success/10 text-success border border-success/20 font-medium">
                 Stay Limits to 12 Words
               </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-              <div className="p-4 rounded-xl bg-surface-2 border border-emerald-500/30 flex flex-col justify-between">
+              <div className="p-4 rounded-xl bg-surface-2 border border-success/30 flex flex-col justify-between">
                 <div>
-                  <div className="text-xs font-mono text-emerald-400 font-bold">Stay Spoken Reply (12 words, 4.2s)</div>
-                  <blockquote className="text-sm font-medium text-ink mt-3 italic border-l-2 border-emerald-500 pl-3">
+                  <div className="text-xs font-mono text-success font-bold">Stay Spoken Reply (12 words, 4.2s)</div>
+                  <blockquote className="text-sm font-medium text-ink mt-3 italic border-l-2 border-success pl-3">
                     &ldquo;Move one empty cardboard box to the recycling bin. That is all.&rdquo;
                   </blockquote>
                 </div>
-                <div className="mt-4 text-[11px] font-mono text-emerald-300">✓ Actionable in 2 min. Zero overwhelm.</div>
+                <div className="mt-4 text-[11px] font-mono text-success">✓ Actionable in 2 min. Zero overwhelm.</div>
               </div>
-              <div className="p-4 rounded-xl bg-surface-2 border border-rose-500/30 flex flex-col justify-between">
+              <div className="p-4 rounded-xl bg-surface-2 border border-danger/30 flex flex-col justify-between">
                 <div>
-                  <div className="text-xs font-mono text-rose-400 font-bold">ChatGPT Voice (64 words, 16.8s)</div>
-                  <blockquote className="text-xs text-ink-2 mt-3 italic border-l-2 border-rose-500/50 pl-3">
+                  <div className="text-xs font-mono text-danger font-bold">ChatGPT Voice (64 words, 16.8s)</div>
+                  <blockquote className="text-xs text-ink-2 mt-3 italic border-l-2 border-danger/50 pl-3">
                     &ldquo;Cleaning the garage can feel really overwhelming! Have you considered breaking it into zones? First, sort items into keep, donate, and trash. Make sure you set a timer and grab storage bins before you begin...&rdquo;
                   </blockquote>
                 </div>
-                <div className="mt-4 text-[11px] font-mono text-rose-400">✗ Cognitive overload. Too many options.</div>
+                <div className="mt-4 text-[11px] font-mono text-danger">✗ Cognitive overload. Too many options.</div>
               </div>
-              <div className="p-4 rounded-xl bg-surface-2 border border-amber-500/30 flex flex-col justify-between">
+              <div className="p-4 rounded-xl bg-surface-2 border border-caution/30 flex flex-col justify-between">
                 <div>
-                  <div className="text-xs font-mono text-amber-400 font-bold">Gemini Live (35 words, 8.5s)</div>
-                  <blockquote className="text-xs text-ink-2 mt-3 italic border-l-2 border-amber-500/50 pl-3">
+                  <div className="text-xs font-mono text-caution font-bold">Gemini Live (35 words, 8.5s)</div>
+                  <blockquote className="text-xs text-ink-2 mt-3 italic border-l-2 border-caution/50 pl-3">
                     &ldquo;Garages are tricky. Try picking one corner to focus on today. You don&apos;t have to finish the whole thing, just spend ten minutes clearing the floor.&rdquo;
                   </blockquote>
                 </div>
-                <div className="mt-4 text-[11px] font-mono text-amber-300">~ Decent advice, but 10m is too high a barrier.</div>
+                <div className="mt-4 text-[11px] font-mono text-caution font-medium">~ Decent advice, but 10m is too high a barrier.</div>
               </div>
             </div>
           </div>
@@ -275,7 +275,7 @@ export function VoiceBenchmarkArena() {
           <thead className="bg-surface-2/60 text-xs text-ink-2 uppercase tracking-wider font-mono border-b border-edge">
             <tr>
               <th scope="col" className="py-4 px-6">Benchmark Dimension</th>
-              <th scope="col" className="py-4 px-6 text-emerald-400">Stay (Fast Voice)</th>
+              <th scope="col" className="py-4 px-6 text-success">Stay (Fast Voice)</th>
               <th scope="col" className="py-4 px-6 text-ink-2">ChatGPT Voice</th>
               <th scope="col" className="py-4 px-6 text-ink-2">Gemini 3.8 Live</th>
               <th scope="col" className="py-4 px-6 text-ink-3">Clinical Rationale</th>
@@ -288,7 +288,7 @@ export function VoiceBenchmarkArena() {
                   <div className="font-semibold text-ink font-display">{m.title}</div>
                   <div className="text-xs text-ink-3">{m.category}</div>
                 </td>
-                <td className="py-4 px-6 font-mono font-medium text-emerald-400">
+                <td className="py-4 px-6 font-mono font-semibold text-success">
                   {m.stayValue}
                 </td>
                 <td className="py-4 px-6 font-mono text-ink-2">

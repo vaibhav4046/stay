@@ -155,7 +155,7 @@ export function AssemblyAiArchitecture() {
             >
               <span
                 className={`inline-block h-2 w-2 rounded-full ${
-                  isSimulating ? 'animate-ping bg-amber-500' : 'bg-emerald-500'
+                  isSimulating ? 'animate-ping bg-caution' : 'bg-success'
                 }`}
                 aria-hidden="true"
               />
@@ -179,7 +179,7 @@ export function AssemblyAiArchitecture() {
                     isSelected
                       ? 'border-2 border-ink bg-surface shadow-md'
                       : 'border border-ink/10 bg-paper/60 hover:border-ink/20 hover:bg-paper'
-                  } ${isCurrentSim ? 'ring-2 ring-amber-500' : ''}`}
+                  } ${isCurrentSim ? 'ring-2 ring-caution' : ''}`}
                 >
                   <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-ink-2">
                     {s.timing}
@@ -202,7 +202,7 @@ export function AssemblyAiArchitecture() {
                 <span className="rounded-md bg-ink/5 px-2.5 py-1 text-xs font-mono font-medium text-ink">
                   {current.timing}
                 </span>
-                <span className="rounded-md bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-800">
+                <span className="rounded-md bg-success/10 px-2.5 py-1 text-xs font-medium text-success">
                   AssemblyAI Integration
                 </span>
               </div>

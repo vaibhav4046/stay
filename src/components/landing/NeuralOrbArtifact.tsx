@@ -204,7 +204,7 @@ export function NeuralOrbArtifact() {
           <h2 id="artifacts-title" className="section-title max-w-[26ch]">
             The 5,200-dot procedural therapist figure
           </h2>
-          <p className="lp-night-copy mt-3 max-w-[60ch]">
+          <p className="mt-3 max-w-[60ch] text-ink-2">
             Built entirely as mathematical point clouds without textures or meshes. Every dot belongs to an organic rig driven in real-time by WebGL, audio visemes, and natural breathing cues.
           </p>
         </div>

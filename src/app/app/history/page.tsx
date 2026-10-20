@@ -4,6 +4,7 @@ import { useStayData } from '@/lib/storage/useStayData';
 import { BARRIER_DEFINITIONS, STRATEGY_DEFINITIONS } from '@/lib/coach/strategies';
 import { StrategyPatternSummary } from '@/components/StrategyPatternSummary';
 import { weekTally, weekTallyLine } from '@/lib/coach/weekTally';
+import { PageSkeleton } from '@/components/PageSkeleton';
 
 const OUTCOME_LABEL: Record<string, { text: string; color: string }> = {
   started: { text: 'Started', color: '#236B48' },
@@ -14,7 +15,7 @@ const OUTCOME_LABEL: Record<string, { text: string; color: string }> = {
 
 export default function HistoryPage() {
   const { sessions, checkins, loaded } = useStayData('app');
-  if (!loaded) return null;
+  if (!loaded) return <PageSkeleton variant="history" />;
   const week = weekTally(sessions);
 
   return (

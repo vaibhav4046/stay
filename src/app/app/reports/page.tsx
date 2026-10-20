@@ -3,10 +3,11 @@
 import { useStayData } from '@/lib/storage/useStayData';
 import { ReportBuilder } from '@/components/ReportBuilder';
 import { appendAuditEvent } from '@/lib/storage/repository';
+import { PageSkeleton } from '@/components/PageSkeleton';
 
 export default function ReportsPage() {
   const { profile, sessions, checkins, loaded } = useStayData('app');
-  if (!loaded) return null;
+  if (!loaded) return <PageSkeleton variant="reports" />;
   return (
     <div>
       <h1 className="section-title mb-2">Report for your clinician</h1>

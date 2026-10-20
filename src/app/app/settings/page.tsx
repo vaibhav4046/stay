@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/auth/useAuth';
 import { AuthModal } from '@/components/AuthModal';
 import { KeysSection } from '@/components/KeysSection';
 import { StyleSettings } from '@/components/StyleSettings';
+import { PageSkeleton } from '@/components/PageSkeleton';
 
 export default function SettingsPage() {
   const { profile, loaded, updateProfile } = useStayData('app');
@@ -20,7 +21,7 @@ export default function SettingsPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => setAudits(getLocalAuditEvents()), []);
-  if (!loaded) return null;
+  if (!loaded) return <PageSkeleton variant="settings" />;
 
   const download = () => {
     const blob = new Blob([exportAllUserDataJson()], { type: 'application/json' });

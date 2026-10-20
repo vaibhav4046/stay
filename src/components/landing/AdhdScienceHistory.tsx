@@ -76,7 +76,7 @@ export function AdhdScienceHistory() {
           <h2 id="science-title" className="section-title max-w-[24ch]">
             The science behind Stay&apos;s two-minute rule
           </h2>
-          <p className="lp-night-copy mt-3 max-w-[62ch]">
+          <p className="mt-3 max-w-[62ch] text-ink-2">
             Stay was not born from productivity hype. It is directly built on over a century of peer-reviewed psychiatric research—from Still and Bradley to Barkley and Solanto.
           </p>
         </div>
@@ -175,50 +175,50 @@ export function AdhdScienceHistory() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
               {/* Avoidance Trap */}
-              <div className="p-5 rounded-xl bg-rose-500/5 border border-rose-500/20 space-y-4">
-                <div className="flex items-center justify-between text-xs font-mono text-rose-400 font-bold uppercase">
+              <div className="p-5 rounded-xl bg-danger/5 border border-danger/20 space-y-4">
+                <div className="flex items-center justify-between text-xs font-mono text-danger font-bold uppercase">
                   <span>The Paralysis Trap</span>
                   <span>Normal AI / Apps</span>
                 </div>
                 <div className="space-y-2 text-xs font-mono">
-                  <div className="p-2.5 rounded bg-surface-2/80 border border-rose-500/30 text-rose-300">
+                  <div className="p-2.5 rounded bg-surface-2 border border-danger/20 text-danger font-medium">
                     1. Overwhelming Ambiguity (&ldquo;Clean entire garage&rdquo;)
                   </div>
                   <div className="text-center text-ink-3">↓</div>
-                  <div className="p-2.5 rounded bg-surface-2/80 border border-rose-500/30 text-rose-300">
+                  <div className="p-2.5 rounded bg-surface-2 border border-danger/20 text-danger font-medium">
                     2. Prefrontal Cortex Freeze (Low Dopamine Gating)
                   </div>
                   <div className="text-center text-ink-3">↓</div>
-                  <div className="p-2.5 rounded bg-surface-2/80 border border-rose-500/30 text-rose-300">
+                  <div className="p-2.5 rounded bg-surface-2 border border-danger/20 text-danger font-medium">
                     3. AI gives 5-paragraph plan → Cognitive Overload
                   </div>
                   <div className="text-center text-ink-3">↓</div>
-                  <div className="p-2.5 rounded bg-rose-500/20 border border-rose-500/40 text-rose-200 font-bold">
+                  <div className="p-2.5 rounded bg-danger/15 border border-danger/30 text-danger font-bold">
                     4. Avoidance &amp; Shame Spiral (&ldquo;I failed again&rdquo;)
                   </div>
                 </div>
               </div>
 
               {/* Stay Micro-Activation Loop */}
-              <div className="p-5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 space-y-4">
-                <div className="flex items-center justify-between text-xs font-mono text-emerald-400 font-bold uppercase">
+              <div className="p-5 rounded-xl bg-success/5 border border-success/20 space-y-4">
+                <div className="flex items-center justify-between text-xs font-mono text-success font-bold uppercase">
                   <span>Stay Micro-Activation Loop</span>
                   <span>Clinically Grounded</span>
                 </div>
                 <div className="space-y-2 text-xs font-mono">
-                  <div className="p-2.5 rounded bg-surface-2/80 border border-emerald-500/30 text-emerald-300">
+                  <div className="p-2.5 rounded bg-surface-2 border border-success/20 text-success font-medium">
                     1. Voice Brain Dump (Unload working memory in 1 breath)
                   </div>
                   <div className="text-center text-ink-3">↓</div>
-                  <div className="p-2.5 rounded bg-surface-2/80 border border-emerald-500/30 text-emerald-300">
+                  <div className="p-2.5 rounded bg-surface-2 border border-success/20 text-success font-medium">
                     2. Emotional Containment (&ldquo;I hear you, that is hard&rdquo;)
                   </div>
                   <div className="text-center text-ink-3">↓</div>
-                  <div className="p-2.5 rounded bg-surface-2/80 border border-emerald-500/30 text-emerald-300">
+                  <div className="p-2.5 rounded bg-surface-2 border border-success/20 text-success font-medium">
                     3. Exactly ONE 2-Minute Atomic Step (&ldquo;Pick up 1 box&rdquo;)
                   </div>
                   <div className="text-center text-ink-3">↓</div>
-                  <div className="p-2.5 rounded bg-emerald-500/20 border border-emerald-500/40 text-emerald-200 font-bold">
+                  <div className="p-2.5 rounded bg-success/15 border border-success/30 text-success font-bold">
                     4. Dopaminergic Spark → Natural Behavioral Momentum
                   </div>
                 </div>
