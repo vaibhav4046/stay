@@ -5,6 +5,8 @@
  * Injected into both real-time voice and text model system prompts.
  */
 
+import { noteStatedAvoidance } from '@/lib/coach/learnings';
+
 export interface UserMemoryProfile {
   name: string | null;
   roleOrField: string | null;
@@ -134,6 +136,7 @@ export function extractMemoriesFromUtterance(text: string): {
     }
   }
 
+  noteStatedAvoidance(text); // keeps the exact quote as evidence for the Memory screen; a no-op when learning is off
   saveUserMemory(profile);
   return { profile, extractedFact };
 }
@@ -222,4 +225,12 @@ ${facts || '• None recorded.'}
 ${recentSessions}
 • Memory Guidance: Naturally reference their context, past successes, or name when appropriate. Never say "According to my memory bank"—speak with natural, genuine human recollection.
 `.trim();
+}
+
+/** Removes one stated trigger or helpful thing by position, so nothing Stay holds about the person is hidden from them. */
+export function removeUserMemoryList(list: 'coreTriggers' | 'knownStrengths', index: number): UserMemoryProfile {
+  const profile = loadUserMemory();
+  profile[list].splice(index, 1);
+  saveUserMemory(profile);
+  return profile;
 }
