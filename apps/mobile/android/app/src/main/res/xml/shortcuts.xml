@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut android:shortcutId="talk" android:enabled="true" android:icon="@mipmap/ic_launcher" android:shortcutShortLabel="@string/shortcut_talk" android:shortcutLongLabel="@string/shortcut_talk_long">
+        <intent android:action="android.intent.action.VIEW" android:data="stay://today?voice=auto" android:targetPackage="app.stay.mobile" android:targetClass="app.stay.mobile.MainActivity" />
+    </shortcut>
+    <shortcut android:shortcutId="focus" android:enabled="true" android:icon="@mipmap/ic_launcher" android:shortcutShortLabel="@string/shortcut_focus" android:shortcutLongLabel="@string/shortcut_focus_long">
+        <intent android:action="android.intent.action.VIEW" android:data="stay://today?timer=20" android:targetPackage="app.stay.mobile" android:targetClass="app.stay.mobile.MainActivity" />
+    </shortcut>
+    <shortcut android:shortcutId="ground" android:enabled="true" android:icon="@mipmap/ic_launcher" android:shortcutShortLabel="@string/shortcut_ground" android:shortcutLongLabel="@string/shortcut_ground_long">
+        <intent android:action="android.intent.action.VIEW" android:data="stay://today?action=grounding" android:targetPackage="app.stay.mobile" android:targetClass="app.stay.mobile.MainActivity" />
+    </shortcut>
+</shortcuts>

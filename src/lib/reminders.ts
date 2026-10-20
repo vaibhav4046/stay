@@ -3,6 +3,8 @@
  * chime, an on-screen note, a spoken line when the voice is live, and a system notification if the person allowed it.
  * A browser tab cannot wake itself when it is closed; this works while Stay is open, including in the background.
  */
+import { emitHost, hostHandlesNotifications } from '@/lib/host';
+
 export interface Reminder {
   id: string;
   text: string;
@@ -34,10 +36,13 @@ function save(list: Reminder[]): Reminder[] {
 export function addReminder(minutes: number, text: string, now = Date.now()): { list: Reminder[]; reminder: Reminder } {
   const m = Math.max(1, Math.min(240, Math.round(minutes)));
   const reminder: Reminder = { id: `rem-${now}-${Math.random().toString(36).slice(2, 5)}`, text: (text || 'Check in').replace(/\s+/g, ' ').trim().slice(0, 100), dueAt: now + m * 60_000 };
-  return { list: save([...loadReminders(), reminder].sort((a, b) => a.dueAt - b.dueAt)), reminder };
+  const list = save([...loadReminders(), reminder].sort((a, b) => a.dueAt - b.dueAt));
+  emitHost({ type: 'reminder-added', id: reminder.id, text: reminder.text, dueAt: reminder.dueAt });
+  return { list, reminder };
 }
 
 export function removeReminder(id: string): Reminder[] {
+  emitHost({ type: 'reminder-removed', id });
   return save(loadReminders().filter((r) => r.id !== id));
 }
 
@@ -67,6 +72,7 @@ export async function askNotificationPermission(): Promise<ReturnType<typeof not
 
 export function showNotification(title: string, body: string): void {
   try {
+    if (hostHandlesNotifications()) return; // the wrapper schedules its own native notification
     if (notificationState() === 'granted') new Notification(title, { body, icon: '/icons/icon-192.png', tag: 'stay-checkin' });
   } catch {
     // some browsers only allow notifications from a service worker
