@@ -88,5 +88,12 @@ export function buildGreeting(persona: VoicePersona, memory: UserMemoryProfile, 
 }
 
 export function appKeyterms(): string[] {
-  return ['Stay', 'ADHD', 'micro-step', 'parking lot', 'Crumpet', 'Chaiwala', 'Sprocket', 'Lavender', 'Fettuccine', 'Tornado', 'Pretzel', 'Waffle', 'Outback', 'Croissant', 'Bagel', 'Maple Moose', 'Matcha', 'Viking Velvet', 'Goblin Mode', 'Pumpkin Pixel'];
+  return [
+    'Stay', 'ADHD', 'micro-step', 'parking lot', 'brain dump', 'wall of awful', 'two-minute timer',
+    'step next', 'wrap up', 'park it', 'rejection sensitivity', 'Cardamom', 'Chaiwala', 'Taco', 'Mariachi',
+    'Lady Lavender', 'Captain Crumpet', 'Biscuit Blitz', 'Marmite Sprocket', 'Waffle Wizard',
+    'Countdown Cookie', 'Porch Light', 'Pancake Paladin', 'Arcade Gremlin', 'Velvet Scalpel',
+    'Pumpkin Pixel', 'Lantern Iris', 'Compass Reid', 'Couch Rocket', 'Croissant Bandit',
+    'Professor Pretzel', 'Fettuccine Maestro', 'Goblin Mode Gus',
+  ];
 }
