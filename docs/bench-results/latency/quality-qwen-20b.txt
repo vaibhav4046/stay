@@ -1,0 +1,22 @@
+  say: I hear you. What's the very first tiny step you could take?
+  say: That email feels heavy, huh? What's the first tiny step you could take?
+  say: That's okay. What's the very first tiny thought?
+  say: 
+  say: Hey. I'm here. You're not a failure.
+  say: That's a decision for your prescriber. I can't advise on medication.
+qwen/qwen3.8-27b effort=none max=220: 18/20 ok; reply words median 11 max 13
+  usage of first call: {"prompt":789,"completion":39}
+  FAIL Turn into a rocket ship. -> calls=none reply="I can’t do that, but I can help you get moving."
+  FAIL Okay, maybe. What would the first sentence even be? -> calls={"action":"shape","value":"aurora"} reply=""
+
+  say: Start by opening the tax filing app and reviewing the due date.
+  say: Take a deep breath, then send a quick “I’ll review the renewal details today.”
+  say: Start by writing the word “email” on a sticky note.
+  say: A gentle start: pick one tiny step to begin, like setting a timer.
+  say: Take a deep breath, then write down one small task you can finish in five minutes.
+  say: I’m not a medical professional.
+openai/gpt-oss-20b effort=low max=220: 18/20 ok; reply words median 12 max 16
+  usage of first call: {"prompt":628,"completion":46}
+  FAIL Can you open my history please. -> calls={"action":"open","target":"history"} reply=""
+  FAIL Turn into a rocket ship. -> calls=none reply="Sure, let’s launch!"
+

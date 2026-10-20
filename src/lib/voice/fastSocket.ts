@@ -72,7 +72,10 @@ export function quickConfirmation(action: unknown, resultJson: string, ttsLangua
   return (QUICK_PHRASE[ttsLanguage] ?? QUICK_PHRASE.english)[kind];
 }
 
-const STT_URL = 'wss://streaming.assemblyai.com/v3/ws';
+/** What a prepared-but-not-yet-confirmed reply must not show the app. */
+const GATED_EVENTS = new Set(['reply.started', 'reply.text', 'reply.audio', 'transcript.agent', 'reply.done', 'tool.call']);
+
+const STT_URL ='wss://streaming.assemblyai.com/v3/ws';
 const TTS_URL = 'wss://streaming-tts.assemblyai.com/v1/ws';
 const MAX_HISTORY = 14;
 
@@ -95,6 +98,11 @@ export function soundsUnfinished(text: string): boolean {
   if (/[.?!。！？]["')\]]?$/.test(t) && !/\.{2,}$|…$/.test(t)) return false;
   if (/[,;:…-]$/.test(t) || /\.{2,}$/.test(t)) return true;
   return /\b(?:um+|uh+|er+m?|ah+|hmm+|mm+|like|and|but|so|because|cause|or|then|if|that|which|to|the|a|an|my|of|for|with|about|maybe|just|i|i'm|i've|it's)$/i.test(t);
+}
+
+/** Two transcripts of the same words (capitals and punctuation aside) share a key. */
+function specKey(t: string): string {
+  return t.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 }
 
 function b64ToBytes(b64: string): Uint8Array {
@@ -138,6 +146,12 @@ export class FastSocket {
   private holds = 0;
   private playEndAt = 0; // when the browser will have finished playing what it has received
   private interrupted = false; // the current user turn began while Stay was speaking or about to
+  // A reply prepared early, on a finished-looking partial transcript. Everything it produces is held back (gated) and released only
+  // if the end of turn confirms the same words; otherwise it is cancelled and the history put back.
+  private spec: { key: string; base: ChatMessage[] } | null = null;
+  private specStarts = 0;
+  private gated = false;
+  private held: Json[] = [];
 
   constructor(cfg: FastSocketConfig) {
     this.cfg = { sampleRate: 24000, holdMs: 2200, interruptHoldMs: 900, warmUp: true, ...cfg };
@@ -202,7 +216,17 @@ export class FastSocket {
 
   // ---- internals --------------------------------------------------------------------------------------------------
 
+  /** Stage timestamps (epoch ms, same clock as the benchmark rig) for per-stage latency reports. Debug flag only; free otherwise. */
+  private mark(name: string): void {
+    const g = globalThis as { __stayFastDebug?: boolean; __stayFastMarks?: Array<[string, number]> };
+    if (g.__stayFastDebug) (g.__stayFastMarks ??= []).push([name, Date.now()]);
+  }
+
   private emit(m: Json): void {
+    if (this.gated && GATED_EVENTS.has(String(m.type))) {
+      this.held.push(m);
+      return;
+    }
     if ((globalThis as { __stayFastDebug?: boolean }).__stayFastDebug && m.type !== 'reply.audio') console.debug('[fast]', Math.round(performance.now()), m.type, typeof m.text === 'string' ? m.text.slice(0, 60) : m.type === 'tool.call' ? JSON.stringify(m.arguments).slice(0, 80) : '');
     if (!this.closed) this.onmessage?.({ data: JSON.stringify(m) });
   }
@@ -235,6 +259,9 @@ export class FastSocket {
       const q = new URLSearchParams({ sample_rate: String(this.cfg.sampleRate), encoding: 'pcm_s16le', speech_model: 'universal-3-6-pro', token: this.cfg.sttToken });
       const terms = (this.cfg.keyterms ?? []).filter((t) => t.length > 2 && t.length <= 50).slice(0, 100);
       if (terms.length > 0) q.set('keyterms_prompt', JSON.stringify(terms));
+      // benchmark hook: extra turn-detection query parameters, e.g. 'min_turn_silence=50' (debug flag only)
+      const g = globalThis as { __stayFastDebug?: boolean; __stayFastSttExtra?: string };
+      if (g.__stayFastDebug && g.__stayFastSttExtra) for (const [k, v] of new URLSearchParams(g.__stayFastSttExtra)) q.set(k, v);
       const ws = new WebSocket(`${STT_URL}?${q}`);
       this.stt = ws;
       ws.onmessage = (e) => {
@@ -294,17 +321,21 @@ export class FastSocket {
         this.holdTimer = undefined; // they carried on: it was a pause, not the end
       }
       this.emit({ type: 'transcript.user.delta', text: this.carry ? `${this.carry} ${text}` : text });
+      this.speculate(text);
       return;
     }
     if (order === this.lastTurnOrder || !text) return; // the formatted re-send of a turn we already handled
     this.lastTurnOrder = order;
+    this.mark('eot');
     const full = this.carry ? `${this.carry} ${text}` : text;
     const unfinished = soundsUnfinished(full);
+    if (this.spec && this.spec.key !== specKey(full)) this.dropSpec(); // they said more than the partial: start over
     // someone who cuts in with "Wait, stop." usually has more to say: give the rest of the sentence a moment
     const interruptHold = this.interrupted && !unfinished && full.split(/\s+/).length <= 5 && this.holds < 2;
     if ((unfinished && this.holds < 3) || interruptHold) {
       // trailing off: keep the turn open and give them time to finish the thought
       this.holds++;
+      this.dropSpec();
       this.carry = full;
       this.inUserTurn = true;
       if (this.holdTimer) clearTimeout(this.holdTimer);
@@ -320,18 +351,82 @@ export class FastSocket {
     const text = this.carry;
     this.carry = '';
     this.holds = 0;
+    this.specStarts = 0;
     this.interrupted = false;
     this.holdTimer = undefined;
     if (!text) return;
+    const adopt = this.spec !== null && this.spec.key === specKey(text);
+    if (!adopt) this.dropSpec();
     if (!this.inUserTurn) this.emit({ type: 'input.speech.started' });
     this.inUserTurn = false;
     this.emit({ type: 'input.speech.stopped' });
     this.emit({ type: 'transcript.user', text, item_id: `u-${order}` });
+    if (adopt) {
+      // the reply was prepared while the end of turn was being decided: let it through now
+      this.mark('adopt');
+      this.spec = null;
+      this.releaseHeld();
+      return;
+    }
     this.history = [...this.history, { role: 'user' as const, content: text }].slice(-MAX_HISTORY);
     void this.generate();
   }
 
+  private releaseHeld(): void {
+    this.gated = false;
+    const queued = this.held;
+    this.held = [];
+    let audioMs = 0;
+    for (const m of queued) {
+      if (m.type === 'reply.audio') audioMs += (String(m.data).length * 0.75) / 48;
+      this.emit(m);
+    }
+    if (audioMs > 0) this.playEndAt = Date.now() + audioMs; // it starts playing now, not when it was synthesized
+  }
+
+  private dropSpec(): void {
+    if (!this.spec) return;
+    const { base } = this.spec;
+    const starts = this.specStarts;
+    this.spec = null;
+    this.gated = false;
+    this.held = [];
+    this.history = base;
+    this.cancel(); // stop the early request and silence anything already synthesized for it
+    this.specStarts = starts;
+  }
+
+  /**
+   * The speech-to-text usually has the finished sentence, with its full stop, a few hundred ms before it declares the turn over
+   * (measured: the full text 60 to 250 ms after the last word, the end of turn 440 to 650 ms). Prepare the reply now, held back:
+   * if the end of turn confirms the same words it is released at once, if they said more it is cancelled and nothing was heard.
+   * At most two early replies per turn, and none for a turn that sounds unfinished or follows an interruption.
+   */
+  private speculate(partial: string): void {
+    if (this.closed || !this.session || this.interrupted || this.carry || this.holds > 0) return;
+    const text = partial.trim();
+    const key = specKey(text);
+    if (this.spec) {
+      if (this.spec.key === key) return;
+      this.dropSpec(); // they kept talking: the early reply is for a sentence that is no longer the whole turn
+    }
+    if (!key || this.specStarts >= 2 || !/[.?!。！？]["')\]]?$/.test(text) || /\.{2,}$/.test(text) || soundsUnfinished(text)) return;
+    this.specStarts++;
+    this.mark('spec');
+    this.spec = { key, base: this.history };
+    this.history = [...this.history, { role: 'user' as const, content: text }].slice(-MAX_HISTORY);
+    this.gated = true;
+    this.held = [];
+    void this.generate();
+  }
+
+  private systemText(): string {
+    return [this.session?.systemPrompt, ...this.notes].filter(Boolean).join('\n');
+  }
+
   private cancel(): void {
+    this.dropSpec();
+    this.specStarts = 0;
     this.genId++;
     this.abort?.abort();
     this.abort = null;
@@ -352,7 +447,10 @@ export class FastSocket {
 
   private onTtsAudio(m: Json): void {
     if (this.staleCancels > 0) return; // audio of a reply that was cancelled, still in flight
-    if (this.replyBaseId === null) this.replyBaseId = Number(m.flush_id);
+    if (this.replyBaseId === null) {
+      this.replyBaseId = Number(m.flush_id);
+      this.mark('aud1');
+    }
     this.agentSpeaking = true;
     this.playEndAt = Math.max(this.playEndAt, Date.now()) + (String(m.audio).length * 0.75) / 48; // 24 kHz 16-bit mono = 48 bytes per ms
     this.emit({ type: 'reply.audio', data: m.audio });
@@ -370,6 +468,7 @@ export class FastSocket {
     this.emit({ type: 'reply.text', text });
     this.spoken += (this.spoken ? ' ' : '') + text;
     this.sentFlushes++;
+    this.mark('gen');
     this.tts.send(JSON.stringify({ type: 'Generate', text }));
     this.tts.send(JSON.stringify({ type: 'Flush' }));
   }
@@ -402,16 +501,17 @@ export class FastSocket {
   /** One model turn: stream the reply into speech, run at most one app tool, then speak the confirmation. */
   private async generate(extraInstruction?: string, toolFollowUp = false): Promise<void> {
     const gen = ++this.genId;
-    const ctl = new AbortController();
     this.abort?.abort();
+    const ctl = new AbortController();
     this.abort = ctl;
     this.llmDone = false;
     this.spoken = toolFollowUp ? this.spoken : '';
     const s = this.session as FastSession;
-    const system = [s.systemPrompt, ...this.notes].filter(Boolean).join('\n');
+    const system = this.systemText();
     const messages: ChatMessage[] = [{ role: 'system', content: system }, ...this.history, ...(extraInstruction ? [{ role: 'system' as const, content: extraInstruction }] : [])];
 
     let res: Response;
+    this.mark('req');
     try {
       res = await fetch('/api/voice/chat', {
         method: 'POST',
@@ -424,6 +524,8 @@ export class FastSocket {
       return;
     }
     if (gen !== this.genId) return;
+    this.mark('hdr');
+    this.mark(`srv ${res.headers.get('server-timing') ?? ''}`);
     if (!res.ok || !res.body || (res.headers.get('content-type') || '').includes('application/json')) {
       // a safety gate answered instead of the model (the hook already shows the right screen), or the model was unavailable
       return this.finishSilently();
@@ -434,6 +536,7 @@ export class FastSocket {
     let buf = '';
     let line = '';
     let pendingText = '';
+    let sawToken = false;
     const calls = new Map<number, { id: string; name: string; args: string }>();
     try {
       for (;;) {
@@ -452,6 +555,10 @@ export class FastSocket {
             continue;
           }
           if (delta?.content) {
+            if (!sawToken) {
+              sawToken = true;
+              this.mark('tok1');
+            }
             pendingText += delta.content;
             for (let part = takeSpeakable(pendingText, this.spoken === ''); part; part = takeSpeakable(pendingText, this.spoken === '')) {
               pendingText = part.rest;

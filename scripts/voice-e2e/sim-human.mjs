@@ -79,8 +79,9 @@ let browser;
 for (let i = 0; ; i++) { try { browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'], timeout: 60000 }); break; } catch (e) { if (i >= 3) throw e; console.log('browser launch timed out, retrying'); } }
 const ctx = await browser.newContext({ viewport: { width: 1200, height: 900 }, locale: LANG_SETUP[LANG]?.locale || 'en-GB' });
 const page = await ctx.newPage();
-await page.addInitScript(({ debug }) => {
+await page.addInitScript(({ debug, sttExtra }) => {
   window.__stayFastDebug = debug;
+  if (sttExtra) window.__stayFastSttExtra = sttExtra;
   const ac = new AudioContext({ sampleRate: 24000 });
   const dest = ac.createMediaStreamDestination();
   // room noise: low brown-ish noise, always on
@@ -96,7 +97,11 @@ await page.addInitScript(({ debug }) => {
   // overlay: Stay's own voice leaking back into the mic, quieter, right now
   window.__leak = (b64, gain) => { const src = ac.createBufferSource(); src.buffer = toBuf(b64); const g = ac.createGain(); g.gain.value = gain; src.connect(g); g.connect(dest); src.start(ac.currentTime + 0.02); };
   navigator.mediaDevices.getUserMedia = async () => { await ac.resume(); return dest.stream; };
-}, { debug: engine === 'fast' });
+  // stage timing: every playback start that is not the injected microphone (Stay's own voice being scheduled)
+  window.__stayPlays = [];
+  const origStart = AudioBufferSourceNode.prototype.start;
+  AudioBufferSourceNode.prototype.start = function (...a) { if (this.context !== ac) window.__stayPlays.push(Date.now()); return origStart.apply(this, a); };
+}, { debug: engine === 'fast', sttExtra: process.env.STT_EXTRA || '' });
 
 // ---- timeline from the sockets and the fast-voice debug events ------------------------------------------------------------
 const ev = []; // {t, type, text}
@@ -107,8 +112,11 @@ const T0 = now();
 function dump() { console.log('\n=== timeline (s) ==='); for (const e of ev) console.log(((e.t - T0) / 1000).toFixed(2).padStart(7), e.type.padEnd(22), String(e.text).slice(0, 100)); console.log('agent audio frames:', audioFrames.length, 'first', ((audioFrames[0] - T0) / 1000).toFixed(2), 'last', ((audioFrames.at(-1) - T0) / 1000).toFixed(2)); }
 const MAX_MS = Number(opt('--max', 420)) * 1000;
 setTimeout(() => { console.log('TIME LIMIT'); dump(); process.exit(3); }, MAX_MS);
+const sttEot = [], ttsGen = [];
 page.on('websocket', (ws) => {
   const url = ws.url();
+  if (url.includes('streaming.assemblyai.com')) ws.on('framereceived', (f) => { try { const m = JSON.parse(String(f.payload)); if (m.type === 'Turn' && m.end_of_turn) sttEot.push({ t: now(), text: String(m.transcript || '') }); } catch { /* binary */ } });
+  if (url.includes('streaming-tts.assemblyai.com')) ws.on('framesent', (f) => { try { if (JSON.parse(String(f.payload)).type === 'Generate') ttsGen.push(now()); } catch { /* binary */ } });
   const isAgent = url.includes('agents.assemblyai.com'), isTts = url.includes('streaming-tts.assemblyai.com');
   if (!isAgent && !isTts) return;
   ws.on('framereceived', (f) => {
@@ -162,7 +170,9 @@ async function say(pcm, label = '') { // returns when the human has finished spe
 }
 async function firstAudioAfter(t, max = 15000) {
   const start = now();
-  while (now() - start < max) { const f = audioFrames.find((x) => x > t); if (f) return f; await sleep(50); }
+  // the first moment Stay's voice is scheduled to play in the page (not when audio bytes reach the socket: a reply prepared early
+  // arrives on the wire before it is released, and only the release is what the person hears)
+  while (now() - start < max) { const p = await page.evaluate((t0) => (window.__stayPlays || []).find((x) => x > t0) ?? null, t); if (p) return p; await sleep(30); }
   return null;
 }
 const lastText = (type, after = 0) => [...ev].reverse().find((e) => e.type === type && e.t >= after)?.text || '';
@@ -176,6 +186,32 @@ console.log(`engine=${engine}${ECHO ? ' +echo' : ''} voice=${VOICE} noise=on llm
 
 const history = [];
 const latencies = [];
+const stageRows = [];
+const STAGE_ORDER = ['stt.eot', 'page.eot', 'req', 'hdr', 'srv.llm', 'srv.n', 'tok1', 'clause1', 'gen', 'gen.wire', 'aud1.wire', 'aud1', 'play1'];
+// ms after the true end of speech for each stage of this turn (first occurrence after the speech end)
+async function collectStages(tEnd, wireAudio) {
+  const marks = await page.evaluate(() => { const m = window.__stayFastMarks || []; window.__stayFastMarks = []; const p = window.__stayPlays || []; window.__stayPlays = []; return { m, p }; });
+  if (flag('--debug-marks')) console.log('marks', JSON.stringify(marks.m.map(([n, t]) => [n, t - tEnd])), 'plays', marks.p.length);
+  const first = (name) => marks.m.find(([n, t]) => n === name && t >= tEnd - 50)?.[1];
+  const row = {};
+  const after = (t) => (t == null ? null : t - tEnd);
+  row['stt.eot'] = after(sttEot.find((x) => x.t >= tEnd - 50)?.t);
+  row['page.eot'] = after(first('eot'));
+  for (const k of ['req', 'hdr', 'tok1', 'clause1', 'gen', 'aud1']) row[k] = after(first(k));
+  const srv = marks.m.find(([n, t]) => n.startsWith('srv ') && t >= tEnd - 50)?.[0] || '';
+  row['srv.llm'] = Number(/llm0;dur=(\d+)/.exec(srv)?.[1] ?? NaN) || null; // route -> Groq headers, measured on the server
+  row['srv.n'] = (srv.match(/llm\d+;/g) || []).length || null;
+  row['gen.wire'] = after(ttsGen.find((t) => t >= tEnd - 50));
+  row['aud1.wire'] = after(wireAudio);
+  row.play1 = after(marks.p.find((t) => t >= tEnd - 50));
+  return row;
+}
+function printStages() {
+  if (!stageRows.length) return;
+  const med = (xs) => { xs = xs.filter((x) => x != null).sort((a, b) => a - b); return xs.length ? xs[Math.floor(xs.length / 2)] : null; };
+  console.log('STAGES (ms after the human stopped speaking; per turn, then median)');
+  for (const k of STAGE_ORDER) console.log(k.padEnd(10), stageRows.map((r) => String(r[k] ?? '-').padStart(6)).join(' '), ' | median', med(stageRows.map((r) => r[k])));
+}
 // ---- scenario 1: ordinary turns --------------------------------------------------------------------------------------------
 for (let i = 0; i < TURNS; i++) {
   const text = await humanSays(history);
@@ -184,6 +220,7 @@ for (let i = 0; i < TURNS; i++) {
   const f = await firstAudioAfter(tEnd);
   const lat = f ? f - tEnd : null;
   if (lat != null) latencies.push(lat);
+  if (engine === 'fast') stageRows.push(await collectStages(tEnd, f));
   await agentQuiet();
   const said = lastText('transcript.agent', tEnd) || lastText('transcript.agent');
   history.push({ who: 'coach', text: said });
@@ -194,6 +231,7 @@ for (let i = 0; i < TURNS; i++) {
 if (flag('--turns-only')) { // other languages: ordinary turns only (the pause, interruption and command lines are English)
   latencies.sort((x, y) => x - y);
   if (flag('--dump')) dump();
+  printStages();
   console.log(`
 SUMMARY engine=${engine} lang=${LANG}: ordinary-turn first audio ${latencies.length ? `median ${latencies[Math.floor(latencies.length / 2)]} ms (n=${latencies.length}; ${latencies.join(', ')})` : 'none'}`);
   await browser.close();
@@ -205,7 +243,8 @@ SUMMARY engine=${engine} lang=${LANG}: ordinary-turn first audio ${latencies.len
   const p1 = await say(speechPcm('I need to, um, send that email to my landlord and, uh...'), 'I need to, um, send that email to my landlord and, uh...');
   const quietStart = now();
   await sleep(2300); // a real ADHD pause
-  const talkedInto = audioFrames.some((x) => x > p1.tEnd + 100 && x < quietStart + 2300) || ev.some((e) => e.type === 'reply.started' && e.t > p1.tEnd && e.t < quietStart + 2300);
+  const plays = await page.evaluate(() => (window.__stayPlays || []).slice());
+  const talkedInto = plays.some((x) => x > p1.tEnd + 100 && x < quietStart + 2300) || ev.some((e) => e.type === 'reply.started' && e.t > p1.tEnd && e.t < quietStart + 2300);
   const p2 = await say(speechPcm('...and I keep thinking about how to start it.'), '...and I keep thinking about how to start it.');
   const f = await firstAudioAfter(p2.tEnd);
   await agentQuiet();
@@ -248,6 +287,7 @@ SUMMARY engine=${engine} lang=${LANG}: ordinary-turn first audio ${latencies.len
 }
 
 if (flag('--dump')) dump();
+printStages();
 latencies.sort((a, b) => a - b);
 console.log(`\nSUMMARY engine=${engine}${ECHO ? '+echo' : ''}: ordinary-turn first audio ${latencies.length ? `median ${latencies[Math.floor(latencies.length / 2)]} ms (n=${latencies.length}; ${latencies.join(', ')})` : 'none'}`);
 await browser.close();

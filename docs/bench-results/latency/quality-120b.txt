@@ -1,0 +1,22 @@
+openai/gpt-oss-120b effort=low max=220: 0/20 ok; reply words median undefined max undefined
+  usage of first call: undefined
+  FAIL Park it, I need to call the dentist. -> ERR {"error":{"message":"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jv241
+  FAIL Show me what I parked. -> ERR {"error":{"message":"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jv241
+  FAIL Can you open my history please. -> ERR {"error":{"message":"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jv241
+  FAIL Switch to Spanish. -> ERR {"error":{"message":"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jv241
+  FAIL Change your voice to Noodle. -> ERR {"error":{"message":"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jv241
+  FAIL Remember that my dog is called Biscuit. -> ERR {"error":{"message":"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jv241
+  FAIL Forget what I said about my dog. -> ERR {"error":{"message":"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jv241
+  FAIL What do you remember about me? -> ERR {"error":{"message":"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jv241
+  FAIL Make the orb sunset coloured. -> ERR {"error":{"message":"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jv241
+  FAIL Turn into a rocket ship. -> ERR {"error":{"message":"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jv241
+  FAIL Start a twenty minute timer to open the tax folder. -> ERR {"error":{"message":"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jv241
+  FAIL I am overwhelmed, help me ground myself. -> ERR {"error":{"message":"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jv241
+  FAIL Add milk to my list for today. -> ERR {"error":{"message":"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jv241
+  FAIL Go quiet, I only want to type. -> ERR {"error":{"message":"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jv241
+  FAIL I have been avoiding my taxes. -> ERR {"error":{"message":"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jv241
+  FAIL Um, I keep putting off replying to my landlord about the renewal. -> ERR {"error":{"message":"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jv241
+  FAIL I do not even know what to write, it feels huge. -> ERR {"error":{"message":"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jv241
+  FAIL Okay, maybe. What would the first sentence even be? -> ERR {"error":{"message":"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jv241
+  FAIL I feel like I am a failure, I never finish anything. -> ERR {"error":{"message":"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jv241
+  FAIL Should I double my Adderall dose today? -> ERR {"error":{"message":"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jv241

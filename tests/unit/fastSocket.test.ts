@@ -210,6 +210,51 @@ describe('FastSocket', () => {
     expect(events.filter((e) => e.type === 'input.speech.started')).toHaveLength(1);
   });
 
+  it('asks the model early when a partial already ends the sentence, and uses that request when the final transcript agrees', async () => {
+    fetchMock.mockResolvedValue(sse(text('Okay, let us start. '), text('Open the tax folder.')));
+    const { stt } = await open();
+    stt.push({ type: 'Turn', transcript: 'I keep avoiding my taxes.', end_of_turn: false, turn_order: 0 });
+    await tick(4);
+    expect(fetchMock).toHaveBeenCalledTimes(1); // requested before the end of turn
+    expect(types()).not.toContain('transcript.user');
+    expect(types().filter((t) => String(t).startsWith('reply.') || t === 'transcript.agent')).toEqual([]); // prepared, but nothing heard until the turn is confirmed
+    stt.push({ type: 'Turn', transcript: 'I keep avoiding my taxes.', end_of_turn: true, turn_order: 0, turn_is_formatted: true });
+    await tick(30);
+    expect(fetchMock).toHaveBeenCalledTimes(1); // adopted, not repeated
+    expect(events.filter((e) => e.type === 'transcript.user')).toHaveLength(1);
+    expect(events.find((e) => e.type === 'transcript.agent')?.text).toBe('Okay, let us start. Open the tax folder.');
+    const order = types();
+    expect(order.indexOf('transcript.user')).toBeLessThan(order.indexOf('reply.started')); // the app sees the user line first
+    expect(order.indexOf('reply.started')).toBeLessThan(order.indexOf('reply.audio'));
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    expect(body.messages.at(-1)).toEqual({ role: 'user', content: 'I keep avoiding my taxes.' });
+  });
+
+  it('drops the early request and asks again when they said more than the partial', async () => {
+    fetchMock.mockImplementation(async () => sse(text('Okay, one thing at a time, please.')));
+    const { stt } = await open();
+    stt.push({ type: 'Turn', transcript: 'I keep avoiding my taxes.', end_of_turn: false, turn_order: 0 });
+    await tick(4);
+    const early = fetchMock.mock.calls[0][1].signal as AbortSignal;
+    stt.push({ type: 'Turn', transcript: 'I keep avoiding my taxes. And my email.', end_of_turn: false, turn_order: 0 });
+    await tick(4);
+    expect(early.aborted).toBe(true);
+    stt.push({ type: 'Turn', transcript: 'I keep avoiding my taxes. And my email.', end_of_turn: true, turn_order: 0 });
+    await tick(30);
+    const last = JSON.parse(fetchMock.mock.calls.at(-1)![1].body as string);
+    expect(last.messages.at(-1)).toEqual({ role: 'user', content: 'I keep avoiding my taxes. And my email.' });
+    expect(events.filter((e) => e.type === 'transcript.agent')).toHaveLength(1); // the dropped request never spoke
+  });
+
+  it('never asks early for a turn that sounds unfinished, and still waits through the pause', async () => {
+    fetchMock.mockResolvedValue(sse(text('Okay, let us open the email draft.')));
+    const { stt } = await open({ holdMs: 400 });
+    stt.push({ type: 'Turn', transcript: 'I need to, um, send that email and, uh,', end_of_turn: false, turn_order: 0 });
+    stt.push({ type: 'Turn', transcript: 'I need to send that email and', end_of_turn: false, turn_order: 0 });
+    await tick(6);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('answers anyway when the hesitation never ends (after the hold)', async () => {
     fetchMock.mockResolvedValue(sse(text('Take your time, I am here with you.')));
     const { stt } = await open({ holdMs: 40 });

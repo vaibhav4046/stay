@@ -1,0 +1,23 @@
+engine=fast voice=en-GB-RyanNeural noise=on llm-human=false
+turn 1: human "Um, I keep putting off replying to my landlord about the renewal."
+        first audio 1032.75 ms after the human stopped; Stay: "Reply now with a short “I’ll review the renewal and get back"
+turn 2: human "I do not even know what to write, it feels huge."
+        first audio 1038.541748046875 ms after the human stopped; Stay: "Draft a quick note: “Hi, I’m reviewing the renewal and will "
+turn 3: human "Okay, maybe. What would the first sentence even be?"
+        first audio 1184.208251953125 ms after the human stopped; Stay: "Start with: “Hi [Landlord’s name], I’m reviewing the renewal"
+STAGES (ms after the human stopped speaking; per turn, then median)
+stt.eot    600.75 590.541748046875 739.208251953125  | median 600.75
+page.eot   598.75 589.541748046875 738.208251953125  | median 598.75
+req        601.75 590.541748046875 739.208251953125  | median 601.75
+hdr        755.75 782.541748046875 857.208251953125  | median 782.541748046875
+srv.llm        67     86     50  | median 67
+srv.n           2      2      2  | median 2
+tok1       809.75 833.541748046875 973.208251953125  | median 833.541748046875
+clause1         -      -      -  | median null
+gen        825.75 838.541748046875 983.208251953125  | median 838.541748046875
+gen.wire   826.75 839.541748046875 984.208251953125  | median 839.541748046875
+aud1.wire  1032.75 1038.541748046875 1184.208251953125  | median 1038.541748046875
+aud1       1031.75 1037.541748046875 1183.208251953125  | median 1037.541748046875
+play1      1032.75 1037.541748046875 1183.208251953125  | median 1037.541748046875
+
+SUMMARY engine=fast lang=en: ordinary-turn first audio median 1038.541748046875 ms (n=3; 1032.75, 1038.541748046875, 1184.208251953125)

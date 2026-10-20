@@ -39,5 +39,5 @@ export async function POST(req: NextRequest) {
   });
   const hdr = llmHeaders({ ok: Boolean(r.res), text: '', source: r.source, error: r.error, userKeyError: r.userKeyError });
   if (!r.res) return NextResponse.json({ error: r.error || 'unavailable' }, { status: 502, headers: hdr });
-  return new Response(r.res.body, { headers: { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-store', ...hdr } });
+  return new Response(r.res.body, { headers: { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-store', ...(r.timing ? { 'Server-Timing': r.timing } : {}), ...hdr } });
 }
