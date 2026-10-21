@@ -9,11 +9,27 @@ const sans = DM_Sans({ subsets: ['latin'], variable: '--font-dm-sans', display: 
 const display = Instrument_Sans({ subsets: ['latin'], variable: '--font-instrument', display: 'swap' });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://stay-two-swart.vercel.app'),
   title: 'Stay: start the thing you have been avoiding',
   description:
     'A voice companion for adults with ADHD. Tell it the task you cannot begin and get one small first step, a short block to do it in, and a note of what helped.',
   icons: { icon: '/icons/icon-192.png', apple: '/icons/icon-180.png' },
   appleWebApp: { capable: true, title: 'Stay', statusBarStyle: 'default' },
+  openGraph: {
+    title: 'Stay: start the thing you have been avoiding',
+    description: 'A voice companion for adults with ADHD. Tell it the task you cannot begin and get one small first step, a short block to do it in, and a note of what helped.',
+    url: 'https://stay-two-swart.vercel.app',
+    siteName: 'Stay',
+    images: [{ url: '/icons/icon-512.png', width: 512, height: 512, alt: 'Stay Voice Companion' }],
+    locale: 'en_GB',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Stay: start the thing you have been avoiding',
+    description: 'A voice companion for adults with ADHD. Tell it the task you cannot begin and get one small first step, a short block to do it in, and a note of what helped.',
+    images: ['/icons/icon-512.png'],
+  },
 };
 
 export const viewport: Viewport = {
