@@ -14,6 +14,7 @@ import { LIBRARY, libraryProgram } from './library';
 import { EMOJI_WORDS } from './emojiWords';
 import { extractVisualKeywords, matchConcept, normalizeConceptKey } from './lexicon';
 import { colorize, emojiCloud, isSingleEmoji } from './points';
+import { getVolumetric3DShape } from './volumetric3d';
 import { hashString, proceduralProgram, sampleProgram, type ShapeProgram } from './sdf';
 import { detectCrisisSignal, detectMedicationAdviceRequest } from '@/lib/safety/crisis';
 import { byokHeaders } from '@/lib/byok/config';
@@ -126,6 +127,12 @@ export function useOrbShape() {
 
   const showLibrary = useCallback(
     (id: string) => {
+      const N = getOrbPointCount();
+      const v3d = getVolumetric3DShape(id, N);
+      if (v3d) {
+        show({ key: v3d.id, points: v3d.points, cols: v3d.cols, palette: v3d.palette });
+        return;
+      }
       const entry = LIBRARY.find((e) => e.id === id);
       const program = libraryProgram(id);
       if (!entry || !program) return;
@@ -221,12 +228,18 @@ export function useOrbShape() {
       const t = (concept || '').trim().slice(0, 40);
       if (!t) return;
       if (detectCrisisSignal(t).triggered || detectMedicationAdviceRequest(t).triggered) return rest();
+      const N = getOrbPointCount();
+      const v3d = getVolumetric3DShape(t, N);
+      if (v3d) {
+        show({ key: v3d.id, points: v3d.points, cols: v3d.cols, palette: v3d.palette });
+        return;
+      }
       const m = matchConcept(t);
       if (m) return showLibrary(m.id);
       const kw = extractVisualKeywords(t);
       void author(kw.length ? kw : [t.toLowerCase()], true);
     },
-    [author, rest, showLibrary],
+    [author, rest, show, showLibrary],
   );
 
   useEffect(() => {
