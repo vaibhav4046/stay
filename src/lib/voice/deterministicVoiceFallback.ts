@@ -59,6 +59,36 @@ export function resolveDeterministicVoice(userText: string): DeterministicVoiceR
     }
   }
 
+  // 2b. Conversational Greetings & Casual Check-in (Human warmth, no task jargon)
+  const isGreeting =
+    /\b(?:hi|hello|hey|hiya|namaste|hola|bonjour|hallo|sup)\b/i.test(trimmed) ||
+    /\b(?:how\s+are\s+you|how\s+are\s+you\s+doing|how's\s+it\s+going|what's\s+up|good\s+(?:morning|afternoon|evening))\b/i.test(trimmed);
+  const isChoreTask = /\b(?:work|clean|email|write|read|study|tax|dishes|doc|report|homework|laundry|tidy|pay|call|send|finish|start|draft)\b/i.test(trimmed);
+  if (isGreeting && !isChoreTask) {
+    return { text: "Hey there! Doing well. How are you feeling right now? If you want to start a step or see me morph into a rocket or star, I'm right here with you." };
+  }
+
+  // 2c. Direct Shape Morphing Commands ("rocket", "make a rocket", "turn into a rocket", "show me a star")
+  const shapeMatch = trimmed.match(
+    /\b(?:(?:show|draw|display|generate|render|craft|morph|transform|turn\s+into|make|become|be)\s+(?:me\s+)?(?:a\s+|an\s+|the\s+)?(?:shape\s+(?:of\s+)?)?|(?:shape\s+))([a-z0-9-]+)\b/i
+  ) || (
+    /^(?:rocket|star|flower|lotus|cup|coffee|book|tree|heart|cloud|sun|moon|house|wave|mountain|bolt|fire|butterfly|cat|dog|dragon|lightning)[\s.?!,]*$/i.test(
+      trimmed
+    )
+      ? [null, trimmed.toLowerCase().replace(/[\s.?!,]+/g, '')]
+      : null
+  );
+  if (shapeMatch && shapeMatch[1]) {
+    const concept = shapeMatch[1].toLowerCase();
+    return {
+      tool: {
+        name: 'app',
+        action: 'shape',
+        value: concept,
+      },
+    };
+  }
+
   // 3. Fast Tool Commands
   // Timer: "timer 2 minutes", "start 10 minute focus block", "temporizador de 5 minutos", "do minute ka timer"
   const timerMatch = trimmed.match(/(?:timer|temporizador|focus|minute|minutos|minute ka timer)\s*(?:of|de|for)?\s*(\d+)/i)

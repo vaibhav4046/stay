@@ -68,6 +68,7 @@ export function useOrbPresence({ topical, speaking, userTalking }: { topical: Or
 
   const toggle = useCallback(() => setState((prev) => togglePin(prev, Date.now())), []);
 
-  const target = state.on ? getFigureTarget() : topical;
+  // When a topical shape is active (e.g. rocket, star, lotus), keep it visible during speech unless explicitly pinned to face
+  const target = state.on && (topical.key === 'orb' || state.pinned) ? getFigureTarget() : topical;
   return { target, figureOn: state.on, pinned: state.pinned, togglePin: toggle };
 }

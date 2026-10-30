@@ -483,6 +483,27 @@ function detectShapeCommandFromText(
       return { type: 'synthesize_billion_shape', concept: target };
     }
   }
+
+  // 3. Natural / Direct Shape Requests ("make a rocket", "show me a rocket", "can you be a rocket", "draw a rocket", or simply "rocket")
+  const directShape =
+    clean.match(
+      /\b(?:(?:show|draw|display|generate|render|craft|morph|transform|turn\s+(?:in)?to|make|become|be)\s+(?:me\s+)?(?:a\s+|an\s+|the\s+)?(?:shape\s+(?:of\s+)?)?|(?:shape\s+))([a-z0-9-]+)\b/i
+    ) ||
+    (/^(?:rocket|star|flower|lotus|cup|coffee|book|tree|heart|cloud|sun|moon|house|wave|mountain|bolt|fire|butterfly|cat|dog|dragon|lightning)[\s.?!,]*$/i.test(
+      clean
+    )
+      ? [null, clean.toLowerCase().replace(/[\s.?!,]+/g, '')]
+      : null);
+  if (directShape && directShape[1]) {
+    const rawTarget = directShape[1].trim();
+    if (
+      !/^(?:grid|workspace|orb|spanish|hindi|french|german|korean|japanese|english|male|female|anna|vera|charles|paul|eve|alba|george|michael|oliver|easy|medium|hard|quiet)$/i.test(
+        rawTarget
+      )
+    ) {
+      return { type: 'synthesize_billion_shape', concept: rawTarget };
+    }
+  }
   return null;
 }
 

@@ -1448,12 +1448,13 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
               synthesizeGenerativeShape(cmd.concept) ||
               buildProceduralBillionShape(cmd.concept, cmd.concept);
             setGenerativeShape(synthesized);
+            optionsRef.current.onShapeRequested?.(cmd.concept);
             // Keep topicShape 5 if start_game was also triggered in the same sentence, otherwise set 8
             if (!multi.commands.some((c) => c.type === 'start_game')) {
               setTopicShape(8);
             }
             executedReplies.push(
-              `${synthesized.icon} Synthesized ${synthesized.label} (${synthesized.formulaSignature})!`
+              `Morphed into ${synthesized.label}! Check out the transformation. Where should we head today?`
             );
           } else if (cmd.type === 'web_research') {
             playEarcon('chime');
@@ -1585,6 +1586,27 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       // The caller (the app screen) already requests the plan for typed text: a second plan, a second voice and a second
       // model call would race the first and pull the person back to the plan card after they have started.
       if (opts?.skipLocalPlan) return true;
+
+      // Conversational check-in & greeting: respond warmly without forcing a task or plan card
+      const isGreeting =
+        /\b(?:hi|hello|hey|hiya|namaste|hola|bonjour|hallo|sup)\b/i.test(clean) ||
+        /\b(?:how\s+are\s+you|how\s+are\s+you\s+doing|how's\s+it\s+going|what's\s+up|good\s+(?:morning|afternoon|evening))\b/i.test(clean);
+      const isChoreTask = /\b(?:work|clean|email|write|read|study|tax|dishes|doc|report|homework|laundry|tidy|pay|call|send|finish|start|draft|fix|buy)\b/i.test(clean);
+      if (isGreeting && !isChoreTask) {
+        const greetingReply =
+          "Hey there! I'm doing well, thank you. How are you feeling right now? If there's something you want to start or a shape you want me to morph into like a rocket or star, I'm right here with you.";
+        setTranscripts((prev) => [
+          ...prev,
+          {
+            id: `agent-${Date.now()}`,
+            role: 'agent',
+            text: greetingReply,
+            timestamp: new Date().toISOString(),
+          },
+        ]);
+        speakDeterministicBoundary(greetingReply, effectiveLang);
+        return true;
+      }
 
       // SUB-15MS INSTANT OPTIMISTIC LOCAL-FIRST ADHD REFLEX:
       // Render plan, localized reply (Hindi/Korean/32L), and voice output immediately with zero network wait!

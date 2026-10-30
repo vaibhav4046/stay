@@ -52,6 +52,24 @@ describe('resolveDeterministicVoice', () => {
     expect(res.text).not.toMatch(/overdue|lazy|failed|behind/i);
   });
 
+  it('answers casual greetings warmly without proposing tasks or chore jargon', () => {
+    const res = resolveDeterministicVoice('Hi, how are you?');
+    expect(res.text).toBeDefined();
+    expect(res.text).toMatch(/doing well|feeling/i);
+    expect(res.tool).toBeUndefined();
+  });
+
+  it('detects shape requests and emits shape tool action', () => {
+    const res = resolveDeterministicVoice('Turn into a rocket');
+    expect(res.tool).toBeDefined();
+    expect(res.tool?.action).toBe('shape');
+    expect(res.tool?.value).toBe('rocket');
+
+    const res2 = resolveDeterministicVoice('rocket');
+    expect(res2.tool?.action).toBe('shape');
+    expect(res2.tool?.value).toBe('rocket');
+  });
+
   it('creates valid SSE stream response', async () => {
     const res = resolveDeterministicVoice('Pick up where we left off.');
     const response = createDeterministicSseResponse(res);

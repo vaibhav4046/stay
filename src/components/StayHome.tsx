@@ -38,6 +38,7 @@ import { refreshLearnings } from '@/lib/coach/learnings';
 import { loadInstructions, styleLine } from '@/lib/coach/customInstructions';
 import { runAgenticAction } from '@/lib/voice/agenticActions';
 import { TodayCard } from '@/components/TodayCard';
+import { GeminiLiveVoiceVisualizer } from '@/components/voice/GeminiLiveVoiceVisualizer';
 import { RoutineSheet } from '@/components/RoutineSheet';
 import { ReminderSheet } from '@/components/ReminderSheet';
 import { takeDue } from '@/lib/reminders';
@@ -256,6 +257,10 @@ export function StayHome({
         sayVoice(cmd.voiceId);
       } else if (cmd.type === 'break_down') {
         voiceRef.current?.sendUserTextMessage('Can you break this down into an ultra-micro step?');
+      } else if (cmd.type === 'synthesize_billion_shape') {
+        orb.request(cmd.concept);
+      } else if (cmd.type === 'change_orb_shape') {
+        orb.request(cmd.shapeLabel);
       }
     },
   });
@@ -815,17 +820,16 @@ export function StayHome({
         }}
       >
         {!quietMode && (
-          <button
-            type="button"
-            onClick={toggleVoice}
-            aria-label={voice.isConnected ? 'Stop listening' : 'Talk to Stay'}
-            className="btn btn-secondary h-12 w-12 shrink-0 !p-0"
-            data-testid="mic-button"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-              {voice.isConnected ? <rect x="6" y="6" width="12" height="12" rx="2" /> : <><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></>}
-            </svg>
-          </button>
+          <GeminiLiveVoiceVisualizer
+            visualState={visual}
+            isConnected={voice.isConnected}
+            audioEnergy={voice.audioEnergy}
+            audioBands={voice.audioBands}
+            isHandsFreePaused={voice.isHandsFreePaused}
+            onToggleVoice={toggleVoice}
+            onToggleHandsFreeMute={voice.toggleHandsFreeMute}
+            className="shrink-0"
+          />
         )}
         <input
           ref={inputRef}
