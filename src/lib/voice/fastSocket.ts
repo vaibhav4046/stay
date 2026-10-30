@@ -83,7 +83,7 @@ export function quickConfirmation(action: unknown, resultJson: string, ttsLangua
 const GATED_EVENTS = new Set(['reply.started', 'reply.text', 'reply.audio', 'transcript.agent', 'reply.done', 'tool.call']);
 
 const STT_URL ='wss://streaming.assemblyai.com/v3/ws';
-const TTS_URL = 'wss://streaming-tts.assemblyai.com/v1/ws';
+const TTS_URL = process.env.NEXT_PUBLIC_ASSEMBLYAI_TTS_URL || 'wss://tts.us.assemblyai.com/v1/ws';
 const MAX_HISTORY = 14;
 
 /** Splits streamed text into speakable chunks: a sentence end followed by space, once there is enough to say. */
@@ -297,7 +297,7 @@ export class FastSocket {
   private openTts(): Promise<void> {
     return new Promise((resolve, reject) => {
       const s = this.session as FastSession;
-      const q = new URLSearchParams({ token: this.cfg.ttsToken, voice: s.voice, language: s.ttsLanguage });
+      const q = new URLSearchParams({ token: this.cfg.ttsToken, voice: s.voice, language: s.ttsLanguage, encoding: 'pcm_s16le', sample_rate: '24000' });
       const ws: WebSocket | TtsConnection = this.cfg.ttsConnect ? this.cfg.ttsConnect() : new WebSocket(`${TTS_URL}?${q}`);
       this.tts = ws;
       ws.onmessage = (e: { data: unknown }) => {
@@ -306,6 +306,7 @@ export class FastSocket {
         if (m.type === 'Begin') resolve();
         else if (m.type === 'Audio' && typeof m.audio === 'string') this.onTtsAudio(m);
         else if (m.type === 'FlushDone') this.onFlushDone(Number(m.flush_id));
+        else if (m.type === 'WordBoundaries' && Array.isArray(m.words)) this.emit({ type: 'word.boundaries', words: m.words });
         else if (m.type === 'Cancelled') this.staleCancels = Math.max(0, this.staleCancels - 1);
         else if (m.type === 'Error') this.fail('tts_error');
       };

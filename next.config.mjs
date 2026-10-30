@@ -14,7 +14,7 @@ const csp = [
   "font-src 'self' https://fonts.gstatic.com data:",
   "img-src 'self' data: blob:",
   "media-src 'self' blob:",
-  "connect-src 'self' wss://streaming.assemblyai.com wss://streaming-tts.assemblyai.com wss://agents.assemblyai.com https://*.supabase.co wss://*.supabase.co" + (isDev ? ' ws://localhost:* http://localhost:*' : ''),
+  "connect-src 'self' wss://streaming.assemblyai.com wss://streaming-tts.assemblyai.com wss://tts.us.assemblyai.com wss://agents.assemblyai.com https://*.supabase.co wss://*.supabase.co" + (isDev ? ' ws://localhost:* http://localhost:*' : ''),
   "worker-src 'self' blob:",
   "frame-ancestors 'none'",
   "base-uri 'self'",

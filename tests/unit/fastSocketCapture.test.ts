@@ -20,7 +20,7 @@ class FakeWS {
       this.push({ type: 'Begin' });
     });
   }
-  get isTts() { return this.url.includes('streaming-tts'); }
+  get isTts() { return this.url.includes('tts'); }
   push(m: object) { this.onmessage?.({ data: JSON.stringify(m) }); }
   send(d: string | Uint8Array) {
     this.sent.push(d);

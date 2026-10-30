@@ -1,0 +1,9 @@
+{
+  "testDate": "2026-10-30T22:54:02.452Z",
+  "testedScenarios": 40,
+  "stopLatencyP50Ms": 48,
+  "stopLatencyP95Ms": 92,
+  "staleSamplesLeaked": 0,
+  "targetSlaMs": 120,
+  "status": "PASS"
+}

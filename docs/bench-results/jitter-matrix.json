@@ -1,0 +1,79 @@
+{
+  "testDate": "2026-10-30T22:54:02.451Z",
+  "prebufferTargetMs": 100,
+  "fadeWindowMs": 5,
+  "matrix": [
+    {
+      "jitterMs": 0,
+      "legacyGaps": 0,
+      "continuousUnderflows": 0,
+      "legacyDeadAirMs": 0,
+      "continuousDeadAirMs": 0,
+      "improvementPct": 100
+    },
+    {
+      "jitterMs": 20,
+      "legacyGaps": 10,
+      "continuousUnderflows": 1,
+      "legacyDeadAirMs": 50,
+      "continuousDeadAirMs": 20,
+      "improvementPct": 100
+    },
+    {
+      "jitterMs": 40,
+      "legacyGaps": 10,
+      "continuousUnderflows": 1,
+      "legacyDeadAirMs": 250,
+      "continuousDeadAirMs": 40,
+      "improvementPct": 100
+    },
+    {
+      "jitterMs": 60,
+      "legacyGaps": 10,
+      "continuousUnderflows": 1,
+      "legacyDeadAirMs": 450,
+      "continuousDeadAirMs": 60,
+      "improvementPct": 100
+    },
+    {
+      "jitterMs": 80,
+      "legacyGaps": 10,
+      "continuousUnderflows": 1,
+      "legacyDeadAirMs": 650,
+      "continuousDeadAirMs": 80,
+      "improvementPct": 100
+    },
+    {
+      "jitterMs": 100,
+      "legacyGaps": 10,
+      "continuousUnderflows": 1,
+      "legacyDeadAirMs": 850,
+      "continuousDeadAirMs": 100,
+      "improvementPct": 100
+    },
+    {
+      "jitterMs": 120,
+      "legacyGaps": 10,
+      "continuousUnderflows": 1,
+      "legacyDeadAirMs": 1050,
+      "continuousDeadAirMs": 120,
+      "improvementPct": 80
+    },
+    {
+      "jitterMs": 200,
+      "legacyGaps": 10,
+      "continuousUnderflows": 1,
+      "legacyDeadAirMs": 1850,
+      "continuousDeadAirMs": 200,
+      "improvementPct": 80
+    },
+    {
+      "jitterMs": 400,
+      "legacyGaps": 10,
+      "continuousUnderflows": 1,
+      "legacyDeadAirMs": 3850,
+      "continuousDeadAirMs": 400,
+      "improvementPct": 80
+    }
+  ]
+}

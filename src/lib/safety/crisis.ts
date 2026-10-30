@@ -69,6 +69,7 @@ const CRISIS_PATTERNS: Array<{ regex: RegExp; label: string }> = [
   { regex: /\b(suicide|suicidal|suicid)/i, label: 'suicidal thoughts' },
   { regex: /\b(?:want(?:ed)?\s+to\s+die|wanna\s+die|better\s+off\s+dead|wish\s+i\s+(?:were|was)\s+dead|wish\s+i\s+(?:could\s+)?(?:just\s+)?(?:die|disappear|never\s+wake\s+up)|wish\s+i\s+(?:wasn'?t|was\s+not|weren'?t)\s+(?:here|alive|born))\b/i, label: 'wanting to die' },
   { regex: /\b(?:don'?t|do\s+not|dont|no\s+longer|never)\s+want\s+to\s+(?:live|be\s+alive|be\s+here|exist|wake\s+up|go\s+on|continue\s+living)\b/i, label: 'life safety risk' },
+  { regex: /\b(?:ready|want|planning|going)\s+to\s+stop\s+existing\b/i, label: 'life safety risk' },
   { regex: /\b(?:can'?t|cannot|won'?t)\s+(?:keep\s+living|go\s+on\s+living|live\s+like\s+this\s+anymore)\b/i, label: 'life safety risk' },
   { regex: /\bno\s+(?:point|reason|purpose)\s+(?:in|to)\s+(?:living|live|going\s+on|being\s+alive|continuing)\b/i, label: 'life safety risk' },
   { regex: /\b(?:want|going|gonna|plan(?:ning)?|ready)\s+to\s+disappear\b|\bdisappear\s+(?:forever|for\s+good)\b/i, label: 'wanting to disappear' },
@@ -110,7 +111,7 @@ const MULTILINGUAL_CRISIS_REGEX = new RegExp(
 const SQUASHED_CRISIS_REGEX = /(killmyself|killingmyself|endmylife|endingmylife|takemyownlife|suicide|suicidal|hurtmyself|harmmyself|wanttodie|wannadie|cutmywrists)/;
 
 const MED_TERM =
-  '(?:elvanse|vyvanse|ritalin|concerta|medikinet|equasym|xaggitin|delmosart|methylphenidate|lisdexamfetamine|dexamfetamine|dextroamphetamine|amphetamines?|adderall|dexedrine|atomoxetine|strattera|guanfacine|intuniv|clonidine|modafinil|medications?|medicines?|meds|my\\s+(?:pills?|tablets?|capsules?|prescription|dose|dosage)|dos(?:e|es|age)|\\d+\\s*mg)';
+  '(?:elvanse|vyvanse|ritalin|concerta|medikinet|equasym|xaggitin|delmosart|methylphenidate|lisdexamfetamine|dexamfetamine|dextroamphetamine|amphetamines?|adderall|dexedrine|atomoxetine|strattera|guanfacine|intuniv|clonidine|modafinil|antidepressants?|ssris?|medications?|medicines?|meds|my\\s+(?:pills?|tablets?|capsules?|prescription|dose|dosage)|dos(?:e|es|age)|\\d+\\s*mg)';
 
 const MED_ADVICE_INTENT =
   "(?:should\\s+i|can\\s+i|could\\s+i|may\\s+i|do\\s+i\\s+need|is\\s+it\\s+(?:ok|okay|safe|fine|alright|bad)|is\\s+(?:this|that|it)\\s+(?:safe|dangerous|normal|bad|too)|how\\s+(?:much|many)|too\\s+(?:much|many|high|low|strong)|maximum|max\\s+dose|safe\\s+to|(?:ok|okay)\\s+to|mix(?:ing)?|combin(?:e|ing)|with\\s+(?:alcohol|caffeine|coffee|ibuprofen|antidepressants?|cannabis|weed|energy\\s+drinks?)|double(?:d)?|triple|increas(?:e|ing)|decreas(?:e|ing)|lower(?:ing)?|rais(?:e|ing)|skip(?:ping)?\\s+(?:my|a|the|today)|stop(?:ping)?\\s+(?:taking|my|the|using)|quit(?:ting)?|wean|snort|crush|inject|side\\s*effects?|withdrawals?|interact|dangerous|what\\s+happens\\s+if\\s+(?:i|someone)\\s+(?:take|takes|took)|all\\s+at\\s+once|(?:makes|making|made)\\s+me\\s+(?:feel\\s+)?(?:shaky|sick|dizzy|anxious|jittery))";
@@ -128,6 +129,10 @@ const MEDICATION_ADVICE_PATTERNS: Array<{ regex: RegExp; label: string }> = [
   {
     regex: /\b(?:take|taking)\s+\d+\s*mg\s+(?:or|and|\/)\s+\d+\s*mg\b/i,
     label: 'comparative dosing question',
+  },
+  {
+    regex: /\b(?:diagnos(?:e|is)|do\s+i\s+have\s+(?:adhd|add|bipolar|depression|autism|ocd)|can\s+you\s+diagnose)\b/i,
+    label: 'medical diagnosis query',
   },
   {
     // non-English medication questions: med word + "may I / how much / increase" marker

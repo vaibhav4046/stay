@@ -1,6 +1,7 @@
 'use client';
 
 import { byokHeaders } from '@/lib/byok/config';
+import { ContinuousPcmPlayer } from '@/lib/voice/playback/continuousPlayback';
 import { FastSocket, FAST_TTS_LANGUAGE } from '@/lib/voice/fastSocket';
 import { loadParked, parkThought } from '@/lib/coach/parkingLot';
 import { addToday, loadToday, openToday } from '@/lib/coach/todayList';
@@ -635,6 +636,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const speechStartTimeRef = useRef<number>(0);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const workletNodeRef = useRef<AudioWorkletNode | null>(null);
+  const pcmPlayerRef = useRef<ContinuousPcmPlayer | null>(null);
   const speechRecRef = useRef<any>(null);
   const activeSourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
   const nextPlaybackTimeRef = useRef<number>(0);
@@ -722,6 +724,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   }, [playEarcon]);
 
   const stopPlaybackQueue = useCallback(() => {
+    pcmPlayerRef.current?.cancelReply('stopPlaybackQueue');
     isAssistantSpeakingRef.current = false;
     if (assistantCooldownTimerRef.current) {
       clearTimeout(assistantCooldownTimerRef.current);
@@ -889,6 +892,10 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   }, []);
 
   const scheduleAgentPcmChunk = useCallback((base64Audio: string) => {
+    if (pcmPlayerRef.current) {
+      pcmPlayerRef.current.enqueuePcm16(base64Audio, { sampleRate: 24000 });
+      return;
+    }
     const ctx = audioCtxRef.current;
     if (!ctx) return;
 
@@ -934,6 +941,14 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
   const disconnectVoiceSession = useCallback(() => {
     dumpApiRef.current.rescue(); // a dump in progress is kept, not lost
+    if (pcmPlayerRef.current) {
+      try {
+        pcmPlayerRef.current.destroy();
+      } catch {
+        // ignore
+      }
+      pcmPlayerRef.current = null;
+    }
     sessionReadyRef.current = false;
     stopPlaybackQueue();
 
@@ -1833,6 +1848,23 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
       await audioCtx.audioWorklet.addModule('/pcm-processor.js');
 
+      const pcmPlayer = new ContinuousPcmPlayer();
+      await pcmPlayer.init(audioCtx, {
+        analyser,
+        onAudioRendered: (float32, rate) => {
+          lipSyncBus.attachClock(audioCtx);
+          lipSyncBus.pushChunk(audioCtx.currentTime, float32, rate);
+        },
+        onTelemetry: (t) => {
+          pushAudioLevels(Math.min(1, t.rms * 3.8));
+          if (t.state === 'STOPPED' || (t.state === 'BUFFERING' && t.bufferedMs === 0)) {
+            setAudioEnergy(0.05);
+            setAudioBands({ low: 0, mid: 0, high: 0, overall: 0.05 });
+          }
+        },
+      });
+      pcmPlayerRef.current = pcmPlayer;
+
       // 3. Mint ephemeral AssemblyAI tokens from our server routes
       // Fast voice understands six languages. On auto, the browser's language decides; anything else uses the managed agent,
       // which detects the spoken language itself.
@@ -2240,6 +2272,9 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         if (type === 'reply.done') {
           medicationSuppressionRef.current = false;
           const status = String(msg.status || 'completed');
+          if (status !== 'interrupted') {
+            pcmPlayerRef.current?.markReplyEnd();
+          }
           if (status === 'interrupted') {
             pendingToolResultsRef.current = [];
             stopPlaybackQueue();
