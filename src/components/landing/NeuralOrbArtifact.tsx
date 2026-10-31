@@ -33,7 +33,7 @@ export function NeuralOrbArtifact() {
     if (!ctx) return;
 
     let animId: number;
-    const N = 3200; // Optimal density for smooth 60fps canvas rendering
+    const N = 5200; // Optimal density for smooth 60fps canvas rendering
     const figure = buildHumanFigure(N);
 
     // Precalculate neural nodes and spherical coordinates
@@ -120,7 +120,7 @@ export function NeuralOrbArtifact() {
       const srcPts = mode === 'figure' ? figure.pts : mode === 'neural' ? neuralPts : spherePts;
 
       // Draw dots
-      for (let i = 0; i < N; i += 2) {
+      for (let i = 0; i < N; i++) {
         let x = srcPts[i * 3];
         let y = srcPts[i * 3 + 1];
         let z = srcPts[i * 3 + 2];
@@ -148,8 +148,8 @@ export function NeuralOrbArtifact() {
         const py = cy - y2 * scale * p;
 
         if (px >= 0 && px <= width && py >= 0 && py <= height) {
-          const depthAlpha = Math.max(0.15, Math.min(1, (z2 + 1.2) / 2.2));
-          const dotRadius = Math.max(1, p * 1.6);
+          const depthAlpha = Math.max(0.55, Math.min(1, (z2 + 1.4) / 2.2));
+          const dotRadius = Math.max(2.2, p * 3.1);
 
           if (mode === 'neural') {
             ctx.fillStyle = `rgba(168, 85, 247, ${depthAlpha * 0.8})`;
@@ -257,7 +257,7 @@ export function NeuralOrbArtifact() {
         <div className="absolute top-4 left-4 p-3 rounded-xl bg-surface-2/80 backdrop-blur-md border border-edge text-xs font-mono space-y-1 select-none pointer-events-none">
           <div className="text-emerald-400 font-bold flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            3,200 Active SDF Dots
+            5,200 Active SDF Dots
           </div>
           <div className="text-ink-3">FPS: {fps} · Math Rig: Procedural</div>
           <div className="text-ink-3">Mode: {mode.toUpperCase()}</div>
