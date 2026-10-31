@@ -364,7 +364,7 @@ test.describe('Landing: layout and speed', () => {
     console.log('LCP/CLS runs (390px, 4x CPU, slow 4G-ish):', JSON.stringify(runs));
     const median = [...runs].sort((a, b) => a.lcp - b.lcp)[1];
     expect(['P', 'H1', 'INPUT', 'SPAN']).toContain(median.tag);
-    expect(median.lcp).toBeLessThan(3800);
+    expect(median.lcp).toBeLessThan(2500);
     for (const r of runs) expect(r.cls).toBeLessThan(0.1);
   });
 });
