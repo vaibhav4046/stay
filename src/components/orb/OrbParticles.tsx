@@ -220,7 +220,7 @@ const PRESETS: Record<VoiceVisualState, StatePreset> = {
   error: { breath: 0.4, think: 0, desat: 0.85 },
 };
 
-const MORPH_SECONDS = 2.5;
+const MORPH_SECONDS = 1.0;
 /** Reduced motion: the old shape fades out, the new one fades in. No travel, no wobble. */
 const FADE_OUT_SECONDS = 0.16;
 const FADE_IN_SECONDS = 0.24;

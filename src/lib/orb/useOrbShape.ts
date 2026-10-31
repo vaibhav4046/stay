@@ -23,7 +23,7 @@ export type FeedKind = 'partial' | 'user' | 'typed';
 
 const STORE_KEY = 'stay_orb_emoji_v1';
 const STORE_MAX = 120;
-const MIN_DWELL_MS = 1500;
+const MIN_DWELL_MS = 600;
 const REST_AFTER_MS = 18000;
 const AI_GAP_MS = 1200;
 

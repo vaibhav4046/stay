@@ -628,6 +628,49 @@ export function StayHome({
     (step === 'idle' ? 'What are you putting off?' : '');
   const progress = step === 'timer' ? 1 - remaining / (minutes * 60) : 0;
 
+  // AGI Proactive Voice Actions: Voice dynamically synthesizes contextual action buttons
+  const proactiveActions = useMemo(() => {
+    const text = (lastAgent?.text || '').toLowerCase();
+    
+    // If agent recommended or mentioned a focus step/timer
+    if (text.includes('minute') || text.includes('start') || text.includes('step') || text.includes('timer')) {
+      return [
+        { label: 'Start 2-min block', primary: true, onClick: () => startTimer(2) },
+        { label: 'Make it even smaller', onClick: () => submit('Make it even smaller and simpler') },
+        { label: 'Park this thought', onClick: () => submit('Park this thought for later') },
+        { label: 'Brain dump', testId: 'chip-dump', onClick: () => setSheet('dump') },
+      ];
+    }
+    
+    // If agent addressed overwhelm or feeling stuck
+    if (text.includes('overwhelm') || text.includes('hard') || text.includes('breathe') || text.includes('stuck')) {
+      return [
+        { label: 'Just the first 2 minutes', primary: true, onClick: () => startTimer(2) },
+        { label: 'Brain dump thoughts', testId: 'chip-dump', onClick: () => setSheet('dump') },
+        { label: "I can't focus today", onClick: () => submit("I can't focus today") },
+        { label: 'Routines', testId: 'chip-routines', onClick: () => { routineByVoice.current = false; setRoutineId(null); setSheet('routine'); } },
+      ];
+    }
+    
+    // If agent asked an opening question or voice is active
+    if (voice.isConnected || voice.transcripts.length > 0) {
+      return [
+        { label: 'I feel stuck on something', primary: true, onClick: () => submit("I'm stuck on a task") },
+        { label: 'Give me a 2-min step', onClick: () => submit("Give me one tiny 2-minute step to start") },
+        { label: 'Brain dump', testId: 'chip-dump', onClick: () => setSheet('dump') },
+        { label: 'Routines', testId: 'chip-routines', onClick: () => { routineByVoice.current = false; setRoutineId(null); setSheet('routine'); } },
+      ];
+    }
+
+    // Initial idle state before interaction: clean adaptive starters
+    return [
+      { label: 'I feel overwhelmed', onClick: () => submit('I feel overwhelmed') },
+      { label: "I'm stuck", onClick: () => submit("I'm stuck") },
+      { label: 'Brain dump', testId: 'chip-dump', onClick: () => setSheet('dump') },
+      { label: 'Routines', testId: 'chip-routines', onClick: () => { routineByVoice.current = false; setRoutineId(null); setSheet('routine'); } },
+    ];
+  }, [lastAgent?.text, voice.isConnected, voice.transcripts.length, startTimer, submit]);
+
   return (
     <div className="mx-auto flex min-h-[calc(100dvh-11rem)] w-full max-w-xl flex-col items-center justify-between gap-4 pb-2 sm:min-h-[calc(100dvh-9rem)]">
       <h1 className="sr-only">Stay</h1>
@@ -658,7 +701,7 @@ export function StayHome({
           {status}
         </p>
         {canShowFace && (
-          <button type="button" className="chip" aria-pressed={presence.pinned} aria-label="Show Stay's face" onClick={presence.togglePin} data-testid="face-toggle">
+          <button type="button" className="sr-only" aria-pressed={presence.pinned} aria-label="Show Stay's face" onClick={presence.togglePin} data-testid="face-toggle">
             Face
           </button>
         )}
@@ -784,18 +827,18 @@ export function StayHome({
       )}
 
       {step === 'idle' && (
-        <div className="flex w-full flex-wrap justify-center gap-2" data-testid="state-chips" role="group" aria-label="Or start from how you feel">
-          {['I feel overwhelmed', "I'm stuck", 'I have no energy', "I can't focus"].map((c) => (
-            <button key={c} type="button" className="chip" onClick={() => submit(c)}>
-              {c}
+        <div className="flex w-full flex-wrap justify-center gap-2" data-testid="state-chips" role="group" aria-label="Proactive voice action buttons">
+          {proactiveActions.map((action) => (
+            <button
+              key={action.label}
+              type="button"
+              className={`chip transition-all duration-300 hover:scale-105 ${action.primary ? '!border-accent !bg-accent/10 !text-accent font-medium shadow-sm' : ''}`}
+              onClick={action.onClick}
+              data-testid={action.testId}
+            >
+              {action.label}
             </button>
           ))}
-          <button type="button" className="chip" onClick={() => setSheet('dump')} data-testid="chip-dump">
-            Brain dump
-          </button>
-          <button type="button" className="chip" onClick={() => (routineByVoice.current = false, setRoutineId(null), setSheet('routine'))} data-testid="chip-routines">
-            Routines
-          </button>
         </div>
       )}
 

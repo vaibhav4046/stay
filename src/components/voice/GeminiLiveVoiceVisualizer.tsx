@@ -105,31 +105,47 @@ export function GeminiLiveVoiceVisualizer({
         data-testid="mic-button"
         className="group flex h-10 items-center gap-2 rounded-full px-2 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
       >
-        <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} aria-hidden="true" className="shrink-0 overflow-visible">
-          <defs>
-            <linearGradient id="stay-wave-a" x1="0" x2="1" y1="0" y2="0">
-              <stop offset="0" stopColor="#4285F4" /><stop offset="0.5" stopColor="#9B72CB" /><stop offset="1" stopColor="#D96570" />
-            </linearGradient>
-            <linearGradient id="stay-wave-b" x1="0" x2="1" y1="0" y2="0">
-              <stop offset="0" stopColor="#00D2FF" /><stop offset="1" stopColor="#8E75FF" />
-            </linearGradient>
-            <linearGradient id="stay-wave-c" x1="0" x2="1" y1="0" y2="0">
-              <stop offset="0" stopColor="#D96570" /><stop offset="1" stopColor="#4285F4" />
-            </linearGradient>
-          </defs>
-          {RIBBONS.map((r, i) => (
+        {!isLive ? (
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="shrink-0 ml-1 transition-transform duration-300 hover:scale-110">
             <path
-              key={i}
-              ref={(el) => { pathRefs.current[i] = el; }}
-              d={buildPath(0, 0, r.freq)}
-              fill="none"
-              stroke={r.stroke}
-              strokeWidth={r.width}
-              strokeLinecap="round"
-              opacity={r.opacity}
+              d="M12 2C12 2 12.8 7.2 14.5 8.9C16.2 10.6 21.4 11.4 21.4 11.4C21.4 11.4 16.2 12.2 14.5 13.9C12.8 15.6 12 20.8 12 20.8C12 20.8 11.2 15.6 9.5 13.9C7.8 12.2 2.6 11.4 2.6 11.4C2.6 11.4 7.8 10.6 9.5 8.9C11.2 7.2 12 2 12 2Z"
+              fill="url(#stay-idle-sparkle)"
             />
-          ))}
-        </svg>
+            <defs>
+              <linearGradient id="stay-idle-sparkle" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor="#4285F4" />
+                <stop offset="50%" stopColor="#9B72CB" />
+                <stop offset="100%" stopColor="#D96570" />
+              </linearGradient>
+            </defs>
+          </svg>
+        ) : (
+          <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} aria-hidden="true" className="shrink-0 overflow-visible transition-opacity duration-300">
+            <defs>
+              <linearGradient id="stay-wave-a" x1="0" x2="1" y1="0" y2="0">
+                <stop offset="0" stopColor="#4285F4" /><stop offset="0.5" stopColor="#9B72CB" /><stop offset="1" stopColor="#D96570" />
+              </linearGradient>
+              <linearGradient id="stay-wave-b" x1="0" x2="1" y1="0" y2="0">
+                <stop offset="0" stopColor="#00D2FF" /><stop offset="1" stopColor="#8E75FF" />
+              </linearGradient>
+              <linearGradient id="stay-wave-c" x1="0" x2="1" y1="0" y2="0">
+                <stop offset="0" stopColor="#D96570" /><stop offset="1" stopColor="#4285F4" />
+              </linearGradient>
+            </defs>
+            {RIBBONS.map((r, i) => (
+              <path
+                key={i}
+                ref={(el) => { pathRefs.current[i] = el; }}
+                d={buildPath(0, 0, r.freq)}
+                fill="none"
+                stroke={r.stroke}
+                strokeWidth={r.width}
+                strokeLinecap="round"
+                opacity={r.opacity}
+              />
+            ))}
+          </svg>
+        )}
         <span className="min-w-[4.5rem] text-left text-xs font-medium tracking-wide text-stone-700 dark:text-stone-200">{label}</span>
       </button>
 
