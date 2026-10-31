@@ -31,6 +31,7 @@ import type {
 import { NATIVE_PERSONA_FOR_LANG, PERSONAS, personaById, resolvePersona, type VoicePersona } from '@/lib/voice/personas';
 import { agentVoiceFor, personaAfterLanguageChange, planSpeech } from '@/lib/voice/tts/plan';
 import { cachedTtsCaps, refreshTtsCaps, voiceNeeds } from '@/lib/voice/tts/caps';
+import { resolvePersonaBrowserSpeech } from '@/lib/voice/tts/browserVoices';
 import { createTtsConnection } from '@/lib/voice/tts';
 import { APP_TOOL, appKeyterms, buildGreeting, buildSystemPrompt, type AppActionArgs } from '@/lib/voice/agentTool';
 import {
@@ -482,30 +483,6 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     return spec;
   }, []);
 
-  const setSelectedVoice = useCallback((query: string): VoicePersona | null => {
-    const persona = resolvePersona(query, selectedVoiceRef.current);
-    if (!persona) return null;
-    if (voiceNeeds(persona)) return null;
-    setSelectedVoiceState(persona.id);
-    selectedVoiceRef.current = persona.id;
-    const convLang = (selectedLanguageRef.current === 'auto' ? (typeof navigator !== 'undefined' ? navigator.language : 'en') : selectedLanguageRef.current).split('-')[0].toLowerCase();
-    if (persona.lang !== convLang) setSelectedLanguage(SUPPORTED_LANGUAGES.find((l) => l.code.startsWith(persona.lang))?.code ?? persona.lang);
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.setItem('stay_selected_voice', persona.id);
-      } catch {
-        // ignore
-      }
-    }
-    optionsRef.current.onShapeRequested?.(persona.shape);
-    // output.voice is immutable once the session is ready (immutable_field), so restart cleanly to apply it.
-    const ws = wsRef.current;
-    if (ws && ws.readyState === WebSocket.OPEN && sessionReadyRef.current) {
-      restartVoiceRef.current?.();
-    }
-    return persona;
-  }, []);
-
   const setSelectedLanguage = useCallback((lang: string) => {
     setSelectedLanguageState(lang);
     selectedLanguageRef.current = lang;
@@ -571,6 +548,41 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       }
     }
   }, []);
+
+  const setSelectedVoice = useCallback((query: string): VoicePersona | null => {
+    const persona = resolvePersona(query, selectedVoiceRef.current);
+    if (!persona) return null;
+    setSelectedVoiceState(persona.id);
+    selectedVoiceRef.current = persona.id;
+    const convLang = (selectedLanguageRef.current === 'auto' ? (typeof navigator !== 'undefined' ? navigator.language : 'en') : selectedLanguageRef.current).split('-')[0].toLowerCase();
+    if (persona.lang !== convLang) setSelectedLanguage(SUPPORTED_LANGUAGES.find((l) => l.code.startsWith(persona.lang))?.code ?? persona.lang);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('stay_selected_voice', persona.id);
+        localStorage.setItem('stay_persona_id', persona.id);
+        window.dispatchEvent(new CustomEvent('stay-voice-changed', { detail: { voiceId: persona.id } }));
+      } catch {
+        // ignore
+      }
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    }
+    optionsRef.current.onShapeRequested?.(persona.shape);
+    // output.voice is immutable once the session is ready (immutable_field), so restart cleanly to apply it.
+    const ws = wsRef.current;
+    if (ws && ws.readyState === WebSocket.OPEN && sessionReadyRef.current) {
+      restartVoiceRef.current?.();
+    }
+    if (speechRecRef.current) {
+      try {
+        speechRecRef.current.lang = persona.voices[0]?.locale || (selectedLanguageRef.current !== 'auto' ? selectedLanguageRef.current : 'en-US');
+      } catch {
+        // ignore
+      }
+    }
+    return persona;
+  }, [setSelectedLanguage]);
 
   const [userMemory, setUserMemory] = useState<UserMemoryProfile>(() => {
     try {
@@ -866,54 +878,16 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         const utterance = new SpeechSynthesisUtterance(text);
         const detectedLang =
           explicitLangCode || detectTextLanguage(text, selectedLanguageRef.current);
-        utterance.lang = detectedLang;
-        const voices = window.speechSynthesis.getVoices();
-        const langPrefix = detectedLang.split('-')[0].toLowerCase();
-        const isMale = MALE_VOICE_IDS.includes(selectedVoiceRef.current);
-        const matchedVoice =
-          voices.find((v) => {
-            const name = v.name.toLowerCase();
-            const langMatches = v.lang.toLowerCase().startsWith(langPrefix);
-            if (!langMatches && langPrefix !== 'en') return false;
-            if (isMale) {
-              return (
-                name.includes('male') ||
-                name.includes('paul') ||
-                name.includes('george') ||
-                name.includes('david') ||
-                name.includes('daniel') ||
-                name.includes('guy') ||
-                name.includes('charles') ||
-                name.includes('michael')
-              );
-            }
-            return (
-              name.includes('female') ||
-              name.includes('anna') ||
-              name.includes('samantha') ||
-              name.includes('victoria') ||
-              name.includes('eve') ||
-              name.includes('vera') ||
-              name.includes('natural')
-            );
-          }) ||
-          voices.find((v) => v.lang.toLowerCase().startsWith(langPrefix)) ||
-          voices.find(
-            (v) =>
-              v.lang === 'en-GB' ||
-              (v.lang.startsWith('en') &&
-                (v.name.includes('UK') ||
-                  v.name.includes('British') ||
-                  v.name.includes('Natural') ||
-                  v.name.includes('Google') ||
-                  v.name.includes('Samantha') ||
-                  v.name.includes('Victoria')))
-          );
-        if (matchedVoice) {
-          utterance.voice = matchedVoice;
+        const persona = personaById(selectedVoiceRef.current);
+        const synthVoices = window.speechSynthesis.getVoices();
+        const voiceConfig = resolvePersonaBrowserSpeech(synthVoices, persona, detectedLang);
+        utterance.lang = voiceConfig.lang || detectedLang;
+        if (voiceConfig.voice) {
+          const matchedNative = synthVoices.find((v) => v.name === voiceConfig.voice?.name);
+          if (matchedNative) utterance.voice = matchedNative;
         }
-        utterance.rate = 1.02;
-        utterance.pitch = 1.0;
+        utterance.rate = voiceConfig.rate;
+        utterance.pitch = voiceConfig.pitch;
         utterance.onboundary = (e) => {
           if (replyEpochRef.current !== localEpoch) return;
           if (e.name === 'word') {
@@ -1026,6 +1000,9 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   }, []);
 
   const disconnectVoiceSession = useCallback(() => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
+    }
     dumpApiRef.current.rescue(); // a dump in progress is kept, not lost
     if (pcmPlayerRef.current) {
       try {
@@ -1179,9 +1156,6 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           return { ok: true, language: l.label };
         }
         case 'voice': {
-          const want = resolvePersona(value, selectedVoiceRef.current);
-          const needs = want ? voiceNeeds(want) : null;
-          if (needs) return { ok: false, error: needs };
           const p = setSelectedVoice(value);
           return p ? { ok: true, voice: p.name, note: p.voiceLabel } : { ok: false, error: 'no such voice', options: PERSONAS.map((x) => x.name) };
         }
@@ -1926,6 +1900,9 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   }, [playEarcon, sendUserTextMessage]);
 
   const startVoiceSession = useCallback(async () => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
+    }
     setErrorMessage(null);
     setVisualState('connecting');
     dispatchVoiceEvent({ type: 'connect_start' });
@@ -2589,12 +2566,21 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     };
   }, [disconnectVoiceSession, startVoiceSession]);
 
-  /** Make the agent speak without a user utterance (documented `reply.create`). */
+  /** Make the agent speak without a user utterance (documented `reply.create` or `reply.say`). */
   const speakProactively = useCallback(
     (instructions: string) => {
       const ws = wsRef.current;
       if (ws && ws.readyState === WebSocket.OPEN && sessionReadyRef.current) {
-        ws.send(JSON.stringify({ type: 'reply.create', instructions }));
+        if (ws instanceof FastSocket) {
+          const isDirectText = !instructions.startsWith('Say ') && !instructions.startsWith('Gently remind ') && !instructions.startsWith('Read this ');
+          if (isDirectText) {
+            ws.send(JSON.stringify({ type: 'reply.say', text: instructions }));
+          } else {
+            ws.send(JSON.stringify({ type: 'reply.create', instructions }));
+          }
+        } else {
+          ws.send(JSON.stringify({ type: 'reply.create', instructions }));
+        }
         return true;
       }
       speakDeterministicBoundary(instructions);

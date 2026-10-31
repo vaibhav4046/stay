@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { PERSONAS, chooseVoice, personaById, resolvePersona } from '@/lib/voice/personas';
 import { agentVoiceFor, personaAfterLanguageChange, planSpeech } from '@/lib/voice/tts/plan';
-import { pickBrowserVoice, voiceGender } from '@/lib/voice/tts/browserVoices';
+import { pickBrowserVoice, voiceGender, resolvePersonaBrowserSpeech } from '@/lib/voice/tts/browserVoices';
 import { AZURE_REGION_RE, azureEndpoint, buildSsml } from '@/lib/voice/tts/ssml';
 import { AzureTts } from '@/lib/voice/tts/azure';
 import { BrowserTts } from '@/lib/voice/tts/browser';
@@ -52,6 +52,26 @@ describe('browser voice choice', () => {
     const m = pickBrowserVoice([{ name: 'Microsoft Heera - English (India)', lang: 'en-IN', localService: true }], 'en-IN', 'male');
     expect(m?.genderMatched).toBe(false);
     expect(m?.gender).toBe('female');
+  });
+
+  it('resolvePersonaBrowserSpeech synchronizes typing and voice mode persona attributes', () => {
+    // Cardamom Calm -> Indian English female
+    const cardamom = resolvePersonaBrowserSpeech(WIN_VOICES, { id: 'cardamom', gender: 'female', lang: 'en', voices: [{ locale: 'en-IN' }] });
+    expect(cardamom.voice?.name).toContain('Heera');
+    expect(cardamom.rate).toBeLessThan(1.0); // calm unhurried pacing
+
+    // Chaiwala Blitz -> Indian English male
+    const chaiwala = resolvePersonaBrowserSpeech(WIN_VOICES, { id: 'chaiwala', gender: 'male', lang: 'en', voices: [{ locale: 'en-IN' }] });
+    expect(chaiwala.voice?.name).toContain('Ravi');
+    expect(chaiwala.rate).toBeGreaterThan(1.0); // upbeat hype pacing
+
+    // Pumpkin Pixel (jean) -> American English female
+    const jean = resolvePersonaBrowserSpeech(WIN_VOICES, { id: 'jean', gender: 'female', lang: 'en', voices: [{ locale: 'en-US' }] });
+    expect(jean.voice?.name).toContain('Zira');
+
+    // Porch Light (george) -> American English male
+    const george = resolvePersonaBrowserSpeech(WIN_VOICES, { id: 'george', gender: 'male', lang: 'en', voices: [{ locale: 'en-US' }] });
+    expect(george.voice?.name).toContain('David');
   });
 });
 

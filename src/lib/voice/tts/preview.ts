@@ -1,6 +1,7 @@
 'use client';
 import { ttsHeaders } from '@/lib/byok/config';
 import { chooseVoice, type VoicePersona } from '../personas';
+import { resolvePersonaBrowserSpeech } from './browserVoices';
 import { previewClipUrl, previewText } from './previewText';
 import type { TtsCaps } from './types';
 
@@ -25,7 +26,14 @@ export function stopPreview(): void {
  */
 export async function startPreview(persona: VoicePersona, caps: TtsCaps, onEnd: () => void): Promise<PreviewHandle> {
   stopPreview();
-  const choice = chooseVoice(persona, caps);
+  let choice = chooseVoice(persona, caps);
+  if (!choice.ref && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    const synthVoices = window.speechSynthesis.getVoices();
+    const config = resolvePersonaBrowserSpeech(synthVoices, persona);
+    if (config.voice) {
+      choice = { ref: { engine: 'browser', voice: '', lang: persona.lang, locale: config.lang, accent: persona.voiceLabel }, browserVoiceName: config.voice.name };
+    }
+  }
   if (!choice.ref) throw new Error(choice.needs ?? 'This voice is not available here.');
   const text = previewText(persona.lang, persona.name);
   let handle: PreviewHandle;
@@ -41,8 +49,12 @@ export async function startPreview(persona: VoicePersona, caps: TtsCaps, onEnd: 
     synth.cancel();
     const u = new SpeechSynthesisUtterance(text);
     u.lang = choice.ref.locale;
-    const v = synth.getVoices().find((x) => x.name === choice.browserVoiceName);
+    const synthVoices = synth.getVoices();
+    const v = synthVoices.find((x) => x.name === choice.browserVoiceName);
     if (v) u.voice = v;
+    const config = resolvePersonaBrowserSpeech(synthVoices, persona);
+    u.rate = config.rate;
+    u.pitch = config.pitch;
     u.onend = onEnd;
     u.onerror = onEnd;
     synth.speak(u);

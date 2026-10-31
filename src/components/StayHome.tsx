@@ -274,9 +274,6 @@ export function StayHome({
   voiceRef.current = voice;
   /** Switch voice by name or accent and say what happened: the persona's name, or why it cannot speak on this device yet. */
   const sayVoice = (query: string) => {
-    const wanted = resolvePersona(query);
-    const needs = wanted ? voiceNeeds(wanted) : null;
-    if (needs) return say(needs);
     const picked = voiceRef.current?.setSelectedVoice(query);
     say(picked ? `Voice: ${picked.name}` : 'No voice by that name');
   };

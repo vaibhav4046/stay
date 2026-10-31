@@ -51,6 +51,130 @@ export function pickBrowserVoice(voices: readonly BrowserVoiceInfo[], locale: st
   return best ? { voice: best.v, genderMatched: best.g === gender, gender: best.g } : null;
 }
 
+export interface PersonaSpeechConfig {
+  voice: BrowserVoiceInfo | null;
+  rate: number;
+  pitch: number;
+  lang: string;
+}
+
+const PERSONA_HINTS: Record<string, string[]> = {
+  anna: ['anna', 'libby', 'sondra', 'hazel', 'susan', 'uk', 'british'],
+  charles: ['charles', 'oliver', 'george', 'ryan', 'uk', 'british'],
+  paul: ['paul', 'alfie', 'david', 'uk', 'british'],
+  vera: ['vera', 'hazel', 'susan', 'fiona', 'uk', 'british'],
+  jean: ['jean', 'jenny', 'zira', 'aria', 'samantha'],
+  eve: ['eve', 'ava', 'allison', 'jessica'],
+  jane: ['jane', 'jenny', 'zira', 'kendra'],
+  george: ['george', 'guy', 'david', 'tom'],
+  michael: ['michael', 'christopher', 'eric', 'david'],
+  alba: ['alba', 'aria', 'jenny', 'samantha'],
+  mary: ['mary', 'monica', 'samantha'],
+  iris: ['iris', 'clara', 'samantha', 'victoria'],
+  reid: ['reid', 'david', 'guy', 'mark', 'daniel'],
+  cardamom: ['heera', 'neerja', 'veena', 'kalpana', 'swara', 'india'],
+  chaiwala: ['ravi', 'prabhat', 'rishi', 'hemant', 'india'],
+  taco: ['dalia', 'paulina', 'sabina', 'mexico'],
+  mariachi: ['jorge', 'raul', 'gerardo', 'mexico'],
+  lola: ['lola', 'monica', 'paulina', 'elena', 'laura', 'conchita'],
+  estelle: ['estelle', 'celine', 'amelie', 'hortense'],
+  juergen: ['juergen', 'stefan', 'hans', 'markus'],
+  giovanni: ['giovanni', 'cosimo', 'matteo', 'luca'],
+  rafael: ['rafael', 'helio', 'ricardo', 'luciano'],
+};
+
+const COMMON_MALE_NAMES = /\b(charles|paul|george|michael|david|daniel|guy|mark|tom|ryan|oliver|ravi|prabhat|rishi|hemant|raul|raúl|jorge|juan|diego|alvaro|cecilio|gerardo|liberto|luciano|pelayo|yago|stefan|hans|cosimo|matteo|luca|helio|ricardo|alex|fred)\b/i;
+const COMMON_FEMALE_NAMES = /\b(anna|libby|sondra|hazel|susan|vera|jean|jenny|zira|aria|samantha|victoria|eve|ava|allison|jane|alba|mary|iris|clara|fiona|heera|neerja|veena|kalpana|swara|dalia|paulina|sabina|monica|elena|laura|estelle|celine|karen)\b/i;
+
+/**
+ * Resolves the ideal browser speechSynthesis voice, rate, and pitch for a persona.
+ * Guarantees that typing and local voice mode match the configured persona's gender, accent, and style.
+ */
+export function resolvePersonaBrowserSpeech(
+  voices: readonly BrowserVoiceInfo[],
+  persona: { id: string; gender: Gender; lang?: string; voices?: Array<{ locale?: string }> },
+  detectedLang?: string
+): PersonaSpeechConfig {
+  const pId = (persona?.id || 'anna').toLowerCase();
+  const targetGender = persona?.gender ?? 'female';
+  const targetLocale = (persona?.voices?.[0]?.locale || detectedLang || persona?.lang || 'en-US').replace(/_/g, '-').toLowerCase();
+  const targetPrefix = targetLocale.split('-')[0];
+
+  // 1. Pacing & pitch tuned to persona's therapeutic role
+  let rate = 1.01;
+  let pitch = 1.0;
+  if (['paul', 'chaiwala', 'lola', 'alba'].includes(pId)) {
+    rate = 1.06;
+    pitch = 1.02;
+  } else if (['anna', 'cardamom', 'iris', 'jane'].includes(pId)) {
+    rate = 0.95;
+    pitch = 0.98;
+  } else if (['eve', 'mary', 'vera', 'reid', 'juergen'].includes(pId)) {
+    rate = 1.02;
+    pitch = 0.99;
+  } else if (['charles', 'giovanni'].includes(pId)) {
+    rate = 0.98;
+    pitch = 1.01;
+  }
+
+  if (!voices || voices.length === 0) {
+    return { voice: null, rate, pitch, lang: targetLocale };
+  }
+
+  // 2. Candidate scoring across all available voices
+  const hints = PERSONA_HINTS[pId] || [pId];
+  const scored = voices.map((v) => {
+    const name = v.name.toLowerCase();
+    const lang = (v.lang || '').replace(/_/g, '-').toLowerCase();
+    let score = 0;
+
+    // Locale matching
+    if (lang === targetLocale) {
+      score += 40;
+    } else if (lang.startsWith(targetPrefix)) {
+      score += 22;
+    } else if (targetPrefix !== 'en' && !lang.startsWith('en')) {
+      score -= 30;
+    }
+
+    // Gender detection (explicit voiceGender + common names)
+    const g = voiceGender(v.name);
+    const isMale = g === 'male' || COMMON_MALE_NAMES.test(name);
+    const isFemale = g === 'female' || COMMON_FEMALE_NAMES.test(name);
+
+    if (targetGender === 'male') {
+      if (isMale) score += 35;
+      else if (isFemale) score -= 75;
+    } else {
+      if (isFemale) score += 35;
+      else if (isMale) score -= 75;
+    }
+
+    // Persona-specific keyword hints
+    for (const h of hints) {
+      if (name.includes(h)) {
+        score += 25;
+        break;
+      }
+    }
+
+    // Quality hints
+    if (/natural|neural|online/i.test(name)) score += 4;
+    if (v.localService) score += 1.5;
+
+    return { voice: v, score };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+  const best = scored[0];
+  return {
+    voice: best && best.score > 0 ? best.voice : null,
+    rate,
+    pitch,
+    lang: targetLocale,
+  };
+}
+
 /** speechSynthesis voices, waiting briefly for the browser to load them (Chrome fills the list asynchronously). */
 export async function loadBrowserVoices(timeoutMs = 1500): Promise<BrowserVoiceInfo[]> {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return [];

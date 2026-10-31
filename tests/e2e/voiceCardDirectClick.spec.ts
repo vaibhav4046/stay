@@ -54,5 +54,21 @@ test('Clicking voice card container selects voice and arms it immediately', asyn
   await page.keyboard.press('Escape');
   await expect(page.getByText(/Biscuit Blitz armed — ready to speak/)).toBeVisible();
 
+  // Re-open and click Card: Cardamom Calm (id: 'cardamom') in Recommended
+  await page.getByTestId('menu-button').click();
+  await page.getByRole('button', { name: 'Voice and language' }).click();
+  await expect(page.getByTestId('voice-picker')).toBeVisible();
+
+  const cardamomCard = page.getByTestId('voice-cardamom');
+  await expect(cardamomCard).toBeVisible();
+  await cardamomCard.click();
+  await expect(cardamomCard).toHaveClass(/!border-primary/);
+
+  const cardamomSelected = await page.evaluate(() => localStorage.getItem('stay_selected_voice'));
+  expect(cardamomSelected).toBe('cardamom');
+
+  await page.keyboard.press('Escape');
+  await expect(page.getByText(/Cardamom Calm armed — ready to speak/)).toBeVisible();
+
   await page.screenshot({ path: 'test-results/voice-card-armed-success.png' });
 });
