@@ -237,39 +237,96 @@ body {
 
 .el-voice-card {
   transition:
-    transform 240ms var(--ease-calm),
-    box-shadow 240ms var(--ease-calm),
-    border-color 200ms ease,
-    background-color 200ms ease;
+    transform 320ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 320ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 240ms ease,
+    background-color 240ms ease;
+  will-change: transform, box-shadow;
 }
 .el-voice-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 2px 4px rgb(33 36 34 / 0.04), 0 14px 28px -12px rgb(33 36 34 / 0.14);
+  transform: translateY(-4px) scale(1.012);
+  box-shadow: 0 4px 14px rgb(33 36 34 / 0.05), 0 20px 36px -10px rgb(0 106 103 / 0.18);
 }
 .el-voice-card:active {
-  transform: translateY(0) scale(0.995);
+  transform: translateY(-1px) scale(0.995);
 }
 
-/* Voice Card Glyph Hover Transform Animations */
+/* Enhanced Voice Card Glyph Hover & Playing Transform Animations */
 @keyframes lp-persona-glyph-transform {
-  0% { transform: scale(1) rotate(0deg); }
-  45% { transform: scale(1.28) rotate(-7deg) translateY(-3px); }
-  80% { transform: scale(1.18) rotate(-4deg) translateY(-1px); }
-  100% { transform: scale(1.24) rotate(-5deg) translateY(-2px); }
+  0% {
+    transform: scale(1) rotate(0deg) translateY(0);
+    filter: drop-shadow(0 0 0 rgba(0, 106, 103, 0));
+  }
+  32% {
+    transform: scale(1.34) rotate(-9deg) translateY(-4px);
+    filter: drop-shadow(0 8px 18px rgba(0, 106, 103, 0.42));
+  }
+  62% {
+    transform: scale(1.20) rotate(-3deg) translateY(-1.5px);
+    filter: drop-shadow(0 4px 10px rgba(0, 106, 103, 0.28));
+  }
+  84% {
+    transform: scale(1.28) rotate(-7deg) translateY(-3.5px);
+    filter: drop-shadow(0 10px 20px rgba(0, 106, 103, 0.46));
+  }
+  100% {
+    transform: scale(1.25) rotate(-5.5deg) translateY(-2.8px);
+    filter: drop-shadow(0 7px 16px rgba(0, 106, 103, 0.38));
+  }
 }
-@keyframes lp-breathe { 50% { transform: scale(1.06); } }
+
+@keyframes lp-breathe {
+  0%, 100% {
+    transform: scale(1.25) rotate(-5.5deg) translateY(-2.8px);
+    filter: drop-shadow(0 7px 16px rgba(0, 106, 103, 0.38));
+  }
+  50% {
+    transform: scale(1.33) rotate(-3deg) translateY(-4.5px);
+    filter: drop-shadow(0 12px 24px rgba(0, 106, 103, 0.52));
+  }
+}
+
+@keyframes lp-glyph-playing-vibe {
+  0% {
+    transform: scale(1.25) rotate(-5deg) translateY(-2px);
+    filter: drop-shadow(0 0 12px rgba(0, 106, 103, 0.5));
+  }
+  25% {
+    transform: scale(1.36) rotate(-11deg) translateY(-4px);
+    filter: drop-shadow(0 0 20px rgba(0, 106, 103, 0.75));
+  }
+  50% {
+    transform: scale(1.26) rotate(3deg) translateY(0);
+    filter: drop-shadow(0 0 14px rgba(0, 106, 103, 0.55));
+  }
+  75% {
+    transform: scale(1.35) rotate(-8deg) translateY(-3.5px);
+    filter: drop-shadow(0 0 22px rgba(0, 106, 103, 0.8));
+  }
+  100% {
+    transform: scale(1.25) rotate(-5deg) translateY(-2px);
+    filter: drop-shadow(0 0 12px rgba(0, 106, 103, 0.5));
+  }
+}
 
 .voice-card-glyph {
   width: 44px;
   height: 44px;
   transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s ease;
+  transform-origin: center center;
 }
 .voice-card-glyph path {
   fill: none !important;
   stroke-width: 4.6 !important;
   stroke-linecap: round !important;
+  transition: stroke-width 0.3s ease;
 }
 .group:hover .voice-card-glyph {
   animation: lp-persona-glyph-transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards, lp-breathe 2.2s ease-in-out 0.6s infinite;
-  filter: drop-shadow(0 8px 16px rgba(0, 106, 103, 0.35));
+}
+.group:hover .voice-card-glyph path {
+  stroke-width: 5.2 !important;
+}
+.voice-card-glyph.is-playing {
+  animation: lp-glyph-playing-vibe 2s ease-in-out infinite !important;
 }

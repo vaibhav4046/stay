@@ -90,11 +90,11 @@ function VoiceCard({
       <div>
         <div className="flex items-start gap-2.5">
           {/* Logo container with 3D hover transform animation */}
-          <div className="relative w-11 h-11 flex-shrink-0 flex items-center justify-center rounded-xl bg-surface-2/80 border border-line/70 p-1 group-hover:bg-primary/5 group-hover:border-primary/25 transition-all duration-300">
+          <div className="relative w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-2xl bg-surface-2/90 border border-line/80 p-1.5 transition-all duration-300 ease-out group-hover:scale-110 group-hover:-rotate-2 group-hover:bg-primary/[0.08] group-hover:border-primary/40 group-hover:shadow-[0_8px_20px_-4px_rgba(0,106,103,0.3)]">
             <svg
               viewBox="0 0 100 100"
               className={`voice-card-glyph ${
-                playing ? 'scale-125 -rotate-6 animate-pulse drop-shadow-[0_0_12px_rgba(0,106,103,0.5)]' : ''
+                playing ? 'is-playing' : ''
               }`}
               aria-hidden="true"
               focusable="false"
@@ -194,11 +194,11 @@ function VoiceCard({
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <button
             type="button"
-            className={`inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-medium transition-all ${
+            className={`inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-medium transition-all duration-200 cursor-pointer ${
               playing
-                ? 'bg-primary text-white shadow-sm'
+                ? 'bg-primary text-white shadow-sm scale-105'
                 : usable
-                  ? 'bg-surface-2 text-ink hover:bg-line-strong hover:text-ink'
+                  ? 'bg-surface-2 text-ink hover:bg-primary/10 hover:text-primary hover:scale-105 active:scale-95 hover:shadow-xs'
                   : 'bg-surface-2 text-ink-3 opacity-50 cursor-not-allowed'
             }`}
             onClick={(e) => {
