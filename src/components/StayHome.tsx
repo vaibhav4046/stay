@@ -700,11 +700,9 @@ export function StayHome({
         <p className="meta" role="status" aria-live="polite" data-testid="orb-status">
           {status}
         </p>
-        {canShowFace && (
-          <button type="button" className="sr-only" aria-pressed={presence.pinned} aria-label="Show Stay's face" onClick={presence.togglePin} data-testid="face-toggle">
-            Face
-          </button>
-        )}
+        <button type="button" className="sr-only" aria-pressed={presence.pinned} aria-label="Show Stay's face" onClick={presence.togglePin} data-testid="face-toggle">
+          Face
+        </button>
         {caption && (
           <p className="min-h-[3.5rem] max-w-[24ch] text-center font-display text-[1.6rem] font-medium leading-tight tracking-tight sm:max-w-[28ch] sm:text-[1.9rem]" data-testid="caption">
             {caption}
