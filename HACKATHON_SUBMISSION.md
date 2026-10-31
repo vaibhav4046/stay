@@ -37,7 +37,7 @@ A voice companion for neurodivergent adults that bridges the gap between executi
 
 ## 4. Empirical Verification & Evidence Matrix
 Every metric is backed by reproducible test scripts and machine-readable JSON artifacts:
-- **Unit & DSP Test Suite:** **661 passed / 661 total** across **44 test files** (`npm test`).
+- **Unit & DSP Test Suite:** **677 passed / 677 total** across **46 test files** (`npm test`).
 - **Jitter Matrix & Continuity (0–400ms):**
   - Legacy scheduler: 10 dead-air gaps under all jitter >15ms (50ms–1850ms dead air).
   - New AudioWorklet engine: **0 gaps, 0 underflows, 0 discontinuities** from 0ms to 100ms jitter (`docs/bench-results/jitter-matrix.json`).
@@ -67,7 +67,7 @@ Detailed verbatim clicks, utterances, and expected outcomes are provided in [`do
 - [x] Public GitHub repository: https://github.com/vaibhav4046/stay
 - [x] High-fidelity demo video with captions: https://stay-two-swart.vercel.app/demo/stay-demo.mp4
 - [x] Continuous audio engine implemented in AudioWorklet (`public/worklets/stay-pcm-playback-processor.js`)
-- [x] 661 passing unit & DSP tests (`tests/`)
+- [x] 677 passing unit & DSP tests (`tests/`)
 - [x] 97 passing Playwright browser tests (`tests/e2e/`)
 - [x] 128-scenario synthetic user swarm (`docs/bench-results/voice-agent-swarm.json`)
 - [x] 5 independent judge evaluations (`docs/judging/`)
