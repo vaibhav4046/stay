@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { loadByok, saveByok } from '@/lib/byok/config';
 import { PERSONAS, RECOMMENDED_PERSONAS, chooseVoice, type VoicePersona } from '@/lib/voice/personas';
+import { dotGlyph, type DotGlyph } from '@/components/landing/personaDots';
 import { BYOK_CHANGED_EVENT, useTtsCaps } from '@/lib/voice/tts/caps';
 import { startPreview, stopPreview, testAzureKey } from '@/lib/voice/tts/preview';
 import { ENGINES, type TtsCaps } from '@/lib/voice/tts/types';
@@ -16,6 +17,14 @@ interface Props {
 }
 
 type FilterMode = 'all' | 'ready' | 'british' | 'american' | 'native';
+
+/** Memoized static dot glyphs for every persona shape */
+const GLYPHS: Record<string, DotGlyph | null> = {};
+for (const p of PERSONAS) {
+  if (!GLYPHS[p.shape]) {
+    GLYPHS[p.shape] = dotGlyph(p.shape, 90);
+  }
+}
 
 /** One line saying which engine would speak this persona right now, e.g. "AssemblyAI" or "Browser voice: Microsoft Heera". */
 function engineLine(p: VoicePersona, caps: TtsCaps): string {
@@ -34,6 +43,7 @@ function VoiceCard({
   error,
   onPick,
   onPreview,
+  glyph,
   hidden = false,
 }: {
   p: VoicePersona;
@@ -43,6 +53,7 @@ function VoiceCard({
   error: string | null;
   onPick: () => void;
   onPreview: () => void;
+  glyph: DotGlyph | null;
   hidden?: boolean;
 }) {
   const usable = chooseVoice(p, caps).ref !== null;
@@ -50,58 +61,92 @@ function VoiceCard({
 
   return (
     <div
-      className={`group relative flex flex-col justify-between rounded-2xl border transition-all duration-200 ${
+      className={`group relative flex flex-col justify-between rounded-2xl border transition-all duration-300 ${
         selected
           ? '!border-primary !bg-primary/[0.04] ring-2 ring-primary/25 shadow-sm'
-          : 'border-line bg-surface hover:border-line-strong hover:shadow-md hover:-translate-y-0.5'
+          : 'border-line bg-surface hover:border-line-strong hover:shadow-lg hover:-translate-y-1'
       } ${playing ? 'ring-2 ring-emerald-500/40 !border-emerald-600' : ''} p-4 ${hidden ? 'hidden' : ''}`}
-      style={{ opacity: usable ? 1 : 0.8 }}
+      style={{ opacity: usable ? 1 : 0.82 }}
       data-testid={`voice-${p.id}`}
       data-usable={usable}
     >
       <div>
-        <button
-          type="button"
-          className="w-full text-left focus:outline-none"
-          aria-pressed={selected}
-          onClick={onPick}
-        >
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-display font-semibold text-ink text-[1.05rem] group-hover:text-primary transition-colors">
-                  {p.name}
-                </span>
-                {selected && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[0.7rem] font-semibold text-primary">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    Selected
-                  </span>
-                )}
-                {usable ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[0.7rem] font-medium text-emerald-700 dark:text-emerald-300">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    Ready
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[0.7rem] font-medium text-amber-800 dark:text-amber-300">
-                    Needs Setup
-                  </span>
-                )}
-              </div>
-
-              <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-                <span className="meta block text-xs">
-                  {p.gender === 'female' ? 'Female' : 'Male'} · {p.voiceLabel}
-                </span>
-              </div>
-            </div>
+        <div className="flex items-start gap-3">
+          {/* Logo container with 3D hover transform animation */}
+          <div className="relative w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-xl bg-surface-2/70 p-1 group-hover:bg-primary/5 transition-all duration-300">
+            <svg
+              viewBox="0 0 100 100"
+              className={`voice-card-glyph ${
+                playing ? 'scale-125 -rotate-6 animate-pulse drop-shadow-[0_0_12px_rgba(0,106,103,0.5)]' : ''
+              }`}
+              aria-hidden="true"
+              focusable="false"
+            >
+              {glyph && (
+                <>
+                  <path
+                    d={glyph.a}
+                    stroke={glyph.colors[0]}
+                    fill="none"
+                    strokeWidth="4.6"
+                    strokeLinecap="round"
+                    style={{ fill: 'none', strokeWidth: 4.6, strokeLinecap: 'round' }}
+                  />
+                  <path
+                    d={glyph.b}
+                    stroke={glyph.colors[1]}
+                    fill="none"
+                    strokeWidth="4.6"
+                    strokeLinecap="round"
+                    style={{ fill: 'none', strokeWidth: 4.6, strokeLinecap: 'round' }}
+                  />
+                </>
+              )}
+            </svg>
+            {playing && (
+              <span className="absolute -inset-1 rounded-xl border border-primary/40 animate-ping pointer-events-none" />
+            )}
           </div>
-        </button>
 
-        <p className="meta mt-2 text-xs leading-relaxed text-ink-2">{p.style}</p>
+          <button
+            type="button"
+            className="flex-1 text-left focus:outline-none cursor-pointer"
+            aria-pressed={selected}
+            onClick={onPick}
+          >
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-display font-semibold text-ink text-[1.05rem] group-hover:text-primary transition-colors">
+                {p.name}
+              </span>
+              {selected && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[0.7rem] font-semibold text-primary">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  Selected
+                </span>
+              )}
+              {usable ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[0.7rem] font-medium text-emerald-700 dark:text-emerald-300">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Ready
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[0.7rem] font-medium text-amber-800 dark:text-amber-300">
+                  Needs Setup
+                </span>
+              )}
+            </div>
+
+            <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+              <span className="meta block text-xs">
+                {p.gender === 'female' ? 'Female' : 'Male'} · {p.voiceLabel}
+              </span>
+            </div>
+          </button>
+        </div>
+
+        <p className="meta mt-2.5 text-xs leading-relaxed text-ink-2">{p.style}</p>
         <p className="meta mt-1 text-[0.75rem] text-ink-3" data-testid={`voice-engine-${p.id}`}>{engineLine(p, caps)}</p>
       </div>
 
@@ -232,6 +277,7 @@ export function VoicePicker({ selected, onSelect, fastVoice }: Props) {
       error={errors[p.id] || null}
       onPick={() => pick(p)}
       onPreview={() => preview(p)}
+      glyph={GLYPHS[p.shape] ?? null}
       hidden={!matchesFilter(p)}
     />
   );
