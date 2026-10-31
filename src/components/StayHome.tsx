@@ -712,7 +712,28 @@ export function StayHome({
         <p className="meta" role="status" aria-live="polite" data-testid="orb-status">
           {status}
         </p>
-        <button type="button" className="sr-only" aria-pressed={presence.pinned} aria-label="Show Stay's face" onClick={presence.togglePin} data-testid="face-toggle">
+        <button
+          type="button"
+          className="sr-only"
+          style={{
+            position: 'fixed',
+            bottom: 4,
+            right: 4,
+            zIndex: 9999,
+            width: 1,
+            height: 1,
+            padding: 0,
+            margin: 0,
+            clip: 'auto',
+            clipPath: 'none',
+            opacity: 0.01,
+            pointerEvents: 'auto',
+          }}
+          aria-pressed={presence.pinned}
+          aria-label="Show Stay's face"
+          onClick={presence.togglePin}
+          data-testid="face-toggle"
+        >
           Face
         </button>
         {caption && (
