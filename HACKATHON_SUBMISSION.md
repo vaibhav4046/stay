@@ -5,6 +5,7 @@
 **Canonical Repository:** https://github.com/vaibhav4046/stay  
 **Default Branch:** `master` (Worktree: `feat/omnirush-continuous-voice`)  
 **Demo Video:** https://stay-two-swart.vercel.app/demo/stay-demo.mp4  
+**Submission Form:** https://forms.gle/XCW2RdZGbarVLnKEA  
 
 ---
 
