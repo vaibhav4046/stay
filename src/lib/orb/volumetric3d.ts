@@ -82,7 +82,7 @@ export function generate3DRocket(n: number, seed = 42): Volumetric3DShape {
     if (v > 0.75) {
       pushPoint(x, y, z, 0.94, 0.24, 0.24); // #EF4444 crimson tip
     } else {
-      pushPoint(x, y, z, 0.97, 0.98, 1.0); // Titanium pearl white
+      pushPoint(x, y, z, 0.62, 0.72, 1.0); // pale periwinkle (white vanishes on the stone page)
     }
   }
 
@@ -101,11 +101,11 @@ export function generate3DRocket(n: number, seed = 42): Volumetric3DShape {
       Math.abs(Math.cos(theta) + 1)
     );
     if (stripeDist < 0.15 && y > -0.25 && y < 0.35) {
-      pushPoint(x, y, z, 0.15, 0.39, 0.92); // #2563EB Racing blue
+      pushPoint(x, y, z, 0.10, 0.25, 0.78); // deep stripe
     } else if (Math.abs(y - 0.05) < 0.035) {
       pushPoint(x, y, z, 0.94, 0.24, 0.24); // #EF4444 Accent ring
     } else {
-      pushPoint(x, y, z, 0.94, 0.96, 0.98); // Clean hull white
+      pushPoint(x, y, z, 0.42, 0.55, 0.98); // hull blue
     }
   }
 
@@ -173,7 +173,7 @@ export function generate3DRocket(n: number, seed = 42): Volumetric3DShape {
     // Mid: orange-red
     // Tip: violet spark
     if (v < 0.28 && r < 0.12) {
-      pushPoint(x, y, z, 1.0, 1.0, 0.95); // White-hot core
+      pushPoint(x, y, z, 1.0, 0.86, 0.30); // hot core
     } else if (v < 0.55) {
       pushPoint(x, y, z, 0.98, 0.72, 0.12); // #F59E0B Solar amber
     } else if (v < 0.85) {
@@ -316,17 +316,29 @@ export function generate3DHeart(n: number, seed = 13): Volumetric3DShape {
   };
 }
 
+/** Recentre on the bounding-box middle and fit to the same 0.92 half-extent as every other orb shape. */
+function centerFit(s: Volumetric3DShape): Volumetric3DShape {
+  const p = s.points;
+  const lo = [Infinity, Infinity, Infinity];
+  const hi = [-Infinity, -Infinity, -Infinity];
+  for (let i = 0; i < p.length; i += 3) {
+    for (let c = 0; c < 3; c++) {
+      lo[c] = Math.min(lo[c], p[i + c]);
+      hi[c] = Math.max(hi[c], p[i + c]);
+    }
+  }
+  const mid = lo.map((l, c) => (l + hi[c]) / 2);
+  const half = Math.max(hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]) / 2 || 1;
+  const k = 0.92 / half;
+  for (let i = 0; i < p.length; i += 3) for (let c = 0; c < 3; c++) p[i + c] = (p[i + c] - mid[c]) * k;
+  return s;
+}
+
 /** Check if an id has a dedicated true-3D volumetric generator */
 export function getVolumetric3DShape(id: string, n: number): Volumetric3DShape | null {
   const norm = id.toLowerCase().trim();
-  if (norm === 'rocket' || norm === 'space' || norm === 'launch' || norm === 'spaceship') {
-    return generate3DRocket(n);
-  }
-  if (norm === 'star' || norm === 'stars' || norm === 'shine') {
-    return generate3DStar(n);
-  }
-  if (norm === 'heart' || norm === 'love') {
-    return generate3DHeart(n);
-  }
+  if (/^(rocket|space|launch|spaceship|rocket ship)$/.test(norm)) return centerFit(generate3DRocket(n));
+  if (/^(star|stars|shine)$/.test(norm)) return centerFit(generate3DStar(n));
+  if (/^(heart|love)$/.test(norm)) return centerFit(generate3DHeart(n));
   return null;
 }

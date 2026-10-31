@@ -18,6 +18,7 @@ import {
 import { isAgentVerifiedLanguage, useVoiceAgent } from '@/lib/voice/useVoiceAgent';
 import { useAssistantHardware } from '@/lib/voice/useAssistantHardware';
 import { parseMultiIntentUtterance } from '@/lib/voice/voiceCommands';
+import { isSmallTalk } from '@/lib/voice/smallTalk';
 import { loadUserCalibration, recordSessionLearning } from '@/lib/coach/selfImprovement';
 import { buildMemorySystemPrompt, loadUserMemory, recordSessionMemory } from '@/lib/coach/userMemory';
 import { useOrbShape } from '@/lib/orb/useOrbShape';
@@ -483,6 +484,10 @@ export function StayHome({
       if (!t) return;
       setInput('');
       orb.feed(t, 'typed');
+      if (isSmallTalk(t)) {
+        voiceRef.current.sendUserTextMessage(t);
+        return;
+      }
       if (detectSensoryGroundingRequest(t).triggered) return setGrounding(true);
       const impulse = detectImpulsiveActionRisk(t);
       if (impulse.triggered) return setNote(impulse.message);

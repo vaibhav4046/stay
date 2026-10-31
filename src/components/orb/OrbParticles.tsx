@@ -543,7 +543,8 @@ export default function OrbParticles({ state, energy, bands, target, tint, think
         sphereW += ((currentKey === 'orb' ? 1 : 0) - sphereW) * ease(2.2);
         figW += ((toIsFigure ? 1 : 0) - figW) * ease(2.4);
         spin += dt * 0.2 * sphereW;
-        uniforms.uYaw.value = spin + Math.sin(t * 0.45) * (0.26 - 0.17 * figW) * (1 - sphereW);
+        ptrYaw += (ptrTarget - ptrYaw) * ease(5);
+        uniforms.uYaw.value = spin + ptrYaw * (1 - 0.5 * sphereW) + Math.sin(t * 0.45) * (0.1 - 0.06 * figW) * (1 - sphereW);
         uniforms.uJelly.value = jelly.step(dt);
       }
       uniforms.uEnergy.value = smoothEnergy;
@@ -594,6 +595,16 @@ export default function OrbParticles({ state, energy, bands, target, tint, think
       raf = requestAnimationFrame(render);
     };
 
+    let ptrYaw = 0;
+    let ptrTarget = 0;
+    const onPtr = (e: PointerEvent) => {
+      const r = mount.getBoundingClientRect();
+      const dx = (e.clientX - (r.left + r.width / 2)) / Math.max(240, window.innerWidth / 2);
+      ptrTarget = Math.max(-1, Math.min(1, dx)) * 0.7;
+    };
+    const onPtrLeave = () => (ptrTarget = 0);
+    window.addEventListener('pointermove', onPtr, { passive: true });
+    document.addEventListener('pointerleave', onPtrLeave);
     let onScreen = true;
     const start = () => {
       if (raf || !onScreen || document.hidden) return;
@@ -628,6 +639,8 @@ export default function OrbParticles({ state, energy, bands, target, tint, think
     return () => {
       stop();
       document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('pointermove', onPtr);
+      document.removeEventListener('pointerleave', onPtrLeave);
       renderer.domElement.removeEventListener('webglcontextlost', onLost);
       io.disconnect();
       ro.disconnect();

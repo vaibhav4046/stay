@@ -24,7 +24,7 @@ class StayPcmPlaybackProcessor extends AudioWorkletProcessor {
     this.muted = false;
 
     // Prebuffer configuration (adaptive 80-150ms default ~100ms)
-    this.prebufferMs = 100;
+    this.prebufferMs = 180;
     this.prebufferSamples = Math.floor((this.prebufferMs / 1000) * sampleRate);
 
     // Fade ramps: ~5ms window to eliminate clicks on boundary
@@ -168,6 +168,9 @@ class StayPcmPlaybackProcessor extends AudioWorkletProcessor {
         if (this.state === 'PLAYING') {
           // Network stall occurred mid-utterance
           this.underflowCount++;
+          // adapt to this network: each stall raises the cushion (max 600 ms) so the next one is smoother
+          this.prebufferMs = Math.min(600, Math.round(this.prebufferMs * 1.6));
+          this.prebufferSamples = Math.floor((this.prebufferMs / 1000) * sampleRate);
           this.state = 'BUFFERING'; // Re-enter buffering until next packets
           this.targetGain = 0.0; // Fade to silence
         } else if (this.state === 'DRAINING') {

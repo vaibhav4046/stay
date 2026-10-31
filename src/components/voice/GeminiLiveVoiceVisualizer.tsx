@@ -1,6 +1,6 @@
-'use client';
+﻿'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { VoiceVisualState, AudioSpectrumBands } from '@/types/domain';
 
 export interface GeminiLiveVoiceVisualizerProps {
@@ -14,6 +14,27 @@ export interface GeminiLiveVoiceVisualizerProps {
   className?: string;
 }
 
+const W = 72;
+const H = 32;
+const MID = H / 2;
+/** Three layered sine ribbons: a calm line when idle, a flowing voice wave when live. */
+const RIBBONS = [
+  { stroke: 'url(#stay-wave-a)', width: 2.4, freq: 1.0, speed: 2.2, amp: 1, opacity: 1 },
+  { stroke: 'url(#stay-wave-b)', width: 1.8, freq: 1.6, speed: -3.1, amp: 0.7, opacity: 0.85 },
+  { stroke: 'url(#stay-wave-c)', width: 1.4, freq: 2.3, speed: 4.0, amp: 0.45, opacity: 0.7 },
+];
+
+function buildPath(phase: number, amp: number, freq: number): string {
+  let d = '';
+  for (let x = 0; x <= W; x += 2) {
+    const u = x / W;
+    const env = Math.sin(Math.PI * u) ** 1.6; // taper to a point at both ends
+    const y = MID + Math.sin(u * Math.PI * 2 * freq + phase) * amp * env;
+    d += `${x === 0 ? 'M' : 'L'}${x} ${y.toFixed(2)} `;
+  }
+  return d;
+}
+
 export function GeminiLiveVoiceVisualizer({
   visualState,
   isConnected,
@@ -25,180 +46,103 @@ export function GeminiLiveVoiceVisualizer({
   className = '',
 }: GeminiLiveVoiceVisualizerProps) {
   const [reducedMotion, setReducedMotion] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    if (typeof window === 'undefined') return;
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReducedMotion(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
-
-  // Compute 7 dynamic waveform bar heights (px) based on real-time FFT frequency bands & RMS
-  const energy = Math.max(0.06, Math.min(1, audioEnergy));
-  const low = Math.max(0.05, Math.min(1, audioBands?.low ?? energy));
-  const mid = Math.max(0.05, Math.min(1, audioBands?.mid ?? energy));
-  const high = Math.max(0.05, Math.min(1, audioBands?.high ?? energy));
+  const pathRefs = useRef<(SVGPathElement | null)[]>([]);
+  const live = useRef({ energy: 0, bands: 0, state: 'idle' as VoiceVisualState, on: false });
 
   const isLive = isConnected && visualState !== 'error';
-  const isListening = isLive && visualState === 'listening';
   const isSpeaking = isLive && visualState === 'speaking';
   const isThinking = isLive && visualState === 'thinking';
 
-  // Height ranges: 3.5px (idle straight line) -> up to 34px (dynamic live audio wave expansion)
-  const barHeights = isLive
-    ? [
-        Math.round(4 + low * 14),
-        Math.round(5 + (low * 0.7 + mid * 0.3) * 20),
-        Math.round(6 + (mid * 0.6 + energy * 0.4) * 26),
-        Math.round(7 + energy * 30),
-        Math.round(6 + (mid * 0.6 + energy * 0.4) * 26),
-        Math.round(5 + (high * 0.7 + mid * 0.3) * 20),
-        Math.round(4 + high * 14),
-      ]
-    : [3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5];
+  live.current.energy = Math.max(0, Math.min(1, audioEnergy));
+  live.current.bands = audioBands ? Math.max(audioBands.low, audioBands.mid, audioBands.high) : audioEnergy;
+  live.current.state = visualState;
+  live.current.on = isLive && !isHandsFreePaused;
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReducedMotion(mq.matches);
+    const h = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    mq.addEventListener('change', h);
+    return () => mq.removeEventListener('change', h);
+  }, []);
+
+  useEffect(() => {
+    let raf = 0;
+    let amp = 0;
+    let t0 = performance.now();
+    const tick = (now: number) => {
+      const dt = Math.min(0.05, (now - t0) / 1000);
+      t0 = now;
+      const s = live.current;
+      const breathe = s.state === 'thinking' ? 0.22 + 0.1 * Math.sin(now / 260) : 0.12 + 0.05 * Math.sin(now / 700);
+      const target = s.on ? Math.max(breathe, Math.min(1, s.energy * 1.6 + s.bands * 0.5)) : 0;
+      amp += (target - amp) * Math.min(1, dt * 9);
+      const px = amp * (H / 2 - 4);
+      const phaseBase = reducedMotion ? 0 : now / 1000;
+      RIBBONS.forEach((r, i) => {
+        const el = pathRefs.current[i];
+        if (el) el.setAttribute('d', buildPath(phaseBase * r.speed, px * r.amp, r.freq));
+      });
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [reducedMotion]);
+
+  const label = !isConnected ? 'Talk to Stay' : isSpeaking ? 'Speaking' : isThinking ? 'Thinking' : isHandsFreePaused ? 'Paused' : 'Listening';
 
   return (
     <div
-      className={`inline-flex items-center gap-1.5 rounded-full border border-stone-200/90 bg-stone-50/95 px-3 py-1 shadow-sm backdrop-blur-md transition-all duration-300 dark:border-stone-700/80 dark:bg-stone-900/95 ${
-        isLive
-          ? 'ring-2 ring-indigo-500/40 shadow-[0_0_12px_rgba(66,133,244,0.18)]'
-          : 'hover:border-indigo-400/50 hover:shadow-sm'
+      className={`inline-flex items-center gap-1 rounded-full border bg-white/90 px-2 py-1 backdrop-blur-md transition-all duration-500 dark:bg-stone-900/90 ${
+        isLive ? 'border-transparent shadow-[0_0_0_1.5px_rgba(111,126,255,0.55),0_6px_24px_-6px_rgba(111,126,255,0.55)]' : 'border-stone-200 shadow-sm hover:border-stone-300'
       } ${className}`}
     >
       <button
         type="button"
         onClick={onToggleVoice}
-        aria-label={isConnected ? 'Disconnect Gemini Live Voice' : 'Start Gemini Live Voice Session'}
+        aria-label={isConnected ? 'End live voice' : 'Start live voice'}
         aria-pressed={isConnected}
         data-testid="mic-button"
-        className="group relative flex h-9 items-center gap-2.5 rounded-full px-1.5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500"
+        className="group flex h-10 items-center gap-2 rounded-full px-2 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
       >
-        {/* Official Google Gemini Sparkle Star Icon with Multi-Stop Brand Gradient */}
-        <div className="relative shrink-0 flex items-center justify-center">
-          <svg
-            width="22"
-            height="22"
-            viewBox="0 0 24 24"
-            fill="none"
-            className={`shrink-0 transition-transform duration-300 ${
-              isLive
-                ? 'scale-110 drop-shadow-[0_0_8px_rgba(66,133,244,0.7)]'
-                : 'group-hover:scale-105 group-hover:drop-shadow-[0_0_5px_rgba(142,117,255,0.5)]'
-            }`}
-            aria-hidden="true"
-          >
-            <defs>
-              <linearGradient id="gemini-official-sparkle" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#4285F4" />
-                <stop offset="35%" stopColor="#8E75FF" />
-                <stop offset="70%" stopColor="#D96570" />
-                <stop offset="100%" stopColor="#00D2FF" />
-              </linearGradient>
-              <linearGradient id="gemini-accent-sparkle" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#00D2FF" />
-                <stop offset="60%" stopColor="#8E75FF" />
-                <stop offset="100%" stopColor="#4285F4" />
-              </linearGradient>
-            </defs>
-
-            {/* Primary Google Gemini 4-Point Concave Star */}
+        <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} aria-hidden="true" className="shrink-0 overflow-visible">
+          <defs>
+            <linearGradient id="stay-wave-a" x1="0" x2="1" y1="0" y2="0">
+              <stop offset="0" stopColor="#4285F4" /><stop offset="0.5" stopColor="#9B72CB" /><stop offset="1" stopColor="#D96570" />
+            </linearGradient>
+            <linearGradient id="stay-wave-b" x1="0" x2="1" y1="0" y2="0">
+              <stop offset="0" stopColor="#00D2FF" /><stop offset="1" stopColor="#8E75FF" />
+            </linearGradient>
+            <linearGradient id="stay-wave-c" x1="0" x2="1" y1="0" y2="0">
+              <stop offset="0" stopColor="#D96570" /><stop offset="1" stopColor="#4285F4" />
+            </linearGradient>
+          </defs>
+          {RIBBONS.map((r, i) => (
             <path
-              d="M11.5 1.5C11.5 6.968 7.032 11.435 1.565 11.435C7.032 11.435 11.5 15.903 11.5 21.37C11.5 15.903 15.968 11.435 21.435 11.435C15.968 11.435 11.5 6.968 11.5 1.5Z"
-              fill="url(#gemini-official-sparkle)"
+              key={i}
+              ref={(el) => { pathRefs.current[i] = el; }}
+              d={buildPath(0, 0, r.freq)}
+              fill="none"
+              stroke={r.stroke}
+              strokeWidth={r.width}
+              strokeLinecap="round"
+              opacity={r.opacity}
             />
-
-            {/* Secondary Accent Sparkle Star */}
-            <path
-              d="M19 1.5C19 3.433 17.433 5 15.5 5C17.433 5 19 6.567 19 8.5C19 6.567 20.567 5 22.5 5C20.567 5 19 3.433 19 1.5Z"
-              fill="url(#gemini-accent-sparkle)"
-              opacity="0.9"
-            />
-          </svg>
-        </div>
-
-        {/* Gemini Live Signature Line-to-Waveform Expansion Stage */}
-        <div
-          className="relative flex h-8 items-center justify-center px-0.5"
-          style={{ width: isLive ? '58px' : '38px', transition: 'width 300ms cubic-bezier(0.4, 0, 0.2, 1)' }}
-          aria-hidden="true"
-        >
-          {!isLive ? (
-            // Idle State: Google Gemini Signature Sleek Horizontal Line
-            <div className="h-[3.5px] w-full rounded-full bg-gradient-to-r from-[#4285F4] via-[#8E75FF] to-[#D96570] shadow-[0_0_8px_rgba(142,117,255,0.45)] transition-all duration-300 group-hover:h-[4.5px] group-hover:shadow-[0_0_12px_rgba(66,133,244,0.6)]" />
-          ) : (
-            // Active State: Gemini Dynamic Expanding Vertical Frequency Spectrum Bars
-            <div className="flex h-8 items-center justify-center gap-[3px]">
-              {barHeights.map((h, i) => (
-                <span
-                  key={i}
-                  className="w-[3px] rounded-full bg-gradient-to-t from-[#4285F4] via-[#8E75FF] to-[#00D2FF] transition-all duration-75"
-                  style={{
-                    height: `${h}px`,
-                    transform: reducedMotion ? 'none' : undefined,
-                    boxShadow: '0 0 6px rgba(142, 117, 255, 0.55)',
-                  }}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Status / Auto-Mic Mode Label */}
-        <span className="text-xs font-semibold tracking-wide text-stone-700 dark:text-stone-200">
-          {!isConnected
-            ? 'Gemini Live'
-            : isSpeaking
-            ? 'Speaking'
-            : isThinking
-            ? 'Thinking'
-            : isHandsFreePaused
-            ? 'Paused'
-            : 'Auto-Mic'}
-        </span>
-
-        {/* Subtle Glowing Live Status Indicator Dot */}
-        {isLive && (
-          <span className="relative flex h-2 w-2 shrink-0">
-            <span
-              className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                isHandsFreePaused
-                  ? 'bg-amber-400'
-                  : 'animate-ping bg-indigo-400'
-              }`}
-            />
-            <span
-              className={`relative inline-flex h-2 w-2 rounded-full ${
-                isHandsFreePaused ? 'bg-amber-500' : 'bg-indigo-500'
-              }`}
-            />
-          </span>
-        )}
+          ))}
+        </svg>
+        <span className="min-w-[4.5rem] text-left text-xs font-medium tracking-wide text-stone-700 dark:text-stone-200">{label}</span>
       </button>
 
-      {/* Quick Pause / Mute Toggle Button when Live */}
       {isLive && onToggleHandsFreeMute && (
         <button
           type="button"
           onClick={onToggleHandsFreeMute}
           aria-label={isHandsFreePaused ? 'Resume auto microphone' : 'Pause auto microphone'}
-          className="flex h-7 w-7 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-stone-200/70 hover:text-stone-800 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-900"
         >
-          {isHandsFreePaused ? (
-            // Play/Resume Icon
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <polygon points="5 3 19 12 5 21 5 3" />
-            </svg>
-          ) : (
-            // Pause Icon
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <rect x="6" y="4" width="4" height="16" />
-              <rect x="14" y="4" width="4" height="16" />
-            </svg>
-          )}
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            {isHandsFreePaused ? <polygon points="6 3 20 12 6 21" /> : (<><rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" /></>)}
+          </svg>
         </button>
       )}
     </div>
