@@ -12,6 +12,7 @@ const NATIVE_NAME: Record<string, string> = { es: 'Spanish', fr: 'French', de: '
 export function Personas({ personas, glyphs }: { personas: VoicePersona[]; glyphs: Record<string, DotGlyph | null> }) {
   const [filter, setFilter] = useState<Filter>('all');
   const [playingId, setPlayingId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string>('anna');
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -24,6 +25,7 @@ export function Personas({ personas, glyphs }: { personas: VoicePersona[]; glyph
   }, []);
 
   const togglePlay = (p: VoicePersona) => {
+    setSelectedId(p.id);
     if (playingId === p.id) {
       if (audioRef.current) {
         audioRef.current.pause();
@@ -88,11 +90,21 @@ export function Personas({ personas, glyphs }: { personas: VoicePersona[]; glyph
         {shown.map((p) => {
           const g = glyphs[p.shape];
           const isPlaying = playingId === p.id;
+          const isSelected = selectedId === p.id;
+          const accentTag = p.voiceLabel.replace(/,\s*accent not documented/i, '').replace(/\s*voice$/i, '').trim();
+          const genderTag = p.gender === 'female' ? 'Female' : 'Male';
+          const firstClause = p.style.split('.')[0]?.trim() || 'Calm coach';
+          const toneTag = firstClause.length > 22 ? `${firstClause.slice(0, 20).trim()}…` : firstClause;
+
           return (
             <li
               key={p.id}
-              className={`lp-persona group relative cursor-pointer select-none transition-all duration-300 hover:scale-[1.02] hover:shadow-md ${
-                isPlaying ? '!border-accent !bg-accent/5 ring-2 ring-accent/30' : ''
+              className={`lp-persona el-voice-card group relative cursor-pointer select-none ${
+                isPlaying
+                  ? '!border-accent !bg-accent/5 ring-2 ring-accent/30'
+                  : isSelected
+                    ? '!border-primary !bg-primary/[0.03] ring-1 ring-primary/20'
+                    : ''
               }`}
               data-testid="persona"
               onClick={() => togglePlay(p)}
@@ -107,12 +119,12 @@ export function Personas({ personas, glyphs }: { personas: VoicePersona[]; glyph
               aria-label={`${isPlaying ? 'Pause' : 'Listen to'} ${p.name}'s voice`}
               aria-pressed={isPlaying}
             >
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between gap-2">
                 <div className="relative">
                   <svg
                     viewBox="0 0 100 100"
-                    className={`lp-glyph transition-all duration-500 ease-out group-hover:scale-125 group-hover:-rotate-6 group-hover:drop-shadow-[0_8px_16px_rgba(99,102,241,0.45)] ${
-                      isPlaying ? 'scale-125 -rotate-6 animate-pulse drop-shadow-[0_0_14px_rgba(99,102,241,0.7)]' : ''
+                    className={`lp-glyph transition-all duration-500 ease-out group-hover:scale-125 group-hover:-rotate-6 group-hover:drop-shadow-[0_8px_16px_rgba(0,106,103,0.35)] ${
+                      isPlaying ? 'scale-125 -rotate-6 animate-pulse drop-shadow-[0_0_14px_rgba(0,106,103,0.6)]' : ''
                     }`}
                     aria-hidden="true"
                     focusable="false"
@@ -129,30 +141,53 @@ export function Personas({ personas, glyphs }: { personas: VoicePersona[]; glyph
                   )}
                 </div>
 
-                <span
-                  className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-all duration-300 ${
-                    isPlaying
-                      ? 'bg-accent text-white shadow-sm'
-                      : 'bg-stone-100 text-stone-600 opacity-0 group-hover:opacity-100 dark:bg-stone-800 dark:text-stone-300'
-                  }`}
-                >
-                  {isPlaying ? (
-                    <>
-                      <span className="flex h-2 w-2 relative">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
-                      </span>
-                      Playing
-                    </>
-                  ) : (
-                    <>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                        <polygon points="5 3 19 12 5 21 5 3" />
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-all duration-300 ${
+                      isPlaying
+                        ? 'bg-accent text-white shadow-sm'
+                        : 'bg-surface-2 text-ink-2 group-hover:bg-accent-soft group-hover:text-accent-hover'
+                    }`}
+                  >
+                    {isPlaying ? (
+                      <>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                          <rect x="4" y="4" width="16" height="16" rx="2" />
+                        </svg>
+                        <span>Stop</span>
+                        <span className="flex items-center gap-0.5 ml-0.5 h-3" aria-hidden="true">
+                          <span className="w-0.5 bg-white rounded-full animate-soundwave-1" />
+                          <span className="w-0.5 bg-white rounded-full animate-soundwave-2" />
+                          <span className="w-0.5 bg-white rounded-full animate-soundwave-3" />
+                          <span className="w-0.5 bg-white rounded-full animate-soundwave-4" />
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                          <polygon points="5 3 19 12 5 21 5 3" />
+                        </svg>
+                        <span>Preview</span>
+                      </>
+                    )}
+                  </span>
+
+                  {/* Radio / check selection indicator */}
+                  <span
+                    aria-hidden="true"
+                    className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all duration-200 ${
+                      isSelected || isPlaying
+                        ? 'bg-primary border-primary text-white shadow-xs'
+                        : 'border-line-strong bg-surface group-hover:border-primary/60'
+                    }`}
+                  >
+                    {(isSelected || isPlaying) && (
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
                       </svg>
-                      Listen
-                    </>
-                  )}
-                </span>
+                    )}
+                  </span>
+                </div>
               </div>
 
               <div>
@@ -160,7 +195,18 @@ export function Personas({ personas, glyphs }: { personas: VoicePersona[]; glyph
                   <span>{p.name}</span>
                 </h4>
                 <p className="meta">{p.voiceLabel}{p.nativeLang ? `, ${NATIVE_NAME[p.nativeLang]} accent` : ''}</p>
-                <p className="mt-1.5 text-[0.92rem] text-ink-2">{p.style}</p>
+                <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+                  <span className="inline-flex items-center rounded-md bg-surface-2 px-2 py-0.5 text-[0.68rem] font-medium text-ink-2 border border-line/80">
+                    {accentTag}
+                  </span>
+                  <span className="inline-flex items-center rounded-md bg-surface-2 px-2 py-0.5 text-[0.68rem] font-medium text-ink-2 border border-line/80">
+                    {genderTag}
+                  </span>
+                  <span className="inline-flex items-center rounded-md bg-primary/[0.06] px-2 py-0.5 text-[0.68rem] font-medium text-primary border border-primary/15">
+                    {toneTag}
+                  </span>
+                </div>
+                <p className="mt-2 text-[0.92rem] text-ink-2">{p.style}</p>
               </div>
             </li>
           );

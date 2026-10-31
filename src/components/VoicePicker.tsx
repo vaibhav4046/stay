@@ -35,6 +35,18 @@ function engineLine(p: VoicePersona, caps: TtsCaps): string {
   return ENGINES.assemblyai.label;
 }
 
+/** Structured ElevenLabs-style metadata tags (Accent, Gender, Tone) for a voice persona. */
+function personaTags(p: VoicePersona): { accent: string; gender: string; tone: string } {
+  const accent = p.voiceLabel
+    .replace(/,\s*accent not documented/i, '')
+    .replace(/\s*voice$/i, '')
+    .trim();
+  const gender = p.gender === 'female' ? 'Female' : 'Male';
+  const firstClause = p.style.split('.')[0]?.trim() || 'Calm coach';
+  const tone = firstClause.length > 24 ? `${firstClause.slice(0, 22).trim()}…` : firstClause;
+  return { accent, gender, tone };
+}
+
 function VoiceCard({
   p,
   caps,
@@ -58,6 +70,7 @@ function VoiceCard({
 }) {
   const usable = chooseVoice(p, caps).ref !== null;
   const needText = chooseVoice(p, caps).needs;
+  const tags = personaTags(p);
 
   return (
     <div
@@ -65,10 +78,10 @@ function VoiceCard({
       tabIndex={0}
       onClick={onPick}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onPick(); } }}
-      className={`group relative flex flex-col justify-between rounded-2xl border transition-all duration-300 cursor-pointer select-none ${
+      className={`el-voice-card group relative flex flex-col justify-between rounded-2xl border cursor-pointer select-none ${
         selected
           ? '!border-primary !bg-primary/[0.04] ring-2 ring-primary/25 shadow-sm'
-          : 'border-line bg-surface hover:border-line-strong hover:shadow-lg hover:-translate-y-1'
+          : 'border-line bg-surface hover:border-line-strong'
       } ${playing ? 'ring-2 ring-emerald-500/40 !border-emerald-600' : ''} p-4 ${hidden ? 'hidden' : ''}`}
       style={{ opacity: usable ? 1 : 0.82 }}
       data-testid={`voice-${p.id}`}
@@ -77,7 +90,7 @@ function VoiceCard({
       <div>
         <div className="flex items-start gap-3">
           {/* Logo container with 3D hover transform animation */}
-          <div className="relative w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-xl bg-surface-2/70 p-1 group-hover:bg-primary/5 transition-all duration-300">
+          <div className="relative w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-xl bg-surface-2/75 border border-line/70 p-1 group-hover:bg-primary/5 group-hover:border-primary/25 transition-all duration-300">
             <svg
               viewBox="0 0 100 100"
               className={`voice-card-glyph ${
@@ -114,32 +127,53 @@ function VoiceCard({
 
           <button
             type="button"
-            className="flex-1 text-left focus:outline-none cursor-pointer"
+            className="flex-1 min-w-0 text-left focus:outline-none cursor-pointer"
             aria-pressed={selected}
             onClick={(e) => { e.stopPropagation(); onPick(); }}
           >
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-display font-semibold text-ink text-[1.05rem] group-hover:text-primary transition-colors">
-                {p.name}
-              </span>
-              {selected && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[0.7rem] font-semibold text-primary">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-display font-semibold text-ink text-[1.05rem] group-hover:text-primary transition-colors">
+                  {p.name}
+                </span>
+                {selected && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[0.7rem] font-semibold text-primary">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    Selected
+                  </span>
+                )}
+                {usable ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[0.7rem] font-medium text-emerald-700 dark:text-emerald-300">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Ready
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[0.7rem] font-medium text-amber-800 dark:text-amber-300">
+                    Needs Setup
+                  </span>
+                )}
+              </div>
+
+              {/* ElevenLabs circular radio/check indicator */}
+              <span
+                aria-hidden="true"
+                data-testid={`voice-radio-${p.id}`}
+                className={`flex-shrink-0 w-5 h-5 rounded-full border flex items-center justify-center transition-all duration-200 ${
+                  selected
+                    ? 'bg-primary border-primary text-white scale-100 shadow-xs'
+                    : 'border-line-strong bg-surface group-hover:border-primary/60'
+                }`}
+              >
+                {selected ? (
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
-                  Selected
-                </span>
-              )}
-              {usable ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[0.7rem] font-medium text-emerald-700 dark:text-emerald-300">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Ready
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[0.7rem] font-medium text-amber-800 dark:text-amber-300">
-                  Needs Setup
-                </span>
-              )}
+                ) : (
+                  <span className="w-1.5 h-1.5 rounded-full bg-transparent group-hover:bg-primary/30 transition-colors" />
+                )}
+              </span>
             </div>
 
             <div className="mt-1 flex items-center gap-1.5 flex-wrap">
@@ -150,7 +184,20 @@ function VoiceCard({
           </button>
         </div>
 
-        <p className="meta mt-2.5 text-xs leading-relaxed text-ink-2">{p.style}</p>
+        {/* ElevenLabs category tags (Accent · Gender · Tone) */}
+        <div className="mt-2.5 flex items-center gap-1.5 flex-wrap" data-testid={`voice-tags-${p.id}`}>
+          <span className="inline-flex items-center rounded-md bg-surface-2 px-2 py-0.5 text-[0.68rem] font-medium text-ink-2 border border-line/80">
+            {tags.accent}
+          </span>
+          <span className="inline-flex items-center rounded-md bg-surface-2 px-2 py-0.5 text-[0.68rem] font-medium text-ink-2 border border-line/80">
+            {tags.gender}
+          </span>
+          <span className="inline-flex items-center rounded-md bg-primary/[0.06] px-2 py-0.5 text-[0.68rem] font-medium text-primary border border-primary/15">
+            {tags.tone}
+          </span>
+        </div>
+
+        <p className="meta mt-2 text-xs leading-relaxed text-ink-2">{p.style}</p>
         <p className="meta mt-1 text-[0.75rem] text-ink-3" data-testid={`voice-engine-${p.id}`}>{engineLine(p, caps)}</p>
       </div>
 
@@ -185,13 +232,17 @@ function VoiceCard({
               )}
             </span>
             <span>{playing ? 'Stop' : 'Preview (20 s)'}</span>
-            {playing && (
-              <span className="flex items-center gap-0.5 ml-0.5 h-3">
-                <span className="w-0.5 bg-white rounded-full animate-soundwave-1" />
-                <span className="w-0.5 bg-white rounded-full animate-soundwave-2" />
-                <span className="w-0.5 bg-white rounded-full animate-soundwave-3" />
-              </span>
-            )}
+            <span
+              className="flex items-center gap-0.5 ml-0.5 h-3.5"
+              data-testid={`voice-wave-indicator-${p.id}`}
+              aria-hidden="true"
+            >
+              <span className={`w-0.5 rounded-full ${playing ? 'bg-white animate-soundwave-1' : 'h-1.5 bg-ink-3/35 group-hover:bg-primary/50 transition-all'}`} />
+              <span className={`w-0.5 rounded-full ${playing ? 'bg-white animate-soundwave-2' : 'h-2.5 bg-ink-3/35 group-hover:bg-primary/50 transition-all'}`} />
+              <span className={`w-0.5 rounded-full ${playing ? 'bg-white animate-soundwave-3' : 'h-1.5 bg-ink-3/35 group-hover:bg-primary/50 transition-all'}`} />
+              <span className={`w-0.5 rounded-full ${playing ? 'bg-white animate-soundwave-4' : 'h-3 bg-ink-3/35 group-hover:bg-primary/50 transition-all'}`} />
+              <span className={`w-0.5 rounded-full ${playing ? 'bg-white animate-soundwave-5' : 'h-1 bg-ink-3/35 group-hover:bg-primary/50 transition-all'}`} />
+            </span>
           </button>
 
           {!usable && (
@@ -213,6 +264,7 @@ export function VoicePicker({ selected, onSelect, fastVoice }: Props) {
   const [playing, setPlaying] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [filter, setFilter] = useState<FilterMode>('all');
+  const [search, setSearch] = useState('');
   const [key, setKey] = useState('');
   const [region, setRegion] = useState('');
   const [keyStatus, setKeyStatus] = useState<{ ok: boolean; message: string } | null>(null);
@@ -253,6 +305,11 @@ export function VoicePicker({ selected, onSelect, fastVoice }: Props) {
   };
 
   const matchesFilter = (p: VoicePersona) => {
+    const q = search.trim().toLowerCase();
+    if (q) {
+      const hay = `${p.name} ${p.voiceLabel} ${p.style} ${p.gender}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
     if (filter === 'all') return true;
     if (filter === 'ready') return chooseVoice(p, caps).ref !== null;
     if (filter === 'british') return p.voiceLabel.includes('British');
@@ -289,6 +346,18 @@ export function VoicePicker({ selected, onSelect, fastVoice }: Props) {
         <div>
           <p className="label">Recommended</p>
           <p className="meta mt-0.5">Four voices that are clear and calm, with the accent each name promises.</p>
+        </div>
+
+        <div className="relative w-full sm:w-56">
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search voice, accent, tone…"
+            aria-label="Search voices"
+            data-testid="voice-search"
+            className="w-full rounded-xl border border-line-strong bg-surface px-3 py-1.5 text-xs text-ink placeholder:text-ink-3 focus:border-primary focus:outline-none"
+          />
         </div>
 
         {/* ElevenLabs category filter bar */}

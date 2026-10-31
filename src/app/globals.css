@@ -226,12 +226,29 @@ body {
 
 /* ElevenLabs Audio Waveform Animations */
 @keyframes soundwave-bar {
-  0%, 100% { height: 4px; }
-  50% { height: 14px; }
+  0%, 100% { height: 4px; opacity: 0.65; }
+  50% { height: 14px; opacity: 1; }
 }
-.animate-soundwave-1 { animation: soundwave-bar 0.75s ease-in-out infinite; }
-.animate-soundwave-2 { animation: soundwave-bar 0.75s ease-in-out 0.2s infinite; }
-.animate-soundwave-3 { animation: soundwave-bar 0.75s ease-in-out 0.4s infinite; }
+.animate-soundwave-1 { animation: soundwave-bar 0.72s ease-in-out infinite; }
+.animate-soundwave-2 { animation: soundwave-bar 0.72s ease-in-out 0.15s infinite; }
+.animate-soundwave-3 { animation: soundwave-bar 0.72s ease-in-out 0.3s infinite; }
+.animate-soundwave-4 { animation: soundwave-bar 0.72s ease-in-out 0.45s infinite; }
+.animate-soundwave-5 { animation: soundwave-bar 0.72s ease-in-out 0.22s infinite; }
+
+.el-voice-card {
+  transition:
+    transform 240ms var(--ease-calm),
+    box-shadow 240ms var(--ease-calm),
+    border-color 200ms ease,
+    background-color 200ms ease;
+}
+.el-voice-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgb(33 36 34 / 0.04), 0 14px 28px -12px rgb(33 36 34 / 0.14);
+}
+.el-voice-card:active {
+  transform: translateY(0) scale(0.995);
+}
 
 /* Voice Card Glyph Hover Transform Animations */
 @keyframes lp-persona-glyph-transform {
