@@ -463,7 +463,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const setSelectedVoice = useCallback((query: string): VoicePersona | null => {
     const persona = resolvePersona(query, selectedVoiceRef.current);
     if (!persona) return null;
-    if (voiceNeeds(persona)) return null; // needs an Azure key or a device voice: the caller says why (see voiceNeeds)
+    if (voiceNeeds(persona)) return null;
     setSelectedVoiceState(persona.id);
     selectedVoiceRef.current = persona.id;
     const convLang = (selectedLanguageRef.current === 'auto' ? (typeof navigator !== 'undefined' ? navigator.language : 'en') : selectedLanguageRef.current).split('-')[0].toLowerCase();

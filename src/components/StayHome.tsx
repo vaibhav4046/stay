@@ -943,7 +943,7 @@ export function StayHome({
 
       {sheet === 'voice' && (
         <Sheet title="Voice and language" onClose={() => setSheet(null)}>
-          <VoicePicker selected={voice.selectedVoice} onSelect={(id) => voice.setSelectedVoice(id)} fastVoice={voice.fastVoice} />
+          <VoicePicker selected={voice.selectedVoice} onSelect={(id) => { const p = voice.setSelectedVoice(id); if (p) setReceipt(`${p.name} armed — ready to speak`); }} fastVoice={voice.fastVoice} />
           <label className="mt-5 flex cursor-pointer items-start gap-3" data-testid="fast-voice-row">
             <input type="checkbox" className="mt-1 h-5 w-5 accent-[#006A67]" checked={voice.fastVoice} onChange={(e) => voice.setFastVoice(e.target.checked)} data-testid="fast-voice-toggle" />
             <span>

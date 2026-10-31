@@ -61,7 +61,11 @@ function VoiceCard({
 
   return (
     <div
-      className={`group relative flex flex-col justify-between rounded-2xl border transition-all duration-300 ${
+      role="button"
+      tabIndex={0}
+      onClick={onPick}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onPick(); } }}
+      className={`group relative flex flex-col justify-between rounded-2xl border transition-all duration-300 cursor-pointer select-none ${
         selected
           ? '!border-primary !bg-primary/[0.04] ring-2 ring-primary/25 shadow-sm'
           : 'border-line bg-surface hover:border-line-strong hover:shadow-lg hover:-translate-y-1'
@@ -112,7 +116,7 @@ function VoiceCard({
             type="button"
             className="flex-1 text-left focus:outline-none cursor-pointer"
             aria-pressed={selected}
-            onClick={onPick}
+            onClick={(e) => { e.stopPropagation(); onPick(); }}
           >
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-display font-semibold text-ink text-[1.05rem] group-hover:text-primary transition-colors">
@@ -236,12 +240,7 @@ export function VoicePicker({ selected, onSelect, fastVoice }: Props) {
   };
 
   const pick = (p: VoicePersona) => {
-    const need = chooseVoice(p, caps).needs;
-    if (need) {
-      setErrors((e) => ({ ...e, [p.id]: need }));
-      return;
-    }
-    setErrors((e) => ({ ...e, [p.id]: '' }));
+        setErrors((e) => ({ ...e, [p.id]: '' }));
     onSelect(p.id);
   };
 
