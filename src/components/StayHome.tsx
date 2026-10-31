@@ -622,9 +622,16 @@ export function StayHome({
             : quietMode
               ? 'Type below'
               : 'Tap the orb to talk';
+  const isAgentSpeaking = visual === 'speaking';
   const caption =
     voice.partialUserTranscript ||
-    (planLoading ? '' : step === 'idle' ? lastAgent?.text : '') ||
+    (isAgentSpeaking
+      ? (voice.liveSpokenText || '...')
+      : visual === 'thinking' || planLoading
+        ? ''
+        : step === 'idle'
+          ? (voice.liveSpokenText || lastAgent?.text)
+          : '') ||
     (step === 'idle' ? 'What are you putting off?' : '');
   const progress = step === 'timer' ? 1 - remaining / (minutes * 60) : 0;
 

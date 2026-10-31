@@ -230,6 +230,19 @@ describe('FastSocket', () => {
     expect(body.messages.at(-1)).toEqual({ role: 'user', content: 'I keep avoiding my taxes.' });
   });
 
+  it('speculates immediately on short greetings like "Hi hello" even without terminal punctuation', async () => {
+    fetchMock.mockResolvedValue(sse(text('Hello! What are you working on?')));
+    const { stt } = await open();
+    stt.push({ type: 'Turn', transcript: 'Hi hello', end_of_turn: false, turn_order: 0 });
+    await tick(4);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(types()).not.toContain('transcript.user');
+    stt.push({ type: 'Turn', transcript: 'Hi hello.', end_of_turn: true, turn_order: 0, turn_is_formatted: true });
+    await tick(30);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(events.find((e) => e.type === 'transcript.agent')?.text).toBe('Hello! What are you working on?');
+  });
+
   it('drops the early request and asks again when they said more than the partial', async () => {
     fetchMock.mockImplementation(async () => sse(text('Okay, one thing at a time, please.')));
     const { stt } = await open();

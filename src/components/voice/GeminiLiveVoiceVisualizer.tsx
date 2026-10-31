@@ -106,9 +106,8 @@ export function GeminiLiveVoiceVisualizer({
         data-testid="mic-button"
         className="group flex h-10 items-center gap-2 rounded-full px-2 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
       >
-        {!isLive ? (
-          <StayLogo size={22} className="shrink-0 transition-transform duration-300 group-hover:scale-110 drop-shadow-sm ml-0.5" />
-        ) : (
+        <StayLogo size={22} className="shrink-0 transition-transform duration-300 group-hover:scale-110 drop-shadow-sm ml-0.5" />
+        {isLive && (
           <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} aria-hidden="true" className="shrink-0 overflow-visible transition-opacity duration-300">
             <defs>
               <linearGradient id="stay-wave-a" x1="0" x2="1" y1="0" y2="0">

@@ -410,6 +410,13 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     if (bands) setAudioBands({ ...bands, overall });
   }, []);
   const [partialUserTranscript, setPartialUserTranscript] = useState('');
+  const [liveSpokenText, setLiveSpokenText] = useState('');
+  const liveSpokenTextRef = useRef('');
+  const wordBoundariesRef = useRef<Array<{ text: string; start: number; end: number }>>([]);
+  const pendingSpeechTextRef = useRef<string>('');
+  const fullReplyTextRef = useRef<string>('');
+  const speechAudioStartTimeRef = useRef<number>(0);
+  const captionTickerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [transcripts, setTranscripts] = useState<VoiceTranscriptEntry[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [streamingAnalysis, setStreamingAnalysis] = useState<RealtimeStreamingAnalysis | null>(null);
@@ -736,6 +743,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       speechFinalizeTimerRef.current = null;
     }
     speechAccumulatorRef.current = '';
+    if (captionTickerRef.current) {
+      clearInterval(captionTickerRef.current);
+      captionTickerRef.current = null;
+    }
+    speechAudioStartTimeRef.current = 0;
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       try {
         window.speechSynthesis.cancel();
@@ -848,6 +860,15 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         }
         utterance.rate = 1.02;
         utterance.pitch = 1.0;
+        utterance.onboundary = (e) => {
+          if (e.name === 'word') {
+            const revealed = text.slice(0, e.charIndex + (e.charLength || 1)).trim();
+            if (revealed) {
+              liveSpokenTextRef.current = revealed;
+              setLiveSpokenText(revealed);
+            }
+          }
+        };
 
         let energyTimer: NodeJS.Timeout | null = null;
         utterance.onstart = () => {
@@ -2221,15 +2242,33 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           return;
         }
 
+        if (type === 'word.boundaries' && Array.isArray(msg.words)) {
+          wordBoundariesRef.current = [...wordBoundariesRef.current, ...(msg.words as Array<{ text: string; start: number; end: number }>)];
+          return;
+        }
+
         if (type === 'reply.text') {
-          // the sentence about to be spoken (fast voice only): vowel shapes for the figure's mouth
-          if (!medicationSuppressionRef.current && !dumpApiRef.current.isAgentMuted()) lipSyncBus.pushText(String(msg.text || ''));
+          const chunk = String(msg.text || '');
+          if (chunk) {
+            pendingSpeechTextRef.current += (pendingSpeechTextRef.current ? ' ' : '') + chunk;
+          }
+          if (!medicationSuppressionRef.current && !dumpApiRef.current.isAgentMuted()) lipSyncBus.pushText(chunk);
           return;
         }
 
         if (type === 'reply.started') {
           lipSyncBus.clearText();
           pendingToolResultsRef.current = [];
+          wordBoundariesRef.current = [];
+          pendingSpeechTextRef.current = '';
+          fullReplyTextRef.current = '';
+          speechAudioStartTimeRef.current = 0;
+          if (captionTickerRef.current) {
+            clearInterval(captionTickerRef.current);
+            captionTickerRef.current = null;
+          }
+          setLiveSpokenText('');
+          liveSpokenTextRef.current = '';
           if (!medicationSuppressionRef.current && !dumpApiRef.current.isAgentMuted()) {
             setVisualState('speaking');
           }
@@ -2250,6 +2289,35 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           if (b64) {
             setVisualState('speaking');
             scheduleAgentPcmChunk(b64);
+
+            if (speechAudioStartTimeRef.current === 0) {
+              speechAudioStartTimeRef.current = performance.now();
+              if (captionTickerRef.current) clearInterval(captionTickerRef.current);
+              captionTickerRef.current = setInterval(() => {
+                if (speechAudioStartTimeRef.current === 0) return;
+                const elapsedMs = performance.now() - speechAudioStartTimeRef.current;
+                if (wordBoundariesRef.current.length > 0) {
+                  const words = wordBoundariesRef.current
+                    .filter((w) => w.start <= elapsedMs + 80)
+                    .map((w) => w.text);
+                  if (words.length > 0) {
+                    const t = words.join(' ');
+                    if (t !== liveSpokenTextRef.current) {
+                      liveSpokenTextRef.current = t;
+                      setLiveSpokenText(t);
+                    }
+                  }
+                } else if (pendingSpeechTextRef.current) {
+                  const words = pendingSpeechTextRef.current.split(/\s+/).filter(Boolean);
+                  const count = Math.min(words.length, Math.max(1, Math.floor((elapsedMs + 80) / 280)));
+                  const t = words.slice(0, count).join(' ');
+                  if (t !== liveSpokenTextRef.current) {
+                    liveSpokenTextRef.current = t;
+                    setLiveSpokenText(t);
+                  }
+                }
+              }, 40);
+            }
           }
           return;
         }
@@ -2260,6 +2328,8 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
             return;
           }
           const text = String(msg.text || '').trim();
+          fullReplyTextRef.current = text;
+          if (!pendingSpeechTextRef.current) pendingSpeechTextRef.current = text;
           // self-check: the words just spoken must match what the last tool really did; if not, say the true line
           const tool = lastToolRef.current;
           if (text && tool && !tool.checked && Date.now() - tool.at < 20_000) {
@@ -2305,6 +2375,15 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
         if (type === 'reply.done') {
           medicationSuppressionRef.current = false;
+          if (captionTickerRef.current) {
+            clearInterval(captionTickerRef.current);
+            captionTickerRef.current = null;
+          }
+          const finalText = fullReplyTextRef.current || pendingSpeechTextRef.current;
+          if (finalText) {
+            liveSpokenTextRef.current = finalText;
+            setLiveSpokenText(finalText);
+          }
           const status = String(msg.status || 'completed');
           if (status !== 'interrupted') {
             pcmPlayerRef.current?.markReplyEnd();
@@ -2538,6 +2617,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     speakProactively,
     injectContext,
     sendUserTextMessage,
+    liveSpokenText,
   };
 }
 

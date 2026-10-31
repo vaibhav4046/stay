@@ -431,7 +431,12 @@ export class FastSocket {
       if (this.spec.key === key) return;
       this.dropSpec(); // they kept talking: the early reply is for a sentence that is no longer the whole turn
     }
-    if (!key || this.specStarts >= 2 || !/[.?!。！？]["')\]]?$/.test(text) || /\.{2,}$/.test(text) || soundsUnfinished(text)) return;
+    const isPunct = /[.?!。！？]["')\]]?$/.test(text) && !/\.{2,}$/.test(text);
+    const isGreetingOrShortComplete =
+      /^(?:hi|hello|hey|hey stay|good (?:morning|afternoon|evening)|yo|sup|namaste|hola|bonjour|hallo|ciao|yes|no|yep|nope|sure|okay|ok|done|stop|thanks|thank you)\b/i.test(
+        text
+      ) && text.split(/\s+/).length <= 5;
+    if (!key || this.specStarts >= 2 || (!isPunct && !isGreetingOrShortComplete) || /\.{2,}$/.test(text) || soundsUnfinished(text)) return;
     this.specStarts++;
     this.mark('spec');
     this.spec = { key, base: this.history };
