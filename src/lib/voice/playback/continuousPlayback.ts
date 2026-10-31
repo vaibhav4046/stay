@@ -56,6 +56,7 @@ export class ContinuousPcmPlayer {
       onTelemetry?: (t: PlaybackTelemetry) => void;
       onAudioRendered?: (float32: Float32Array, sampleRate: number) => void;
       analyser?: AnalyserNode;
+      destinationNode?: AudioNode;
     }
   ): Promise<boolean> {
     this.ctx = ctx;
@@ -66,11 +67,17 @@ export class ContinuousPcmPlayer {
     this.gainNode = ctx.createGain();
     this.gainNode.gain.value = 1.0;
 
+    // Connect gain directly to destination or provided master playback gain node
+    const targetDest = options?.destinationNode ?? ctx.destination;
+    this.gainNode.connect(targetDest);
+
+    // Feed analyser for visualization (lip-sync, orb bands, wave ribbons).
+    // CRITICAL: NEVER connect this.analyserNode to targetDest / ctx.destination!
+    // An AnalyserNode does NOT require an output connection to compute FFT or time-domain data.
+    // If connected to destination, any other audio routed to the analyser (e.g. microphone)
+    // is piped straight to the speakers, causing severe mic loopback, echo, and acoustic feedback.
     if (this.analyserNode) {
       this.gainNode.connect(this.analyserNode);
-      this.analyserNode.connect(ctx.destination);
-    } else {
-      this.gainNode.connect(ctx.destination);
     }
 
     try {

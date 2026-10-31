@@ -137,9 +137,13 @@ class StayPcmPlaybackProcessor extends AudioWorkletProcessor {
     if (this.state === 'BUFFERING') {
       if (this.bufferedCount >= this.prebufferSamples || this.markedEnd) {
         this.state = this.markedEnd ? 'DRAINING' : 'PLAYING';
+        if (!this.muted) {
+          this.targetGain = 1.0;
+        }
       } else {
         // Still buffering: emit silence
         channel.fill(0);
+        for (let c = 1; c < output.length; c++) output[c].fill(0);
         this.sendTelemetry(0, 0);
         return true;
       }
@@ -147,6 +151,7 @@ class StayPcmPlaybackProcessor extends AudioWorkletProcessor {
 
     if (this.state === 'STOPPED') {
       channel.fill(0);
+      for (let c = 1; c < output.length; c++) output[c].fill(0);
       this.sendTelemetry(0, 0);
       return true;
     }
@@ -196,6 +201,11 @@ class StayPcmPlaybackProcessor extends AudioWorkletProcessor {
       const absSample = Math.abs(outSample);
       if (absSample > peak) peak = absSample;
       sumSq += outSample * outSample;
+    }
+
+    // Duplicate mono channel to stereo/multi-channel destination (e.g. headphones)
+    for (let c = 1; c < output.length; c++) {
+      output[c].set(channel);
     }
 
     this.renderedSamples += renderedThisQuantum;

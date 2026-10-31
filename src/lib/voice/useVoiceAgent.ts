@@ -635,6 +635,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const backchannelTimerRef = useRef<NodeJS.Timeout | null>(null);
   const speechStartTimeRef = useRef<number>(0);
   const mediaStreamRef = useRef<MediaStream | null>(null);
+  const mediaStreamSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const workletNodeRef = useRef<AudioWorkletNode | null>(null);
   const pcmPlayerRef = useRef<ContinuousPcmPlayer | null>(null);
   const speechRecRef = useRef<any>(null);
@@ -959,6 +960,15 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         // ignore
       }
       speechRecRef.current = null;
+    }
+
+    if (mediaStreamSourceRef.current) {
+      try {
+        mediaStreamSourceRef.current.disconnect();
+      } catch {
+        // ignore
+      }
+      mediaStreamSourceRef.current = null;
     }
 
     if (workletNodeRef.current) {
@@ -1873,6 +1883,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       const pcmPlayer = new ContinuousPcmPlayer();
       await pcmPlayer.init(audioCtx, {
         analyser,
+        destinationNode: outGain,
         onAudioRendered: (float32, rate) => {
           lipSyncBus.attachClock(audioCtx);
           lipSyncBus.pushChunk(audioCtx.currentTime, float32, rate);
@@ -1976,6 +1987,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
           // Start streaming microphone audio now that session.ready has fired
           const source = audioCtx.createMediaStreamSource(stream);
+          mediaStreamSourceRef.current = source;
           const worklet = new AudioWorkletNode(audioCtx, 'pcm-processor');
           workletNodeRef.current = worklet;
 
