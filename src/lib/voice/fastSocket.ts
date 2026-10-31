@@ -10,6 +10,30 @@
 import { byokHeaders } from '@/lib/byok/config';
 import type { TtsConnection } from '@/lib/voice/tts/types';
 
+export type EndpointingMode = 'coaching' | 'reflective' | 'crisis';
+
+export const ENDPOINTING_PRESETS: Record<
+  EndpointingMode,
+  { end_of_turn_confidence_threshold: number; min_turn_silence: number; max_turn_silence: number }
+> = {
+  coaching: { end_of_turn_confidence_threshold: 0.4, min_turn_silence: 400, max_turn_silence: 1280 },
+  reflective: { end_of_turn_confidence_threshold: 0.6, min_turn_silence: 700, max_turn_silence: 2400 },
+  crisis: { end_of_turn_confidence_threshold: 0.7, min_turn_silence: 800, max_turn_silence: 3000 },
+};
+
+/** True when a short utterance during agent speech is a conversational backchannel ("yeah", "mm-hmm", "got it") that should NOT interrupt Stay. */
+export function isBackchannelOnly(text: string): boolean {
+  const clean = text.toLowerCase().replace(/[^\p{L}\p{N}\s-]+/gu, '').trim();
+  if (!clean || clean.split(/\s+/).length > 3) return false;
+  return /^(?:yeah|yep|yup|mm[- ]?hmm|mhm|uh[- ]?huh|mm|hm+|hmm+|okay|ok|right|sure|got it|i see|ah|oh|true|fair)(?:\s+(?:yeah|okay|ok|right|sure|got it|i see))?$/i.test(clean);
+}
+
+/** True when the user utters an explicit interruption keyword ("stop", "wait", "pause", "hold on") that should barge in immediately even on a single word. */
+export function isExplicitInterruption(text: string): boolean {
+  const clean = text.toLowerCase().replace(/[^\p{L}\p{N}\s]+/gu, '').trim();
+  return /^(?:stop|wait|pause|hold(?:\s+on)?|cancel|enough|quiet|shh+|no\s+wait|actually\s+wait|hang\s+on)\b/i.test(clean);
+}
+
 export interface FastSocketConfig {
   sttToken: string;
   ttsToken: string;
@@ -23,6 +47,8 @@ export interface FastSocketConfig {
   keyterms?: string[];
   /** Ping the chat route when the session starts so the first reply is not slowed by a cold function. Default true. */
   warmUp?: boolean;
+  /** Optional AssemblyAI v3 turn-detection endpointing preset (coaching, reflective, crisis). */
+  endpointingMode?: EndpointingMode;
   /** Speak through another engine (browser or Azure voice) instead of AssemblyAI's TTS socket. See src/lib/voice/tts. */
   ttsConnect?: () => TtsConnection;
 }
@@ -129,7 +155,7 @@ export class FastSocket {
   onerror: (() => void) | null = null;
   onclose: (() => void) | null = null;
 
-  private cfg: Required<Omit<FastSocketConfig, "keyterms" | "ttsConnect">> & { keyterms?: string[]; ttsConnect?: () => TtsConnection };
+  private cfg: Required<Omit<FastSocketConfig, "keyterms" | "ttsConnect" | "endpointingMode">> & { keyterms?: string[]; ttsConnect?: () => TtsConnection; endpointingMode?: EndpointingMode };
   private session: FastSession | null = null;
   private notes: string[] = [];
   private history: ChatMessage[] = [];
@@ -145,6 +171,8 @@ export class FastSocket {
   private replyBaseId: number | null = null;
   private lastDoneId = -1;
   private staleCancels = 0;
+  private wordBoundaryOffsetMs = 0;
+  private lastWordEndMs = 0;
   private llmDone = false;
   private spoken = '';
   private toolWaiters = new Map<string, (r: string) => void>();
@@ -275,6 +303,12 @@ export class FastSocket {
       const q = new URLSearchParams({ sample_rate: String(this.cfg.sampleRate), encoding: 'pcm_s16le', speech_model: 'universal-3-6-pro', token: this.cfg.sttToken });
       const terms = (this.cfg.keyterms ?? []).filter((t) => t.length > 2 && t.length <= 50).slice(0, 100);
       if (terms.length > 0) q.set('keyterms_prompt', JSON.stringify(terms));
+      if (this.cfg.endpointingMode && ENDPOINTING_PRESETS[this.cfg.endpointingMode]) {
+        const preset = ENDPOINTING_PRESETS[this.cfg.endpointingMode];
+        q.set('end_of_turn_confidence_threshold', String(preset.end_of_turn_confidence_threshold));
+        q.set('min_turn_silence', String(preset.min_turn_silence));
+        q.set('max_turn_silence', String(preset.max_turn_silence));
+      }
       // benchmark hook: extra turn-detection query parameters, e.g. 'min_turn_silence=50' (debug flag only)
       const g = globalThis as { __stayFastDebug?: boolean; __stayFastSttExtra?: string };
       if (g.__stayFastDebug && g.__stayFastSttExtra) for (const [k, v] of new URLSearchParams(g.__stayFastSttExtra)) q.set(k, v);
@@ -306,7 +340,7 @@ export class FastSocket {
         if (m.type === 'Begin') resolve();
         else if (m.type === 'Audio' && typeof m.audio === 'string') this.onTtsAudio(m);
         else if (m.type === 'FlushDone') this.onFlushDone(Number(m.flush_id));
-        else if (m.type === 'WordBoundaries' && Array.isArray(m.words)) this.emit({ type: 'word.boundaries', words: m.words });
+        else if (m.type === 'WordBoundaries' && Array.isArray(m.words)) this.onWordBoundaries(m.words as Array<Record<string, unknown>>);
         else if (m.type === 'Cancelled') this.staleCancels = Math.max(0, this.staleCancels - 1);
         else if (m.type === 'Error') this.fail('tts_error');
       };
@@ -317,18 +351,43 @@ export class FastSocket {
     });
   }
 
+  private onWordBoundaries(rawWords: Array<Record<string, unknown>>): void {
+    if (this.staleCancels > 0 || rawWords.length === 0) return;
+    const firstStart = Number(rawWords[0]?.start ?? 0);
+    const lastEnd = Number(rawWords[rawWords.length - 1]?.end ?? 0);
+    const isSeconds =
+      rawWords.some((w) => !Number.isInteger(Number(w.start ?? 0)) || !Number.isInteger(Number(w.end ?? 0))) &&
+      lastEnd < 120;
+    const scale = isSeconds ? 1000 : 1;
+    if (firstStart * scale < this.lastWordEndMs && this.lastWordEndMs > 0) {
+      this.wordBoundaryOffsetMs = this.lastWordEndMs + 60;
+    }
+    const aligned = rawWords.map((w) => {
+      const start = Math.round(Number(w.start ?? 0) * scale) + this.wordBoundaryOffsetMs;
+      const end = Math.max(start + 40, Math.round(Number(w.end ?? start) * scale) + this.wordBoundaryOffsetMs);
+      this.lastWordEndMs = Math.max(this.lastWordEndMs, end);
+      return { text: String(w.text ?? ''), start, end };
+    });
+    this.emit({ type: 'word.boundaries', words: aligned, reply_id: this.genId });
+  }
+
   /** Streaming transcript -> the Voice Agent's user events. */
   private onTurn(m: Json): void {
     const text = String(m.transcript || '').trim();
     const order = Number(m.turn_order ?? -1);
     if (order >= 0 && order <= this.lastTurnOrder) return; // a late or formatted re-send of a turn already handled
+    const speakingNow = this.agentSpeaking || Date.now() < this.playEndAt;
     if (!m.end_of_turn) {
       if (!text) return;
-      // Someone starting to talk over Stay (two words, so a cough or echo does not cut it off) stops it.
+      // Someone starting to talk over Stay: ignore 1-3 word backchannels ("yeah", "mm-hmm", "got it") and single-word coughs,
+      // unless they uttered an explicit interruption ("stop", "wait", "pause") or a multi-word barge-in sentence.
       if (!this.inUserTurn) {
-        if (this.agentSpeaking && text.split(/\s+/).length < 2) return;
+        if (speakingNow) {
+          if (isBackchannelOnly(text)) return;
+          if (!isExplicitInterruption(text) && text.split(/\s+/).length < 2) return;
+        }
         this.inUserTurn = true;
-        this.interrupted = this.agentSpeaking || Date.now() < this.playEndAt || this.spoken !== '';
+        this.interrupted = speakingNow || this.spoken !== '';
         this.playEndAt = 0;
         this.cancel();
         this.emit({ type: 'input.speech.started' });
@@ -338,10 +397,15 @@ export class FastSocket {
         this.holdTimer = undefined; // they carried on: it was a pause, not the end
       }
       this.emit({ type: 'transcript.user.delta', text: this.carry ? `${this.carry} ${text}` : text });
-      this.speculate(text);
+      const hasUtterance = typeof m.utterance === 'string' && m.utterance.trim().length > 0;
+      this.speculate(text, hasUtterance);
       return;
     }
     if (order === this.lastTurnOrder || !text) return; // the formatted re-send of a turn we already handled
+    if (!this.inUserTurn && speakingNow && isBackchannelOnly(text)) {
+      this.lastTurnOrder = order;
+      return; // conversational backchannel while Stay is speaking: do not interrupt
+    }
     this.lastTurnOrder = order;
     this.mark('eot');
     const full = this.carry ? `${this.carry} ${text}` : text;
@@ -423,7 +487,7 @@ export class FastSocket {
    * if the end of turn confirms the same words it is released at once, if they said more it is cancelled and nothing was heard.
    * At most two early replies per turn, and none for a turn that sounds unfinished or follows an interruption.
    */
-  private speculate(partial: string): void {
+  private speculate(partial: string, hasUtterance = false): void {
     if (this.closed || !this.session || this.interrupted || this.carry || this.holds > 0) return;
     const text = partial.trim();
     const key = specKey(text);
@@ -436,7 +500,7 @@ export class FastSocket {
       /^(?:hi|hello|hey|hey stay|good (?:morning|afternoon|evening)|yo|sup|namaste|hola|bonjour|hallo|ciao|yes|no|yep|nope|sure|okay|ok|done|stop|thanks|thank you)\b/i.test(
         text
       ) && text.split(/\s+/).length <= 5;
-    if (!key || this.specStarts >= 2 || (!isPunct && !isGreetingOrShortComplete) || /\.{2,}$/.test(text) || soundsUnfinished(text)) return;
+    if (!key || this.specStarts >= 2 || (!isPunct && !isGreetingOrShortComplete && !hasUtterance) || /\.{2,}$/.test(text) || soundsUnfinished(text)) return;
     this.specStarts++;
     this.mark('spec');
     this.spec = { key, base: this.history };
@@ -459,6 +523,8 @@ export class FastSocket {
     this.sentFlushes = 0;
     this.replyBaseId = null;
     this.lastDoneId = -1;
+    this.wordBoundaryOffsetMs = 0;
+    this.lastWordEndMs = 0;
     this.agentSpeaking = false;
     this.toolWaiters.clear();
     try {
@@ -508,6 +574,8 @@ export class FastSocket {
     this.sentFlushes = 0;
     this.replyBaseId = null;
     this.lastDoneId = -1;
+    this.wordBoundaryOffsetMs = 0;
+    this.lastWordEndMs = 0;
     this.agentSpeaking = false;
     this.history = [...this.history, { role: 'assistant' as const, content: text }].slice(-MAX_HISTORY);
     this.emit({ type: 'transcript.agent', text, item_id: `a-${Date.now()}` });
@@ -521,6 +589,8 @@ export class FastSocket {
     this.sentFlushes = 0;
     this.replyBaseId = null;
     this.lastDoneId = -1;
+    this.wordBoundaryOffsetMs = 0;
+    this.lastWordEndMs = 0;
     this.say(text, gen);
   }
 
@@ -531,7 +601,11 @@ export class FastSocket {
     const ctl = new AbortController();
     this.abort = ctl;
     this.llmDone = false;
-    this.spoken = toolFollowUp ? this.spoken : '';
+    if (!toolFollowUp) {
+      this.spoken = '';
+      this.wordBoundaryOffsetMs = 0;
+      this.lastWordEndMs = 0;
+    }
     const s = this.session as FastSession;
     const system = this.systemText();
     const messages: ChatMessage[] = [{ role: 'system', content: system }, ...this.history, ...(extraInstruction ? [{ role: 'system' as const, content: extraInstruction }] : [])];

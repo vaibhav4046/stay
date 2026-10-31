@@ -1,4 +1,8 @@
 import { test, expect, Page } from '@playwright/test';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const SCREENSHOT_DIR = path.resolve('test-results');
 
 async function onboard(page: Page) {
   await page.goto('/app/today');
@@ -12,6 +16,7 @@ async function onboard(page: Page) {
 }
 
 test('live voice caption synchronization and logo persistence', async ({ page }) => {
+  fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
   await onboard(page);
 
   // 1. Verify StayLogo is visibly present in mic-button capsule when idle
@@ -29,14 +34,19 @@ test('live voice caption synchronization and logo persistence', async ({ page })
   await expect(caption).toHaveText('What are you putting off?');
 
   // 4. Capture screenshot of idle state with logo
-  await page.screenshot({ path: 'C:/Users/lalwa/.gemini/antigravity/brain/f13ac96d-8370-4da4-b76f-a95c33b66555/08-live-voice-idle-with-logo.png' });
+  await page.screenshot({ path: path.join(SCREENSHOT_DIR, '08-live-voice-idle-with-logo.png') });
 
-  // 5. Test greeting "Hi hello"
+  // 5. Test greeting "Hi hello" -> verify progressive word reveal and warm human coaching response
   const input = page.getByTestId('task-input');
   await input.fill('Hi hello');
-  await page.screenshot({ path: 'C:/Users/lalwa/.gemini/antigravity/brain/f13ac96d-8370-4da4-b76f-a95c33b66555/09-hi-hello-responsive-input.png' });
+  await page.screenshot({ path: path.join(SCREENSHOT_DIR, '09-hi-hello-responsive-input.png') });
   await page.getByTestId('send').click();
-  await page.waitForTimeout(400);
+
+  // Immediately after send, caption starts revealing words progressively (not blank, and matches warm human greeting prefix)
+  await expect(caption).toContainText('Hey.', { timeout: 3000 });
+  // After progressive word reveal completes (~1.6s for 9 words), full greeting is visible without forcing a plan card
+  await expect(caption).toHaveText("Hey. Good to hear from you. What's on your mind?", { timeout: 5000 });
+  await expect(page.getByTestId('plan-card')).toHaveCount(0);
 
   // 6. Test actual task input "Do my taxes" to verify plan creation
   await input.fill('Do my taxes');
@@ -45,5 +55,5 @@ test('live voice caption synchronization and logo persistence', async ({ page })
   const planCard = page.getByTestId('plan-card');
   await expect(planCard).toBeVisible({ timeout: 10000 });
 
-  await page.screenshot({ path: 'C:/Users/lalwa/.gemini/antigravity/brain/f13ac96d-8370-4da4-b76f-a95c33b66555/10-responsive-plan-card.png' });
+  await page.screenshot({ path: path.join(SCREENSHOT_DIR, '10-responsive-plan-card.png') });
 });

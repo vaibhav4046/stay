@@ -1,5 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { FastSocket, fastVoiceFor, quickConfirmation, soundsUnfinished, takeSpeakable } from '@/lib/voice/fastSocket';
+import {
+  ENDPOINTING_PRESETS,
+  FastSocket,
+  fastVoiceFor,
+  isBackchannelOnly,
+  isExplicitInterruption,
+  quickConfirmation,
+  soundsUnfinished,
+  takeSpeakable,
+} from '@/lib/voice/fastSocket';
 
 // ---- a scripted AssemblyAI: STT sockets accept audio and are driven by the test; TTS sockets answer Flush with audio ----
 class FakeWS {
@@ -387,5 +396,116 @@ describe('fastVoiceFor', () => {
     expect(fastVoiceFor('vera', 'en')).toBe('vera');
     expect(fastVoiceFor('lola', 'en')).toBe('anna');
     expect(fastVoiceFor('', 'en')).toBe('anna');
+  });
+});
+
+describe('Full-duplex overlap, endpointing presets, utterance speculation & multi-flush WordBoundaries', () => {
+  it('classifies conversational backchannels vs explicit interruptions accurately', () => {
+    expect(isBackchannelOnly('yeah')).toBe(true);
+    expect(isBackchannelOnly('mm-hmm')).toBe(true);
+    expect(isBackchannelOnly('uh huh')).toBe(true);
+    expect(isBackchannelOnly('got it')).toBe(true);
+    expect(isBackchannelOnly('stop')).toBe(false);
+    expect(isBackchannelOnly('wait actually change that')).toBe(false);
+
+    expect(isExplicitInterruption('stop')).toBe(true);
+    expect(isExplicitInterruption('Wait')).toBe(true);
+    expect(isExplicitInterruption('pause please')).toBe(true);
+    expect(isExplicitInterruption('hold on')).toBe(true);
+    expect(isExplicitInterruption('yeah')).toBe(false);
+  });
+
+  it('does NOT cancel assistant speech when user utters a 2-word backchannel ("uh huh", "got it")', async () => {
+    FakeWS.auto = false;
+    fetchMock.mockImplementation(async () => sse(text('Here is a calm two minute step for your taxes.')));
+    const { s, stt, tts } = await open();
+    stt.push({ type: 'Turn', transcript: 'help me with taxes.', end_of_turn: true, turn_order: 0 });
+    await tick(12);
+    tts.push({ type: 'Audio', audio: 'A'.repeat(48000), flush_id: 0 });
+    const cancelsBefore = tts.sent.filter((d) => typeof d === 'string' && JSON.parse(d).type === 'Cancel').length;
+
+    stt.push({ type: 'Turn', transcript: 'uh huh', end_of_turn: false, turn_order: 1 });
+    stt.push({ type: 'Turn', transcript: 'uh huh', end_of_turn: true, turn_order: 1 });
+    const cancelsAfter = tts.sent.filter((d) => typeof d === 'string' && JSON.parse(d).type === 'Cancel').length;
+    expect(cancelsAfter).toBe(cancelsBefore);
+    s.close();
+  });
+
+  it('immediately interrupts assistant speech on a single-word explicit stop ("stop" or "wait")', async () => {
+    FakeWS.auto = false;
+    fetchMock.mockImplementation(async () => sse(text('Here is a long explanation that you want to stop right now.')));
+    const { s, stt, tts } = await open();
+    stt.push({ type: 'Turn', transcript: 'help me.', end_of_turn: true, turn_order: 0 });
+    await tick(12);
+    tts.push({ type: 'Audio', audio: 'A'.repeat(48000), flush_id: 0 });
+    const cancelsBefore = tts.sent.filter((d) => typeof d === 'string' && JSON.parse(d).type === 'Cancel').length;
+
+    stt.push({ type: 'Turn', transcript: 'stop', end_of_turn: false, turn_order: 1 });
+    const cancelsAfter = tts.sent.filter((d) => typeof d === 'string' && JSON.parse(d).type === 'Cancel').length;
+    expect(cancelsAfter).toBeGreaterThan(cancelsBefore);
+    s.close();
+  });
+
+  it('monotonically offsets WordBoundaries across multiple TTS flushes in the same reply', async () => {
+    const { tts } = await open();
+    tts.push({
+      type: 'WordBoundaries',
+      words: [
+        { text: 'First', start: 0, end: 250 },
+        { text: 'sentence.', start: 260, end: 600 },
+      ],
+    });
+    // Second flush resets start to 0 from provider TTS
+    tts.push({
+      type: 'WordBoundaries',
+      words: [
+        { text: 'Second', start: 0, end: 300 },
+        { text: 'sentence.', start: 320, end: 700 },
+      ],
+    });
+    const wbEvents = events.filter((e) => e.type === 'word.boundaries');
+    expect(wbEvents).toHaveLength(2);
+    const secondFlushWords = wbEvents[1].words as Array<{ text: string; start: number; end: number }>;
+    expect(secondFlushWords[0].start).toBeGreaterThanOrEqual(660);
+    expect(secondFlushWords[1].end).toBeGreaterThan(secondFlushWords[0].start);
+  });
+
+  it('applies ENDPOINTING_PRESETS query params when endpointingMode is configured', async () => {
+    const s = new FastSocket({
+      sttToken: 'stt',
+      ttsToken: 'tts',
+      warmUp: false,
+      endpointingMode: 'reflective',
+    });
+    await tick(2);
+    s.send(JSON.stringify({ type: 'session.update', session: { system_prompt: 'Stay', greeting: '', output: { voice: 'anna' }, tools: [] } }));
+    await tick(6);
+    const stt = FakeWS.instances.find((w) => !w.isTts)!;
+    expect(stt.url).toContain(`end_of_turn_confidence_threshold=${ENDPOINTING_PRESETS.reflective.end_of_turn_confidence_threshold}`);
+    expect(stt.url).toContain(`min_turn_silence=${ENDPOINTING_PRESETS.reflective.min_turn_silence}`);
+    expect(stt.url).toContain(`max_turn_silence=${ENDPOINTING_PRESETS.reflective.max_turn_silence}`);
+    s.close();
+  });
+
+  it('starts speculative LLM generation early when AssemblyAI Turn emits utterance before end_of_turn', async () => {
+    fetchMock.mockResolvedValue(sse(text('Let us open the document together.')));
+    const { stt } = await open();
+    stt.push({
+      type: 'Turn',
+      transcript: 'I need help starting my report',
+      utterance: 'I need help starting my report',
+      end_of_turn: false,
+      turn_order: 0,
+    });
+    await tick(4);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    stt.push({
+      type: 'Turn',
+      transcript: 'I need help starting my report.',
+      end_of_turn: true,
+      turn_order: 0,
+    });
+    await tick(25);
+    expect(fetchMock).toHaveBeenCalledTimes(1); // adopted speculative request
   });
 });

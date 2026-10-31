@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
 import { StayLogo } from '@/components/StayLogo';
@@ -47,17 +47,20 @@ export function GeminiLiveVoiceVisualizer({
   className = '',
 }: GeminiLiveVoiceVisualizerProps) {
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const pathRefs = useRef<(SVGPathElement | null)[]>([]);
-  const live = useRef({ energy: 0, bands: 0, state: 'idle' as VoiceVisualState, on: false });
+  const live = useRef({ energy: 0, bands: 0, state: 'idle' as VoiceVisualState, on: false, hovered: false });
 
-  const isLive = isConnected && visualState !== 'error';
-  const isSpeaking = isLive && visualState === 'speaking';
-  const isThinking = isLive && visualState === 'thinking';
+  const isActiveState = visualState === 'speaking' || visualState === 'thinking' || visualState === 'listening';
+  const isLive = (isConnected || isActiveState) && visualState !== 'error';
+  const isSpeaking = visualState === 'speaking';
+  const isThinking = visualState === 'thinking';
 
   live.current.energy = Math.max(0, Math.min(1, audioEnergy));
   live.current.bands = audioBands ? Math.max(audioBands.low, audioBands.mid, audioBands.high) : audioEnergy;
   live.current.state = visualState;
   live.current.on = isLive && !isHandsFreePaused;
+  live.current.hovered = hovered;
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -75,11 +78,18 @@ export function GeminiLiveVoiceVisualizer({
       const dt = Math.min(0.05, (now - t0) / 1000);
       t0 = now;
       const s = live.current;
-      const breathe = s.state === 'thinking' ? 0.22 + 0.1 * Math.sin(now / 260) : 0.12 + 0.05 * Math.sin(now / 700);
-      const target = s.on ? Math.max(breathe, Math.min(1, s.energy * 1.6 + s.bands * 0.5)) : 0;
-      amp += (target - amp) * Math.min(1, dt * 9);
+      const breathe =
+        s.state === 'speaking'
+          ? 0.34 + 0.18 * Math.sin(now / 150)
+          : s.state === 'thinking'
+            ? 0.22 + 0.1 * Math.sin(now / 260)
+            : 0.14 + 0.06 * Math.sin(now / 600);
+      const hoverPulse = s.hovered ? 0.18 + 0.06 * Math.sin(now / 320) : 0;
+      const target = s.on ? Math.max(breathe, Math.min(1, s.energy * 1.65 + s.bands * 0.55)) : hoverPulse;
+      amp += (target - amp) * Math.min(1, dt * 10);
       const px = amp * (H / 2 - 4);
-      const phaseBase = reducedMotion ? 0 : now / 1000;
+      const speedBoost = s.state === 'speaking' ? 1.35 : 1.0;
+      const phaseBase = reducedMotion ? 0 : (now / 1000) * speedBoost;
       RIBBONS.forEach((r, i) => {
         const el = pathRefs.current[i];
         if (el) el.setAttribute('d', buildPath(phaseBase * r.speed, px * r.amp, r.freq));
@@ -90,10 +100,12 @@ export function GeminiLiveVoiceVisualizer({
     return () => cancelAnimationFrame(raf);
   }, [reducedMotion]);
 
-  const label = !isConnected ? 'Talk to Stay' : isSpeaking ? 'Speaking' : isThinking ? 'Thinking' : isHandsFreePaused ? 'Paused' : 'Listening';
+  const label = isSpeaking ? 'Speaking' : isThinking ? 'Thinking' : !isConnected ? 'Talk to Stay' : isHandsFreePaused ? 'Paused' : 'Listening';
 
   return (
     <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       className={`inline-flex items-center gap-1 rounded-full border bg-white/90 px-2 py-1 backdrop-blur-md transition-all duration-500 dark:bg-stone-900/90 ${
         isLive ? 'border-transparent shadow-[0_0_0_1.5px_rgba(111,126,255,0.55),0_6px_24px_-6px_rgba(111,126,255,0.55)]' : 'border-stone-200 shadow-sm hover:border-stone-300'
       } ${className}`}
@@ -107,8 +119,8 @@ export function GeminiLiveVoiceVisualizer({
         className="group flex h-10 items-center gap-2 rounded-full px-2 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
       >
         <StayLogo size={22} className="shrink-0 transition-transform duration-300 group-hover:scale-110 drop-shadow-sm ml-0.5" />
-        {isLive && (
-          <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} aria-hidden="true" className="shrink-0 overflow-visible transition-opacity duration-300">
+        {(isLive || hovered) && (
+          <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} aria-hidden="true" data-testid="voice-wave-svg" className="shrink-0 overflow-visible transition-opacity duration-300">
             <defs>
               <linearGradient id="stay-wave-a" x1="0" x2="1" y1="0" y2="0">
                 <stop offset="0" stopColor="#4285F4" /><stop offset="0.5" stopColor="#9B72CB" /><stop offset="1" stopColor="#D96570" />

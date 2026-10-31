@@ -3,6 +3,13 @@
 import { byokHeaders } from '@/lib/byok/config';
 import { ContinuousPcmPlayer } from '@/lib/voice/playback/continuousPlayback';
 import { FastSocket, FAST_TTS_LANGUAGE } from '@/lib/voice/fastSocket';
+import {
+  computeProgressiveCaption,
+  transitionConversationState,
+  type ConversationState,
+  type VoiceEvent,
+  type WordBoundary,
+} from '@/lib/voice/captionSync';
 import { loadParked, parkThought } from '@/lib/coach/parkingLot';
 import { addToday, loadToday, openToday } from '@/lib/coach/todayList';
 import { findRoutine, loadRoutines } from '@/lib/routines/routines';
@@ -387,6 +394,10 @@ export function buildLocalizedStayResponse(
 
 export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const [visualState, setVisualState] = useState<VoiceVisualState>('idle');
+  const [conversationState, setConversationState] = useState<ConversationState>('IDLE');
+  const dispatchVoiceEvent = useCallback((ev: Parameters<typeof transitionConversationState>[1]) => {
+    setConversationState((prev) => transitionConversationState(prev, ev));
+  }, []);
   const [isConnected, setIsConnected] = useState(false);
   const [audioEnergy, setAudioEnergy] = useState(0);
   const lastAudioPushRef = useRef(0);
@@ -412,10 +423,14 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const [partialUserTranscript, setPartialUserTranscript] = useState('');
   const [liveSpokenText, setLiveSpokenText] = useState('');
   const liveSpokenTextRef = useRef('');
-  const wordBoundariesRef = useRef<Array<{ text: string; start: number; end: number }>>([]);
+  const wordBoundariesRef = useRef<WordBoundary[]>([]);
   const pendingSpeechTextRef = useRef<string>('');
   const fullReplyTextRef = useRef<string>('');
   const speechAudioStartTimeRef = useRef<number>(0);
+  const expectedAudioDurationMsRef = useRef<number>(0);
+  const replyDoneReceivedRef = useRef<boolean>(false);
+  const playbackClockLockedRef = useRef<boolean>(false);
+  const replyEpochRef = useRef<number>(0);
   const captionTickerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [transcripts, setTranscripts] = useState<VoiceTranscriptEntry[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -743,11 +758,15 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       speechFinalizeTimerRef.current = null;
     }
     speechAccumulatorRef.current = '';
+    replyEpochRef.current += 1;
     if (captionTickerRef.current) {
       clearInterval(captionTickerRef.current);
       captionTickerRef.current = null;
     }
     speechAudioStartTimeRef.current = 0;
+    expectedAudioDurationMsRef.current = 0;
+    replyDoneReceivedRef.current = false;
+    playbackClockLockedRef.current = false;
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       try {
         window.speechSynthesis.cancel();
@@ -805,7 +824,42 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       }
     }
 
-    // 2. Play spoken audio via browser SpeechSynthesis with dynamic fluid wave pulsing
+    // 2. Play spoken audio via browser SpeechSynthesis with dynamic fluid wave pulsing & progressive word sync
+    const words = text.trim().split(/\s+/).filter(Boolean);
+    const localEpoch = ++replyEpochRef.current;
+    isAssistantSpeakingRef.current = true;
+    if (assistantCooldownTimerRef.current) {
+      clearTimeout(assistantCooldownTimerRef.current);
+      assistantCooldownTimerRef.current = null;
+    }
+    setVisualState('speaking');
+    dispatchVoiceEvent({ type: 'assistant_started' });
+    const firstWord = words[0] ?? '';
+    liveSpokenTextRef.current = firstWord;
+    setLiveSpokenText(firstWord);
+
+    if (captionTickerRef.current) {
+      clearInterval(captionTickerRef.current);
+      captionTickerRef.current = null;
+    }
+    let wordIdx = 1;
+    captionTickerRef.current = setInterval(() => {
+      if (replyEpochRef.current !== localEpoch) return;
+      if (wordIdx < words.length) {
+        wordIdx += 1;
+        const partial = words.slice(0, wordIdx).join(' ');
+        if (partial.length > liveSpokenTextRef.current.length) {
+          liveSpokenTextRef.current = partial;
+          setLiveSpokenText(partial);
+        }
+      } else {
+        if (captionTickerRef.current) {
+          clearInterval(captionTickerRef.current);
+          captionTickerRef.current = null;
+        }
+      }
+    }, 180);
+
     if ('speechSynthesis' in window) {
       try {
         window.speechSynthesis.cancel();
@@ -861,9 +915,13 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         utterance.rate = 1.02;
         utterance.pitch = 1.0;
         utterance.onboundary = (e) => {
+          if (replyEpochRef.current !== localEpoch) return;
           if (e.name === 'word') {
-            const revealed = text.slice(0, e.charIndex + (e.charLength || 1)).trim();
-            if (revealed) {
+            const rawEnd = e.charIndex + (e.charLength || 1);
+            const trailingPunct = text.slice(rawEnd).match(/^[.,!?;:'")\]]+/);
+            const endIdx = rawEnd + (trailingPunct ? trailingPunct[0].length : 0);
+            const revealed = text.slice(0, endIdx).trim();
+            if (revealed && revealed.length > liveSpokenTextRef.current.length) {
               liveSpokenTextRef.current = revealed;
               setLiveSpokenText(revealed);
             }
@@ -872,11 +930,8 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
         let energyTimer: NodeJS.Timeout | null = null;
         utterance.onstart = () => {
+          if (replyEpochRef.current !== localEpoch) return;
           isAssistantSpeakingRef.current = true;
-          if (assistantCooldownTimerRef.current) {
-            clearTimeout(assistantCooldownTimerRef.current);
-            assistantCooldownTimerRef.current = null;
-          }
           setVisualState('speaking');
           let frame = 0;
           energyTimer = setInterval(() => {
@@ -894,6 +949,15 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
         const cleanup = () => {
           if (energyTimer) clearInterval(energyTimer);
+          if (replyEpochRef.current === localEpoch) {
+            if (captionTickerRef.current) {
+              clearInterval(captionTickerRef.current);
+              captionTickerRef.current = null;
+            }
+            liveSpokenTextRef.current = text;
+            setLiveSpokenText(text);
+            dispatchVoiceEvent({ type: 'assistant_stopped', reason: 'finished' });
+          }
           // 400ms acoustic cooldown so mic doesn't capture trailing speaker room echo
           assistantCooldownTimerRef.current = setTimeout(() => {
             isAssistantSpeakingRef.current = false;
@@ -1043,7 +1107,8 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     setAudioEnergy(0);
     setPartialUserTranscript('');
     setVisualState('idle');
-  }, [stopPlaybackQueue]);
+    dispatchVoiceEvent({ type: 'disconnect' });
+  }, [stopPlaybackQueue, dispatchVoiceEvent]);
 
   /** Runs one action requested by the agent's single app tool. Never deletes data: delete_data only opens the confirm screen. */
   const runAppAction = useCallback(
@@ -1624,8 +1689,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         /\b(?:how\s+are\s+you|how\s+are\s+you\s+doing|how's\s+it\s+going|what's\s+up|good\s+(?:morning|afternoon|evening))\b/i.test(clean);
       const isChoreTask = /\b(?:work|clean|email|write|read|study|tax|dishes|doc|report|homework|laundry|tidy|pay|call|send|finish|start|draft|fix|buy)\b/i.test(clean);
       if (isGreeting && !isChoreTask) {
-        const greetingReply =
-          "Hey there! I'm doing well, thank you. How are you feeling right now? If there's something you want to start or a shape you want me to morph into like a rocket or star, I'm right here with you.";
+        const greetingReply = "Hey. Good to hear from you. What's on your mind?";
         setTranscripts((prev) => [
           ...prev,
           {
@@ -1864,6 +1928,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const startVoiceSession = useCallback(async () => {
     setErrorMessage(null);
     setVisualState('connecting');
+    dispatchVoiceEvent({ type: 'connect_start' });
 
     const chosenLang = selectedLanguageRef.current;
     if (chosenLang !== 'auto' && !isAgentVerifiedLanguage(chosenLang)) {
@@ -1911,6 +1976,10 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         },
         onTelemetry: (t) => {
           pushAudioLevels(Math.min(1, t.rms * 3.8));
+          if (t.state === 'PLAYING' && !playbackClockLockedRef.current && speechAudioStartTimeRef.current > 0) {
+            speechAudioStartTimeRef.current = performance.now() - pcmPlayer.getPlaybackPositionMs();
+            playbackClockLockedRef.current = true;
+          }
           if (t.state === 'STOPPED' || (t.state === 'BUFFERING' && t.bufferedMs === 0)) {
             setAudioEnergy(0.05);
             setAudioBands({ low: 0, mid: 0, high: 0, overall: 0.05 });
@@ -2005,6 +2074,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           renewAttemptsRef.current = 0;
           setIsConnected(true);
           setVisualState('listening');
+          dispatchVoiceEvent({ type: 'session_ready' });
 
           // Start streaming microphone audio now that session.ready has fired
           const source = audioCtx.createMediaStreamSource(stream);
@@ -2060,6 +2130,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
         if (type === 'input.speech.started') {
           stopPlaybackQueue();
+          dispatchVoiceEvent({ type: 'user_audio_started', at: Date.now() });
           if (duckTimerRef.current) clearTimeout(duckTimerRef.current);
           playbackGainRef.current?.gain.setTargetAtTime(1, audioCtxRef.current?.currentTime ?? 0, 0.01);
           if (backchannelTimerRef.current) {
@@ -2079,6 +2150,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           // Per AssemblyAI docs: text is the full partial transcript so far — replace, never append
           const text = String(msg.text || '');
           setPartialUserTranscript(text);
+          if (text) dispatchVoiceEvent({ type: 'user_partial', text });
 
           if (text.length > 4) {
             const analysis = analyzeStreamingUtterance(text);
@@ -2146,6 +2218,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
             backchannelTimerRef.current = null;
           }
           setVisualState('thinking');
+          dispatchVoiceEvent({ type: 'user_turn_final', text: '', turnId: String(Date.now()) });
           return;
         }
 
@@ -2243,7 +2316,10 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         }
 
         if (type === 'word.boundaries' && Array.isArray(msg.words)) {
-          wordBoundariesRef.current = [...wordBoundariesRef.current, ...(msg.words as Array<{ text: string; start: number; end: number }>)];
+          wordBoundariesRef.current = [
+            ...wordBoundariesRef.current,
+            ...(msg.words as WordBoundary[]),
+          ];
           return;
         }
 
@@ -2251,18 +2327,23 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           const chunk = String(msg.text || '');
           if (chunk) {
             pendingSpeechTextRef.current += (pendingSpeechTextRef.current ? ' ' : '') + chunk;
+            dispatchVoiceEvent({ type: 'assistant_text_delta', text: chunk });
           }
           if (!medicationSuppressionRef.current && !dumpApiRef.current.isAgentMuted()) lipSyncBus.pushText(chunk);
           return;
         }
 
         if (type === 'reply.started') {
+          replyEpochRef.current += 1;
           lipSyncBus.clearText();
           pendingToolResultsRef.current = [];
           wordBoundariesRef.current = [];
           pendingSpeechTextRef.current = '';
           fullReplyTextRef.current = '';
           speechAudioStartTimeRef.current = 0;
+          expectedAudioDurationMsRef.current = 0;
+          replyDoneReceivedRef.current = false;
+          playbackClockLockedRef.current = false;
           if (captionTickerRef.current) {
             clearInterval(captionTickerRef.current);
             captionTickerRef.current = null;
@@ -2271,6 +2352,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           liveSpokenTextRef.current = '';
           if (!medicationSuppressionRef.current && !dumpApiRef.current.isAgentMuted()) {
             setVisualState('speaking');
+            dispatchVoiceEvent({ type: 'assistant_started' });
           }
           return;
         }
@@ -2288,33 +2370,38 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           const b64 = String(msg.data || '');
           if (b64) {
             setVisualState('speaking');
+            dispatchVoiceEvent({ type: 'assistant_started' });
+            const chunkDurationMs = (b64.length * 0.75) / 48; // 24kHz 16-bit mono = 48 bytes per ms
+            expectedAudioDurationMsRef.current += chunkDurationMs;
             scheduleAgentPcmChunk(b64);
 
             if (speechAudioStartTimeRef.current === 0) {
-              speechAudioStartTimeRef.current = performance.now();
+              const prebufferOffsetMs =
+                pcmPlayerRef.current && !pcmPlayerRef.current.isFallback() ? 120 : 20;
+              speechAudioStartTimeRef.current = performance.now() + prebufferOffsetMs;
+              const activeEpoch = replyEpochRef.current;
               if (captionTickerRef.current) clearInterval(captionTickerRef.current);
               captionTickerRef.current = setInterval(() => {
-                if (speechAudioStartTimeRef.current === 0) return;
+                if (replyEpochRef.current !== activeEpoch || speechAudioStartTimeRef.current === 0) return;
                 const elapsedMs = performance.now() - speechAudioStartTimeRef.current;
-                if (wordBoundariesRef.current.length > 0) {
-                  const words = wordBoundariesRef.current
-                    .filter((w) => w.start <= elapsedMs + 80)
-                    .map((w) => w.text);
-                  if (words.length > 0) {
-                    const t = words.join(' ');
-                    if (t !== liveSpokenTextRef.current) {
-                      liveSpokenTextRef.current = t;
-                      setLiveSpokenText(t);
-                    }
+                const res = computeProgressiveCaption({
+                  elapsedMs,
+                  wordBoundaries: wordBoundariesRef.current,
+                  fallbackText: fullReplyTextRef.current || pendingSpeechTextRef.current,
+                  expectedAudioDurationMs: expectedAudioDurationMsRef.current,
+                  replyDoneReceived: replyDoneReceivedRef.current,
+                });
+                if (res.text && res.text !== liveSpokenTextRef.current) {
+                  liveSpokenTextRef.current = res.text;
+                  setLiveSpokenText(res.text);
+                }
+                if (res.finished) {
+                  if (captionTickerRef.current) {
+                    clearInterval(captionTickerRef.current);
+                    captionTickerRef.current = null;
                   }
-                } else if (pendingSpeechTextRef.current) {
-                  const words = pendingSpeechTextRef.current.split(/\s+/).filter(Boolean);
-                  const count = Math.min(words.length, Math.max(1, Math.floor((elapsedMs + 80) / 280)));
-                  const t = words.slice(0, count).join(' ');
-                  if (t !== liveSpokenTextRef.current) {
-                    liveSpokenTextRef.current = t;
-                    setLiveSpokenText(t);
-                  }
+                  setVisualState((prev) => (prev === 'speaking' ? 'listening' : prev));
+                  dispatchVoiceEvent({ type: 'assistant_stopped', reason: 'finished' });
                 }
               }, 40);
             }
@@ -2375,25 +2462,17 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
         if (type === 'reply.done') {
           medicationSuppressionRef.current = false;
-          if (captionTickerRef.current) {
-            clearInterval(captionTickerRef.current);
-            captionTickerRef.current = null;
-          }
-          const finalText = fullReplyTextRef.current || pendingSpeechTextRef.current;
-          if (finalText) {
-            liveSpokenTextRef.current = finalText;
-            setLiveSpokenText(finalText);
-          }
           const status = String(msg.status || 'completed');
-          if (status !== 'interrupted') {
-            pcmPlayerRef.current?.markReplyEnd();
-          }
           if (status === 'interrupted') {
             pendingToolResultsRef.current = [];
             stopPlaybackQueue();
             setVisualState('interrupted');
+            dispatchVoiceEvent({ type: 'assistant_stopped', reason: 'barge_in' });
             return;
           }
+
+          replyDoneReceivedRef.current = true;
+          pcmPlayerRef.current?.markReplyEnd();
 
           if (
             pendingToolResultsRef.current.length > 0 &&
@@ -2412,7 +2491,30 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
             pendingToolResultsRef.current = [];
           }
 
-          setVisualState('listening');
+          const finalText = fullReplyTextRef.current || pendingSpeechTextRef.current;
+          const elapsedMs =
+            speechAudioStartTimeRef.current > 0
+              ? performance.now() - speechAudioStartTimeRef.current
+              : 0;
+          const lastBoundaryEnd =
+            wordBoundariesRef.current[wordBoundariesRef.current.length - 1]?.end ?? 0;
+          const totalPlayMs = Math.max(expectedAudioDurationMsRef.current, lastBoundaryEnd);
+          const remainingMs = totalPlayMs - Math.max(0, elapsedMs);
+
+          // Only finalize captions and transition out of 'speaking' immediately if playback has already finished (or no audio was queued).
+          // Otherwise, captionTickerRef continues revealing words in lockstep with audio playback until totalPlayMs elapses.
+          if (remainingMs <= 60 || speechAudioStartTimeRef.current === 0 || !captionTickerRef.current) {
+            if (captionTickerRef.current) {
+              clearInterval(captionTickerRef.current);
+              captionTickerRef.current = null;
+            }
+            if (finalText) {
+              liveSpokenTextRef.current = finalText;
+              setLiveSpokenText(finalText);
+            }
+            setVisualState('listening');
+            dispatchVoiceEvent({ type: 'assistant_stopped', reason: 'finished' });
+          }
           return;
         }
 
@@ -2570,6 +2672,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
   return {
     visualState,
+    conversationState,
     setVisualState,
     isConnected,
     audioEnergy,

@@ -315,9 +315,14 @@ export function StayHome({
     onStartTimer: (m) => startTimer(m),
   });
 
-  // the PWA shortcut "Brain dump" opens /app/today?action=dump
+  // the PWA shortcut "Brain dump" opens /app/today?action=dump; ?voice=auto starts real-time orb voice vibe
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get('action') === 'dump') setSheet('dump');
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('action') === 'dump') setSheet('dump');
+    if (params.get('voice') === 'auto' && !quietMode && !voiceRef.current.isConnected) {
+      void voiceRef.current.startVoiceSession();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Native wrappers (desktop tray/hotkey, mobile, extension) watch these and send commands back; see src/lib/host.ts.

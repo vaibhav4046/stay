@@ -54,7 +54,7 @@ Every metric is backed by reproducible test scripts and machine-readable JSON ar
 ---
 
 ## 5. Judge 90-Second Walkthrough
-Detailed verbatim clicks, utterances, and expected outcomes are provided in [`docs/JUDGE_RUNBOOK.md`](file:///C:/Users/lalwa/.gemini/antigravity/scratch/stay/docs/JUDGE_RUNBOOK.md):
+Detailed verbatim clicks, utterances, and expected outcomes are provided in [`docs/JUDGE_RUNBOOK.md`](./docs/JUDGE_RUNBOOK.md):
 1. **0–10s:** Open [https://stay-two-swart.vercel.app/app/today](https://stay-two-swart.vercel.app/app/today).
 2. **10–30s:** Tap "Talk to Stay" -> Say *"I'm avoiding my dissertation and I can't start."* -> Hear gapless, non-shaming 2-minute micro-step.
 3. **30–45s:** Interrupt aloud *"Wait, make it even smaller."* -> Audio cuts off instantly in <100ms.

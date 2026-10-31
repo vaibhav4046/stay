@@ -2,10 +2,11 @@ import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const ARTIFACT_DIR = 'C:/Users/lalwa/.gemini/antigravity/brain/f13ac96d-8370-4da4-b76f-a95c33b66555';
+const ARTIFACT_DIR = process.env.STAY_ARTIFACT_DIR || path.resolve('docs', 'verification-screenshots');
 
 function copyToArtifacts(filename: string) {
   const src = path.resolve('test-results', filename);
+  fs.mkdirSync(ARTIFACT_DIR, { recursive: true });
   const dest = path.join(ARTIFACT_DIR, filename);
   if (fs.existsSync(src)) {
     fs.copyFileSync(src, dest);
@@ -13,6 +14,7 @@ function copyToArtifacts(filename: string) {
 }
 
 test('Capture complete browser visual verification suite', async ({ page }) => {
+  fs.mkdirSync(path.resolve('test-results'), { recursive: true });
   // Set viewport to clear, high-resolution desktop view
   await page.setViewportSize({ width: 1280, height: 960 });
 
@@ -29,7 +31,7 @@ test('Capture complete browser visual verification suite', async ({ page }) => {
 
   // Confirm face button has no visible presence (sr-only)
   const faceButton = page.locator('#face-toggle');
-  if (await faceButton.count() > 0) {
+  if ((await faceButton.count()) > 0) {
     await expect(faceButton).not.toBeVisible();
   }
 
