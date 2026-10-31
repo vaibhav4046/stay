@@ -1,126 +1,118 @@
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
-import { installFakeVoice } from './helpers/fakeVoice';
 
-test.use({
-  permissions: ['microphone'],
-  launchOptions: {
-    args: [
-      '--use-fake-ui-for-media-stream',
-      '--use-fake-device-for-media-stream',
-      '--autoplay-policy=no-user-gesture-required',
-      '--mute-audio',
-    ],
-  },
-});
+const ARTIFACT_DIR = 'C:/Users/lalwa/.gemini/antigravity/brain/f13ac96d-8370-4da4-b76f-a95c33b66555';
 
-const OUTPUT_DIR = path.join(process.cwd(), 'docs', 'verification-screenshots');
+function copyToArtifacts(filename: string) {
+  const src = path.resolve('test-results', filename);
+  const dest = path.join(ARTIFACT_DIR, filename);
+  if (fs.existsSync(src)) {
+    fs.copyFileSync(src, dest);
+  }
+}
 
-test.describe('Stay Visual Verification & Screenshot Suite', () => {
-  test.beforeAll(() => {
-    fs.mkdirSync(OUTPUT_DIR, { recursive: true });
-  });
+test('Capture complete browser visual verification suite', async ({ page }) => {
+  // Set viewport to clear, high-resolution desktop view
+  await page.setViewportSize({ width: 1280, height: 960 });
 
-  test('captures full visual verification suite across desktop and mobile', async ({ page }) => {
-    test.setTimeout(60000);
+  // 1. TODAY PAGE - Idle with Logo, no Face button
+  await page.goto('/app/today');
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
 
-    // 1. Desktop Onboarding & Idle Screen with Gemini Live Visualizer
-    await page.setViewportSize({ width: 1280, height: 900 });
-    const voice = await installFakeVoice(page);
+  // Complete calm onboarding
+  await page.getByTestId('care-self_managing').click();
+  await page.getByTestId('onboarding-ack').click();
+  await page.getByTestId('onboarding-done').click();
+  await expect(page.getByTestId('task-input')).toBeVisible();
 
-    await page.goto('/app/today');
-    await page.evaluate(() => localStorage.clear());
-    await page.reload();
+  // Confirm face button has no visible presence (sr-only)
+  const faceButton = page.locator('#face-toggle');
+  if (await faceButton.count() > 0) {
+    await expect(faceButton).not.toBeVisible();
+  }
 
-    // Onboarding flow
-    await page.getByTestId('care-self_managing').click();
-    await page.getByTestId('onboarding-ack').click();
-    await page.getByTestId('onboarding-done').click();
+  // Ensure Talk to Stay button is visible
+  const talkBtn = page.getByRole('button', { name: /Talk to Stay/i });
+  await expect(talkBtn).toBeVisible();
 
-    // Wait for canvas orb ready
-    await expect(page.getByTestId('orb-button')).toBeVisible();
-    await page.waitForSelector('[data-testid="orb-button"] canvas');
-    await page.waitForTimeout(1000);
+  // Screenshot 1: Today full screen (avatar, logo in capsule, no face button, proactive buttons)
+  const shot1 = '01-today-idle-with-logo-no-face.png';
+  await page.screenshot({ path: path.join('test-results', shot1) });
+  copyToArtifacts(shot1);
 
-    // Screenshot 1: Desktop Today Screen (Resting Orb + Idle Gemini Live Voice Capsule)
-    await page.screenshot({
-      path: path.join(OUTPUT_DIR, '01-desktop-idle-gemini-live.png'),
-      fullPage: true,
-    });
+  // Screenshot 2: Closeup of the Talk to Stay capsule with the StayLogo on the left
+  const shot2 = '02-talk-to-stay-capsule-closeup.png';
+  await talkBtn.screenshot({ path: path.join('test-results', shot2) });
+  copyToArtifacts(shot2);
 
-    // Screenshot 2: Close-up of Gemini Live Visualizer in Idle State
-    const micButton = page.getByTestId('mic-button');
-    await expect(micButton).toBeVisible();
-    await micButton.screenshot({
-      path: path.join(OUTPUT_DIR, '02-gemini-live-pill-idle.png'),
-    });
+  // 2. OPEN VOICE PICKER
+  await page.getByTestId('menu-button').click();
+  await page.getByRole('button', { name: 'Voice and language' }).click();
+  const voicePicker = page.getByTestId('voice-picker');
+  await expect(voicePicker).toBeVisible();
 
-    // 2. Start Live Voice Session (Auto-Mic active, expanding soundwave bars)
-    await micButton.click();
-    await expect(page.getByTestId('orb-status')).toHaveText('Listening', { timeout: 10000 });
-    await page.waitForTimeout(800);
+  // Screenshot 3: Recommended voice cards with 3D dot glyph logos
+  const shot3 = '03-voice-picker-recommended-cards.png';
+  await page.screenshot({ path: path.join('test-results', shot3) });
+  copyToArtifacts(shot3);
 
-    // Screenshot 3: Live Auto-Mic Active with expanding spectrum bars
-    await micButton.screenshot({
-      path: path.join(OUTPUT_DIR, '03-gemini-live-pill-active-automic.png'),
-    });
+  // Open "More voices" details disclosure
+  const moreDetails = page.getByTestId('voice-more');
+  await moreDetails.locator('summary').click();
 
-    // Screenshot 4: Full Page in Live Listening State
-    await page.screenshot({
-      path: path.join(OUTPUT_DIR, '04-desktop-listening-state.png'),
-      fullPage: true,
-    });
+  // Locate Card 22: Mariachi Metronome
+  const mariachiCard = page.getByTestId('voice-mariachi');
+  await expect(mariachiCard).toBeVisible();
+  await mariachiCard.scrollIntoViewIfNeeded();
 
-    // 3. Conversational Check-in ("Hi, how are you?")
-    const input = page.getByTestId('task-input');
-    await input.fill('Hi, how are you?');
-    await page.getByTestId('send').click();
-    await page.waitForTimeout(1200);
+  // Hover over Card 22 to engage 3D transform animation
+  await mariachiCard.hover();
+  await page.waitForTimeout(400);
 
-    // Screenshot 5: Conversational Check-in (warm reply, zero chore jargon)
-    await page.screenshot({
-      path: path.join(OUTPUT_DIR, '05-conversational-greeting-checkin.png'),
-      fullPage: true,
-    });
+  // Screenshot 4: Card 22 Mariachi Metronome hovered with 3D transform
+  const shot4 = '04-card-22-mariachi-metronome-hover.png';
+  await page.screenshot({ path: path.join('test-results', shot4) });
+  copyToArtifacts(shot4);
 
-    // 4. Shape Transformation ("Turn into a rocket")
-    await input.fill('Turn into a rocket');
-    await page.getByTestId('send').click();
+  // 3. DIRECT CLICK ON A VOICE CARD (ElevenLabs UX)
+  // Click Countdown Cookie directly on the card
+  const eveCard = page.getByTestId('voice-eve');
+  await eveCard.scrollIntoViewIfNeeded();
+  await eveCard.click();
 
-    // Wait for the orb to morph into rocket shape
-    await expect.poll(
-      async () => {
-        return await page
-          .locator('[data-testid="orb-button"] [data-shape]')
-          .first()
-          .getAttribute('data-shape');
-      },
-      { timeout: 8000 }
-    ).toBe('rocket');
+  // Verify active selection ring
+  await expect(eveCard).toHaveClass(/!border-primary/);
 
-    await page.waitForTimeout(1200);
+  // Screenshot 5: Direct clicked voice card with active border
+  const shot5 = '05-voice-card-direct-click-selected.png';
+  await eveCard.screenshot({ path: path.join('test-results', shot5) });
+  copyToArtifacts(shot5);
 
-    // Screenshot 6: Orb 3D Rocket Dot Cloud Transformation
-    const orb = page.getByTestId('orb-button');
-    await orb.screenshot({
-      path: path.join(OUTPUT_DIR, '06-orb-rocket-transformation-closeup.png'),
-    });
+  // Close sheet and verify armed receipt on Today screen
+  await page.keyboard.press('Escape');
+  await expect(page.getByText(/Countdown Cookie armed — ready to speak/)).toBeVisible();
 
-    // Screenshot 7: Full Screen with Active Rocket Transformation
-    await page.screenshot({
-      path: path.join(OUTPUT_DIR, '07-desktop-rocket-shape-screen.png'),
-      fullPage: true,
-    });
+  // Screenshot 6: Armed voice receipt confirmation on Today screen
+  const shot6 = '06-voice-armed-today-receipt.png';
+  await page.screenshot({ path: path.join('test-results', shot6) });
+  copyToArtifacts(shot6);
 
-    // 5. Mobile Viewport (iPhone 390x844) Responsive Verification
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.waitForTimeout(800);
+  // 4. LANDING PAGE - MATHEMATICAL 5,200 DOT COUNT AUDIT
+  await page.goto('/');
+  await page.waitForTimeout(500);
 
-    // Screenshot 8: Mobile Responsive Viewport with Rocket & Gemini Live bar
-    await page.screenshot({
-      path: path.join(OUTPUT_DIR, '08-mobile-390px-rocket-and-live-bar.png'),
-      fullPage: true,
-    });
-  });
+  const section = page.getByText('The 5,200-dot procedural therapist figure');
+  await section.scrollIntoViewIfNeeded();
+
+  const dotInspectorBtn = page.getByRole('button', { name: /Inspect All 5,200 Dots/i });
+  await expect(dotInspectorBtn).toBeVisible();
+  await dotInspectorBtn.click();
+  await page.waitForTimeout(500);
+
+  // Screenshot 7: Mathematical 5,200 dot count audit and verifier
+  const shot7 = '07-landing-5200-dot-count-verifier.png';
+  await page.screenshot({ path: path.join('test-results', shot7) });
+  copyToArtifacts(shot7);
 });
