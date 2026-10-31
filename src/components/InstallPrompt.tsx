@@ -58,15 +58,22 @@ export function InstallPrompt() {
 
   if (!event && !ios) return null;
   return (
-    <aside className="card mb-4 flex items-center justify-between gap-3 px-4 py-3" aria-label="Install Stay" data-testid="install-prompt">
-      <p className="text-[0.92rem] text-ink-2">
+    <aside
+      className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-40 max-w-sm rounded-2xl border border-edge bg-surface/95 backdrop-blur-md p-4 shadow-xl transition-all"
+      aria-label="Install Stay"
+      data-testid="install-prompt"
+    >
+      <p className="text-xs sm:text-[0.92rem] text-ink-2 leading-relaxed">
         {event ? 'Keep Stay on your home screen or desktop. It opens in one tap and works offline.' : 'To keep Stay on your home screen: tap Share, then Add to Home Screen.'}
       </p>
-      <div className="flex shrink-0 items-center gap-1">
+      <div className="mt-3 flex items-center justify-end gap-2">
+        <button type="button" className="btn btn-ghost text-xs" onClick={dismiss}>
+          Not now
+        </button>
         {event && (
           <button
             type="button"
-            className="btn btn-primary"
+            className="btn btn-primary text-xs"
             onClick={async () => {
               await event.prompt();
               await event.userChoice.catch(() => undefined);
@@ -76,9 +83,6 @@ export function InstallPrompt() {
             Install
           </button>
         )}
-        <button type="button" className="btn btn-ghost" onClick={dismiss}>
-          Not now
-        </button>
       </div>
     </aside>
   );

@@ -1,10 +1,13 @@
 'use client';
 
+import { useState, useRef } from 'react';
+import Link from 'next/link';
 import { useStayData } from '@/lib/storage/useStayData';
 import { BARRIER_DEFINITIONS, STRATEGY_DEFINITIONS } from '@/lib/coach/strategies';
 import { StrategyPatternSummary } from '@/components/StrategyPatternSummary';
 import { weekTally, weekTallyLine } from '@/lib/coach/weekTally';
 import { PageSkeleton } from '@/components/PageSkeleton';
+import type { CoachSessionRecord } from '@/types/domain';
 
 const OUTCOME_LABEL: Record<string, { text: string; color: string }> = {
   started: { text: 'Started', color: '#236B48' },
@@ -14,12 +17,45 @@ const OUTCOME_LABEL: Record<string, { text: string; color: string }> = {
 };
 
 export default function HistoryPage() {
-  const { sessions, checkins, loaded } = useStayData('app');
+  const { profile, sessions, checkins, loaded, removeSession, restoreSession } = useStayData('app');
+  const [deletedSession, setDeletedSession] = useState<CoachSessionRecord | null>(null);
+  const undoTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   if (!loaded) return <PageSkeleton variant="history" />;
   const week = weekTally(sessions);
 
+  const handleDelete = (s: CoachSessionRecord) => {
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    setDeletedSession(s);
+    void removeSession(s.id);
+    undoTimerRef.current = setTimeout(() => {
+      setDeletedSession(null);
+    }, 4000);
+  };
+
+  const handleUndo = () => {
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    if (deletedSession) {
+      void restoreSession(deletedSession);
+      setDeletedSession(null);
+    }
+  };
+
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+    <div>
+      {!profile.onboardingCompleted && (
+        <div className="mb-6 rounded-2xl border border-primary/20 bg-primary/5 p-4 flex flex-wrap items-center justify-between gap-3" data-testid="onboarding-guide-banner">
+          <div>
+            <p className="font-semibold text-sm text-ink">Welcome to Stay</p>
+            <p className="text-xs text-ink-2 mt-0.5">Complete the quick 2-question setup on Today to personalize your focus coaching.</p>
+          </div>
+          <Link href="/app/today" className="btn btn-primary text-xs py-2 px-3">
+            Start setup
+          </Link>
+        </div>
+      )}
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] relative">
       <section className="card p-5 sm:p-6" aria-labelledby="hist-title">
         <h1 id="hist-title" className="section-title">History</h1>
         <p className="mt-2 text-ink-2" data-testid="week-tally">{weekTallyLine(week)}</p>
@@ -30,14 +66,25 @@ export default function HistoryPage() {
             {sessions.map((s) => {
               const o = s.outcome ? OUTCOME_LABEL[s.outcome] : null;
               return (
-                <li key={s.id} className="py-4">
+                <li key={s.id} className="group py-4">
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <p className="font-medium">{s.taskText}</p>
-                    {o && (
-                      <span className="meta" style={{ color: o.color }}>
-                        {o.text}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {o && (
+                        <span className="meta font-medium" style={{ color: o.color }}>
+                          {o.text}
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(s)}
+                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity text-xs text-ink-3 hover:text-red-500 cursor-pointer px-1.5 py-0.5 rounded border border-transparent hover:border-edge"
+                        aria-label={`Delete log "${s.taskText}"`}
+                        data-testid={`history-delete-${s.id}`}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                   <p className="text-ink-2 text-[0.92rem] mt-1">{s.firstStep}</p>
                   <p className="meta mt-1.5 tnum">
@@ -73,6 +120,27 @@ export default function HistoryPage() {
           </ul>
         </section>
       </div>
+
+      {deletedSession && (
+        <aside
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-2xl border border-edge bg-surface/95 backdrop-blur-md px-4 py-3 shadow-xl"
+          role="status"
+          data-testid="history-undo-toast"
+        >
+          <span className="text-xs sm:text-sm text-ink truncate max-w-[200px] sm:max-w-xs">
+            Deleted &quot;{deletedSession.taskText}&quot;
+          </span>
+          <button
+            type="button"
+            onClick={handleUndo}
+            className="text-xs font-semibold text-primary hover:underline cursor-pointer ml-2"
+            data-testid="history-undo-button"
+          >
+            Undo (4s)
+          </button>
+        </aside>
+      )}
+    </div>
     </div>
   );
 }

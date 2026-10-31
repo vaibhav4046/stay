@@ -66,7 +66,19 @@ export function DemoPlayer() {
     const v = video.current;
     if (!v) return;
     if (v.paused) {
-      v.play().catch(() => setError(true));
+      setStarted(true);
+      setError(false);
+      const playPromise = v.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // Browser audio restriction fallback: try muted video playback
+          if (v) {
+            v.muted = true;
+            setMuted(true);
+            v.play().catch(() => setError(true));
+          }
+        });
+      }
     } else {
       v.pause();
     }

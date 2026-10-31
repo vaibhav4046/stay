@@ -7,6 +7,7 @@ import { detectCrisisSignal } from '@/lib/safety/crisis';
 import { fallbackTriage, type TriageItem, type TriageResponse } from '@/lib/coach/triage';
 import { addToday } from '@/lib/coach/todayList';
 import type { DumpLive } from '@/lib/voice/useDumpCapture';
+import { usePersistentDraft } from '@/lib/storage/usePersistentDraft';
 
 type Phase = { kind: 'write' } | { kind: 'sorting' } | { kind: 'done'; result: TriageResponse; source: string } | { kind: 'safety'; which: 'crisis' | 'medication' };
 
@@ -29,7 +30,7 @@ export function BrainDumpSheet({ onClose, onStart, onCrisis, onSaved, live, voic
   onFinishLive?: () => void;
   onCancelLive?: () => void;
 }) {
-  const [text, setText] = useState('');
+  const [text, setText, clearText] = usePersistentDraft('stay_draft_braindump', '');
   const [phase, setPhase] = useState<Phase>({ kind: 'write' });
   const area = useRef<HTMLTextAreaElement>(null);
   useEffect(() => area.current?.focus(), []);
@@ -54,6 +55,7 @@ export function BrainDumpSheet({ onClose, onStart, onCrisis, onSaved, live, voic
     }
     const final = result ?? fallbackTriage(t);
     addToday(final.items.map((i) => ({ text: i.text, bucket: i.bucket, firstStep: i.firstStep, minutes: i.minutes })));
+    clearText();
     onSaved();
     setPhase({ kind: 'done', result: final, source });
   };

@@ -10,6 +10,8 @@ import {
   getLocalProfile,
   getLocalSessions,
   recordCoachSession,
+  deleteCoachSession,
+  restoreCoachSession,
   recordTreatmentCheckin,
   saveProfile,
 } from '@/lib/storage/repository';
@@ -74,6 +76,26 @@ export function useStayData(variant: DataVariant) {
     [variant]
   );
 
+  const removeSession = useCallback(
+    async (id: string) => {
+      if (variant !== 'demo') {
+        await deleteCoachSession(id);
+      }
+      setSessions((s) => s.filter((item) => item.id !== id));
+    },
+    [variant]
+  );
+
+  const restoreSession = useCallback(
+    async (rec: CoachSessionRecord) => {
+      if (variant !== 'demo') {
+        await restoreCoachSession(rec);
+      }
+      setSessions((s) => [rec, ...s]);
+    },
+    [variant]
+  );
+
   const addCheckin = useCallback(
     async (input: Omit<TreatmentCheckinRecord, 'id' | 'userId' | 'createdAt'>) => {
       if (variant === 'demo') {
@@ -94,5 +116,15 @@ export function useStayData(variant: DataVariant) {
     [variant]
   );
 
-  return { profile, sessions, checkins, loaded, updateProfile, addSession, addCheckin };
+  return {
+    profile,
+    sessions,
+    checkins,
+    loaded,
+    updateProfile,
+    addSession,
+    removeSession,
+    restoreSession,
+    addCheckin,
+  };
 }

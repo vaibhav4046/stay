@@ -6,6 +6,11 @@ import { addRoutine, findRoutine, loadRoutines, parseSteps, removeRoutine, type 
 
 const clock = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
 
+const EXAMPLE_ROUTINE = {
+  name: 'Study session',
+  steps: 'Water and healthy snack - 3\nPhone in another room\nOpen the notes - 2\nReview first section - 15',
+};
+
 /**
  * Routines, one step at a time. The current step is big, has its own short timer, and is read out when the voice is live.
  * Finishing a step moves on; skipping is always fine; nothing is scored.
@@ -17,6 +22,7 @@ export function RoutineSheet({ initialId, onClose, onSpeak, onComplete }: { init
   const [mode, setMode] = useState<'list' | 'new'>('list');
   const [name, setName] = useState('');
   const [steps, setSteps] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const speakRef = useRef(onSpeak);
   speakRef.current = onSpeak;
 
@@ -55,6 +61,30 @@ export function RoutineSheet({ initialId, onClose, onSpeak, onComplete }: { init
     begin(running.routine, i);
   };
 
+  const loadExample = () => {
+    setName(EXAMPLE_ROUTINE.name);
+    setSteps(EXAMPLE_ROUTINE.steps);
+    setError(null);
+  };
+
+  const handleSaveRoutine = () => {
+    const trimmedName = name.trim();
+    const parsed = parseSteps(steps);
+    if (!trimmedName) {
+      setError('Please provide a name for your routine (or click "Use example template").');
+      return;
+    }
+    if (parsed.length === 0) {
+      setError('Please type at least one step (e.g. "open notes - 2") or click "Use example template".');
+      return;
+    }
+    setError(null);
+    setList(addRoutine(trimmedName, parsed));
+    setName('');
+    setSteps('');
+    setMode('list');
+  };
+
   if (running) {
     const step = running.routine.steps[running.index];
     return (
@@ -84,16 +114,74 @@ export function RoutineSheet({ initialId, onClose, onSpeak, onComplete }: { init
     const parsed = parseSteps(steps);
     return (
       <Sheet title="New routine" onClose={onClose}>
-        <label className="block"><span className="label">Name</span>
-          <input className="field mt-1 w-full" value={name} maxLength={40} onChange={(e) => setName(e.target.value)} placeholder="Study session" data-testid="routine-name" />
+        <div className="mb-3 flex items-center justify-between">
+          <span className="text-xs text-ink-3">Design custom multi-step focus sequences</span>
+          <button
+            type="button"
+            onClick={loadExample}
+            className="text-xs font-medium text-primary hover:underline cursor-pointer"
+            data-testid="routine-load-template"
+          >
+            Use example template
+          </button>
+        </div>
+
+        <label className="block">
+          <span className="label">Name</span>
+          <input
+            className="field mt-1 w-full placeholder:italic placeholder:text-ink-4/60"
+            value={name}
+            maxLength={40}
+            onChange={(e) => {
+              setName(e.target.value);
+              if (error) setError(null);
+            }}
+            placeholder="e.g. Study session"
+            data-testid="routine-name"
+          />
         </label>
-        <label className="mt-3 block"><span className="label">Steps, one per line (add minutes like &ldquo;tidy desk - 5&rdquo;)</span>
-          <textarea className="field mt-1 min-h-[8rem] w-full p-3" value={steps} onChange={(e) => setSteps(e.target.value)} placeholder={'water and snack - 3\nphone in another room\nopen the notes - 2'} data-testid="routine-steps" />
+
+        <label className="mt-3 block">
+          <span className="label">Steps, one per line (add minutes like &ldquo;tidy desk - 5&rdquo;)</span>
+          <textarea
+            className="field mt-1 min-h-[8rem] w-full p-3 font-sans placeholder:italic placeholder:text-ink-4/60"
+            value={steps}
+            onChange={(e) => {
+              setSteps(e.target.value);
+              if (error) setError(null);
+            }}
+            placeholder={'e.g.\nwater and snack - 3\nphone in another room\nopen the notes - 2'}
+            data-testid="routine-steps"
+          />
         </label>
-        <p className="meta mt-2">{parsed.length} step{parsed.length === 1 ? '' : 's'}</p>
-        <div className="mt-3 flex gap-2">
-          <button type="button" className="btn btn-primary" disabled={!name.trim() || parsed.length === 0} onClick={() => { setList(addRoutine(name, parsed)); setName(''); setSteps(''); setMode('list'); }} data-testid="routine-save">Save routine</button>
-          <button type="button" className="btn btn-ghost" onClick={() => setMode('list')}>Back</button>
+
+        <div className="mt-2 flex items-center justify-between text-xs text-ink-3">
+          <span className="meta">{parsed.length} step{parsed.length === 1 ? '' : 's'}</span>
+          <span>Minutes: {parsed.reduce((acc, s) => acc + s.minutes, 0)}m</span>
+        </div>
+
+        {error && (
+          <div
+            className="mt-3 rounded-xl border border-red-500/30 bg-red-500/10 p-2.5 text-xs text-red-600 dark:text-red-400 font-medium"
+            data-testid="routine-error"
+            role="alert"
+          >
+            {error}
+          </div>
+        )}
+
+        <div className="mt-4 flex gap-2">
+          <button
+            type="button"
+            className="btn btn-primary cursor-pointer"
+            onClick={handleSaveRoutine}
+            data-testid="routine-save"
+          >
+            Save routine
+          </button>
+          <button type="button" className="btn btn-ghost" onClick={() => setMode('list')}>
+            Back
+          </button>
         </div>
       </Sheet>
     );

@@ -236,23 +236,23 @@ function sampleStroke(rnd: () => number, curve: (u: number) => [number, number],
 // ------------------------------------------------------------------ the figure
 
 const WEIGHTS = {
-  faceFill: 0.21,
-  faceEdge: 0.04,
-  hairFill: 0.27,
-  hairEdge: 0.06,
-  hairBack: 0.05,
-  neck: 0.035,
-  torsoFill: 0.12,
-  torsoEdge: 0.035,
-  chest: 0.015,
-  collar: 0.02,
-  eye: 0.072, // both eyes
-  brow: 0.032, // both brows
-  nose: 0.028,
-  upperLip: 0.026,
-  lowerLip: 0.032,
-  mouthInner: 0.026,
-  blush: 0.012, // both cheeks
+  faceFill: 0.18,
+  faceEdge: 0.035,
+  hairFill: 0.20,
+  hairEdge: 0.045,
+  hairBack: 0.03,
+  neck: 0.045,
+  torsoFill: 0.22,
+  torsoEdge: 0.055,
+  chest: 0.025,
+  collar: 0.025,
+  eye: 0.06, // both eyes
+  brow: 0.025, // both brows
+  nose: 0.022,
+  upperLip: 0.022,
+  lowerLip: 0.025,
+  mouthInner: 0.02,
+  blush: 0.01, // both cheeks
   shadow: 0.012,
 };
 

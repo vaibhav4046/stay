@@ -48,6 +48,7 @@ import { addToday, loadToday, moveToday, toggleToday, type TodayItem } from '@/l
 import { byokHeaders } from '@/lib/byok/config';
 import { loadParked, unparkThought, type ParkedItem } from '@/lib/coach/parkingLot';
 import { emitHost, onHostCommand } from '@/lib/host';
+import { usePersistentDraft } from '@/lib/storage/usePersistentDraft';
 
 type Step = 'idle' | 'plan' | 'timer' | 'outcome' | 'done';
 
@@ -97,7 +98,9 @@ export function StayHome({
   const orb = useOrbShape();
 
   const [step, setStep] = useState<Step>('idle');
-  const [input, setInput] = useState('');
+  const [input, setInput, clearInput] = usePersistentDraft('stay_draft_today_task', '');
+  const [shrinkDepth, setShrinkDepth] = useState(0);
+  const [isLoggingOutcome, setIsLoggingOutcome] = useState(false);
   const [plan, setPlan] = useState<CoachPlanProposal | null>(null);
   const [planLoading, setPlanLoading] = useState(false);
   const [minutes, setMinutes] = useState(() => {
@@ -171,7 +174,9 @@ export function StayHome({
 
   const logOutcome = useCallback(
     async (outcome: SessionOutcome, rating: number | null = null) => {
-      if (!plan) return;
+      if (!plan || isLoggingOutcome) return;
+      setIsLoggingOutcome(true);
+      setTimeout(() => setIsLoggingOutcome(false), 2500);
       await onLogSession({
         completedAt: new Date().toISOString(),
         mode: usedVoice ? 'voice' : 'text',
@@ -195,7 +200,7 @@ export function StayHome({
       say('Saved on this device');
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [plan, onLogSession, usedVoice, careContext, minutes, elapsed, say],
+    [plan, isLoggingOutcome, onLogSession, usedVoice, careContext, minutes, elapsed, say],
   );
 
   const voice = useVoiceAgent({
@@ -487,7 +492,8 @@ export function StayHome({
     (raw: string) => {
       const t = raw.trim();
       if (!t) return;
-      setInput('');
+      clearInput();
+      setShrinkDepth(0);
       orb.feed(t, 'typed');
       if (isSmallTalk(t)) {
         voiceRef.current.sendUserTextMessage(t);
@@ -502,15 +508,20 @@ export function StayHome({
       voiceRef.current.sendUserTextMessage(t, { skipLocalPlan: true });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [requestPlan],
+    [requestPlan, clearInput],
   );
 
-  // A task typed on the landing page arrives here once, through sessionStorage (never the URL).
+  // A task typed on the landing page arrives here through URL query, sessionStorage, or localStorage
   useEffect(() => {
     try {
-      const handed = sessionStorage.getItem('stay_handoff_task');
+      const urlPrompt = new URLSearchParams(window.location.search).get('prompt');
+      const handed =
+        urlPrompt ||
+        sessionStorage.getItem('stay_handoff_task') ||
+        localStorage.getItem('stay_pending_prompt');
       if (handed) {
         sessionStorage.removeItem('stay_handoff_task');
+        localStorage.removeItem('stay_pending_prompt');
         submit(handed);
       }
     } catch {
@@ -566,7 +577,7 @@ export function StayHome({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // A block survives a reload or a closed tab: save it while it runs (and while its outcome is waiting), clear it otherwise.
+  // A block survives a reload or a closed tab: save it only while actively running, clear it otherwise.
   const savedOnce = useRef(false);
   useEffect(() => {
     // the first run is the page loading: leave what is stored for the restore effect above to read
@@ -575,15 +586,15 @@ export function StayHome({
       return;
     }
     try {
-      if ((step === 'timer' || step === 'outcome') && plan) {
+      if (step === 'timer' && running && plan) {
         window.localStorage.setItem('stay_active_block', JSON.stringify({ plan, minutes, endsAt: deadline.current }));
-      } else if (step === 'idle' || step === 'plan' || step === 'done') {
+      } else {
         window.localStorage.removeItem('stay_active_block');
       }
     } catch {
       // private mode: not remembered
     }
-  }, [step, plan, minutes]);
+  }, [step, running, plan, minutes]);
 
   // arriving from onboarding or another screen: always start at the top, never mid-scroll
   useEffect(() => {
@@ -766,9 +777,39 @@ export function StayHome({
             <button type="button" className="btn btn-primary" onClick={() => startTimer(minutes)} data-testid="start-timer">
               Start {minutes} min
             </button>
-            <button type="button" className="btn btn-secondary" onClick={() => void requestPlan(plan.taskText, 'task_shrinking')}>
-              Make it smaller
-            </button>
+            {shrinkDepth >= 4 ? (
+              <span className="text-xs px-3 py-2 rounded-xl bg-surface-2 text-ink-3 border border-edge flex items-center gap-1.5" data-testid="shrink-floor">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                Smallest step floor reached
+              </span>
+            ) : (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  const nextDepth = shrinkDepth + 1;
+                  setShrinkDepth(nextDepth);
+                  if (nextDepth >= 4) {
+                    setPlan((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            firstStep: 'Smallest possible floor: take one slow breath with the orb for 10 seconds, then just touch the first item. Zero pressure to finish.',
+                            whyThisFits: 'When tasks feel this heavy, the nervous system is overwhelmed. Breathing resets the freeze response before doing anything else.',
+                            timerMinutes: 2,
+                          }
+                        : null
+                    );
+                    setMinutes(2);
+                  } else {
+                    void requestPlan(plan.taskText, 'task_shrinking');
+                  }
+                }}
+                data-testid="make-smaller"
+              >
+                Make it smaller {shrinkDepth > 0 ? `(${shrinkDepth}/3)` : ''}
+              </button>
+            )}
             {[5, 10, 25, 45, 90].map((m) => (
               <button key={m} type="button" className="chip" aria-pressed={minutes === m} onClick={() => setMinutes(m)} aria-label={`${m} minute block`}>
                 {m}
@@ -794,6 +835,9 @@ export function StayHome({
               className="btn btn-secondary"
               onClick={() => {
                 setRunning(false);
+                try {
+                  window.localStorage.removeItem('stay_active_block');
+                } catch {}
                 setStep('outcome');
               }}
               data-testid="stop-timer"
@@ -805,7 +849,15 @@ export function StayHome({
               className="btn btn-secondary"
               onClick={() => {
                 deadline.current += 5 * 60_000;
-                setMinutes((m) => m + 5);
+                const newMinutes = minutes + 5;
+                setMinutes(newMinutes);
+                const newLeft = Math.max(0, Math.round((deadline.current - Date.now()) / 1000));
+                setRemaining(newLeft);
+                try {
+                  if (plan) {
+                    window.localStorage.setItem('stay_active_block', JSON.stringify({ plan, minutes: newMinutes, endsAt: deadline.current }));
+                  }
+                } catch {}
                 say('Five more minutes');
               }}
               data-testid="plus-five"
@@ -818,7 +870,24 @@ export function StayHome({
             className="btn btn-ghost mt-3"
             onClick={() => {
               setRunning(false);
-              void requestPlan(plan.taskText, 'task_shrinking');
+              const nextDepth = shrinkDepth + 1;
+              setShrinkDepth(nextDepth);
+              if (nextDepth >= 4) {
+                setPlan((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        firstStep: 'Smallest possible floor: take one slow breath with the orb for 10 seconds, then just touch the first item. Zero pressure to finish.',
+                        whyThisFits: 'When tasks feel this heavy, the nervous system is overwhelmed. Breathing resets the freeze response before doing anything else.',
+                        timerMinutes: 2,
+                      }
+                    : null
+                );
+                setMinutes(2);
+                setStep('plan');
+              } else {
+                void requestPlan(plan.taskText, 'task_shrinking');
+              }
             }}
             data-testid="too-big"
           >

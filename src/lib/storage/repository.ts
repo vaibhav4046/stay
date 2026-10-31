@@ -243,6 +243,51 @@ export function getLocalSessions(): CoachSessionRecord[] {
   return safeReadJson<CoachSessionRecord[]>(STORAGE_KEYS.sessions, []);
 }
 
+export async function deleteCoachSession(id: string): Promise<void> {
+  const current = getLocalSessions();
+  const target = current.find((s) => s.id === id);
+  const updated = current.filter((s) => s.id !== id);
+  safeWriteJson(STORAGE_KEYS.sessions, updated);
+
+  if (target) {
+    await appendAuditEvent(
+      'coach_session_deleted',
+      `Deleted session "${target.taskText.slice(0, 60)}"`
+    );
+  }
+
+  const supabase = getSupabaseBrowserClient();
+  if (supabase) {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user) {
+        await supabase.from('coach_sessions').delete().eq('id', id);
+      }
+    } catch {
+      // offline fallback
+    }
+  }
+}
+
+export async function restoreCoachSession(session: CoachSessionRecord): Promise<void> {
+  const current = getLocalSessions();
+  if (current.some((s) => s.id === session.id)) return;
+  const updated = [session, ...current];
+  safeWriteJson(STORAGE_KEYS.sessions, updated);
+
+  const supabase = getSupabaseBrowserClient();
+  if (supabase) {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user) {
+        await supabase.from('coach_sessions').insert(session);
+      }
+    } catch {
+      // offline fallback
+    }
+  }
+}
+
 export async function recordCoachSession(
   input: Omit<CoachSessionRecord, 'id' | 'userId' | 'createdAt'>
 ): Promise<CoachSessionRecord> {

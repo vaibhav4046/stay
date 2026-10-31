@@ -151,7 +151,7 @@ export function NeuralOrbArtifact() {
 
         if (px >= 0 && px <= width && py >= 0 && py <= height) {
           const depthAlpha = Math.max(0.55, Math.min(1, (z2 + 1.4) / 2.2));
-          const dotRadius = Math.max(2.2, p * 3.1);
+          const dotRadius = Math.max(2.6, p * 3.5);
 
           if (mode === 'neural') {
             ctx.fillStyle = `rgba(168, 85, 247, ${depthAlpha * 0.8})`;
@@ -319,28 +319,28 @@ export function NeuralOrbArtifact() {
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center font-mono">
               <div className="p-2.5 rounded-lg bg-surface-2">
                 <p className="text-ink-3 text-[10px] uppercase">Face Skin</p>
-                <p className="text-sm font-bold text-ink mt-0.5">1,300</p>
-                <p className="text-[10px] text-ink-3">25.0%</p>
+                <p className="text-sm font-bold text-ink mt-0.5">1,070</p>
+                <p className="text-[10px] text-ink-3">20.6%</p>
               </div>
               <div className="p-2.5 rounded-lg bg-surface-2">
                 <p className="text-ink-3 text-[10px] uppercase">Hair Volume</p>
-                <p className="text-sm font-bold text-ink mt-0.5">1,976</p>
-                <p className="text-[10px] text-ink-3">38.0%</p>
+                <p className="text-sm font-bold text-ink mt-0.5">1,355</p>
+                <p className="text-[10px] text-ink-3">26.1%</p>
               </div>
               <div className="p-2.5 rounded-lg bg-surface-2">
-                <p className="text-ink-3 text-[10px] uppercase">Torso & Neck</p>
-                <p className="text-sm font-bold text-ink mt-0.5">988</p>
-                <p className="text-[10px] text-ink-3">19.0%</p>
+                <p className="text-ink-3 text-[10px] uppercase">Torso & Shoulders</p>
+                <p className="text-sm font-bold text-ink mt-0.5">1,747</p>
+                <p className="text-[10px] text-ink-3">33.6%</p>
               </div>
               <div className="p-2.5 rounded-lg bg-surface-2">
                 <p className="text-ink-3 text-[10px] uppercase">Eyes & Brows</p>
-                <p className="text-sm font-bold text-ink mt-0.5">541</p>
-                <p className="text-[10px] text-ink-3">10.4%</p>
+                <p className="text-sm font-bold text-ink mt-0.5">420</p>
+                <p className="text-[10px] text-ink-3">8.1%</p>
               </div>
               <div className="p-2.5 rounded-lg bg-surface-2">
                 <p className="text-ink-3 text-[10px] uppercase">Lips & Visemes</p>
-                <p className="text-sm font-bold text-ink mt-0.5">395</p>
-                <p className="text-[10px] text-ink-3">7.6%</p>
+                <p className="text-sm font-bold text-ink mt-0.5">608</p>
+                <p className="text-[10px] text-ink-3">11.7%</p>
               </div>
             </div>
 

@@ -46,8 +46,12 @@ export function Hero() {
   }, []);
 
   const handoff = () => {
+    const trimmed = text.trim();
     try {
-      if (text.trim()) sessionStorage.setItem(HANDOFF_KEY, text.trim());
+      if (trimmed) {
+        sessionStorage.setItem(HANDOFF_KEY, trimmed);
+        localStorage.setItem('stay_pending_prompt', trimmed);
+      }
     } catch {
       // private mode: the app simply opens empty
     }
@@ -112,7 +116,12 @@ export function Hero() {
               if (v.trim().length >= 3) pause.current = window.setTimeout(() => orb.feed(v, 'typed'), 700);
             }}
           />
-          <Link href="/app/today" onClick={handoff} className="btn btn-primary h-12 whitespace-nowrap" data-testid="hero-start">
+          <Link
+            href="/app/today"
+            onClick={handoff}
+            className="btn btn-primary h-12 whitespace-nowrap"
+            data-testid="hero-start"
+          >
             Talk to Stay
           </Link>
         </form>
