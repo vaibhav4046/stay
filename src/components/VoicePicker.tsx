@@ -15,6 +15,8 @@ interface Props {
   fastVoice: boolean;
 }
 
+type FilterMode = 'all' | 'ready' | 'british' | 'american' | 'native';
+
 /** One line saying which engine would speak this persona right now, e.g. "AssemblyAI" or "Browser voice: Microsoft Heera". */
 function engineLine(p: VoicePersona, caps: TtsCaps): string {
   const c = chooseVoice(p, caps);
@@ -24,25 +26,134 @@ function engineLine(p: VoicePersona, caps: TtsCaps): string {
   return ENGINES.assemblyai.label;
 }
 
-function VoiceCard({ p, caps, selected, playing, error, onPick, onPreview }: { p: VoicePersona; caps: TtsCaps; selected: boolean; playing: boolean; error: string | null; onPick: () => void; onPreview: () => void }) {
+function VoiceCard({
+  p,
+  caps,
+  selected,
+  playing,
+  error,
+  onPick,
+  onPreview,
+  hidden = false,
+}: {
+  p: VoicePersona;
+  caps: TtsCaps;
+  selected: boolean;
+  playing: boolean;
+  error: string | null;
+  onPick: () => void;
+  onPreview: () => void;
+  hidden?: boolean;
+}) {
   const usable = chooseVoice(p, caps).ref !== null;
+  const needText = chooseVoice(p, caps).needs;
+
   return (
-    <div className="rounded-xl border p-3" style={{ borderColor: selected ? 'var(--color-accent)' : 'var(--color-line)', opacity: usable ? 1 : 0.8 }} data-testid={`voice-${p.id}`} data-usable={usable}>
-      <button type="button" className="chip w-full justify-start" aria-pressed={selected} onClick={onPick}>
-        <span>
-          <span className="block font-medium">{p.name}</span>
-          <span className="meta block">{p.gender === 'female' ? 'Female' : 'Male'} · {p.voiceLabel}</span>
-        </span>
-      </button>
-      <p className="meta mt-2">{p.style}</p>
-      <p className="meta mt-1" data-testid={`voice-engine-${p.id}`}>{engineLine(p, caps)}</p>
-      <div className="mt-2 flex items-center gap-2">
-        <button type="button" className="btn btn-secondary" onClick={onPreview} disabled={!usable} aria-label={`${playing ? 'Stop' : 'Play'} a 20 second preview of ${p.name}`} data-testid={`preview-${p.id}`}>
-          {playing ? 'Stop' : 'Preview (20 s)'}
+    <div
+      className={`group relative flex flex-col justify-between rounded-2xl border transition-all duration-200 ${
+        selected
+          ? '!border-primary !bg-primary/[0.04] ring-2 ring-primary/25 shadow-sm'
+          : 'border-line bg-surface hover:border-line-strong hover:shadow-md hover:-translate-y-0.5'
+      } ${playing ? 'ring-2 ring-emerald-500/40 !border-emerald-600' : ''} p-4 ${hidden ? 'hidden' : ''}`}
+      style={{ opacity: usable ? 1 : 0.8 }}
+      data-testid={`voice-${p.id}`}
+      data-usable={usable}
+    >
+      <div>
+        <button
+          type="button"
+          className="w-full text-left focus:outline-none"
+          aria-pressed={selected}
+          onClick={onPick}
+        >
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-display font-semibold text-ink text-[1.05rem] group-hover:text-primary transition-colors">
+                  {p.name}
+                </span>
+                {selected && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[0.7rem] font-semibold text-primary">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    Selected
+                  </span>
+                )}
+                {usable ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[0.7rem] font-medium text-emerald-700 dark:text-emerald-300">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Ready
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[0.7rem] font-medium text-amber-800 dark:text-amber-300">
+                    Needs Setup
+                  </span>
+                )}
+              </div>
+
+              <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                <span className="meta block text-xs">
+                  {p.gender === 'female' ? 'Female' : 'Male'} · {p.voiceLabel}
+                </span>
+              </div>
+            </div>
+          </div>
         </button>
-        {!usable && <span className="meta">{chooseVoice(p, caps).needs}</span>}
+
+        <p className="meta mt-2 text-xs leading-relaxed text-ink-2">{p.style}</p>
+        <p className="meta mt-1 text-[0.75rem] text-ink-3" data-testid={`voice-engine-${p.id}`}>{engineLine(p, caps)}</p>
       </div>
-      {error && <p className="meta mt-1" role="alert" style={{ color: 'var(--color-danger)' }}>{error}</p>}
+
+      <div className="mt-3 pt-3 border-t border-line/60">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <button
+            type="button"
+            className={`inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-medium transition-all ${
+              playing
+                ? 'bg-primary text-white shadow-sm'
+                : usable
+                  ? 'bg-surface-2 text-ink hover:bg-line-strong hover:text-ink'
+                  : 'bg-surface-2 text-ink-3 opacity-50 cursor-not-allowed'
+            }`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onPreview();
+            }}
+            disabled={!usable}
+            aria-label={`${playing ? 'Stop' : 'Play'} a 20 second preview of ${p.name}`}
+            data-testid={`preview-${p.id}`}
+          >
+            <span className={`w-4 h-4 rounded-full flex items-center justify-center ${playing ? 'bg-white/20' : 'bg-surface'}`}>
+              {playing ? (
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <rect x="4" y="4" width="16" height="16" rx="2" />
+                </svg>
+              ) : (
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="ml-0.5">
+                  <polygon points="5 3 19 12 5 21 5 3" />
+                </svg>
+              )}
+            </span>
+            <span>{playing ? 'Stop' : 'Preview (20 s)'}</span>
+            {playing && (
+              <span className="flex items-center gap-0.5 ml-0.5 h-3">
+                <span className="w-0.5 bg-white rounded-full animate-soundwave-1" />
+                <span className="w-0.5 bg-white rounded-full animate-soundwave-2" />
+                <span className="w-0.5 bg-white rounded-full animate-soundwave-3" />
+              </span>
+            )}
+          </button>
+
+          {!usable && (
+            <span className="meta text-xs text-amber-700 dark:text-amber-300">
+              {needText}
+            </span>
+          )}
+        </div>
+
+        {error && <p className="meta mt-1.5 text-xs" role="alert" style={{ color: 'var(--color-danger)' }}>{error}</p>}
+      </div>
     </div>
   );
 }
@@ -52,6 +163,7 @@ export function VoicePicker({ selected, onSelect, fastVoice }: Props) {
   const caps = useTtsCaps();
   const [playing, setPlaying] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [filter, setFilter] = useState<FilterMode>('all');
   const [key, setKey] = useState('');
   const [region, setRegion] = useState('');
   const [keyStatus, setKeyStatus] = useState<{ ok: boolean; message: string } | null>(null);
@@ -96,28 +208,119 @@ export function VoicePicker({ selected, onSelect, fastVoice }: Props) {
     window.dispatchEvent(new Event(BYOK_CHANGED_EVENT));
   };
 
+  const matchesFilter = (p: VoicePersona) => {
+    if (filter === 'all') return true;
+    if (filter === 'ready') return chooseVoice(p, caps).ref !== null;
+    if (filter === 'british') return p.voiceLabel.includes('British');
+    if (filter === 'american') return p.voiceLabel.includes('American');
+    if (filter === 'native') return p.nativeLang !== null;
+    return true;
+  };
+
+  const readyCount = PERSONAS.filter((p) => chooseVoice(p, caps).ref !== null).length;
+  const britishCount = PERSONAS.filter((p) => p.voiceLabel.includes('British')).length;
+  const americanCount = PERSONAS.filter((p) => p.voiceLabel.includes('American')).length;
+  const nativeCount = PERSONAS.filter((p) => p.nativeLang !== null).length;
+
   const card = (p: VoicePersona) => (
-    <VoiceCard key={p.id} p={p} caps={caps} selected={selected === p.id} playing={playing === p.id} error={errors[p.id] || null} onPick={() => pick(p)} onPreview={() => preview(p)} />
+    <VoiceCard
+      key={p.id}
+      p={p}
+      caps={caps}
+      selected={selected === p.id}
+      playing={playing === p.id}
+      error={errors[p.id] || null}
+      onPick={() => pick(p)}
+      onPreview={() => preview(p)}
+      hidden={!matchesFilter(p)}
+    />
   );
+
   const others = PERSONAS.filter((p) => !p.recommended);
 
   return (
     <div data-testid="voice-picker">
-      <p className="label">Recommended</p>
-      <p className="meta mt-1">Four voices that are clear and calm, with the accent each name promises. Say a name to switch, like &ldquo;change voice to Chaiwala Blitz&rdquo;, &ldquo;use the Indian voice&rdquo; or &ldquo;switch to Mexican Spanish&rdquo;.</p>
-      <div className="mt-2 grid gap-2 sm:grid-cols-2" data-testid="voice-recommended">{RECOMMENDED_PERSONAS.map(card)}</div>
-      {!fastVoice && <p className="meta mt-2" role="note">Browser and Azure voices only speak in Fast voice. With Fast voice off, Stay uses the standard voice.</p>}
+      <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
+        <div>
+          <p className="label">Recommended</p>
+          <p className="meta mt-0.5">Four voices that are clear and calm, with the accent each name promises.</p>
+        </div>
 
-      <details className="mt-4" data-testid="voice-more">
-        <summary className="label cursor-pointer">More voices ({others.length})</summary>
-        <p className="meta mt-1">Every name matches its voice: British and American voices are British and American, and only the native voices speak Spanish, French, German, Italian or Portuguese. Lantern Iris and Compass Reid are English voices whose accent the provider does not document.</p>
-        <div className="mt-2 grid gap-2 sm:grid-cols-2">{others.map(card)}</div>
+        {/* ElevenLabs category filter bar */}
+        <div className="flex items-center gap-1.5 flex-wrap" role="group" aria-label="Filter voices">
+          <button
+            type="button"
+            onClick={() => setFilter('all')}
+            className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all ${
+              filter === 'all' ? 'bg-primary text-white shadow-sm' : 'bg-surface-2 text-ink-2 hover:text-ink'
+            }`}
+          >
+            All ({PERSONAS.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilter('ready')}
+            className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all flex items-center gap-1 ${
+              filter === 'ready' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+            }`}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            Ready ({readyCount})
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilter('british')}
+            className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all ${
+              filter === 'british' ? 'bg-primary text-white shadow-sm' : 'bg-surface-2 text-ink-2 hover:text-ink'
+            }`}
+          >
+            British ({britishCount})
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilter('american')}
+            className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all ${
+              filter === 'american' ? 'bg-primary text-white shadow-sm' : 'bg-surface-2 text-ink-2 hover:text-ink'
+            }`}
+          >
+            American ({americanCount})
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilter('native')}
+            className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all ${
+              filter === 'native' ? 'bg-primary text-white shadow-sm' : 'bg-surface-2 text-ink-2 hover:text-ink'
+            }`}
+          >
+            Native ({nativeCount})
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-2 grid gap-2.5 sm:grid-cols-2" data-testid="voice-recommended">
+        {RECOMMENDED_PERSONAS.map(card)}
+      </div>
+
+      {!fastVoice && (
+        <p className="meta mt-2" role="note">
+          Browser and Azure voices only speak in Fast voice. With Fast voice off, Stay uses the standard voice.
+        </p>
+      )}
+
+      <details className="mt-5" data-testid="voice-more">
+        <summary className="label cursor-pointer select-none py-1">More voices ({others.length})</summary>
+        <p className="meta mt-1">
+          Every name matches its voice: British and American voices are British and American, and only the native voices speak Spanish, French, German, Italian or Portuguese. Lantern Iris and Compass Reid are English voices whose accent the provider does not document.
+        </p>
+        <div className="mt-3 grid gap-2.5 sm:grid-cols-2">{others.map(card)}</div>
       </details>
 
-      <details className="mt-4" data-testid="voice-engines">
-        <summary className="label cursor-pointer">Accent voices: Indian English and Mexican Spanish</summary>
-        <p className="meta mt-2">AssemblyAI has British, American and five native-language voices, and no Indian English or Mexican Spanish. Those two accents come from other engines, shown on each voice:</p>
-        <ul className="meta mt-2 list-disc pl-5">
+      <details className="mt-5" data-testid="voice-engines">
+        <summary className="label cursor-pointer select-none py-1">Accent voices: Indian English and Mexican Spanish</summary>
+        <p className="meta mt-2">
+          AssemblyAI has British, American and five native-language voices, and no Indian English or Mexican Spanish. Those two accents come from other engines, shown on each voice:
+        </p>
+        <ul className="meta mt-2 list-disc pl-5 space-y-1">
           <li><strong>{ENGINES.browser.label}.</strong> {ENGINES.browser.note} On this device: {caps.browserVoices.filter((v) => /^(en[-_]IN|es[-_]MX)/i.test(v.lang)).map((v) => `${v.name} (${v.lang})`).join(', ') || 'no Indian English or Mexican Spanish voice found'}.</li>
           <li><strong>{ENGINES.azure.label}.</strong> {ENGINES.azure.note}</li>
         </ul>
@@ -135,7 +338,9 @@ export function VoicePicker({ selected, onSelect, fastVoice }: Props) {
             {keyStatus && <span className="meta" role="status" style={{ color: keyStatus.ok ? undefined : 'var(--color-danger)' }}>{keyStatus.message}</span>}
           </div>
         </div>
-        <p className="meta mt-3">Stays in this browser and travels through Stay&apos;s server to Azure with each spoken sentence. Never saved or logged by Stay. If Azure rejects it mid-conversation, Stay switches to the standard voice.</p>
+        <p className="meta mt-3">
+          Stays in this browser and travels through Stay&apos;s server to Azure with each spoken sentence. Never saved or logged by Stay. If Azure rejects it mid-conversation, Stay switches to the standard voice.
+        </p>
       </details>
     </div>
   );
