@@ -50,6 +50,8 @@ import { loadActiveSession, saveActiveSession } from '@/lib/coach/activeSession'
 import { RoutineSheet } from '@/components/RoutineSheet';
 import { ReminderSheet } from '@/components/ReminderSheet';
 import { takeDue } from '@/lib/reminders';
+import { CallStayCard } from '@/components/voice/CallStayCard';
+import { CallStayOverlay } from '@/components/voice/CallStayOverlay';
 import { showNotification } from '@/lib/reminders';
 import { addToday, loadToday, moveToday, toggleToday, type TodayItem } from '@/lib/coach/todayList';
 import { byokHeaders } from '@/lib/byok/config';
@@ -580,6 +582,33 @@ export function StayHome({
 
   const toggleVoice = handleStartVoice;
 
+  // Call mode: a full-screen call over the same voice session (opens once connected, closes when it drops)
+  const [callIntent, setCallIntent] = useState(false);
+  const callWasLive = useRef(false);
+  const startCall = useCallback(() => {
+    setCallIntent(true);
+    if (!voiceRef.current.isConnected) handleStartVoice();
+  }, [handleStartVoice]);
+  const endCall = useCallback(() => {
+    setCallIntent(false);
+    callWasLive.current = false;
+    voiceRef.current.disconnectVoiceSession();
+  }, []);
+  useEffect(() => {
+    if (!callIntent) return;
+    if (voice.isConnected) {
+      callWasLive.current = true;
+      return;
+    }
+    if (callWasLive.current) {
+      callWasLive.current = false;
+      setCallIntent(false);
+      return;
+    }
+    const id = window.setTimeout(() => setCallIntent(false), 20_000); // never connected (consent declined, error)
+    return () => window.clearTimeout(id);
+  }, [callIntent, voice.isConnected]);
+
   const handleModeChange = useCallback((newMode: AppMode) => {
     setMode(newMode);
     if (newMode === 'quiet') {
@@ -956,7 +985,7 @@ export function StayHome({
           />
           <button
             type="button"
-            onClick={voice.isConnected ? () => voice.disconnectVoiceSession() : handleStartVoice}
+            onClick={voice.isConnected ? endCall : startCall}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium transition-colors shrink-0 cursor-pointer ${
               voice.isConnected
                 ? 'border-rose-500/30 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20'
@@ -1055,55 +1084,11 @@ export function StayHome({
             onMove={(id) => setToday(moveToday(id, 'today'))}
           />
 
-          {(() => {
-            // Only show a number once a real one is configured (never invent one).
-            const phone = process.env.NEXT_PUBLIC_STAY_PHONE || '';
-            return (
-              <aside
-                className="card p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 border border-primary/20 bg-primary/5 mt-3"
-                data-testid="call-stay-card"
-                aria-label="Direct Call to Stay or Telephone Companion"
-              >
-                <div>
-                  <p className="font-semibold text-sm text-ink flex items-center gap-2">
-                    <span>Call Stay</span>
-                  </p>
-                  <p className="text-xs text-ink-2 mt-0.5">
-                    Talk to Stay in your browser with AssemblyAI voice.
-                    {phone && (
-                      <> Phone (US, inbound only): <a href={`tel:${phone}`} className="font-mono font-semibold text-primary underline">{phone}</a>. Carrier rates apply outside the US.</>
-                    )}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <button
-                    type="button"
-                    onClick={voice.isConnected ? () => voice.disconnectVoiceSession() : handleStartVoice}
-                    className={`btn text-xs py-2 px-3 shrink-0 flex items-center gap-1.5 cursor-pointer ${
-                      voice.isConnected ? 'bg-rose-600 hover:bg-rose-700 text-white' : 'btn-primary'
-                    }`}
-                    data-testid="call-direct-stay-btn"
-                  >
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                    </svg>
-                    <span>{voice.isConnected ? 'End Call' : 'Call Stay Directly'}</span>
-                  </button>
-                  {phone && (
-                    <a
-                      href={`tel:${phone}`}
-                      className="btn btn-secondary text-xs py-2 px-3 shrink-0 flex items-center gap-1.5"
-                      data-testid="call-stay-btn"
-                    >
-                      <span>Dial {phone}</span>
-                    </a>
-                  )}
-                </div>
-              </aside>
-            );
-          })()}
+          <CallStayCard inCall={voice.isConnected} onCall={startCall} onRing={chime} phone={process.env.NEXT_PUBLIC_STAY_PHONE || undefined} />
         </div>
       )}
+
+      {callIntent && voice.isConnected && <CallStayOverlay voice={voice} onEnd={endCall} />}
 
       {/* Fluid Gemini Live Chat Stream (Elevated primary above-the-fold content) */}
       <LiveChatBox

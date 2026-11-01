@@ -48,3 +48,10 @@ This document records the security audit and remediation performed across Stay's
 ## 3. Client Bundle Secret Scan (`B6`)
 Scanned `.next/static` for `ASSEMBLYAI_API_KEY`, `GROQ_API_KEY`, `ELEVENLABS_API_KEY`, `STAY_SESSION_SECRET`, `gsk_`, and `sk-`.
 - **Result:** `0` server secrets present in `.next/static`.
+
+
+## Follow-up review (2026-11-01, Cloudflare security-audit-skill, focused mode)
+
+- **Fixed:** `/api/coach/triage` lacked `guardPaidRoute` and spent the server LLM key (cost abuse). Now same-origin + signed session + rate limit + 8 KB body bound.
+- **Open (low):** `/api/keys/check` is unauthenticated and rate-limited only by spoofable client IP; it only validates a key the caller supplies, so impact is a free key-validity oracle, not spend.
+- **Scope:** focused review of API route guards, not the full six-phase audit; no live endpoint was probed.
