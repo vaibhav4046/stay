@@ -24,6 +24,14 @@ class FakeWS {
   flushes = 0;
   constructor(public url: string) {
     FakeWS.instances.push(this);
+    const parsed = new URL(url);
+    if (this.isTts && parsed.searchParams.has('voice')) {
+      queueMicrotask(() => {
+        this.push({ type: 'Error', error_code: 3006, error: 'voice is retired; use voice_id' });
+        this.close();
+      });
+      return;
+    }
     queueMicrotask(() => {
       this.readyState = 1;
       this.push({ type: 'Begin' });
@@ -34,7 +42,14 @@ class FakeWS {
   send(d: string | Uint8Array) {
     this.sent.push(d);
     if (typeof d === 'string' && this.isTts) {
-      const m = JSON.parse(d) as { type: string };
+      let m: { type: string };
+      try {
+        m = JSON.parse(d) as { type: string };
+      } catch {
+        this.push({ type: 'Error', error_code: 3012, error: 'Malformed JSON' });
+        this.close();
+        return;
+      }
       if (m.type === 'Flush' && FakeWS.auto) {
         const id = this.flushes++;
         queueMicrotask(() => { this.push({ type: 'Audio', audio: 'AAAA', flush_id: id }); if (!(FakeWS.coalesce && id % 2 === 0)) this.push({ type: 'FlushDone', flush_id: id }); });
@@ -125,8 +140,9 @@ describe('FastSocket', () => {
   it('connects both sockets with the right addresses and says ready, then speaks the greeting', async () => {
     const { stt, tts } = await open({ greeting: 'Still here with you.' });
     expect(stt.url).toContain('streaming.assemblyai.com/v3/ws');
-    expect(stt.url).toContain('sample_rate=24000');
-    expect(tts.url).toContain('voice=anna');
+    expect(stt.url).toContain('sample_rate=16000');
+    expect(tts.url).toContain('voice_id=aai-anna');
+    expect(tts.url).not.toContain('voice=');
     expect(tts.url).toContain('language=english');
     expect(types()).toEqual(['session.ready', 'reply.started', 'reply.text', 'reply.audio', 'transcript.agent', 'reply.done']);
     expect(events.find((e) => e.type === 'transcript.agent')?.text).toBe('Still here with you.');
@@ -386,16 +402,16 @@ describe('FastSocket', () => {
 });
 
 describe('fastVoiceFor', () => {
-  it('uses the language native voice for non-English fast voice', () => {
-    expect(fastVoiceFor('anna', 'es')).toBe('lola');
-    expect(fastVoiceFor('anna', 'fr')).toBe('estelle');
-    expect(fastVoiceFor('anna', 'de')).toBe('juergen');
-    expect(fastVoiceFor('charles', 'pt')).toBe('rafael');
+  it('uses the language native §2.4 voice_id for non-English fast voice', () => {
+    expect(fastVoiceFor('anna', 'es')).toBe('66c6bf99-bc69-5e32-a0cd-f9cef8ceb550'); // Mateo (es)
+    expect(fastVoiceFor('anna', 'fr')).toBe('213be0fa-a416-5a9f-8338-bd2fa4be096d'); // Claire (fr)
+    expect(fastVoiceFor('anna', 'de')).toBe('d845fc5c-96f9-5cb1-bf06-b9fa1dc125f0'); // Greta (de)
+    expect(fastVoiceFor('charles', 'pt')).toBe('c85aa079-c365-5f2b-9084-f722eeef9aa0'); // Lucas (pt)
   });
-  it('keeps an English pick and swaps a native voice out on English', () => {
-    expect(fastVoiceFor('vera', 'en')).toBe('vera');
-    expect(fastVoiceFor('lola', 'en')).toBe('anna');
-    expect(fastVoiceFor('', 'en')).toBe('anna');
+  it('maps English picks to verified §2.4 voice_ids and swaps a non-English voice out on English', () => {
+    expect(fastVoiceFor('jane', 'en')).toBe('aai-jane');
+    expect(fastVoiceFor('lola', 'en')).toBe('aai-anna');
+    expect(fastVoiceFor('', 'en')).toBe('aai-anna');
   });
 });
 
@@ -470,7 +486,7 @@ describe('Full-duplex overlap, endpointing presets, utterance speculation & mult
     expect(secondFlushWords[1].end).toBeGreaterThan(secondFlushWords[0].start);
   });
 
-  it('applies ENDPOINTING_PRESETS query params when endpointingMode is configured', async () => {
+  it('applies ENDPOINTING_PRESETS query params when endpointingMode is configured (without end_of_turn_confidence_threshold on universal-3-6-pro)', async () => {
     const s = new FastSocket({
       sttToken: 'stt',
       ttsToken: 'tts',
@@ -481,7 +497,7 @@ describe('Full-duplex overlap, endpointing presets, utterance speculation & mult
     s.send(JSON.stringify({ type: 'session.update', session: { system_prompt: 'Stay', greeting: '', output: { voice: 'anna' }, tools: [] } }));
     await tick(6);
     const stt = FakeWS.instances.find((w) => !w.isTts)!;
-    expect(stt.url).toContain(`end_of_turn_confidence_threshold=${ENDPOINTING_PRESETS.reflective.end_of_turn_confidence_threshold}`);
+    expect(stt.url).not.toContain('end_of_turn_confidence_threshold');
     expect(stt.url).toContain(`min_turn_silence=${ENDPOINTING_PRESETS.reflective.min_turn_silence}`);
     expect(stt.url).toContain(`max_turn_silence=${ENDPOINTING_PRESETS.reflective.max_turn_silence}`);
     s.close();
