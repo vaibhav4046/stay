@@ -40,6 +40,7 @@ import { loadInstructions, styleLine } from '@/lib/coach/customInstructions';
 import { runAgenticAction } from '@/lib/voice/agenticActions';
 import { TodayCard } from '@/components/TodayCard';
 import { GeminiLiveVoiceVisualizer } from '@/components/voice/GeminiLiveVoiceVisualizer';
+import { LiveChatBox } from '@/components/voice/LiveChatBox';
 import { RoutineSheet } from '@/components/RoutineSheet';
 import { ReminderSheet } from '@/components/ReminderSheet';
 import { takeDue } from '@/lib/reminders';
@@ -792,6 +793,17 @@ export function StayHome({
         )}
        </div>
       </div>
+
+      {/* Fluid Gemini Live Chat Stream */}
+      <LiveChatBox
+        transcripts={voice.transcripts}
+        partialUserTranscript={voice.partialUserTranscript}
+        liveSpokenText={voice.liveSpokenText}
+        visualState={visual}
+        isConnected={voice.isConnected}
+        onClear={voice.clearTranscripts}
+        className="w-full my-1.5"
+      />
 
       {note && (
         <div className="notice w-full" role="status" data-testid="note">

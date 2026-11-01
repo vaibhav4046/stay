@@ -816,6 +816,23 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     const liveWs = wsRef.current;
     if (!force && liveWs && liveWs.readyState === WebSocket.OPEN && sessionReadyRef.current) return;
 
+    // Record to conversational transcript feed
+    if (text.trim()) {
+      setTranscripts((prev) => {
+        const last = prev[prev.length - 1];
+        if (last && last.role === 'agent' && last.text === text.trim()) return prev;
+        return [
+          ...prev,
+          {
+            id: `agent-${Date.now()}`,
+            role: 'agent',
+            text: text.trim(),
+            timestamp: new Date().toISOString(),
+          },
+        ];
+      });
+    }
+
     // 1. Play soft clinical boundary tone if audio context is active
     if (audioCtxRef.current && audioCtxRef.current.state === 'running') {
       try {
@@ -2711,6 +2728,12 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     injectContext,
     sendUserTextMessage,
     liveSpokenText,
+    clearTranscripts: () => {
+      setTranscripts([]);
+      setLiveSpokenText('');
+      liveSpokenTextRef.current = '';
+      setPartialUserTranscript('');
+    },
   };
 }
 
