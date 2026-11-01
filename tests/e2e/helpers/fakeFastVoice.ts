@@ -1,26 +1,13 @@
 import type { Page, WebSocketRoute } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { replyPcm } from './fakeVoice';
 
-const VALID_VOICE_IDS = new Set([
-  '49c443a4-8a1d-5f7e-b70b-98bdbd9823c3', // Audrey (en-US)
-  'cb8fd642-d010-5c81-ad25-d2b3bcd7093f', //22-char/UUID Edwin (en-US)
-  '9f5ccf62-048f-5e15-99b6-f22cdb097f73', // Nora (en-GB)
-  '48d5949c-34a1-5e72-8635-f1db2bb2c2c6', // Oliver (en-GB)
-  '7e0ef16d-2f0f-5b3c-a3b5-f0c4f8f4d9c0', // Hannah (en-AU)
-  'a02eb9b9-a6d2-5a72-9d90-7ef92f53a4fd', // Callum (en-AU)
-  '37c0f1b6-f2b7-5b9a-88aa-8da4cf9d7f54', // Andrew (en-IN)
-  '1a48e481-7f02-5e96-bb84-68fcac65c2b2', // Mateo (es)
-  '04e17f09-99f7-5cac-8903-30d6b3de48fc', // Claire (fr)
-  '8659d94f-872e-554f-8152-71a535ec0da5', // Greta (de)
-  'd7aada97-72e8-520d-b253-0e7ec0bb79c2', // Lucas (pt)
-  'aai-anna',
-  'aai-charles',
-  'aai-jane',
-  'aai-felix',
-  'aai-claire',
-  'aai-logan',
-  'aai-marcus',
-  'aai-elena',
+// Same ids the app can send; whether the live API accepts them is checked by scripts/verify-voices.mjs.
+const FAST_SOCKET_SRC = readFileSync(join(__dirname, '../../../src/lib/voice/fastSocket.ts'), 'utf8');
+const VALID_VOICE_IDS = new Set<string>([
+  ...(FAST_SOCKET_SRC.match(/aai-[a-z]+/g) ?? []),
+  ...(FAST_SOCKET_SRC.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g) ?? []),
 ]);
 
 function toBase64Pcm(pcm: Float32Array): string {
