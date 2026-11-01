@@ -154,7 +154,7 @@ describe('patterns', () => {
     const { STATE_LABELS } = await import('@/components/Signal');
     expect(STATE_LABELS.backchannel).toBe('Listening');
     expect(STATE_LABELS.speaking).toBe('Speaking');
-    expect(STATE_LABELS.interrupted).toBe('Listening');
+    expect(STATE_LABELS.interrupted).toBe('Interrupted');
 
     const testBands: import('@/types/domain').AudioSpectrumBands = {
       low: 0.85,    // Vowel formant

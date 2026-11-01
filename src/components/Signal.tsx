@@ -13,7 +13,7 @@ export const STATE_LABELS: Record<VoiceVisualState, string> = {
   listening: 'Listening',
   thinking: 'Thinking',
   speaking: 'Speaking',
-  interrupted: 'Listening',
+  interrupted: 'Interrupted',
   backchannel: 'Listening',
   saving: 'Saving',
   complete: 'Logged',

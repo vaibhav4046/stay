@@ -663,7 +663,7 @@ export function StayHome({
     : voice.isHandsFreePaused
       ? 'Paused. Say "Hey Stay" to continue.'
       : voice.isConnected
-        ? { idle: 'Listening', connecting: 'Connecting', listening: 'Listening', thinking: 'Thinking', speaking: 'Speaking', interrupted: 'Listening', backchannel: 'Listening', saving: 'Saving', complete: 'Done', error: 'Voice unavailable' }[visual]
+        ? { idle: 'Listening', connecting: 'Connecting', listening: 'Listening', thinking: 'Thinking', speaking: 'Speaking', interrupted: 'Interrupted', backchannel: 'Listening', saving: 'Saving', complete: 'Done', error: 'Voice unavailable' }[visual]
         : planLoading
           ? 'Thinking'
           : step === 'timer'

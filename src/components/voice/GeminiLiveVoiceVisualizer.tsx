@@ -99,7 +99,24 @@ export function GeminiLiveVoiceVisualizer({
     return () => cancelAnimationFrame(raf);
   }, [reducedMotion]);
 
-  const label = isSpeaking ? 'Speaking' : isThinking ? 'Thinking' : !isConnected ? 'Talk to Stay' : isHandsFreePaused ? 'Paused' : 'Listening';
+  let label = 'Talk to Stay';
+  if (!isConnected) {
+    label = visualState === 'connecting' ? 'Reconnecting' : visualState === 'error' ? 'Text-only fallback' : 'Talk to Stay';
+  } else if (isHandsFreePaused) {
+    label = 'Paused';
+  } else if (visualState === 'interrupted') {
+    label = 'Interrupted';
+  } else if (isSpeaking) {
+    label = 'Speaking';
+  } else if (isThinking) {
+    label = 'Thinking';
+  } else if (visualState === 'connecting') {
+    label = 'Reconnecting';
+  } else if (visualState === 'error') {
+    label = 'Text-only fallback';
+  } else {
+    label = 'Listening';
+  }
 
   return (
     <div
