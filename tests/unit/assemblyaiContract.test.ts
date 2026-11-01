@@ -7,43 +7,8 @@ import { FastSocket, toAssemblyVoiceId, VALID_ASSEMBLY_VOICE_IDS } from '@/lib/v
 import { POST as fastTokenPost } from '@/app/api/voice/fast-token/route';
 import { appKeyterms, saveUserKeyterms } from '@/lib/voice/agentTool';
 
-const VALID_VOICE_ID_SET = new Set([
-  'aai-jane',
-  'aai-anna',
-  'aai-john',
-  'aai-nicole',
-  'aai-emily',
-  'aai-daniel',
-  'aai-michael',
-  'aai-sarah',
-  'aai-david',
-  'aai-emma',
-  'aai-james',
-  'aai-olivia',
-  'aai-sophia',
-  'aai-liam',
-  'aai-noah',
-  'aai-ava',
-  'aai-isabella',
-  'aai-mia',
-  'aai-charlotte',
-  'aai-amelia',
-  'aai-harper',
-  'aai-evelyn',
-  'aai-abigail',
-  '49c443a4-8a1d-5f7e-b70b-98bdbd9823c3', // Callum (en-GB)
-  '87df35db-c5c5-580f-a802-40fb03efafe9', // Harper (en-AU)
-  '66c6bf99-bc69-5e32-a0cd-f9cef8ceb550', // Mateo (es)
-  '97cd5fb8-b7d8-5555-82bc-7a9b6ee0acdc', // Elena (es)
-  '213be0fa-a416-5a9f-8338-bd2fa4be096d', // Claire (fr)
-  '9022fd34-f1be-5414-a929-f0c4a82a4528', // Henri (fr)
-  'd845fc5c-96f9-5cb1-bf06-b9fa1dc125f0', // Greta (de)
-  'be6fe4c9-c9fb-5bb8-8c28-c5cabd9ef510', // Lukas (de)
-  'e93dc061-d4fb-5d32-9b1f-cf3e5f8c3fd9', // Giulia (it)
-  '9664fb8c-b411-57aa-a704-f8ed151de0f0', // Marco (it)
-  'd51e3418-a9d3-5999-a06c-d7bb2be9b2d3', // Camila (pt)
-  'c85aa079-c365-5f2b-9084-f722eeef9aa0', // Lucas (pt)
-]);
+// The ids the live API accepts are checked by scripts/verify-voices.mjs (real provider); this fake follows the app's list.
+const VALID_VOICE_ID_SET = new Set<string>(VALID_ASSEMBLY_VOICE_IDS);
 
 const VALID_TTS_LANGUAGES = new Set([
   'english',
@@ -222,7 +187,7 @@ describe('AssemblyAI Protocol Contract (A1)', () => {
     expect(tts).toBeDefined();
     const u = new URL(tts.url);
     expect(u.searchParams.has('voice')).toBe(false);
-    expect(u.searchParams.get('voice_id')).toBe('aai-anna');
+    expect(u.searchParams.get('voice_id')).toBe('478badc1-a7eb-5bef-b916-c6e51bd2771e'); // Adrienne (en-GB)
     expect(VALID_VOICE_ID_SET.has(u.searchParams.get('voice_id')!)).toBe(true);
     expect(VALID_TTS_LANGUAGES.has(u.searchParams.get('language')!)).toBe(true);
     expect(tts.closeCode).toBeNull();

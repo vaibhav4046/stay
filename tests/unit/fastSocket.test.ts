@@ -141,7 +141,7 @@ describe('FastSocket', () => {
     const { stt, tts } = await open({ greeting: 'Still here with you.' });
     expect(stt.url).toContain('streaming.assemblyai.com/v3/ws');
     expect(stt.url).toContain('sample_rate=16000');
-    expect(tts.url).toContain('voice_id=aai-anna');
+    expect(tts.url).toContain('voice_id=478badc1-a7eb-5bef-b916-c6e51bd2771e'); // persona "anna" = Adrienne (en-GB)
     expect(tts.url).not.toContain('voice=');
     expect(tts.url).toContain('language=english');
     expect(types()).toEqual(['session.ready', 'reply.started', 'reply.text', 'reply.audio', 'transcript.agent', 'reply.done']);
@@ -403,10 +403,10 @@ describe('FastSocket', () => {
 
 describe('fastVoiceFor', () => {
   it('uses the language native §2.4 voice_id for non-English fast voice', () => {
-    expect(fastVoiceFor('anna', 'es')).toBe('66c6bf99-bc69-5e32-a0cd-f9cef8ceb550'); // Mateo (es)
-    expect(fastVoiceFor('anna', 'fr')).toBe('213be0fa-a416-5a9f-8338-bd2fa4be096d'); // Claire (fr)
-    expect(fastVoiceFor('anna', 'de')).toBe('d845fc5c-96f9-5cb1-bf06-b9fa1dc125f0'); // Greta (de)
-    expect(fastVoiceFor('charles', 'pt')).toBe('c85aa079-c365-5f2b-9084-f722eeef9aa0'); // Lucas (pt)
+    expect(fastVoiceFor('anna', 'es')).toBe('1a48e481-7f02-5e96-bb84-68fcac65c2b2'); // Mateo (es)
+    expect(fastVoiceFor('anna', 'fr')).toBe('04e17f09-99f7-5cac-8903-30d6b3de48fc'); // Claire (fr)
+    expect(fastVoiceFor('anna', 'de')).toBe('8659d94f-872e-554f-8152-71a535ec0da5'); // Greta (de)
+    expect(fastVoiceFor('charles', 'pt')).toBe('d7aada97-72e8-520d-b253-0e7ec0bb79c2'); // Lucas (pt)
   });
   it('maps English picks to verified §2.4 voice_ids and swaps a non-English voice out on English', () => {
     expect(fastVoiceFor('jane', 'en')).toBe('aai-jane');

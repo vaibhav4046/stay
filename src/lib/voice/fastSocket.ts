@@ -65,10 +65,12 @@ export interface FastSession {
 type Json = Record<string, unknown>;
 type ChatMessage = { role: 'system' | 'user' | 'assistant' | 'tool'; content: string | null; tool_calls?: unknown[]; tool_call_id?: string };
 
-/** Verified AssemblyAI-TTS-1 voice_id values (§2.4). */
+/** voice_id values accepted by the live TTS API (checked by scripts/verify-voices.mjs). Add new ones only after that check passes. */
 export const VALID_ASSEMBLY_VOICE_IDS = new Set([
   'aai-jane',
   'aai-anna',
+  '478badc1-a7eb-5bef-b916-c6e51bd2771e', // Adrienne (en-GB)
+  '1edcb3f4-d874-5c38-8839-8a29b854d294', // Aaron (en-GB)
   'aai-john',
   'aai-nicole',
   'aai-emily',
@@ -87,30 +89,29 @@ export const VALID_ASSEMBLY_VOICE_IDS = new Set([
   'aai-mia',
   'aai-charlotte',
   'aai-amelia',
-  'aai-harper',
   'aai-evelyn',
   'aai-abigail',
-  '49c443a4-8a1d-5f7e-b70b-98bdbd9823c3', // Callum (en-GB)
-  '87df35db-c5c5-580f-a802-40fb03efafe9', // Harper (en-AU)
-  '66c6bf99-bc69-5e32-a0cd-f9cef8ceb550', // Mateo (es)
-  '97cd5fb8-b7d8-5555-82bc-7a9b6ee0acdc', // Elena (es)
-  '213be0fa-a416-5a9f-8338-bd2fa4be096d', // Claire (fr)
-  '9022fd34-f1be-5414-a929-f0c4a82a4528', // Henri (fr)
-  'd845fc5c-96f9-5cb1-bf06-b9fa1dc125f0', // Greta (de)
-  'be6fe4c9-c9fb-5bb8-8c28-c5cabd9ef510', // Lukas (de)
-  'e93dc061-d4fb-5d32-9b1f-cf3e5f8c3fd9', // Giulia (it)
-  '9664fb8c-b411-57aa-a704-f8ed151de0f0', // Marco (it)
-  'd51e3418-a9d3-5999-a06c-d7bb2be9b2d3', // Camila (pt)
-  'c85aa079-c365-5f2b-9084-f722eeef9aa0', // Lucas (pt)
+  '49c443a4-8a1d-5f7e-b70b-98bdbd9823c3', // Audrey (en-US)
+  'bf7d036b-b18a-5b6b-94d3-d6a6bdd6febe', // Elvia (en-AU)
+  '1a48e481-7f02-5e96-bb84-68fcac65c2b2', // Aday (es)
+  '5db34b17-ccd6-542f-bb62-8b947a04947b', // Aixa (es)
+  '04e17f09-99f7-5cac-8903-30d6b3de48fc', // Agathe (fr)
+  '94806d12-dfd6-5155-b951-2c60263fc3c2', // Abdelaziz (fr)
+  '8659d94f-872e-554f-8152-71a535ec0da5', // Amelie (de)
+  '36f3b07c-dd5b-5baa-8e6e-45745e3018fa', // Günther (de)
+  '590f46de-c993-5cdf-9aae-1bc70a45a485', // Agnese (it)
+  '52da0768-d49b-5624-a0e7-1ea762147195', // Adamo (it)
+  '0739ceb4-e8f2-5b54-bed4-7fe534aa9b95', // Aline (pt)
+  'd7aada97-72e8-520d-b253-0e7ec0bb79c2', // Abraão (pt)
 ]);
 
 /** AssemblyAI TTS voices are tied to one language: an English voice on a Spanish connection is rejected. One native voice_id per language. */
 export const FAST_NATIVE_VOICE: Record<string, string> = {
-  es: '66c6bf99-bc69-5e32-a0cd-f9cef8ceb550', // Mateo
-  fr: '213be0fa-a416-5a9f-8338-bd2fa4be096d', // Claire
-  de: 'd845fc5c-96f9-5cb1-bf06-b9fa1dc125f0', // Greta
-  it: 'e93dc061-d4fb-5d32-9b1f-cf3e5f8c3fd9', // Giulia
-  pt: 'c85aa079-c365-5f2b-9084-f722eeef9aa0', // Lucas
+  es: '1a48e481-7f02-5e96-bb84-68fcac65c2b2', // Aday (es)
+  fr: '04e17f09-99f7-5cac-8903-30d6b3de48fc', // Agathe (fr)
+  de: '8659d94f-872e-554f-8152-71a535ec0da5', // Amelie (de)
+  it: '590f46de-c993-5cdf-9aae-1bc70a45a485', // Agnese (it)
+  pt: 'd7aada97-72e8-520d-b253-0e7ec0bb79c2', // Abraão (pt)
 };
 
 const NON_ENGLISH_VOICE_KEYS = new Set([
@@ -120,27 +121,27 @@ const NON_ENGLISH_VOICE_KEYS = new Set([
   'giovanni', 'giulia', 'marco',
   'rafael', 'camila', 'lucas',
   ...Object.values(FAST_NATIVE_VOICE),
-  '97cd5fb8-b7d8-5555-82bc-7a9b6ee0acdc',
-  '9022fd34-f1be-5414-a929-f0c4a82a4528',
-  'be6fe4c9-c9fb-5bb8-8c28-c5cabd9ef510',
-  '9664fb8c-b411-57aa-a704-f8ed151de0f0',
-  'd51e3418-a9d3-5999-a06c-d7bb2be9b2d3',
+  '5db34b17-ccd6-542f-bb62-8b947a04947b',
+  '94806d12-dfd6-5155-b951-2c60263fc3c2',
+  '36f3b07c-dd5b-5baa-8e6e-45745e3018fa',
+  '52da0768-d49b-5624-a0e7-1ea762147195',
+  '0739ceb4-e8f2-5b54-bed4-7fe534aa9b95',
 ]);
 
 const VOICE_NAME_TO_ID: Record<string, string> = {
   jane: 'aai-jane',
-  anna: 'aai-anna',
+  anna: '478badc1-a7eb-5bef-b916-c6e51bd2771e', // Adrienne (en-GB)
   john: 'aai-john',
   george: 'aai-john',
   reid: 'aai-john',
-  callum: '49c443a4-8a1d-5f7e-b70b-98bdbd9823c3',
-  charles: '49c443a4-8a1d-5f7e-b70b-98bdbd9823c3',
-  paul: '49c443a4-8a1d-5f7e-b70b-98bdbd9823c3',
-  harper: '87df35db-c5c5-580f-a802-40fb03efafe9',
+  callum: '1edcb3f4-d874-5c38-8839-8a29b854d294', // Aaron (en-GB)
+  charles: '1edcb3f4-d874-5c38-8839-8a29b854d294', // Aaron (en-GB)
+  paul: '1edcb3f4-d874-5c38-8839-8a29b854d294', // Aaron (en-GB)
+  harper: 'bf7d036b-b18a-5b6b-94d3-d6a6bdd6febe',
   nicole: 'aai-nicole',
   vera: 'aai-nicole',
   emily: 'aai-emily',
-  eve: 'aai-emily',
+  eve: '49c443a4-8a1d-5f7e-b70b-98bdbd9823c3', // Audrey (en-US)
   daniel: 'aai-daniel',
   michael: 'aai-michael',
   sarah: 'aai-sarah',
@@ -163,26 +164,26 @@ const VOICE_NAME_TO_ID: Record<string, string> = {
   evelyn: 'aai-evelyn',
   abigail: 'aai-abigail',
   // Spanish
-  mateo: '66c6bf99-bc69-5e32-a0cd-f9cef8ceb550',
-  lola: '66c6bf99-bc69-5e32-a0cd-f9cef8ceb550',
-  carlos: '66c6bf99-bc69-5e32-a0cd-f9cef8ceb550',
-  elena: '97cd5fb8-b7d8-5555-82bc-7a9b6ee0acdc',
+  mateo: '1a48e481-7f02-5e96-bb84-68fcac65c2b2',
+  lola: '1a48e481-7f02-5e96-bb84-68fcac65c2b2',
+  carlos: '1a48e481-7f02-5e96-bb84-68fcac65c2b2',
+  elena: '5db34b17-ccd6-542f-bb62-8b947a04947b',
   // French
-  claire: '213be0fa-a416-5a9f-8338-bd2fa4be096d',
-  estelle: '213be0fa-a416-5a9f-8338-bd2fa4be096d',
-  henri: '9022fd34-f1be-5414-a929-f0c4a82a4528',
+  claire: '04e17f09-99f7-5cac-8903-30d6b3de48fc',
+  estelle: '04e17f09-99f7-5cac-8903-30d6b3de48fc',
+  henri: '94806d12-dfd6-5155-b951-2c60263fc3c2',
   // German
-  greta: 'd845fc5c-96f9-5cb1-bf06-b9fa1dc125f0',
-  juergen: 'd845fc5c-96f9-5cb1-bf06-b9fa1dc125f0',
-  lukas: 'be6fe4c9-c9fb-5bb8-8c28-c5cabd9ef510',
+  greta: '8659d94f-872e-554f-8152-71a535ec0da5',
+  juergen: '8659d94f-872e-554f-8152-71a535ec0da5',
+  lukas: '36f3b07c-dd5b-5baa-8e6e-45745e3018fa',
   // Italian
-  giulia: 'e93dc061-d4fb-5d32-9b1f-cf3e5f8c3fd9',
-  marco: '9664fb8c-b411-57aa-a704-f8ed151de0f0',
-  giovanni: '9664fb8c-b411-57aa-a704-f8ed151de0f0',
+  giulia: '590f46de-c993-5cdf-9aae-1bc70a45a485',
+  marco: '52da0768-d49b-5624-a0e7-1ea762147195',
+  giovanni: '52da0768-d49b-5624-a0e7-1ea762147195',
   // Portuguese
-  camila: 'd51e3418-a9d3-5999-a06c-d7bb2be9b2d3',
-  lucas: 'c85aa079-c365-5f2b-9084-f722eeef9aa0',
-  rafael: 'c85aa079-c365-5f2b-9084-f722eeef9aa0',
+  camila: '0739ceb4-e8f2-5b54-bed4-7fe534aa9b95',
+  lucas: 'd7aada97-72e8-520d-b253-0e7ec0bb79c2',
+  rafael: 'd7aada97-72e8-520d-b253-0e7ec0bb79c2',
 };
 
 const LANG_NAME_TO_ISO: Record<string, string> = {

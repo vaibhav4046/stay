@@ -38,6 +38,10 @@ test.describe('Landing', () => {
     expect((await page.request.get('/demo')).status()).toBe(404);
   });
 
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('stay:playful_orb:v1', '1')); // orb morphing is opt-in
+  });
+
   test('typing words reshapes the orb: library, offline emoji, and a fallback for anything', async ({ page }) => {
     await page.goto('/');
     await page.waitForSelector('[data-testid="hero-orb"] canvas');
@@ -94,7 +98,8 @@ test.describe('The loop', () => {
     expect(await page.evaluate(() => sessionStorage.getItem('stay_handoff_task'))).toBeNull();
   });
 
-  test('the orb in the app reshapes with what you type', async ({ page }) => {
+  test('the orb in the app reshapes with what you type (opt-in playful orb)', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('stay:playful_orb:v1', '1'));
     await onboard(page);
     await page.getByTestId('task-input').fill('I feel so overwhelmed');
     await page.getByTestId('send').click();
@@ -138,10 +143,10 @@ test('the voice sheet shows four recommended voices and every other voice, hones
   const dialog = page.getByRole('dialog');
   await expect(dialog.getByTestId('voice-recommended').locator('[data-testid^="voice-"][data-usable]')).toHaveCount(4);
   await dialog.getByTestId('voice-more').locator('summary').click();
-  await expect(dialog.getByText('Captain Crumpet', { exact: true })).toBeVisible();
-  await expect(dialog.getByText('Goblin Mode Gus', { exact: true })).toBeVisible();
-  await expect(dialog.getByText('Native Spanish voice').first()).toBeVisible();
-  await expect(dialog.getByText('British voice').first()).toBeVisible();
+  await expect(dialog.getByText('Oliver', { exact: true })).toBeVisible();
+  await expect(dialog.getByText('Lucas', { exact: true })).toBeVisible();
+  await expect(dialog.getByText(/Spanish/).first()).toBeVisible();
+  await expect(dialog.getByText(/British/).first()).toBeVisible();
   expect(await dialog.locator('[data-testid^="voice-"][data-usable]').count()).toBe(22);
 });
 
@@ -168,9 +173,10 @@ test.describe('Your own keys and block lengths', () => {
     await page.getByTestId('llm-model').fill('some-model');
     await page.getByTestId('llm-check').click();
     await expect(page.getByTestId('keys-section')).toContainText(/not allowed/i, { timeout: 8000 });
+    expect(await page.evaluate(() => localStorage.getItem('stay_byok'))).toBeNull(); // memory only (B4)
     await page.reload();
-    await expect(page.getByTestId('provider-custom')).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.getByTestId('llm-key')).toHaveValue('sk-test-key-123');
+    await expect(page.getByTestId('provider-default')).toHaveAttribute('aria-pressed', 'true'); // not persisted: back to default
+    await page.getByTestId('provider-custom').click();
     await page.getByTestId('keys-clear').click();
     await expect(page.getByTestId('provider-default')).toHaveAttribute('aria-pressed', 'true');
     expect(await page.evaluate(() => localStorage.getItem('stay_byok'))).toBeNull();
@@ -181,7 +187,7 @@ test.describe('Your own keys and block lengths', () => {
     await page.goto('/app/settings');
     await page.getByTestId('provider-groq').click();
     await page.getByTestId('llm-key').fill('gsk_not_real_key');
-    expect(await page.evaluate(() => localStorage.getItem('stay_byok'))).not.toBeNull();
+    expect(await page.evaluate(() => localStorage.getItem('stay_byok'))).toBeNull(); // keys are never persisted (B4)
     await page.getByTestId('delete-start').click();
     await page.getByTestId('delete-confirm').click();
     await page.waitForURL(/\/app\/today/, { timeout: 8000 });

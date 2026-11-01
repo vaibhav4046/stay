@@ -9,10 +9,10 @@ const VALID_VOICE_IDS = new Set([
   '7e0ef16d-2f0f-5b3c-a3b5-f0c4f8f4d9c0', // Hannah (en-AU)
   'a02eb9b9-a6d2-5a72-9d90-7ef92f53a4fd', // Callum (en-AU)
   '37c0f1b6-f2b7-5b9a-88aa-8da4cf9d7f54', // Andrew (en-IN)
-  '66c6bf99-bc69-5e32-a0cd-f9cef8ceb550', // Mateo (es)
-  '213be0fa-a416-5a9f-8338-bd2fa4be096d', // Claire (fr)
-  'd845fc5c-96f9-5cb1-bf06-b9fa1dc125f0', // Greta (de)
-  'c85aa079-c365-5f2b-9084-f722eeef9aa0', // Lucas (pt)
+  '1a48e481-7f02-5e96-bb84-68fcac65c2b2', // Mateo (es)
+  '04e17f09-99f7-5cac-8903-30d6b3de48fc', // Claire (fr)
+  '8659d94f-872e-554f-8152-71a535ec0da5', // Greta (de)
+  'd7aada97-72e8-520d-b253-0e7ec0bb79c2', // Lucas (pt)
   'aai-anna',
   'aai-charles',
   'aai-jane',
