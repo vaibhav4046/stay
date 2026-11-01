@@ -3,18 +3,17 @@
 import { useEffect, useState } from 'react';
 import { showNotification } from '@/lib/reminders';
 import { CALL_ME_CHOICES, cancelScheduledCall, scheduleCall, scheduledCallAt, takeDueCall } from '@/lib/voice/callMode';
+import { startTone } from '@/lib/voice/ringtone';
 
 interface Props {
   inCall: boolean;
   onCall: () => void;
-  /** sound for an incoming call; supplied by the page so there is one audio idiom */
-  onRing: () => void;
   /** real number, only when configured; never invented */
   phone?: string;
 }
 
 /** The Call Stay entry point: call now, or have Stay ring you in a few minutes (while this page is open). */
-export function CallStayCard({ inCall, onCall, onRing, phone }: Props) {
+export function CallStayCard({ inCall, onCall, phone }: Props) {
   const [ringAt, setRingAt] = useState<number | null>(null);
   const [ringing, setRinging] = useState(false);
 
@@ -25,11 +24,21 @@ export function CallStayCard({ inCall, onCall, onRing, phone }: Props) {
       if (!takeDueCall()) return;
       setRingAt(null);
       setRinging(true);
-      onRing();
       showNotification('Stay is calling', 'Open Stay to answer.');
     }, 2000);
     return () => window.clearInterval(id);
-  }, [onRing]);
+  }, []);
+
+  // an incoming call rings until it is answered, dismissed, or missed after 30 s
+  useEffect(() => {
+    if (!ringing) return;
+    const stop = startTone('incoming');
+    const missed = window.setTimeout(() => setRinging(false), 30_000);
+    return () => {
+      stop();
+      window.clearTimeout(missed);
+    };
+  }, [ringing]);
 
   const book = (m: number) => setRingAt(scheduleCall(m));
   const cancel = () => (cancelScheduledCall(), setRingAt(null));

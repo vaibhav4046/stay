@@ -12,22 +12,13 @@ export interface TransportBadgeProps {
 export function TransportBadge({ transport, isConnected, replyTimes = [] }: TransportBadgeProps) {
   const [open, setOpen] = useState(false);
 
+  const isAai = transport.mode === 'assemblyai';
+  // neutral by default; amber only when something other than AssemblyAI is speaking (R5: never silent)
   const badgeTone =
-    transport.mode === 'assemblyai'
-      ? 'bg-emerald-50 text-emerald-900 border-emerald-200'
-      : transport.mode === 'device' || transport.mode === 'backup'
+    transport.mode === 'device' || transport.mode === 'backup'
       ? 'bg-amber-50 text-amber-900 border-amber-200'
-      : 'bg-stone-100 text-stone-800 border-stone-300';
-
-  const dotTone =
-    transport.mode === 'assemblyai' && isConnected
-      ? 'bg-emerald-600'
-      : transport.mode === 'assemblyai'
-      ? 'bg-emerald-500/70'
-      : transport.mode === 'device' || transport.mode === 'backup'
-      ? 'bg-amber-600'
-      : 'bg-stone-500';
-
+      : 'bg-surface text-ink border-line';
+  const rest = isAai ? transport.label.replace(/^AssemblyAI\s*/, '') : transport.label;
   const lastLatencyMs = replyTimes.length > 0 ? Math.round(replyTimes[replyTimes.length - 1] * 1000) : null;
 
   return (
@@ -37,12 +28,18 @@ export function TransportBadge({ transport, isConnected, replyTimes = [] }: Tran
         data-testid="transport-badge"
         data-transport-mode={transport.mode}
         onClick={() => setOpen(true)}
-        className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${badgeTone}`}
+        className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${badgeTone}`}
         title="View live voice transport diagnostics"
         aria-label={`Voice transport: ${transport.label}. Click for diagnostics.`}
       >
-        <span className={`h-2 w-2 rounded-full ${dotTone}`} aria-hidden="true" />
-        <span>{transport.label}</span>
+        {isAai && (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/assemblyai-logo.svg" alt="" aria-hidden="true" width={80} height={14} className="h-3.5 w-auto" />
+            <span className="sr-only">AssemblyAI </span>
+          </>
+        )}
+        {rest && <span>{rest}</span>}
       </button>
 
       {open && (

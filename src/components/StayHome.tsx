@@ -15,7 +15,7 @@ import {
   detectImpulsiveActionRisk,
   detectSensoryGroundingRequest,
 } from '@/lib/safety/crisis';
-import { isAgentVerifiedLanguage, useVoiceAgent } from '@/lib/voice/useVoiceAgent';
+import { SUPPORTED_LANGUAGES, isAgentVerifiedLanguage, useVoiceAgent } from '@/lib/voice/useVoiceAgent';
 import { useAssistantHardware } from '@/lib/voice/useAssistantHardware';
 import { parseMultiIntentUtterance } from '@/lib/voice/voiceCommands';
 import { isSmallTalk } from '@/lib/voice/smallTalk';
@@ -52,6 +52,8 @@ import { ReminderSheet } from '@/components/ReminderSheet';
 import { takeDue } from '@/lib/reminders';
 import { CallStayCard } from '@/components/voice/CallStayCard';
 import { CallStayOverlay } from '@/components/voice/CallStayOverlay';
+import { RING_MS } from '@/lib/voice/ringtone';
+import { personaById } from '@/lib/voice/personas';
 import { showNotification } from '@/lib/reminders';
 import { addToday, loadToday, moveToday, toggleToday, type TodayItem } from '@/lib/coach/todayList';
 import { byokHeaders } from '@/lib/byok/config';
@@ -298,6 +300,11 @@ export function StayHome({
   });
   const voiceRef = useRef(voice);
   voiceRef.current = voice;
+  // saved values may be a bare 'en' while the list holds 'en-GB': match on the base language so the select never shows blank
+  const langValue =
+    SUPPORTED_LANGUAGES.find((l) => l.code === voice.selectedLanguage)?.code ??
+    SUPPORTED_LANGUAGES.find((l) => l.code.split('-')[0] === voice.selectedLanguage.split('-')[0])?.code ??
+    'auto';
   /** Switch voice by name or accent and say what happened: the persona's name, or why it cannot speak on this device yet. */
   const sayVoice = (query: string) => {
     const picked = voiceRef.current?.setSelectedVoice(query);
@@ -582,14 +589,20 @@ export function StayHome({
 
   const toggleVoice = handleStartVoice;
 
-  // Call mode: a full-screen call over the same voice session (opens once connected, closes when it drops)
+  // Call mode: the call screen opens at once and rings; the voice session starts after one ring.
   const [callIntent, setCallIntent] = useState(false);
   const callWasLive = useRef(false);
+  const ringTimer = useRef<number | undefined>(undefined);
   const startCall = useCallback(() => {
     setCallIntent(true);
-    if (!voiceRef.current.isConnected) handleStartVoice();
+    if (voiceRef.current.isConnected) return;
+    window.clearTimeout(ringTimer.current);
+    ringTimer.current = window.setTimeout(() => {
+      if (!voiceRef.current.isConnected) handleStartVoice();
+    }, RING_MS);
   }, [handleStartVoice]);
   const endCall = useCallback(() => {
+    window.clearTimeout(ringTimer.current);
     setCallIntent(false);
     callWasLive.current = false;
     voiceRef.current.disconnectVoiceSession();
@@ -602,13 +615,13 @@ export function StayHome({
     }
     if (callWasLive.current) {
       callWasLive.current = false;
-      setCallIntent(false);
+      setCallIntent(false); // the line dropped
       return;
     }
-    const id = window.setTimeout(() => setCallIntent(false), 20_000); // never connected (consent declined, error)
+    if (showMicConsent) return; // waiting for the person to answer the consent sheet
+    const id = window.setTimeout(() => setCallIntent(false), 25_000); // never connected (error)
     return () => window.clearTimeout(id);
-  }, [callIntent, voice.isConnected]);
-
+  }, [callIntent, voice.isConnected, showMicConsent]);
   const handleModeChange = useCallback((newMode: AppMode) => {
     setMode(newMode);
     if (newMode === 'quiet') {
@@ -933,59 +946,29 @@ export function StayHome({
           </span>
         </div>
 
-        {/* Mode switcher (§7.4) */}
-        <div className="flex items-center gap-0.5 sm:gap-1 rounded-full bg-surface-2 p-0.5 sm:p-1 border border-line max-w-full overflow-x-auto shrink-0" role="tablist" aria-label="Conversation mode">
-          {(['talk', 'dictate', 'translate', 'reflect', 'quiet'] as const).map((m) => {
-            const active = mode === m;
-            return (
-              <button
-                key={m}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                onClick={() => handleModeChange(m)}
-                className={`rounded-full px-2 py-0.5 text-[0.7rem] sm:text-xs font-medium capitalize transition-colors shrink-0 ${
-                  active ? 'bg-surface text-ink shadow-xs font-semibold' : 'text-ink-2 hover:text-ink'
-                }`}
-                data-testid={`mode-${m}`}
-              >
-                {m}
-              </button>
-            );
-          })}
-        </div>
-
         <div className="flex items-center gap-2 shrink-0">
-          {/* Quick Language selector pills */}
-          <div className="hidden sm:flex items-center gap-1 text-xs">
-            {(['auto', 'en', 'es', 'fr', 'de', 'hi', 'ja'] as const).map((lang) => (
-              <button
-                key={lang}
-                type="button"
-                onClick={() => {
-                  voiceRef.current?.setSelectedLanguage(lang === 'auto' ? 'auto' : lang);
-                  say(`Language: ${lang.toUpperCase()}`);
-                }}
-                aria-pressed={voice.selectedLanguage === (lang === 'auto' ? 'auto' : lang)}
-                className={`px-1.5 py-0.5 rounded text-[0.7rem] uppercase font-mono transition-colors ${
-                  (lang === 'auto' ? voice.selectedLanguage === 'auto' : voice.selectedLanguage.startsWith(lang))
-                    ? 'bg-accent text-white font-bold'
-                    : 'text-ink-2 hover:bg-surface-2'
-                }`}
-                data-testid={`lang-pill-${lang}`}
-              >
-                {lang}
-              </button>
+          <label className="sr-only" htmlFor="stay-language">Language</label>
+          <select
+            id="stay-language"
+            data-testid="language-select"
+            value={langValue}
+            onChange={(e) => {
+              voiceRef.current?.setSelectedLanguage(e.target.value);
+              say(`Language: ${SUPPORTED_LANGUAGES.find((l) => l.code === e.target.value)?.label ?? e.target.value}`);
+            }}
+            className="rounded-full border border-line bg-surface px-2.5 py-1 text-xs font-medium text-ink"
+          >
+            {SUPPORTED_LANGUAGES.map((l) => (
+              <option key={l.code} value={l.code}>{l.label}</option>
             ))}
-          </div>
-          <TransportBadge
+          </select>          <TransportBadge
             transport={voice.transportInfo}
             isConnected={voice.isConnected}
             replyTimes={voice.replyTimes}
           />
           <button
             type="button"
-            onClick={voice.isConnected ? endCall : startCall}
+            onClick={voice.isConnected || callIntent ? endCall : startCall}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium transition-colors shrink-0 cursor-pointer ${
               voice.isConnected
                 ? 'border-rose-500/30 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20'
@@ -1084,11 +1067,19 @@ export function StayHome({
             onMove={(id) => setToday(moveToday(id, 'today'))}
           />
 
-          <CallStayCard inCall={voice.isConnected} onCall={startCall} onRing={chime} phone={process.env.NEXT_PUBLIC_STAY_PHONE || undefined} />
+          <CallStayCard inCall={callIntent} onCall={startCall} phone={process.env.NEXT_PUBLIC_STAY_PHONE || undefined} />
         </div>
       )}
 
-      {callIntent && voice.isConnected && <CallStayOverlay voice={voice} onEnd={endCall} />}
+      {callIntent && (
+        <CallStayOverlay
+          voice={voice}
+          connected={voice.isConnected}
+          name={personaById(voice.selectedVoice).name}
+          paused={showMicConsent}
+          onEnd={endCall}
+        />
+      )}
 
       {/* Fluid Gemini Live Chat Stream (Elevated primary above-the-fold content) */}
       <LiveChatBox
@@ -1426,10 +1417,11 @@ export function StayHome({
             window.localStorage.setItem('stay:mic_consented:v1', '0');
           } catch {}
           setShowMicConsent(false);
+          setCallIntent(false);
           onQuietModeChange(true);
           setMode('quiet');
         }}
-        onClose={() => setShowMicConsent(false)}
+        onClose={() => (setShowMicConsent(false), setCallIntent(false))}
       />
 
       {sheet === 'menu' && (

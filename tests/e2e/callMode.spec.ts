@@ -23,15 +23,18 @@ async function openToday(page: Page) {
 }
 
 test.describe('Call Stay (browser call mode)', () => {
-  test('call opens a call screen with a clock, mute and end; ending closes it and the session', async ({ page }) => {
+  test('call rings, then connects with a clock, mute and end; ending closes it and the session', async ({ page }) => {
     const fake = await openToday(page);
     await page.getByTestId('call-direct-stay-btn').click();
-    // first mic use asks for consent in-app
-    const consent = page.getByRole('button', { name: /start talking/i });
-    if (await consent.isVisible({ timeout: 3000 }).catch(() => false)) await consent.click();
-
+    // the call screen opens at once and rings
     const overlay = page.getByTestId('call-overlay');
-    await expect(overlay).toBeVisible({ timeout: 10000 });
+    await expect(overlay).toBeVisible();
+    await expect(overlay).toHaveAttribute('data-call-state', 'ringing');
+    await expect(page.getByTestId('call-clock')).toHaveText('Calling…');
+    // first mic use asks for consent in-app, after the ring
+    const consent = page.getByRole('button', { name: /start talking/i });
+    if (await consent.isVisible({ timeout: 5000 }).catch(() => false)) await consent.click();
+    await expect(overlay).toHaveAttribute('data-call-state', 'connected', { timeout: 12000 });
     expect(fake.managedAgentSocketOpened()).toBe(false); // real AssemblyAI path, no silent fallback
     await expect(page.getByTestId('call-clock')).toHaveText(/^\d\d:\d\d$/);
 
@@ -57,7 +60,7 @@ test.describe('Call Stay (browser call mode)', () => {
     await expect(page.getByTestId('incoming-call')).toBeVisible({ timeout: 6000 });
     await page.getByTestId('call-answer').click();
     const consent = page.getByRole('button', { name: /start talking/i });
-    if (await consent.isVisible({ timeout: 3000 }).catch(() => false)) await consent.click();
-    await expect(page.getByTestId('call-overlay')).toBeVisible({ timeout: 10000 });
+    if (await consent.isVisible({ timeout: 5000 }).catch(() => false)) await consent.click();
+    await expect(page.getByTestId('call-overlay')).toHaveAttribute('data-call-state', 'connected', { timeout: 12000 });
   });
 });
