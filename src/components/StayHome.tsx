@@ -1056,7 +1056,8 @@ export function StayHome({
           />
 
           {(() => {
-            const phone = process.env.NEXT_PUBLIC_STAY_PHONE || '+1 (415) 800-STAY';
+            // Only show a number once a real one is configured (never invent one).
+            const phone = process.env.NEXT_PUBLIC_STAY_PHONE || '';
             return (
               <aside
                 className="card p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 border border-primary/20 bg-primary/5 mt-3"
@@ -1066,10 +1067,12 @@ export function StayHome({
                 <div>
                   <p className="font-semibold text-sm text-ink flex items-center gap-2">
                     <span>Call Stay</span>
-                    <span className="text-[0.7rem] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded bg-primary/10 text-primary font-semibold">LiveKit SIP & Web Voice</span>
                   </p>
                   <p className="text-xs text-ink-2 mt-0.5">
-                    Call directly in your browser, or dial <a href={`tel:${phone}`} className="font-mono font-semibold text-primary underline">{phone}</a> from any telephone.
+                    Talk to Stay in your browser with AssemblyAI voice.
+                    {phone && (
+                      <> Phone (US, inbound only): <a href={`tel:${phone}`} className="font-mono font-semibold text-primary underline">{phone}</a>. Carrier rates apply outside the US.</>
+                    )}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
@@ -1086,13 +1089,15 @@ export function StayHome({
                     </svg>
                     <span>{voice.isConnected ? 'End Call' : 'Call Stay Directly'}</span>
                   </button>
-                  <a
-                    href={`tel:${phone}`}
-                    className="btn btn-secondary text-xs py-2 px-3 shrink-0 flex items-center gap-1.5"
-                    data-testid="call-stay-btn"
-                  >
-                    <span>Dial {phone}</span>
-                  </a>
+                  {phone && (
+                    <a
+                      href={`tel:${phone}`}
+                      className="btn btn-secondary text-xs py-2 px-3 shrink-0 flex items-center gap-1.5"
+                      data-testid="call-stay-btn"
+                    >
+                      <span>Dial {phone}</span>
+                    </a>
+                  )}
                 </div>
               </aside>
             );

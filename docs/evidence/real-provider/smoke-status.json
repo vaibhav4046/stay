@@ -1,10 +1,41 @@
 {
-  "status": "NOT_RUN",
-  "reason": "no key",
-  "gitSha": "fa97596b1aa93be060e9b23246e2c5dddfb08e8e",
+  "status": "PASS",
+  "gitSha": "03d16847e03463048d10812dc418fc9cfa7704fd",
   "dirty": false,
   "tier": "real-provider",
   "scenarioId": "assemblyai-live-ws-smoke",
-  "timestamp": "2026-11-01T05:55:16.081Z",
-  "fixtureWav": "tests/fixtures/audio/smoke-16k.wav"
+  "timestamp": "2026-11-01T18:58:41.829Z",
+  "durationMs": 3167,
+  "sttEvents": [
+    "Begin",
+    "Termination"
+  ],
+  "ttsEvents": [
+    "Begin",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Cancelled",
+    "Termination"
+  ],
+  "voiceIdVerified": "49c443a4-8a1d-5f7e-b70b-98bdbd9823c3"
 }
