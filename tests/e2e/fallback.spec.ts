@@ -15,16 +15,23 @@ test.use({
 
 test.describe('Explicit Managed-Agent Fallback Transport (fallback.spec.ts)', () => {
   test('When stay_fast_voice is explicitly set to 0, connects to managed-agent fallback and displays honest Backup voice badge', async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        'stay_v1_profile',
+        JSON.stringify({
+          careContext: 'self_managing',
+          onboardingCompleted: true,
+          interactionMode: 'voice_and_text',
+        })
+      );
+      localStorage.setItem('stay_fast_voice', '0');
+      localStorage.setItem('stay:mic_consented:v1', '1');
+    });
+
     const fakeVoice = await installFakeVoice(page);
     await page.goto('/app/today');
 
-    const careOption = page.getByTestId('care-self_managing');
-    if (await careOption.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await careOption.click();
-      await page.getByTestId('onboarding-ack').click();
-      await page.getByTestId('onboarding-done').click();
-    }
-
+    await expect(page.getByTestId('orb-button')).toBeVisible({ timeout: 10000 });
     await page.getByTestId('orb-button').click();
     await expect(page.getByTestId('orb-status')).toHaveText('Listening', { timeout: 10000 });
     expect(fakeVoice.ready()).toBe(true);

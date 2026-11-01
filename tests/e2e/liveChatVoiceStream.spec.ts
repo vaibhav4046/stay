@@ -253,14 +253,14 @@ test.describe('Deterministic FastSocket Browser Live Chat Stream Suite (C1)', ()
     await expect(page.getByTestId('plan-card')).toBeVisible({ timeout: 10000 });
 
     // What you heard action
-    const heardBtn = page.getByTestId('wispr-heard-btn');
+    const heardBtn = page.getByTestId('wispr-heard-btn').last();
     if (await heardBtn.isVisible()) {
       await heardBtn.click();
       await expect(page.getByTestId('chat-agent-message').last()).toContainText(/heard/i);
     }
 
     // Repeat action
-    const repeatBtn = page.getByTestId('wispr-repeat-btn');
+    const repeatBtn = page.getByTestId('wispr-repeat-btn').last();
     if (await repeatBtn.isVisible()) {
       await repeatBtn.click();
       await expect(page.getByTestId('chat-agent-message').last()).toBeVisible();
