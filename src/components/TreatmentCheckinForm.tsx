@@ -38,17 +38,21 @@ function Rating({ label, value, onChange, id }: { label: string; value: number |
 export function TreatmentCheckinForm({
   onSubmit,
   showTreatment = true,
+  initialCheckin,
 }: {
   onSubmit: (rec: Omit<TreatmentCheckinRecord, 'id' | 'userId' | 'createdAt'>) => Promise<unknown>;
   /** The medication question is only for people who said they take prescribed medication. */
   showTreatment?: boolean;
+  initialCheckin?: TreatmentCheckinRecord | null;
 }) {
   const { openCrisisPanel } = useCrisisPanel();
-  const [taken, setTaken] = useState<TakenStatus | null>(showTreatment ? null : 'not_applicable');
-  const [focus, setFocus] = useState<number | null>(null);
-  const [sleep, setSleep] = useState<number | null>(null);
-  const [sideEffects, setSideEffects] = useState(false);
-  const [note, setNote] = useState('');
+  const [taken, setTaken] = useState<TakenStatus | null>(
+    initialCheckin?.takenStatus ?? (showTreatment ? null : 'not_applicable')
+  );
+  const [focus, setFocus] = useState<number | null>(initialCheckin?.focusRating ?? null);
+  const [sleep, setSleep] = useState<number | null>(initialCheckin?.sleepQuality ?? null);
+  const [sideEffects, setSideEffects] = useState(initialCheckin?.sideEffectsNoted ?? false);
+  const [note, setNote] = useState(initialCheckin?.sideEffectNote ?? '');
   const [saved, setSaved] = useState(false);
   const [boundary, setBoundary] = useState<string | null>(null);
 
@@ -69,17 +73,17 @@ export function TreatmentCheckinForm({
       sideEffectNote: note.trim() ? note.trim().slice(0, 280) : null,
     });
     setSaved(true);
-    setTaken(null);
-    setFocus(null);
-    setSleep(null);
-    setSideEffects(false);
-    setNote('');
   };
 
   return (
     <form className="card p-5 sm:p-6" onSubmit={submit} aria-labelledby="checkin-title" data-testid="checkin-form">
       <h2 id="checkin-title" className="card-title">Today&apos;s check-in</h2>
       <p className="meta mt-1">About 30 seconds. Stay logs this for you and your clinician. It never gives dosing advice.</p>
+      {initialCheckin && (
+        <p className="meta mt-2 text-primary font-medium" data-testid="checkin-existing-note">
+          You already recorded today&apos;s check-in. Any changes here will update today&apos;s entry.
+        </p>
+      )}
 
       {showTreatment && <fieldset className="mt-5">
         <legend className="label">Treatment today</legend>
@@ -130,11 +134,11 @@ export function TreatmentCheckinForm({
 
       <div className="mt-5 flex flex-wrap items-center gap-3">
         <button type="submit" className="btn btn-primary" disabled={!taken} data-testid="checkin-submit">
-          Save check-in
+          {initialCheckin ? "Update today's check-in" : 'Save check-in'}
         </button>
         {saved && (
-          <span className="meta" role="status" style={{ color: '#236B48' }}>
-            Saved.
+          <span className="meta" role="status" style={{ color: '#236B48' }} data-testid="checkin-saved-msg">
+            {initialCheckin ? "Saved (updated today's check-in)." : 'Saved.'}
           </span>
         )}
       </div>

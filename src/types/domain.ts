@@ -108,6 +108,7 @@ export interface TreatmentCheckinRecord {
   sideEffectNote: string | null;
   focusRating: number | null;
   sleepQuality: number | null;
+  updatedAt?: string;
   isSample?: boolean;
 }
 

@@ -1,4 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
+import path from 'node:path';
 
 async function onboard(page: Page) {
   await page.goto('/app/today');
@@ -22,12 +23,12 @@ test('persona card hover transform and audio preview click', async ({ page }) =>
   // Hover first card to show transform
   await firstCard.hover();
   await page.waitForTimeout(500);
-  await page.screenshot({ path: 'persona-hover-transform.png' });
+  await page.screenshot({ path: path.join('test-results', 'persona-hover-transform.png') });
 
   // Click card to trigger audio preview
   await firstCard.click();
   await page.waitForTimeout(400);
-  await page.screenshot({ path: 'persona-playing-state.png' });
+  await page.screenshot({ path: path.join('test-results', 'persona-playing-state.png') });
 });
 
 test('today view has idle sparkle voice visualizer and no visible face button', async ({ page }) => {
@@ -41,5 +42,5 @@ test('today view has idle sparkle voice visualizer and no visible face button', 
   const micBtn = page.getByTestId('mic-button');
   await expect(micBtn).toBeVisible();
 
-  await page.screenshot({ path: 'today-idle-sparkle-no-face.png' });
+  await page.screenshot({ path: path.join('test-results', 'today-idle-sparkle-no-face.png') });
 });

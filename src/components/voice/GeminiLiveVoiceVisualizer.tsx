@@ -51,10 +51,9 @@ export function GeminiLiveVoiceVisualizer({
   const pathRefs = useRef<(SVGPathElement | null)[]>([]);
   const live = useRef({ energy: 0, bands: 0, state: 'idle' as VoiceVisualState, on: false, hovered: false });
 
-  const isActiveState = visualState === 'speaking' || visualState === 'thinking' || visualState === 'listening';
-  const isLive = (isConnected || isActiveState) && visualState !== 'error';
-  const isSpeaking = visualState === 'speaking';
-  const isThinking = visualState === 'thinking';
+  const isLive = isConnected && visualState !== 'error';
+  const isSpeaking = isConnected && visualState === 'speaking';
+  const isThinking = isConnected && visualState === 'thinking';
 
   live.current.energy = Math.max(0, Math.min(1, audioEnergy));
   live.current.bands = audioBands ? Math.max(audioBands.low, audioBands.mid, audioBands.high) : audioEnergy;
@@ -149,7 +148,7 @@ export function GeminiLiveVoiceVisualizer({
         <span className="min-w-[4.5rem] text-left text-xs font-medium tracking-wide text-stone-700 dark:text-stone-200">{label}</span>
       </button>
 
-      {isLive && onToggleHandsFreeMute && (
+      {isConnected && onToggleHandsFreeMute && (
         <button
           type="button"
           onClick={onToggleHandsFreeMute}

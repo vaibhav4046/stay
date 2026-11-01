@@ -53,6 +53,8 @@ export function ReportBuilder({
     patientDisplayName: '',
   });
   const [exporting, setExporting] = useState(false);
+  const [downloadedFilename, setDownloadedFilename] = useState<string | null>(null);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
 
   const cutoff = Date.now() - config.periodDays * 86400000;
   const s = useMemo(() => sessions.filter((x) => new Date(x.createdAt).getTime() >= cutoff), [sessions, cutoff]);
@@ -64,11 +66,17 @@ export function ReportBuilder({
 
   const exportPdf = async () => {
     setExporting(true);
+    setDownloadedFilename(null);
+    setDownloadError(null);
     try {
       const { generateClinicianReportPdf } = await import('@/lib/pdf/clinicianReport');
       const doc = generateClinicianReportPdf({ config, careContext, sessions, checkins, isSampleData: isDemo });
-      doc.save(`stay-summary-${new Date().toISOString().slice(0, 10)}${isDemo ? '-sample' : ''}.pdf`);
+      const filename = `stay-summary-${new Date().toISOString().slice(0, 10)}${isDemo ? '-sample' : ''}.pdf`;
+      doc.save(filename);
+      setDownloadedFilename(filename);
       onExported?.();
+    } catch {
+      setDownloadError('Could not generate PDF. Please try again.');
     } finally {
       setExporting(false);
     }
@@ -122,8 +130,31 @@ export function ReportBuilder({
         />
 
         <button type="button" className="btn btn-primary w-full mt-5" onClick={exportPdf} disabled={exporting} data-testid="export-pdf">
-          {exporting ? 'Preparing PDF' : 'Download one-page PDF'}
+          {exporting ? 'Preparing PDF...' : 'Download one-page PDF'}
         </button>
+
+        {downloadedFilename && (
+          <div
+            className="mt-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-800 dark:text-emerald-200 flex items-center gap-2"
+            role="status"
+            data-testid="pdf-success-status"
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+            <span>
+              Downloaded <strong>{downloadedFilename}</strong> successfully.
+            </span>
+          </div>
+        )}
+
+        {downloadError && (
+          <div
+            className="mt-3 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-800 dark:text-rose-200"
+            role="alert"
+            data-testid="pdf-error-status"
+          >
+            {downloadError}
+          </div>
+        )}
       </section>
 
       <section className="card p-6 sm:p-8" aria-label="Report preview" data-testid="report-preview">

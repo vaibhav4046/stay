@@ -345,20 +345,38 @@ export function getLocalCheckins(): TreatmentCheckinRecord[] {
 export async function recordTreatmentCheckin(
   input: Omit<TreatmentCheckinRecord, 'id' | 'userId' | 'createdAt'>
 ): Promise<TreatmentCheckinRecord> {
-  const record: TreatmentCheckinRecord = {
-    ...input,
-    id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `chk-${Date.now()}`,
-    userId: 'local-user',
-    createdAt: new Date().toISOString(),
-  };
-
   const current = getLocalCheckins();
-  const updated = [record, ...current];
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const existingIdx = current.findIndex((c) => c.createdAt.slice(0, 10) === todayKey);
+
+  let record: TreatmentCheckinRecord;
+  let updated: TreatmentCheckinRecord[];
+
+  if (existingIdx >= 0) {
+    record = {
+      ...current[existingIdx],
+      ...input,
+      updatedAt: new Date().toISOString(),
+    };
+    updated = [...current];
+    updated[existingIdx] = record;
+  } else {
+    record = {
+      ...input,
+      id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `chk-${Date.now()}`,
+      userId: 'local-user',
+      createdAt: new Date().toISOString(),
+    };
+    updated = [record, ...current];
+  }
+
   safeWriteJson(STORAGE_KEYS.checkins, updated);
 
   await appendAuditEvent(
     'treatment_checkin_logged',
-    `Recorded treatment check-in: ${record.takenStatus}`
+    existingIdx >= 0
+      ? `Updated today's treatment check-in: ${record.takenStatus}`
+      : `Recorded treatment check-in: ${record.takenStatus}`
   );
 
   const supabase = getSupabaseBrowserClient();

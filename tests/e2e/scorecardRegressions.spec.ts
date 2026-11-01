@@ -100,4 +100,73 @@ test.describe('Scorecard regressions (each asserts the real behaviour, not a toa
     await page.getByTestId('history-undo-button').click();
     await expect(rows).toHaveCount(n);
   });
+
+  test('Enter key submission produces plan card reliably', async ({ page }) => {
+    await onboard(page);
+    await page.getByTestId('task-input').fill('Filing my 2024 taxes');
+    await page.getByTestId('task-input').press('Enter');
+    await expect(page.getByTestId('plan-card')).toBeVisible({ timeout: 20000 });
+    await expect(page.getByTestId('first-step')).toBeVisible();
+  });
+
+  test('text submission does not expose pause auto microphone button', async ({ page }) => {
+    await onboard(page);
+    await page.getByTestId('task-input').fill('Quick task inquiry');
+    await page.getByTestId('send').click();
+    await expect(page.getByLabel('Pause auto microphone')).toHaveCount(0);
+    await expect(page.getByLabel('Resume auto microphone')).toHaveCount(0);
+  });
+
+  test('daily check-in updates existing entry instead of creating duplicates on same day', async ({ page }) => {
+    await onboard(page);
+    await page.goto('/app/treatment');
+    await page.getByTestId('focus-4').click();
+    await page.getByTestId('sleep-4').click();
+    await page.getByTestId('checkin-note').fill('First note of the day');
+    await page.getByTestId('checkin-submit').click();
+    await expect(page.getByTestId('checkin-saved-msg')).toBeVisible();
+    await page.goto('/app/history');
+    await expect(page.locator('text=1 logged')).toBeVisible();
+
+    // Now return to treatment and update today's checkin
+    await page.goto('/app/treatment');
+    await expect(page.getByTestId('checkin-existing-note')).toBeVisible();
+    await page.getByTestId('checkin-note').fill('Updated note for today');
+    await page.getByTestId('checkin-submit').click();
+    await expect(page.getByTestId('checkin-saved-msg')).toBeVisible();
+    // Verify localStorage has exactly 1 checkin record with the updated note
+    const checkins = await page.evaluate(() => JSON.parse(localStorage.getItem('stay_v1_treatment_checkins') || '[]'));
+    expect(checkins).toHaveLength(1);
+    expect(checkins[0].sideEffectNote).toBe('Updated note for today');
+
+    await page.goto('/app/history');
+    // Still exactly 1 logged, not 2
+    await expect(page.locator('text=1 logged')).toBeVisible();
+  });
+
+  test('PDF download provides explicit success receipt with filename', async ({ page }) => {
+    await onboard(page);
+    await page.goto('/app/reports');
+    await page.getByTestId('export-pdf').click();
+    await expect(page.getByTestId('pdf-success-status')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId('pdf-success-status')).toContainText('Downloaded');
+    await expect(page.getByTestId('pdf-success-status')).toContainText('stay-summary-');
+  });
+
+  test('running focus session displays active timer warning banner', async ({ page }) => {
+    await onboard(page);
+    await startBlock(page, 'Read one paragraph');
+    await expect(page.getByTestId('active-timer-tab-warning')).toBeVisible();
+  });
+
+  test('"More" sheet presents structured sections for overwhelmed users', async ({ page }) => {
+    await onboard(page);
+    await page.getByTestId('menu-button').click();
+    await expect(page.locator('text=Calm & Focus')).toBeVisible();
+    await expect(page.locator('text=Voice & Audio')).toBeVisible();
+    await expect(page.locator('text=Workspace & History')).toBeVisible();
+    await expect(page.getByTestId('parking-open')).toBeVisible();
+    await expect(page.getByTestId('companion-toggle')).toBeVisible();
+    await expect(page.getByTestId('remind-open')).toBeVisible();
+  });
 });

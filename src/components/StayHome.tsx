@@ -593,6 +593,42 @@ export function StayHome({
     }
   }, [step, running, plan, minutes]);
 
+  // Synchronize active focus block state across browser tabs
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'stay_active_block') {
+        if (!e.newValue) {
+          if (step === 'timer') {
+            setRunning(false);
+            setStep('outcome');
+            setNote('Focus session was ended in another tab.');
+          }
+        } else {
+          try {
+            const b = JSON.parse(e.newValue);
+            if (b?.plan && typeof b.endsAt === 'number') {
+              const left = Math.round((b.endsAt - Date.now()) / 1000);
+              if (left > 0) {
+                setPlan(b.plan);
+                setMinutes(b.minutes);
+                deadline.current = b.endsAt;
+                setRemaining(left);
+                setElapsed(b.minutes * 60 - left);
+                setRunning(true);
+                setStep('timer');
+                setNote(`Active focus session running (${Math.max(1, Math.round(left / 60))} min left). Synced from another tab.`);
+              }
+            }
+          } catch {
+            // ignore unparseable storage
+          }
+        }
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, [step]);
+
   // arriving from onboarding or another screen: always start at the top, never mid-scroll
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -819,6 +855,13 @@ export function StayHome({
 
       {step === 'timer' && plan && (
         <section className="card w-full p-5 text-center" aria-label="Focus block" data-testid="timer-card">
+          <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-700 dark:text-amber-300" data-testid="active-timer-tab-warning">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75"></span>
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500"></span>
+            </span>
+            Active focus session running · Synced across browser tabs
+          </div>
           <p className="meta">{plan.firstStep}</p>
           <p className="tnum my-2 font-display text-5xl font-semibold" data-testid="clock">
             {clock(remaining)}
@@ -959,9 +1002,13 @@ export function StayHome({
 
       <form
         className="flex w-full items-center gap-2"
+        action="javascript:void(0);"
         onSubmit={(e) => {
           e.preventDefault();
-          submit(input);
+          e.stopPropagation();
+          if (input.trim()) {
+            submit(input);
+          }
         }}
       >
         {!quietMode && (
@@ -981,6 +1028,15 @@ export function StayHome({
           className="field h-12 flex-1"
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              e.stopPropagation();
+              if (input.trim()) {
+                submit(input);
+              }
+            }
+          }}
           placeholder="Or type it here"
           aria-label="Tell Stay what you're avoiding"
           maxLength={280}
@@ -996,47 +1052,64 @@ export function StayHome({
 
       {sheet === 'menu' && (
         <Sheet title="More" onClose={() => setSheet(null)}>
-          <div className="grid gap-2">
-            <button type="button" className="btn btn-secondary justify-start" onClick={() => (setSheet(null), setGrounding(true))}>
-              Ground me (breathing)
-            </button>
-            <button type="button" className="btn btn-secondary justify-start" onClick={() => setSheet('voice')}>
-              Voice and language
-            </button>
-            <button type="button" className="btn btn-secondary justify-start" onClick={() => (routineByVoice.current = false, setRoutineId(null), setSheet('routine'))}>
-              Routines
-            </button>
-            <button type="button" className="btn btn-secondary justify-start" onClick={() => setSheet('remind')} data-testid="remind-open">
-              Check-ins and reminders
-            </button>
-            <button type="button" className="btn btn-secondary justify-start" onClick={() => setSheet('memory')}>
-              What Stay remembers
-            </button>
-            <button type="button" className="btn btn-secondary justify-start" onClick={() => (setParked(loadParked()), setSheet('parking'))} data-testid="parking-open">
-              Parked thoughts
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary justify-start"
-              onClick={() => {
-                if (!quietMode) voice.disconnectVoiceSession();
-                onQuietModeChange(!quietMode);
-                setSheet(null);
-              }}
-            >
-              {quietMode ? 'Turn voice on' : 'Quiet mode: type only'}
-            </button>
-            <button type="button" className="btn btn-secondary justify-start" onClick={() => voice.setCompanionMode(!voice.companionMode)} aria-pressed={voice.companionMode} data-testid="companion-toggle">
-              {voice.companionMode ? 'Stay with me all day: on' : 'Stay with me all day: off'}
-            </button>
-            <button type="button" className="btn btn-secondary justify-start" onClick={() => router.push('/app/history')}>
-              History
-            </button>
-            <button type="button" className="btn btn-secondary justify-start" onClick={() => router.push('/app/settings')}>
-              Settings and your own keys
-            </button>
+          <div className="space-y-4">
+            <div>
+              <p className="text-[0.7rem] font-semibold uppercase tracking-wider text-ink-3 mb-1.5">Calm & Focus</p>
+              <div className="grid gap-1.5 sm:grid-cols-2">
+                <button type="button" className="btn btn-secondary justify-start text-sm py-2" onClick={() => (setSheet(null), setGrounding(true))}>
+                  Ground me (breathing)
+                </button>
+                <button type="button" className="btn btn-secondary justify-start text-sm py-2" onClick={() => (routineByVoice.current = false, setRoutineId(null), setSheet('routine'))}>
+                  Routines
+                </button>
+                <button type="button" className="btn btn-secondary justify-start text-sm py-2 sm:col-span-2" onClick={() => (setParked(loadParked()), setSheet('parking'))} data-testid="parking-open">
+                  Parked thoughts
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-[0.7rem] font-semibold uppercase tracking-wider text-ink-3 mb-1.5">Voice & Audio</p>
+              <div className="grid gap-1.5 sm:grid-cols-2">
+                <button type="button" className="btn btn-secondary justify-start text-sm py-2" onClick={() => setSheet('voice')}>
+                  Voice and language
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary justify-start text-sm py-2"
+                  onClick={() => {
+                    if (!quietMode) voice.disconnectVoiceSession();
+                    onQuietModeChange(!quietMode);
+                    setSheet(null);
+                  }}
+                >
+                  {quietMode ? 'Turn voice on' : 'Quiet mode (type only)'}
+                </button>
+                <button type="button" className="btn btn-secondary justify-start text-sm py-2 sm:col-span-2" onClick={() => voice.setCompanionMode(!voice.companionMode)} aria-pressed={voice.companionMode} data-testid="companion-toggle">
+                  {voice.companionMode ? 'Stay with me all day: on' : 'Stay with me all day: off'}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-[0.7rem] font-semibold uppercase tracking-wider text-ink-3 mb-1.5">Workspace & History</p>
+              <div className="grid gap-1.5 sm:grid-cols-2">
+                <button type="button" className="btn btn-secondary justify-start text-sm py-2" onClick={() => setSheet('remind')} data-testid="remind-open">
+                  Check-ins & reminders
+                </button>
+                <button type="button" className="btn btn-secondary justify-start text-sm py-2" onClick={() => setSheet('memory')}>
+                  What Stay remembers
+                </button>
+                <button type="button" className="btn btn-secondary justify-start text-sm py-2" onClick={() => router.push('/app/history')}>
+                  History
+                </button>
+                <button type="button" className="btn btn-secondary justify-start text-sm py-2" onClick={() => router.push('/app/settings')}>
+                  Settings & keys
+                </button>
+              </div>
+            </div>
           </div>
-          <p className="meta mt-4">All-day mode keeps the voice session alive for up to three hours at a time and renews it quietly while this tab stays open. Everything here also works by voice: &ldquo;ground me&rdquo;, &ldquo;show my memory&rdquo;, &ldquo;switch to Spanish&rdquo;, &ldquo;change voice to Charles&rdquo;.</p>
+          <p className="meta mt-4">Hands-free: Say &ldquo;ground me&rdquo;, &ldquo;switch voice&rdquo;, or &ldquo;show memory&rdquo; anytime.</p>
         </Sheet>
       )}
 

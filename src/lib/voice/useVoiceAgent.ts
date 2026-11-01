@@ -937,7 +937,9 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
             isAssistantSpeakingRef.current = false;
             assistantCooldownTimerRef.current = null;
           }, 400);
-          setVisualState('listening');
+          const liveWs = wsRef.current;
+          const isWsLive = Boolean(liveWs && liveWs.readyState === WebSocket.OPEN && sessionReadyRef.current);
+          setVisualState(isWsLive ? 'listening' : 'idle');
           setAudioEnergy(0.05);
           setAudioBands({ low: 0, mid: 0, high: 0, overall: 0.05 });
         };
@@ -946,7 +948,9 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
         window.speechSynthesis.speak(utterance);
       } catch {
-        setVisualState('listening');
+        const liveWs = wsRef.current;
+        const isWsLive = Boolean(liveWs && liveWs.readyState === WebSocket.OPEN && sessionReadyRef.current);
+        setVisualState(isWsLive ? 'listening' : 'idle');
       }
     }
   }, []);

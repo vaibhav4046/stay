@@ -281,7 +281,12 @@ export function VoicePicker({ selected, onSelect, fastVoice }: Props) {
   };
 
   const pick = (p: VoicePersona) => {
-        setErrors((e) => ({ ...e, [p.id]: '' }));
+    const need = chooseVoice(p, caps).needs;
+    if (need) {
+      setErrors((e) => ({ ...e, [p.id]: need }));
+      return;
+    }
+    setErrors((e) => ({ ...e, [p.id]: '' }));
     onSelect(p.id);
   };
 

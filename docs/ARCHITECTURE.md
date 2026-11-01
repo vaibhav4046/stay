@@ -1,26 +1,43 @@
 # Architecture
 
-Stay is a Next.js 15 (App Router, React 19, TypeScript, Tailwind v4) web app. Almost everything runs in the browser; the server is a thin layer that holds keys, applies the safety gates and relays to a language model.
+Stay is a Next.js 15 (App Router, React 19, TypeScript, Tailwind v4) real-time voice application designed specifically for task initiation and executive dysfunction in ADHD. Almost everything runs in the browser; the server is a secure, low-latency edge layer that holds ephemeral tokens, enforces deterministic safety gates, and routes completions.
 
+## Real-Time Speech Architecture
+
+```mermaid
+flowchart TD
+    MIC["Browser microphone"] --> WORKLET["AudioWorklet: 16 kHz mono PCM"]
+    WORKLET --> WS["Stay realtime WebSocket"]
+    WS --> STT["AssemblyAI streaming STT"]
+    STT --> EVENTS["Partial transcript + utterance + end_of_turn"]
+    EVENTS --> ORCH["Conversation orchestrator"]
+    
+    ORCH --> LLM["Streaming LLM"]
+    ORCH --> SAFETY["Safety and crisis router"]
+    ORCH --> MEMORY["Session memory and clinician summary"]
+    
+    LLM --> TTS["Streaming TTS"]
+    TTS --> JITTER["Jitter buffer + speaker"]
+    JITTER --> INTERRUPT["User interruption detector"]
+    INTERRUPT --> WS
 ```
- microphone ──► AudioWorklet (24 kHz, 16-bit, 50 ms chunks)
-                      │
-                      ▼
-              FastSocket (src/lib/voice/fastSocket.ts)       emits the Voice Agent's own events,
-              ┌───────────────┬──────────────────┐            so the voice hook, tools, memory,
-              │ speech-to-text │  chat model      │  speech    safety and orb are shared by both engines
-              │ AssemblyAI v3  │  /api/voice/chat │  AssemblyAI
-              │ wss, browser-  │  (SSE, one `app` │  streaming TTS
-              │ direct, short- │  tool) -> Groq   │  wss, browser-direct
-              │ lived token    │  or your own key │  Generate / Flush / Cancel
-              └───────┬────────┴────────┬─────────┘
-                      │ turn events     │ reply text, tool calls
-                      ▼                 ▼
-              useVoiceAgent (hook) ── runAppAction ──► screens, timer, routines, today list,
-                      │                                  parking lot, check-ins, memory, orb
-                      ▼
-              playback queue ──► speakers          fallback: AssemblyAI Voice Agent (managed)
-```
+
+### Component Mapping & Source Implementation
+
+| Node in Diagram | Role & Responsibilities | Codebase Implementation |
+|---|---|---|
+| **Browser microphone** | Web Audio `getUserMedia` with hardware Echo Cancellation (AEC), Noise Suppression (NS), and Automatic Gain Control (AGC). | `src/lib/voice/useVoiceAgent.ts` |
+| **AudioWorklet: 16 kHz mono PCM** | Low-latency audio capture processor running on Web Audio rendering thread, streaming 16-bit linear PCM in 50ms chunks. | `public/pcm-processor.js`, `src/lib/voice/playback/pcm16.ts` |
+| **Stay realtime WebSocket** | High-performance full-duplex socket (`FastSocket`) managing auth handshakes, binary frames, epoch tagging, and heartbeat ping/pong. | `src/lib/voice/fastSocket.ts`, `src/app/api/voice/fast-token/route.ts` |
+| **AssemblyAI streaming STT** | Universal-Streaming v3 WebSocket connection transcribing speech in real-time with zero-latency partial stabilization. | `streaming.assemblyai.com/v3/ws`, `src/lib/voice/fastSocket.ts` |
+| **Partial transcript + utterance + end_of_turn** | Multi-tiered turn detection: partials drive real-time captions & neural orb morphing; `utterance` triggers speculative LLM generation; `end_of_turn` finalizes prompt. | `src/lib/voice/fastSocket.ts`, `src/lib/voice/captionSync.ts` |
+| **Conversation orchestrator** | State machine coordinating tool execution (`app`), turn cadence, ADHD hesitation holding (2.2s patience window), and multi-turn context. | `src/lib/voice/fastSocket.ts`, `src/lib/voice/agenticActions.ts` |
+| **Safety and crisis router** | Deterministic multilingual interceptor evaluating every transcript before LLM invocation, routing crisis prompts to emergency resources. | `src/lib/safety/crisis.ts`, `src/app/api/coach/plan/route.ts` |
+| **Session memory & clinician summary** | Privacy-first local storage repository, cognitive tracking, and structured export for ADHD clinical check-ins & PDF reports. | `src/lib/storage/repository.ts`, `src/lib/pdf/clinicianReport.ts` |
+| **Streaming LLM** | Ultra-low latency streaming model (`openai/gpt-oss-120b` on Groq, OpenAI, or user BYOK) generating concise 1-step task breakdowns. | `src/app/api/voice/chat/route.ts`, `src/app/api/coach/plan/route.ts` |
+| **Streaming TTS** | Real-time text-to-speech synthesis (AssemblyAI Streaming TTS + Azure Neural TTS + Browser SpeechSynthesis). | `src/lib/voice/tts/`, `src/app/api/voice/tts/route.ts` |
+| **Jitter buffer + speaker** | Custom AudioWorklet ring buffer decouples network delivery jitter from audio DAC clock, ensuring smooth continuous playback with zero gap clicks. | `public/worklets/stay-pcm-playback-processor.js`, `src/lib/voice/playback/continuousPlayback.ts` |
+| **User interruption detector** | Instant barge-in detection: user speech immediately emits an atomic Cancel epoch frame to abort TTS and flush audio buffers within <50ms. | `src/lib/voice/playback/epochs.ts`, `src/lib/voice/fastSocket.ts` |
 
 ## Voice
 

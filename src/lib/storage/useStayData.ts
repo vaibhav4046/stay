@@ -98,19 +98,38 @@ export function useStayData(variant: DataVariant) {
 
   const addCheckin = useCallback(
     async (input: Omit<TreatmentCheckinRecord, 'id' | 'userId' | 'createdAt'>) => {
+      const todayKey = new Date().toISOString().slice(0, 10);
       if (variant === 'demo') {
-        const rec: TreatmentCheckinRecord = {
-          ...input,
-          id: `demo-chk-live-${Date.now()}`,
-          userId: 'sample-demo-user',
-          createdAt: new Date().toISOString(),
-          isSample: true,
-        };
-        setCheckins((c) => [rec, ...c]);
-        return rec;
+        let rec: TreatmentCheckinRecord;
+        setCheckins((c) => {
+          const idx = c.findIndex((x) => x.createdAt.slice(0, 10) === todayKey);
+          if (idx >= 0) {
+            rec = { ...c[idx], ...input, updatedAt: new Date().toISOString() };
+            const next = [...c];
+            next[idx] = rec;
+            return next;
+          }
+          rec = {
+            ...input,
+            id: `demo-chk-live-${Date.now()}`,
+            userId: 'sample-demo-user',
+            createdAt: new Date().toISOString(),
+            isSample: true,
+          };
+          return [rec, ...c];
+        });
+        return rec!;
       }
       const rec = await recordTreatmentCheckin(input);
-      setCheckins((c) => [rec, ...c]);
+      setCheckins((c) => {
+        const idx = c.findIndex((x) => x.id === rec.id || x.createdAt.slice(0, 10) === todayKey);
+        if (idx >= 0) {
+          const next = [...c];
+          next[idx] = rec;
+          return next;
+        }
+        return [rec, ...c];
+      });
       return rec;
     },
     [variant]
