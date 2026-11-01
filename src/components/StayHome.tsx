@@ -954,17 +954,34 @@ export function StayHome({
             isConnected={voice.isConnected}
             replyTimes={voice.replyTimes}
           />
-          <a
-            href={`tel:${process.env.NEXT_PUBLIC_STAY_PHONE || '+1 (415) 800-STAY'}`}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-primary/30 bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors shrink-0"
+          <button
+            type="button"
+            onClick={voice.isConnected ? () => voice.disconnectVoiceSession() : handleStartVoice}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium transition-colors shrink-0 cursor-pointer ${
+              voice.isConnected
+                ? 'border-rose-500/30 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20'
+                : 'border-primary/30 bg-primary/10 text-primary hover:bg-primary/20'
+            }`}
             data-testid="header-call-stay-btn"
-            title="Call Stay phone companion (LiveKit Telephony)"
+            title={voice.isConnected ? 'In Call — click to hang up' : 'Direct Call to Stay (Browser voice)'}
+            aria-label={voice.isConnected ? 'Hang up call with Stay' : 'Direct Call to Stay'}
           >
-            <svg className="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-            </svg>
-            <span className="hidden xs:inline">Call Stay</span>
-          </a>
+            {voice.isConnected ? (
+              <>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" aria-hidden="true" />
+                <span className="hidden xs:inline">In Call · End</span>
+                <span className="xs:hidden">End</span>
+              </>
+            ) : (
+              <>
+                <svg className="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                </svg>
+                <span className="hidden xs:inline">Direct Call</span>
+                <span className="xs:hidden">Call</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
 
@@ -1044,27 +1061,39 @@ export function StayHome({
               <aside
                 className="card p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 border border-primary/20 bg-primary/5 mt-3"
                 data-testid="call-stay-card"
-                aria-label="Call Stay over telephone"
+                aria-label="Direct Call to Stay or Telephone Companion"
               >
                 <div>
                   <p className="font-semibold text-sm text-ink flex items-center gap-2">
                     <span>Call Stay</span>
-                    <span className="text-[0.7rem] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded bg-primary/10 text-primary font-semibold">LiveKit SIP Telephony</span>
+                    <span className="text-[0.7rem] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded bg-primary/10 text-primary font-semibold">LiveKit SIP & Web Voice</span>
                   </p>
                   <p className="text-xs text-ink-2 mt-0.5">
-                    Dial <a href={`tel:${phone}`} className="font-mono font-semibold text-primary underline">{phone}</a> from any phone for Universal-3.6 Pro voice companion.
+                    Call directly in your browser, or dial <a href={`tel:${phone}`} className="font-mono font-semibold text-primary underline">{phone}</a> from any telephone.
                   </p>
                 </div>
-                <a
-                  href={`tel:${phone}`}
-                  className="btn btn-primary text-xs py-2 px-3 shrink-0 flex items-center gap-1.5"
-                  data-testid="call-stay-btn"
-                >
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                  </svg>
-                  Call {phone}
-                </a>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={voice.isConnected ? () => voice.disconnectVoiceSession() : handleStartVoice}
+                    className={`btn text-xs py-2 px-3 shrink-0 flex items-center gap-1.5 cursor-pointer ${
+                      voice.isConnected ? 'bg-rose-600 hover:bg-rose-700 text-white' : 'btn-primary'
+                    }`}
+                    data-testid="call-direct-stay-btn"
+                  >
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                    </svg>
+                    <span>{voice.isConnected ? 'End Call' : 'Call Stay Directly'}</span>
+                  </button>
+                  <a
+                    href={`tel:${phone}`}
+                    className="btn btn-secondary text-xs py-2 px-3 shrink-0 flex items-center gap-1.5"
+                    data-testid="call-stay-btn"
+                  >
+                    <span>Dial {phone}</span>
+                  </a>
+                </div>
               </aside>
             );
           })()}
