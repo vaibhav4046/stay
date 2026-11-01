@@ -3,6 +3,7 @@ import { test, expect, type Page } from '@playwright/test';
 const shapeOf = (page: Page) => page.locator('[data-testid="hero-orb"] [data-shape]').first().getAttribute('data-shape');
 
 async function open(page: Page) {
+  await page.addInitScript(() => localStorage.setItem('stay:playful_orb:v1', '1')); // chip morphing is opt-in
   await page.goto('/', { waitUntil: 'networkidle' });
   await page.waitForSelector('[data-testid="hero-orb"] canvas');
 }
@@ -220,7 +221,7 @@ test.describe('Landing: scroll story and artifacts', () => {
     await expect(p.getByTestId('persona')).toHaveCount(22);
     await p.getByRole('button', { name: /Native accent/ }).click();
     await expect(p.getByTestId('persona')).toHaveCount(7);
-    await expect(p).toContainText('Native Italian voice');
+    await expect(p).toContainText('Italian accent');
   });
 });
 

@@ -79,7 +79,7 @@ test('Capture complete browser visual verification suite', async ({ page }) => {
   copyToArtifacts(shot4);
 
   // 3. DIRECT CLICK ON A VOICE CARD (ElevenLabs UX)
-  // Click Countdown Cookie directly on the card
+  // Click Audrey directly on the card
   const eveCard = page.getByTestId('voice-eve');
   await eveCard.scrollIntoViewIfNeeded();
   await eveCard.click();
@@ -94,7 +94,7 @@ test('Capture complete browser visual verification suite', async ({ page }) => {
 
   // Close sheet and verify armed receipt on Today screen
   await page.keyboard.press('Escape');
-  await expect(page.getByText(/Countdown Cookie armed — ready to speak/)).toBeVisible();
+  await expect(page.getByText(/Audrey armed — ready to speak/)).toBeVisible();
 
   // Screenshot 6: Armed voice receipt confirmation on Today screen
   const shot6 = '06-voice-armed-today-receipt.png';

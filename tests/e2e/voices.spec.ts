@@ -42,12 +42,12 @@ test.describe('accurate voices', () => {
     await expect(taco).toHaveAttribute('data-usable', 'false');
     await expect(taco).toContainText('Needs an Azure Speech key');
     await expect(page.getByTestId('preview-taco')).toBeDisabled();
-    await taco.getByRole('button', { name: /^Taco Tornado/ }).click();
+    await taco.getByRole('button', { name: /^Constanza/ }).click();
     expect(await page.evaluate(() => localStorage.getItem('stay_selected_voice'))).not.toBe('taco');
 
     // choosing the usable Indian English voice sticks
-    await page.getByTestId('voice-cardamom').getByRole('button', { name: /^Cardamom Calm/ }).click();
-    await expect(page.getByTestId('voice-cardamom').getByRole('button', { name: /^Cardamom Calm/ })).toHaveAttribute('aria-pressed', 'true');
+    await page.getByTestId('voice-cardamom').getByRole('button', { name: /^Kavya/ }).click();
+    await expect(page.getByTestId('voice-cardamom').getByRole('button', { name: /^Kavya/ })).toHaveAttribute('aria-pressed', 'true');
     expect(await page.evaluate(() => localStorage.getItem('stay_selected_voice'))).toBe('cardamom');
 
     // an Azure key makes Mexican Spanish available, and picking it moves the conversation to Spanish
@@ -56,14 +56,14 @@ test.describe('accurate voices', () => {
     await page.getByTestId('tts-region').fill('centralindia');
     await expect(page.getByTestId('voice-engine-taco')).toHaveText('Azure Neural: Dalia');
     await expect(taco).toHaveAttribute('data-usable', 'true');
-    await taco.getByRole('button', { name: /^Taco Tornado/ }).click();
-    await expect(taco.getByRole('button', { name: /^Taco Tornado/ })).toHaveAttribute('aria-pressed', 'true');
+    await taco.getByRole('button', { name: /^Constanza/ }).click();
+    await expect(taco.getByRole('button', { name: /^Constanza/ })).toHaveAttribute('aria-pressed', 'true');
     expect(await page.evaluate(() => localStorage.getItem('stay_selected_voice'))).toBe('taco');
     expect(await page.evaluate(() => localStorage.getItem('stay_selected_language'))).toMatch(/^es/);
 
-    // the key lives in this browser only, and not in the shared byok headers
-    const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('stay_byok') || '{}'));
-    expect(stored.ttsRegion).toBe('centralindia');
+    // the key lives in this tab's memory only: nothing is written to persistent storage (B4)
+    expect(await page.evaluate(() => localStorage.getItem('stay_byok'))).toBeNull();
+    expect(await page.evaluate(() => JSON.stringify(localStorage))).not.toContain('kkkkkkkk');
     await page.screenshot({ path: 'test-results/voices-picker.png', fullPage: false });
   });
 
@@ -92,7 +92,7 @@ test.describe('accurate voices', () => {
     const sent = JSON.parse(calls[0].body);
     expect(sent.voice).toBe('es-MX-DaliaNeural');
     expect(sent.locale).toBe('es-MX');
-    expect(sent.text).toContain('Taco Tornado');
+    expect(sent.text).toContain('Constanza');
     expect(calls[0].headers['x-stay-tts-key']).toBe('k'.repeat(32));
     expect(calls[0].headers['x-stay-tts-region']).toBe('centralindia');
 

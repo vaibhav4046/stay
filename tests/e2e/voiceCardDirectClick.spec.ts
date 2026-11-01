@@ -13,7 +13,7 @@ test('Clicking voice card container selects voice and arms it immediately', asyn
   await page.getByRole('button', { name: 'Voice and language' }).click();
   await expect(page.getByTestId('voice-picker')).toBeVisible();
 
-  // Card: Countdown Cookie (id: 'eve')
+  // Card: Audrey (id: 'eve')
   const eveCard = page.getByTestId('voice-eve');
   await expect(eveCard).toBeVisible();
 
@@ -29,9 +29,9 @@ test('Clicking voice card container selects voice and arms it immediately', asyn
 
   // Close sheet and verify receipt feedback on Today screen
   await page.keyboard.press('Escape');
-  await expect(page.getByText(/Countdown Cookie armed — ready to speak/)).toBeVisible();
+  await expect(page.getByText(/Audrey armed — ready to speak/)).toBeVisible();
 
-  // Re-open and click Card: Biscuit Blitz (id: 'paul') in More voices
+  // Re-open and click Card: Paul (id: 'paul') in More voices
   await page.getByTestId('menu-button').click();
   await page.getByRole('button', { name: 'Voice and language' }).click();
   await expect(page.getByTestId('voice-picker')).toBeVisible();
@@ -50,11 +50,11 @@ test('Clicking voice card container selects voice and arms it immediately', asyn
   const paulSelected = await page.evaluate(() => localStorage.getItem('stay_selected_voice'));
   expect(paulSelected).toBe('paul');
 
-  // Close sheet and verify Biscuit Blitz armed receipt
+  // Close sheet and verify Paul armed receipt
   await page.keyboard.press('Escape');
-  await expect(page.getByText(/Biscuit Blitz armed — ready to speak/)).toBeVisible();
+  await expect(page.getByText(/Paul armed — ready to speak/)).toBeVisible();
 
-  // Re-open and click Card: Lady Lavender (id: 'anna') in Recommended
+  // Re-open and click Card: Adrienne (id: 'anna') in Recommended
   await page.getByTestId('menu-button').click();
   await page.getByRole('button', { name: 'Voice and language' }).click();
   await expect(page.getByTestId('voice-picker')).toBeVisible();
@@ -69,7 +69,7 @@ test('Clicking voice card container selects voice and arms it immediately', asyn
   expect(annaSelected).toBe('anna');
 
   await page.keyboard.press('Escape');
-  await expect(page.getByText(/Lady Lavender armed — ready to speak/)).toBeVisible();
+  await expect(page.getByText(/Adrienne armed — ready to speak/)).toBeVisible();
 
   await page.screenshot({ path: 'test-results/voice-card-armed-success.png' });
 });
