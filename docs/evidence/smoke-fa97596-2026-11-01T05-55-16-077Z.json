@@ -1,0 +1,10 @@
+{
+  "status": "NOT_RUN",
+  "reason": "no key",
+  "gitSha": "fa97596b1aa93be060e9b23246e2c5dddfb08e8e",
+  "dirty": false,
+  "tier": "real-provider",
+  "scenarioId": "assemblyai-live-ws-smoke",
+  "timestamp": "2026-11-01T05:55:16.081Z",
+  "fixtureWav": "tests/fixtures/audio/smoke-16k.wav"
+}

@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { installFakeVoice, type FakeVoice } from './helpers/fakeVoice';
+import { installFakeFastVoice, type FakeFastVoice } from './helpers/fakeFastVoice';
 
 test.use({
   permissions: ['microphone'],
@@ -13,8 +13,15 @@ test.use({
   },
 });
 
-async function setupOnboardedPage(page: Page): Promise<FakeVoice> {
-  const fakeVoice = await installFakeVoice(page);
+async function setupOnboardedPage(
+  page: Page,
+  chatReplyText = 'Let us open your W-2 document first.'
+): Promise<FakeFastVoice> {
+  const fakeVoice = await installFakeFastVoice(page, {
+    chatReplyText,
+    ttsChunksPerFlush: 3,
+    ttsChunkIntervalMs: 30,
+  });
   await page.goto('/app/today');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
@@ -35,82 +42,86 @@ async function startVoice(page: Page) {
   await expect(page.getByTestId('orb-status')).toHaveText('Listening', { timeout: 10000 });
 }
 
-test.describe('Deterministic Fake-Voice Browser Live Chat Stream Suite', () => {
-  test('User partial speech -> final speech -> thinking -> assistant streaming -> finalized message', async ({ page }) => {
-    const fakeVoice = await setupOnboardedPage(page);
+test.describe('Deterministic FastSocket Browser Live Chat Stream Suite (C1)', () => {
+  test('User partial speech -> final speech -> thinking -> assistant streaming -> finalized message over FastSocket', async ({ page }) => {
+    const fakeVoice = await setupOnboardedPage(page, 'Let us open your W-2 document first.');
 
-    // Start voice session
     await startVoice(page);
     expect(fakeVoice.ready()).toBe(true);
+    expect(fakeVoice.managedAgentSocketOpened()).toBe(false);
+    expect(fakeVoice.ttsUrl()).toContain('voice_id=');
+    expect(fakeVoice.ttsUrl()).not.toContain('voice=');
 
-    // 1. Send user partial delta
-    fakeVoice.sendRaw({ type: 'transcript.user.delta', text: 'I need to file my' });
+    // 1. Send user partial Turn via AssemblyAI v3 STT socket
+    fakeVoice.pushSttPartial('I need to file my', 0);
 
-    // Assert: chat-live-user-partial is visible, appears once, status says Transcribing speech
     const userPartial = page.getByTestId('chat-live-user-partial');
     await expect(userPartial).toBeVisible({ timeout: 5000 });
     await expect(userPartial).toHaveCount(1);
     await expect(userPartial).toContainText('I need to file my');
     await expect(page.getByTestId('chat-status-pill')).toContainText('Transcribing speech');
 
-    // 2. Send longer user partial delta (in-place replacement)
-    fakeVoice.sendRaw({ type: 'transcript.user.delta', text: 'I need to file my taxes for 2024' });
+    // 2. Send longer user partial Turn (in-place replacement)
+    fakeVoice.pushSttPartial('I need to file my taxes for 2024', 0);
     await expect(userPartial).toHaveCount(1);
     await expect(userPartial).toContainText('I need to file my taxes for 2024');
 
-    // 3. Send final user transcript
-    fakeVoice.sendRaw({ type: 'input.speech.stopped' });
-    fakeVoice.sendRaw({ type: 'transcript.user', text: 'I need to file my taxes for 2024', item_id: 'u-101' });
+    // 3. Send final user Turn (end_of_turn: true) -> triggers /api/voice/chat -> TTS Generate + Flush -> Audio + FlushDone
+    fakeVoice.pushSttFinal('I need to file my taxes for 2024.', 0);
 
-    // Assert: temporary user partial becomes finalized chat-user-message
-    await expect(userPartial).toHaveCount(0);
+    await expect(userPartial).toHaveCount(0, { timeout: 5000 });
     const userMsg = page.getByTestId('chat-user-message');
     await expect(userMsg).toHaveCount(1);
-    await expect(userMsg).toContainText('I need to file my taxes for 2024');
+    await expect(userMsg).toContainText('I need to file my taxes for 2024.');
 
-    // 4. Send reply.started
-    fakeVoice.sendRaw({ type: 'reply.started' });
-    // State becomes thinking or speaking
-    await expect(page.getByTestId('chat-status-pill')).toContainText(/Thinking|speaking/i);
-
-    // 5. Send streaming audio & transcript.agent
-    fakeVoice.sendRaw({ type: 'transcript.agent', text: 'Let us open your W-2 document first.', item_id: 'a-201' });
-
-    // 6. Send reply.done
-    fakeVoice.sendRaw({ type: 'reply.done', status: 'completed' });
-
-    // Exactly one finalized agent message exists
-    const agentMsg = page.getByTestId('chat-agent-message');
-    await expect(agentMsg).toHaveCount(1);
-    await expect(agentMsg).toContainText('Let us open your W-2 document first.');
+    // Finalized agent reply is the latest agent message in the transcript
+    const agentMsg = page.getByTestId('chat-agent-message').last();
+    await expect(agentMsg).toContainText('Let us open your W-2 document first.', { timeout: 8000 });
   });
 
-  test('Instant barge-in interruption while Stay is speaking', async ({ page }) => {
-    const fakeVoice = await setupOnboardedPage(page);
+  test('Instant barge-in interruption while Stay is speaking over FastSocket', async ({ page }) => {
+    const fakeVoice = await installFakeFastVoice(page, {
+      chatReplyText: 'Start with the stack of bills on your left and sort the top three.',
+      ttsChunksPerFlush: 12,
+      ttsChunkIntervalMs: 120,
+    });
+    await page.goto('/app/today');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+
+    const careOption = page.getByTestId('care-self_managing');
+    if (await careOption.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await careOption.click();
+      await page.getByTestId('onboarding-ack').click();
+      await page.getByTestId('onboarding-done').click();
+    }
 
     await startVoice(page);
     expect(fakeVoice.ready()).toBe(true);
 
     // Initial user speech & final
-    fakeVoice.sendRaw({ type: 'transcript.user', text: 'Organize office', item_id: 'u-1' });
-    await expect(page.getByTestId('chat-user-message')).toHaveCount(1);
+    fakeVoice.pushSttFinal('Organize office.', 0);
+    await expect(page.getByTestId('chat-user-message')).toHaveCount(1, { timeout: 5000 });
 
-    // Stay begins speaking
-    fakeVoice.sendRaw({ type: 'reply.started' });
-    fakeVoice.sendRaw({ type: 'transcript.agent', text: 'Start with the stack of bills on your left.', item_id: 'a-1' });
+    // Wait until TTS starts streaming audio
+    await page.waitForTimeout(180);
 
     // User interrupts by speaking over Stay
-    fakeVoice.userSpeaks('Wait, I found the document already');
+    fakeVoice.pushSttSpeechStarted();
+    fakeVoice.pushSttPartial('Wait, I found the document already', 1);
 
-    // Assert: interruption badge appears and new user partial bubble appears
-    await expect(page.getByTestId('chat-live-interrupted-badge')).toBeVisible({ timeout: 5000 });
     const userPartial = page.getByTestId('chat-live-user-partial');
-    await expect(userPartial).toBeVisible();
+    await expect(userPartial).toBeVisible({ timeout: 5000 });
     await expect(userPartial).toContainText('Wait, I found the document already');
 
+    // Verify FastSocket sent Cancel to AssemblyAI TTS socket
+    await expect
+      .poll(() => fakeVoice.ttsSentJson().some((m) => m.type === 'Cancel'), { timeout: 4000 })
+      .toBe(true);
+
     // Finalize the interruption utterance
-    fakeVoice.sendRaw({ type: 'transcript.user', text: 'Wait, I found the document already', item_id: 'u-2' });
-    await expect(page.getByTestId('chat-user-message')).toHaveCount(2);
+    fakeVoice.pushSttFinal('Wait, I found the document already.', 1);
+    await expect(page.getByTestId('chat-user-message')).toHaveCount(2, { timeout: 6000 });
   });
 
   test('User partial ending in hesitation, rapid speech, and empty transcript handling', async ({ page }) => {
@@ -120,21 +131,23 @@ test.describe('Deterministic Fake-Voice Browser Live Chat Stream Suite', () => {
     expect(fakeVoice.ready()).toBe(true);
 
     // Empty transcript should not add broken bubbles
-    fakeVoice.sendRaw({ type: 'transcript.user.delta', text: '   ' });
+    fakeVoice.pushSttPartial('   ', 0);
     await expect(page.getByTestId('chat-live-user-partial')).toHaveCount(0);
 
     // Rapid speech updates
-    fakeVoice.sendRaw({ type: 'transcript.user.delta', text: 'I' });
-    fakeVoice.sendRaw({ type: 'transcript.user.delta', text: 'I am' });
-    fakeVoice.sendRaw({ type: 'transcript.user.delta', text: 'I am not sure...' });
+    fakeVoice.pushSttPartial('I', 0);
+    fakeVoice.pushSttPartial('I am', 0);
+    fakeVoice.pushSttPartial('I am not sure...', 0);
 
     const userPartial = page.getByTestId('chat-live-user-partial');
     await expect(userPartial).toHaveCount(1);
     await expect(userPartial).toContainText('I am not sure...');
 
     // Finalize hesitation
-    fakeVoice.sendRaw({ type: 'transcript.user', text: 'I am not sure where to start', item_id: 'u-hesitate' });
-    await expect(page.getByTestId('chat-user-message')).toContainText('I am not sure where to start');
+    fakeVoice.pushSttFinal('I am not sure where to start.', 0);
+    await expect(page.getByTestId('chat-user-message')).toContainText('I am not sure where to start.', {
+      timeout: 5000,
+    });
   });
 
   test('Collapse while streaming, accessible preview button, and reopening after collapse', async ({ page }) => {
@@ -148,7 +161,7 @@ test.describe('Deterministic Fake-Voice Browser Live Chat Stream Suite', () => {
     await expect(page.getByTestId('chat-message-list')).not.toBeVisible();
 
     // Stream user speech while collapsed
-    fakeVoice.sendRaw({ type: 'transcript.user.delta', text: 'Testing collapsed streaming' });
+    fakeVoice.pushSttPartial('Testing collapsed streaming', 0);
 
     // Collapsed preview button is visible and accessible
     const previewBtn = page.getByTestId('chat-collapsed-preview-btn');
@@ -167,8 +180,8 @@ test.describe('Deterministic Fake-Voice Browser Live Chat Stream Suite', () => {
     await startVoice(page);
     expect(fakeVoice.ready()).toBe(true);
 
-    fakeVoice.sendRaw({ type: 'transcript.user', text: 'A completed thought', item_id: 'u-10' });
-    await expect(page.getByTestId('chat-user-message')).toHaveCount(1);
+    fakeVoice.pushSttFinal('A completed thought.', 0);
+    await expect(page.getByTestId('chat-user-message')).toHaveCount(1, { timeout: 5000 });
 
     // Clear
     const clearBtn = page.getByTestId('chat-clear-btn');

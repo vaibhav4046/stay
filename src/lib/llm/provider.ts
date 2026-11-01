@@ -2,7 +2,6 @@
  * One place that talks to a chat-completions provider: the person's own (headers) or Stay's shared default.
  * Their key is used for that one request and never stored or logged.
  */
-import { lookup } from 'node:dns/promises';
 import { getNextGroqKey, reportGroqKeyRateLimit } from '@/lib/voice/tokenOptimizer';
 
 export type LlmError = 'invalid_key' | 'quota' | 'unreachable' | 'bad_endpoint' | 'rate_limited' | 'no_server_key' | 'other';
@@ -136,7 +135,9 @@ export async function resolvesPublic(
   try {
     const answers = customLookup
       ? await customLookup(cleanHost)
-      : await lookup(cleanHost, { all: true });
+      : await (await import(/* webpackIgnore: true */ 'node:dns/promises')).lookup(cleanHost, {
+          all: true,
+        });
     ok = answers.length > 0 && answers.every((a) => !isPrivateIp(a.address));
   } catch {
     ok = false;
