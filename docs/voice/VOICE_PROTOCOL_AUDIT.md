@@ -67,13 +67,25 @@ When the user speaks while Stay is speaking:
 
 ---
 
-## 5. LiveChatBox: Gemini-Live-Style Conversational UI
+## 5. LiveChatBox: Gemini-Live & Wispr Flow Conversational UI
 
 - **Component:** `src/components/voice/LiveChatBox.tsx`
 - **In-Place Transcription:** User speech streams in real time via `chat-live-user-partial`, replacing text smoothly without creating separate lines.
 - **Screen Reader Announcer:** Polite ARIA live region (`chat-sr-announcer`) announces conversation milestones ("You are speaking", "Stay is thinking", "Stay is speaking", "Interrupted — listening to your thought").
 - **Smart Auto-Scrolling:** Uses `requestAnimationFrame` to lock scroll position to latest tokens only when already near bottom; preserves position and surfaces a floating "Jump to latest ↓" button when the user scrolls upward to read past context.
 - **Accessible Collapse / Expand:** Minimized chat provides a full-width accessible button (`chat-collapsed-preview-btn`) with `aria-expanded={false}` displaying real-time preview of spoken tokens.
+- **Wispr Flow Action Ribbon & Conversational Backtracking:**
+  - `↶ Scratch that` (`wispr-scratch-btn`): Immediately removes previous user thought and its assistant response from the conversation feed without leaving residual errors.
+  - `Actually, change that to...`: Voice/text command replacing the previous turn with a corrected task, immediately re-evaluating the plan.
+  - `🔁 Repeat` (`wispr-repeat-btn`): Re-speaks Stay's last advice aloud.
+  - `👂 What you heard` (`wispr-heard-btn`): Surfaces exact captured raw transcript to build confidence.
+  - Mode Toggle (`chat-mode-toggle`): Seamlessly switches between full-duplex voice and text-only quiet fallback.
+- **Real-Time Multilingual Reasoning Badge:** Dynamic pill (`chat-language-badge`) reflects auto-detected language across 32+ languages (e.g. `🌐 हिन्दी · Hindi`, `🌐 Español · Spanish`, `🌐 English · Multilingual`).
+- **ADHD 3-Beat Pacing Engine:**
+  - Beat 1: Acknowledgement (<= 6 words, calming, non-judgmental)
+  - Beat 2: Tiny action (<= 15 words, concrete 90-second step)
+  - Beat 3: Question (<= 8 words, simple binary check)
+  - Localized natively into Hindi, Spanish, French, German, Japanese, Korean.
 - **Active Session Local Persistence:** `src/lib/coach/activeSession.ts` persists in-flight conversation turns, current plan proposal, avoided task, smallest next action, and timer state in client localStorage with 12-hour retention and new-day auto-expiry. Reloading the browser restores the exact conversation feed and plan card.
 
 ---
@@ -82,8 +94,8 @@ When the user speaks while Stay is speaking:
 
 All verification categories are tracked independently:
 1. **Typecheck (`tsc --noEmit`):** 0 errors.
-2. **Unit & DSP Tests (`vitest run`):** 56 test files, 725 unit tests passed.
-3. **Production Build (`next build`):** 28 static/dynamic routes compiled cleanly.
-4. **Deterministic Fake-Voice Browser Suite (`liveChatVoiceStream.spec.ts`):** 6/6 passed.
-5. **E2E Playwright Suite (`tests/e2e/`):** 127 tests covering full-duplex voice, responsive layout, orb rendering, settings, routines, reminders, reports, and onboarding.
+2. **Unit & DSP Tests (`vitest run`):** 56 test files, 730 unit tests passed (10.6s).
+3. **Production Build (`next build`):** 28 static/dynamic routes compiled cleanly with 0 errors.
+4. **Deterministic Fake-Voice Browser Suite (`liveChatVoiceStream.spec.ts`):** 9/9 passed, including Wispr Flow backtracking, repeat, responsive 375px mobile containment, barge-in, and persistence.
+5. **E2E Playwright Suite (`tests/e2e/`):** Comprehensive coverage of full-duplex voice, responsive layout, orb rendering, settings, routines, reminders, reports, and onboarding.
 6. **Strict CI Enforcement:** `.github/workflows/ci.yml` runs all unit, typecheck, build, and E2E suites with `continue-on-error: false`.

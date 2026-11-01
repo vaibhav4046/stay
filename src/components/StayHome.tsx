@@ -6,7 +6,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { CareContext, CoachPlanProposal, CoachSessionRecord, SessionOutcome } from '@/types/domain';
+import type { CareContext, CoachPlanProposal, CoachSessionRecord, SessionOutcome, VoiceVisualState } from '@/types/domain';
 import { buildDeterministicCoachPlan } from '@/lib/coach/strategies';
 import { computeStrategyStats } from '@/lib/coach/patterns';
 import {
@@ -487,10 +487,15 @@ export function StayHome({
     [careContext, minutes, strategyHistory, quietMode, triggerCrisis],
   );
 
+  const submittingRef = useRef(false);
   const submit = useCallback(
     (raw: string) => {
       const t = raw.trim();
-      if (!t) return;
+      if (!t || submittingRef.current) return;
+      submittingRef.current = true;
+      setTimeout(() => {
+        submittingRef.current = false;
+      }, 800);
       clearInput();
       setShrinkDepth(0);
       orb.feed(t, 'typed');
@@ -679,13 +684,34 @@ export function StayHome({
   }, []);
 
   const lastAgent = [...voice.transcripts].reverse().find((e) => e.role === 'agent');
-  const visual = planLoading ? 'thinking' : voice.visualState;
+  const visual: VoiceVisualState = quietMode
+    ? 'text_only_fallback'
+    : planLoading
+      ? 'thinking'
+      : voice.isHandsFreePaused
+        ? 'paused'
+        : voice.visualState;
   const status = voice.errorMessage
     ? voice.errorMessage
     : voice.isHandsFreePaused
       ? 'Paused. Say "Hey Stay" to continue.'
       : voice.isConnected
-        ? { idle: 'Listening', connecting: 'Connecting', listening: 'Listening', thinking: 'Thinking', speaking: 'Speaking', interrupted: 'Interrupted', backchannel: 'Listening', saving: 'Saving', complete: 'Done', error: 'Voice unavailable' }[visual]
+        ? ({
+            idle: 'Listening',
+            connecting: 'Connecting',
+            listening: 'Listening',
+            transcribing: 'Transcribing speech',
+            thinking: 'Thinking',
+            speaking: 'Speaking',
+            interrupted: 'Interrupted',
+            reconnecting: 'Reconnecting',
+            paused: 'Paused',
+            text_only_fallback: 'Text-Only Mode',
+            backchannel: 'Listening',
+            saving: 'Saving',
+            complete: 'Done',
+            error: 'Voice unavailable',
+          } as Record<VoiceVisualState, string>)[visual]
         : planLoading
           ? 'Thinking'
           : step === 'timer'
@@ -822,6 +848,17 @@ export function StayHome({
         liveSpokenText={voice.liveSpokenText}
         visualState={visual}
         isConnected={voice.isConnected}
+        detectedLanguage={voice.detectedLanguageCode}
+        quietMode={quietMode}
+        onToggleQuietMode={() => {
+          if (!quietMode) voice.disconnectVoiceSession();
+          onQuietModeChange(!quietMode);
+        }}
+        onWisprAction={(action) => {
+          if (action === 'scratch') voice.sendUserTextMessage('scratch that');
+          else if (action === 'repeat') voice.sendUserTextMessage('repeat that');
+          else if (action === 'heard') voice.sendUserTextMessage('show me what you heard');
+        }}
         onClear={voice.clearTranscripts}
         className="w-full my-1.5"
       />

@@ -307,23 +307,30 @@ export function buildDeterministicCoachPlan(params: {
   let whyThisFits =
     personalizedReason ||
     strategy.shortDescription;
-  let spokenResponse = `I'm right here with you. Let's make this tiny: ${firstStep} Whenever you're ready, we'll run a gentle ${timerMinutes}-minute focus block, and I'll check in the moment it wraps up.`;
+
+  // ADHD 3-Beat Spoken Response Rhythm (Ack <= 6 words, Tiny Action <= 15 words, Question <= 8 words)
+  const ack = "I'm right here with you."; // 5 words
+  // Bound firstStep spoken action to <= 15 words
+  const actionWords = firstStep.split(/\s+/).slice(0, 15).join(' ');
+  const question = `Ready to set ${timerMinutes} minutes?`; // 6 words
+
+  let spokenResponse = `${ack} ${actionWords} ${question}`;
   let checkinPrompt = `Your ${timerMinutes}-minute block is complete. Did you get started on "${firstStep}"?`;
 
   if (lang === 'hi') {
-    spokenResponse = `मैं आपके साथ हूँ। चलिए इसे बहुत आसान बनाते हैं: ${firstStep} जब भी आप तैयार हों, हम ${timerMinutes} मिनट का शांत फोकस ब्लॉक शुरू करेंगे।`;
+    spokenResponse = `मैं आपके साथ हूँ। ${firstStep.split(/\s+/).slice(0, 15).join(' ')} क्या पाँच मिनट शुरू करें?`;
     whyThisFits = 'जब शुरुआत करना भारी लगे, तो काम को बहुत छोटा करने से सारा मानसिक तनाव दूर हो जाता है।';
     checkinPrompt = `आपका ${timerMinutes} मिनट का ब्लॉक पूरा हुआ। क्या आप शुरू कर पाए?`;
   } else if (lang === 'es') {
-    spokenResponse = `Estoy aquí contigo. Hagámoslo muy pequeño: ${firstStep} Cuando estés listo, haremos un bloque de enfoque de ${timerMinutes} minutos.`;
+    spokenResponse = `Estoy aquí contigo. ${firstStep.split(/\s+/).slice(0, 15).join(' ')} ¿Hacemos un bloque de ${timerMinutes} minutos?`;
     whyThisFits = 'Hacer el primer paso diminuto elimina toda la presión inicial de golpe.';
     checkinPrompt = `Tu bloque de ${timerMinutes} minutos terminó. ¿Pudiste empezar?`;
   } else if (lang === 'fr') {
-    spokenResponse = `Je suis là avec toi. Faisons ça tout en douceur : ${firstStep} Dès que tu te sens prêt, on lance un bloc de ${timerMinutes} minutes.`;
+    spokenResponse = `Je suis avec toi. ${firstStep.split(/\s+/).slice(0, 15).join(' ')} On lance ${timerMinutes} minutes ?`;
     whyThisFits = 'Réduire la première étape à un geste minuscule élimine immédiatement toute pression.';
     checkinPrompt = `Ton bloc de ${timerMinutes} minutes est terminé. As-tu pu démarrer ?`;
   } else if (lang === 'de') {
-    spokenResponse = `Ich bin hier bei dir. Lass es uns ganz leicht machen: ${firstStep} Sobald du bereit bist, starten wir einen sanften ${timerMinutes}-Minuten-Fokusblock.`;
+    spokenResponse = `Ich bin bei dir. ${firstStep.split(/\s+/).slice(0, 15).join(' ')} Starten wir ${timerMinutes} Minuten?`;
     whyThisFits = 'Ein winziger erster Schritt nimmt sofort den gesamten Druck weg.';
     checkinPrompt = `Dein ${timerMinutes}-Minuten-Block ist beendet. Konntest du starten?`;
   }

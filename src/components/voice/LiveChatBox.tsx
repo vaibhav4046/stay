@@ -1,17 +1,28 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import { StayLogo } from '@/components/StayLogo';
-import type { VoiceTranscriptEntry } from '@/lib/voice/useVoiceAgent';
+import React, { useState, useEffect, useRef } from 'react';
 import type { VoiceVisualState } from '@/types/domain';
+import { StayLogo } from '@/components/StayLogo';
+
+export interface ChatTranscriptEntry {
+  id: string;
+  role: 'user' | 'agent' | 'system';
+  text: string;
+  timestamp?: string;
+  interrupted?: boolean;
+}
 
 export interface LiveChatBoxProps {
-  transcripts: VoiceTranscriptEntry[];
+  transcripts: ChatTranscriptEntry[];
   partialUserTranscript?: string;
   liveSpokenText?: string;
   visualState: VoiceVisualState;
   isConnected: boolean;
+  detectedLanguage?: string;
   onClear?: () => void;
+  onWisprAction?: (action: 'scratch' | 'change' | 'repeat' | 'heard') => void;
+  quietMode?: boolean;
+  onToggleQuietMode?: () => void;
   className?: string;
 }
 
@@ -21,12 +32,16 @@ export function LiveChatBox({
   liveSpokenText = '',
   visualState,
   isConnected,
+  detectedLanguage = 'en-GB',
   onClear,
+  onWisprAction,
+  quietMode = false,
+  onToggleQuietMode,
   className = '',
 }: LiveChatBoxProps) {
   const [isOpen, setIsOpen] = useState(true);
-  const [showJumpToBottom, setShowJumpToBottom] = useState(false);
   const [recentlyInterrupted, setRecentlyInterrupted] = useState(false);
+  const [showJumpToBottom, setShowJumpToBottom] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const isNearBottomRef = useRef(true);
 
@@ -66,7 +81,6 @@ export function LiveChatBox({
     if (!el) return;
 
     if (isNearBottomRef.current) {
-      // Use requestAnimationFrame without heavy smooth animations per streaming token
       requestAnimationFrame(() => {
         if (el) {
           el.scrollTop = el.scrollHeight;
@@ -78,22 +92,22 @@ export function LiveChatBox({
     }
   }, [transcripts, partialUserTranscript, liveSpokenText, isThinking, isInterrupted, isOpen]);
 
-  // Status badge config
+  // Turn State Machine config (IDLE, CONNECTING, LISTENING, TRANSCRIBING, THINKING, SPEAKING, INTERRUPTED, RECONNECTING, PAUSED, TEXT_ONLY_FALLBACK, ERROR)
   const statusConfig = (() => {
     if (isInterrupted) {
       return {
         label: 'Interrupted',
         srAnnouncement: 'Interrupted — listening to your thought',
-        dotClass: 'bg-amber-500 animate-pulse',
-        textClass: 'text-amber-700 dark:text-amber-300',
+        dotClass: 'bg-rose-500 animate-pulse',
+        textClass: 'text-rose-700 dark:text-rose-300',
       };
     }
-    if (isUserSpeaking) {
+    if (visualState === 'transcribing' || isUserSpeaking) {
       return {
         label: 'Transcribing speech...',
         srAnnouncement: 'You are speaking',
-        dotClass: 'bg-emerald-500 animate-ping',
-        textClass: 'text-emerald-700 dark:text-emerald-300',
+        dotClass: 'bg-cyan-500 animate-ping',
+        textClass: 'text-cyan-700 dark:text-cyan-300',
       };
     }
     if (isAgentSpeaking) {
@@ -110,6 +124,54 @@ export function LiveChatBox({
         srAnnouncement: 'Stay is thinking',
         dotClass: 'bg-purple-500 animate-bounce',
         textClass: 'text-purple-700 dark:text-purple-300',
+      };
+    }
+    if (visualState === 'listening') {
+      return {
+        label: 'Listening',
+        srAnnouncement: 'Listening for speech',
+        dotClass: 'bg-emerald-500 animate-pulse',
+        textClass: 'text-emerald-700 dark:text-emerald-300',
+      };
+    }
+    if (visualState === 'connecting') {
+      return {
+        label: 'Connecting...',
+        srAnnouncement: 'Connecting to voice session',
+        dotClass: 'bg-sky-500 animate-spin',
+        textClass: 'text-sky-700 dark:text-sky-300',
+      };
+    }
+    if (visualState === 'reconnecting') {
+      return {
+        label: 'Reconnecting...',
+        srAnnouncement: 'Reconnecting to voice stream',
+        dotClass: 'bg-amber-500 animate-pulse',
+        textClass: 'text-amber-700 dark:text-amber-300',
+      };
+    }
+    if (visualState === 'paused') {
+      return {
+        label: 'Paused',
+        srAnnouncement: 'Voice session paused',
+        dotClass: 'bg-stone-500',
+        textClass: 'text-stone-700 dark:text-stone-300',
+      };
+    }
+    if (visualState === 'text_only_fallback' || quietMode) {
+      return {
+        label: 'Text-Only Mode',
+        srAnnouncement: 'Quiet text mode active',
+        dotClass: 'bg-blue-400',
+        textClass: 'text-blue-700 dark:text-blue-300',
+      };
+    }
+    if (visualState === 'error') {
+      return {
+        label: 'Error',
+        srAnnouncement: 'Connection error',
+        dotClass: 'bg-red-500',
+        textClass: 'text-red-700 dark:text-red-400',
       };
     }
     if (isConnected) {
@@ -138,6 +200,18 @@ export function LiveChatBox({
     }
   };
 
+  const getLanguageLabel = (code: string) => {
+    if (code.startsWith('hi')) return 'हिन्दी · Hindi';
+    if (code.startsWith('es')) return 'Español · Spanish';
+    if (code.startsWith('fr')) return 'Français · French';
+    if (code.startsWith('de')) return 'Deutsch · German';
+    if (code.startsWith('ja')) return '日本語 · Japanese';
+    if (code.startsWith('ko')) return '한국어 · Korean';
+    if (code.startsWith('it')) return 'Italiano · Italian';
+    if (code.startsWith('pt')) return 'Português · Portuguese';
+    return 'English · Multilingual';
+  };
+
   return (
     <section
       className={`card relative w-full overflow-hidden transition-all duration-300 ease-out border border-line/90 bg-surface/90 shadow-sm backdrop-blur-md dark:bg-stone-900/90 ${className}`}
@@ -149,15 +223,26 @@ export function LiveChatBox({
         {statusConfig.srAnnouncement}
       </div>
 
-      {/* Header bar */}
-      <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-line/60 bg-surface-2/60 dark:bg-stone-800/40">
-        <div className="flex items-center gap-2 min-w-0">
+      {/* Header bar with Status, Realtime Language Translation Badge, and Controls */}
+      <div className="flex flex-wrap items-center justify-between gap-1.5 px-3.5 py-2.5 border-b border-line/60 bg-surface-2/60 dark:bg-stone-800/40">
+        <div className="flex items-center gap-2 min-w-0 flex-wrap">
           <div className="flex items-center gap-1.5" data-testid="chat-status-pill">
             <span className={`h-2 w-2 rounded-full ${statusConfig.dotClass}`} aria-hidden="true" />
             <span className={`text-xs font-semibold tracking-tight truncate ${statusConfig.textClass}`}>
               {statusConfig.label}
             </span>
           </div>
+
+          {/* Multilingual Translation & Realtime Engine Badge */}
+          <span
+            className="inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 text-[0.68rem] font-medium text-primary dark:text-primary-foreground"
+            data-testid="chat-language-badge"
+            title="Real-time voice auto-translation and multilingual reasoning enabled"
+          >
+            <span>🌐</span>
+            <span>{getLanguageLabel(detectedLanguage)}</span>
+          </span>
+
           {transcripts.length > 0 && (
             <span className="rounded-full bg-surface-2 px-1.5 py-0.5 text-[0.68rem] font-medium text-ink-3 border border-line/60">
               {transcripts.length}
@@ -166,6 +251,22 @@ export function LiveChatBox({
         </div>
 
         <div className="flex items-center gap-1">
+          {onToggleQuietMode && (
+            <button
+              type="button"
+              onClick={onToggleQuietMode}
+              className={`text-[0.72rem] font-medium px-2 py-1 rounded transition-colors ${
+                quietMode
+                  ? 'bg-primary/15 text-primary border border-primary/30'
+                  : 'text-ink-3 hover:text-ink'
+              }`}
+              title={quietMode ? 'Switch to Duplex Voice' : 'Switch to Text-Only'}
+              data-testid="chat-mode-toggle"
+            >
+              {quietMode ? '⌨️ Quiet' : '🎙️ Voice'}
+            </button>
+          )}
+
           {transcripts.length > 0 && onClear && (
             <button
               type="button"
@@ -177,6 +278,7 @@ export function LiveChatBox({
               Clear
             </button>
           )}
+
           <button
             type="button"
             onClick={() => setIsOpen((prev) => !prev)}
@@ -202,6 +304,40 @@ export function LiveChatBox({
           </button>
         </div>
       </div>
+
+      {/* Wispr Flow Action Ribbon (Correction & Backtracking Commands) */}
+      {isOpen && transcripts.length > 0 && onWisprAction && (
+        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-surface/80 dark:bg-stone-900/60 border-b border-line/40 overflow-x-auto text-[0.72rem]">
+          <span className="text-ink-3 text-[0.68rem] font-medium shrink-0">Voice Actions:</span>
+          <button
+            type="button"
+            onClick={() => onWisprAction('scratch')}
+            className="px-2 py-0.5 rounded-full bg-surface-2 text-ink-2 hover:bg-surface hover:text-ink border border-line/60 transition-colors shrink-0"
+            data-testid="wispr-scratch-btn"
+            title="Erase the last spoken thought"
+          >
+            ↶ Scratch that
+          </button>
+          <button
+            type="button"
+            onClick={() => onWisprAction('repeat')}
+            className="px-2 py-0.5 rounded-full bg-surface-2 text-ink-2 hover:bg-surface hover:text-ink border border-line/60 transition-colors shrink-0"
+            data-testid="wispr-repeat-btn"
+            title="Repeat Stay's last response"
+          >
+            🔁 Repeat
+          </button>
+          <button
+            type="button"
+            onClick={() => onWisprAction('heard')}
+            className="px-2 py-0.5 rounded-full bg-surface-2 text-ink-2 hover:bg-surface hover:text-ink border border-line/60 transition-colors shrink-0"
+            data-testid="wispr-heard-btn"
+            title="Check what Stay heard"
+          >
+            👂 What you heard
+          </button>
+        </div>
+      )}
 
       {/* Collapsed Preview Pill (accessible real button when chat is minimized) */}
       {!isOpen && (isUserSpeaking || isAgentSpeaking) && (

@@ -4,7 +4,7 @@ import path from 'node:path';
 async function onboard(page: Page) {
   await page.goto('/app/today');
   const careOption = page.getByTestId('care-self_managing');
-  if (await careOption.isVisible()) {
+  if (await careOption.isVisible({ timeout: 4000 }).catch(() => false)) {
     await careOption.click();
     await page.getByTestId('onboarding-ack').click();
     await page.getByTestId('onboarding-done').click();

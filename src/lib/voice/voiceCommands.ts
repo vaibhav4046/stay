@@ -35,6 +35,10 @@ export type VoiceCommandAction =
   | { type: 'web_research'; query: string }
   | { type: 'toggle_quiet_mode' }
   | { type: 'clear_chat' }
+  | { type: 'scratch_that' }
+  | { type: 'change_that_to'; newText: string }
+  | { type: 'repeat_last' }
+  | { type: 'show_what_heard' }
   | null;
 
 export interface MultiIntentParseResult {
@@ -272,6 +276,27 @@ export function detectVoiceCommand(text: string): VoiceCommandAction {
     return { type: 'clear_chat' };
   }
 
+  // 8b. Wispr Flow Correction: Scratch That ("scratch that", "erase that", "forget that", "cancel that last thing")
+  if (/\b(?:scratch\s+that|erase\s+that|forget\s+that|delete\s+that|cancel\s+that(?:\s+last\s+thing)?)\b/i.test(clean)) {
+    return { type: 'scratch_that' };
+  }
+
+  // 8c. Wispr Flow Correction: Actually, change that to... ("actually change that to...", "change that to...", "make that...")
+  const changeMatch = clean.match(/\b(?:actually\s*,?\s*change\s+that\s+to|change\s+that\s+to|make\s+that|i\s+meant)\s+(.+)$/i);
+  if (changeMatch && changeMatch[1]?.trim()) {
+    return { type: 'change_that_to', newText: changeMatch[1].trim() };
+  }
+
+  // 8d. Wispr Flow: Repeat the last thing ("repeat the last thing", "repeat that", "say that again", "what did you say")
+  if (/\b(?:repeat\s+(?:the\s+)?(?:last\s+thing|that|what\s+you\s+said)|say\s+that\s+again|what\s+did\s+you\s+say)\b/i.test(clean)) {
+    return { type: 'repeat_last' };
+  }
+
+  // 8e. Wispr Flow: Show me what you heard ("show me what you heard", "what did you hear", "did you hear me")
+  if (/\b(?:show\s+(?:me\s+)?what\s+you\s+heard|what\s+did\s+you\s+hear|did\s+you\s+hear\s+me)\b/i.test(clean)) {
+    return { type: 'show_what_heard' };
+  }
+
   // 9. Start Timer Command ("start 20 minutes", "set timer for 15 min", "start the timer")
   const timerMatch = clean.match(
     /\b(?:start|set|do|run)\s+(?:a\s+)?(?:(?:the\s+)?timer\s+(?:for\s+)?)?(\d{1,2})\s*(?:min|minute|minutes)(?:\s+timer|\s+block|\s+sprint)?\b/i
@@ -453,6 +478,11 @@ function detectColorCommandFromText(clean: string): Extract<VoiceCommandAction, 
 function detectShapeCommandFromText(
   clean: string
 ): Extract<VoiceCommandAction, { type: 'change_orb_shape' } | { type: 'synthesize_billion_shape' }> | null {
+  // Prevent Wispr Flow corrections from being misinterpreted as shape morphs
+  if (/\b(?:change\s+that\s+to|scratch\s+that|erase\s+that|repeat\s+that)\b/i.test(clean)) {
+    return null;
+  }
+
   // 1. Core 8 shapes
   const coreShapeMatch = clean.match(
     /\b(?:(?:change|set|morph|transform|turn|switch)\s+(?:the\s+)?(?:orb\s+)?(?:shape\s+)?(?:to|into)\s+(?:a\s+|an\s+|the\s+)?|(?:orb\s+)?shape\s+|shapify\s+)(fluid|wave|sphere|ice\s*cream|cone|swirl|letter|gem|crystal|star|rose|creative|lotus|calm|flower|game|arena|globe|research|hourglass|timer|vortex)\b/i
@@ -521,6 +551,23 @@ export function parseMultiIntentUtterance(text: string): MultiIntentParseResult 
     return { commands: [], conversationalContext: null, isMultiContext: false };
   }
   const lower = clean.toLowerCase();
+
+  // Priority: Check direct Wispr Flow backtracking and correction commands first
+  const wisprCheck = detectVoiceCommand(clean);
+  if (
+    wisprCheck &&
+    (wisprCheck.type === 'scratch_that' ||
+      wisprCheck.type === 'change_that_to' ||
+      wisprCheck.type === 'repeat_last' ||
+      wisprCheck.type === 'show_what_heard')
+  ) {
+    return {
+      commands: [wisprCheck],
+      conversationalContext: null,
+      isMultiContext: false,
+    };
+  }
+
   const commands: NonNullable<VoiceCommandAction>[] = [];
 
   // 1. Check Game launch

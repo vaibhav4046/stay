@@ -84,6 +84,18 @@ describe('Hands-Free Voice Command Parser', () => {
     });
   });
 
+  it('detects Wispr Flow backtracking and correction voice commands', () => {
+    expect(parseVoiceCommand('Scratch that')).toEqual({ type: 'scratch_that' });
+    expect(parseVoiceCommand('erase that')).toEqual({ type: 'scratch_that' });
+    expect(parseVoiceCommand('Actually, change that to call the bank')).toEqual({
+      type: 'change_that_to',
+      newText: 'call the bank',
+    });
+    expect(parseVoiceCommand('Repeat the last thing')).toEqual({ type: 'repeat_last' });
+    expect(parseVoiceCommand('Say that again')).toEqual({ type: 'repeat_last' });
+    expect(parseVoiceCommand('Show me what you heard')).toEqual({ type: 'show_what_heard' });
+  });
+
   it('detects grounding, voice switching, quiet mode, and clear chat commands', () => {
     expect(parseVoiceCommand('Stay ground me')).toEqual({ type: 'open_grounding' });
     expect(parseVoiceCommand('help me breathe')).toEqual({ type: 'open_grounding' });

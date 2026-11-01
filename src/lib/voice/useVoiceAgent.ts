@@ -623,6 +623,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const lastLoudAtRef = useRef(0);
   /** What the person last said, so a saved memory can be checked against it (the model must not invent facts about them). */
   const lastUserSaidRef = useRef('');
+  const lastUserSaidTimeRef = useRef(0);
   // Fast voice (beta): own speech-to-text + chat model + text-to-speech instead of the managed Voice Agent.
   const [fastVoice, setFastVoiceState] = useState(true);
   const fastVoiceRef = useRef(true);
@@ -1389,6 +1390,13 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       const clean = text.trim();
       if (!clean) return false;
 
+      // Prevent duplicate rapid submissions of the exact same message within 1200ms
+      const now = Date.now();
+      if (lastUserSaidRef.current === clean && (now - lastUserSaidTimeRef.current < 1200)) {
+        return false;
+      }
+      lastUserSaidTimeRef.current = now;
+
       // 1. Real-time multilingual auto-detection (Devanagari, Hangul, Romanized Hinglish/Korean, 32 languages)
       const autoDetectedLang = detectTextLanguage(clean, 'auto');
       const effectiveLang =
@@ -1425,15 +1433,18 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       const multi = parseMultiIntentUtterance(clean);
       const liveNow = !!wsRef.current && wsRef.current.readyState === WebSocket.OPEN && sessionReadyRef.current;
       if (multi.commands.length > 0 && (!liveNow || multi.commands.some((c) => c.type === 'pause_listening' || c.type === 'resume_listening'))) {
-        setTranscripts((prev) => [
-          ...prev,
-          {
-            id: `msg-${Date.now()}`,
-            role: 'user',
-            text: clean,
-            timestamp: new Date().toISOString(),
-          },
-        ]);
+        const isCorrection = multi.commands.some((c) => c.type === 'scratch_that' || c.type === 'change_that_to');
+        if (!isCorrection) {
+          setTranscripts((prev) => [
+            ...prev,
+            {
+              id: `msg-${Date.now()}`,
+              role: 'user',
+              text: clean,
+              timestamp: new Date().toISOString(),
+            },
+          ]);
+        }
 
         const executedReplies: string[] = [];
         let shouldReturnEarly = !multi.conversationalContext;
@@ -1596,6 +1607,45 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
             optionsRef.current.onClearChatRequested?.();
             setTranscripts([]);
             return true;
+          } else if (cmd.type === 'scratch_that') {
+            playEarcon('pause');
+            setTranscripts((prev) => {
+              const lastUserIdx = prev.map((p) => p.role).lastIndexOf('user');
+              if (lastUserIdx !== -1) {
+                return prev.slice(0, lastUserIdx);
+              }
+              return [];
+            });
+            executedReplies.push('Scratched that.');
+            shouldReturnEarly = true;
+          } else if (cmd.type === 'change_that_to') {
+            playEarcon('chime');
+            const newText = cmd.newText;
+            lastUserSaidRef.current = newText;
+            setTranscripts((prev) => {
+              const lastUserIdx = prev.map((p) => p.role).lastIndexOf('user');
+              const base = lastUserIdx !== -1 ? prev.slice(0, lastUserIdx) : prev;
+              return [
+                ...base,
+                { id: `edit-${Date.now()}`, role: 'user', text: newText, timestamp: new Date().toISOString() }
+              ];
+            });
+            const newPlan = buildDeterministicCoachPlan({ taskText: newText });
+            const localized = buildLocalizedStayResponse(newText, effectiveLang, newPlan);
+            optionsRef.current.onPlanProposed?.({ ...newPlan, spokenResponse: localized });
+            executedReplies.push(`Changed to: ${newText}. ${localized}`);
+            shouldReturnEarly = true;
+          } else if (cmd.type === 'repeat_last') {
+            playEarcon('chime');
+            const lastAgentMsg = [...transcripts].reverse().find((t) => t.role === 'agent');
+            const toRepeat = lastAgentMsg ? lastAgentMsg.text : 'I recommended taking one small breath and starting with 90 seconds of setup.';
+            executedReplies.push(`Here is what I said: ${toRepeat}`);
+            shouldReturnEarly = true;
+          } else if (cmd.type === 'show_what_heard') {
+            playEarcon('chime');
+            const heard = lastUserSaidRef.current || 'I have not heard anything recently.';
+            executedReplies.push(`I heard: "${heard}".`);
+            shouldReturnEarly = true;
           }
         }
 

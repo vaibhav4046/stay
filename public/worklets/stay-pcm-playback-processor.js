@@ -23,8 +23,8 @@ class StayPcmPlaybackProcessor extends AudioWorkletProcessor {
     this.markedEnd = false;
     this.muted = false;
 
-    // Prebuffer configuration (adaptive 80-150ms default ~100ms)
-    this.prebufferMs = 180;
+    // Prebuffer configuration (adaptive 80-120ms default 100ms)
+    this.prebufferMs = 100;
     this.prebufferSamples = Math.floor((this.prebufferMs / 1000) * sampleRate);
 
     // Fade ramps: ~5ms window to eliminate clicks on boundary

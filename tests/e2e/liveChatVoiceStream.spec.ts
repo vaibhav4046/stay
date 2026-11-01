@@ -20,7 +20,7 @@ async function setupOnboardedPage(page: Page): Promise<FakeVoice> {
   await page.reload();
 
   const careOption = page.getByTestId('care-self_managing');
-  if (await careOption.isVisible()) {
+  if (await careOption.isVisible({ timeout: 5000 }).catch(() => false)) {
     await careOption.click();
     await page.getByTestId('onboarding-ack').click();
     await page.getByTestId('onboarding-done').click();
@@ -205,5 +205,66 @@ test.describe('Deterministic Fake-Voice Browser Live Chat Stream Suite', () => {
     await expect(page.getByTestId('chat-user-message')).toContainText('Filing 2024 quarterly taxes');
     await expect(page.getByTestId('plan-card')).toBeVisible();
     await expect(page.getByTestId('task-input')).toBeVisible();
+  });
+
+  test('Wispr Flow: Scratch that and Actually change that to voice commands', async ({ page }) => {
+    await setupOnboardedPage(page);
+
+    // Submit initial task
+    const taskInput = page.getByTestId('task-input');
+    await taskInput.fill('Send invoice to client');
+    await page.getByTestId('send').click();
+    await expect(page.getByTestId('chat-user-message')).toContainText('Send invoice to client');
+
+    // Use Wispr Flow Scratch that button
+    const scratchBtn = page.getByTestId('wispr-scratch-btn');
+    await expect(scratchBtn).toBeVisible({ timeout: 4000 });
+    await scratchBtn.click();
+    await page.waitForTimeout(500);
+    // Last turn is cleanly removed
+    const userMsgs = await page.locator('[data-testid="chat-user-message"]').allTextContents();
+    expect(userMsgs.some(t => t.includes('Send invoice to client'))).toBe(false);
+
+    // Voice command: Actually change that to call landlord
+    await taskInput.fill('Actually, change that to call the landlord');
+    await page.getByTestId('send').click();
+    await expect(page.getByTestId('chat-user-message').last()).toContainText('call the landlord');
+  });
+
+  test('Wispr Flow: Repeat last thing and What you heard commands', async ({ page }) => {
+    await setupOnboardedPage(page);
+
+    const taskInput = page.getByTestId('task-input');
+    await taskInput.fill('Tidy desk');
+    await page.getByTestId('send').click();
+    await expect(page.getByTestId('plan-card')).toBeVisible({ timeout: 10000 });
+
+    // What you heard action
+    const heardBtn = page.getByTestId('wispr-heard-btn');
+    if (await heardBtn.isVisible()) {
+      await heardBtn.click();
+      await expect(page.getByTestId('chat-agent-message').last()).toContainText(/heard/i);
+    }
+
+    // Repeat action
+    const repeatBtn = page.getByTestId('wispr-repeat-btn');
+    if (await repeatBtn.isVisible()) {
+      await repeatBtn.click();
+      await expect(page.getByTestId('chat-agent-message').last()).toBeVisible();
+    }
+  });
+
+  test('Mobile 375px responsive layout has no overflow and live chat is fully contained', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 700 });
+    await setupOnboardedPage(page);
+
+    const liveChatBox = page.getByTestId('live-chat-box');
+    await expect(liveChatBox).toBeVisible();
+
+    // Verify horizontal overflow is strictly zero
+    const overflow = await page.evaluate(() => {
+      return document.documentElement.scrollWidth > document.documentElement.clientWidth;
+    });
+    expect(overflow).toBe(false);
   });
 });

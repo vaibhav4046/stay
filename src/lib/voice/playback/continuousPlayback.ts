@@ -34,6 +34,7 @@ export class ContinuousPcmPlayer {
   private fallbackMode = false;
   private fallbackNextTime = 0;
   private fallbackSources = new Set<AudioBufferSourceNode>();
+  private lastSequence = -1;
 
   private telemetry: PlaybackTelemetry = {
     state: 'STOPPED',
@@ -132,6 +133,14 @@ export class ContinuousPcmPlayer {
       return;
     }
 
+    // Sequence tracking: reject duplicate or out-of-order packets
+    if (meta?.sequence !== undefined) {
+      if (meta.sequence <= this.lastSequence) {
+        return; // drop duplicate or out-of-order
+      }
+      this.lastSequence = meta.sequence;
+    }
+
     if (this.replyStartTimestamp === null) {
       this.replyStartTimestamp = performance.now();
     }
@@ -202,6 +211,7 @@ export class ContinuousPcmPlayer {
 
   cancelReply(reason = 'barge-in'): void {
     const nextEpoch = this.epochs.cancelReply();
+    this.lastSequence = -1;
     this.decoder.reset();
     this.resampler?.reset();
     this.firstAudioTimestamp = null;
