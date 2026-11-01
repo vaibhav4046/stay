@@ -41,6 +41,8 @@ export interface FastSocketConfig {
   sampleRate?: number;
   /** How long to wait after a turn that trails off ("and, uh,") before answering. Default 2200 ms. */
   holdMs?: number;
+  /** Auto-detect mode: move the TTS session to the language the person switches to (when AssemblyAI TTS speaks it). */
+  autoLanguage?: boolean;
   /** After an interruption, a short fragment ("Wait, stop.") is held this long in case the sentence continues. Default 900 ms. */
   interruptHoldMs?: number;
   /** Words the speech-to-text should favour (names, product terms). Up to 100, each under 50 characters. */
@@ -57,6 +59,8 @@ export interface FastSession {
   systemPrompt: string;
   greeting: string;
   voice: string;
+  /** the persona's own voice key, kept so the voice can follow a language switch */
+  rawVoice: string;
   /** AssemblyAI TTS language name: english, spanish, french, german, italian, portuguese */
   ttsLanguage: string;
   tools: boolean;
@@ -340,6 +344,8 @@ export class FastSocket {
   private captureOnly = false; // brain dump: hear and transcribe, but never answer
   private keepAliveTimer: ReturnType<typeof setInterval> | undefined;
   private ttsRotationTimer: ReturnType<typeof setTimeout> | undefined;
+  private ttsSwitch: Promise<void> | null = null;
+  private detectedLang = '';
   private ttsNeedsRotation = false;
   private ttsReconnectAttempts = 0;
   private sttTermResolve: (() => void) | null = null;
@@ -349,7 +355,7 @@ export class FastSocket {
   private cancelFallbackTimer: ReturnType<typeof setTimeout> | undefined;
 
   constructor(cfg: FastSocketConfig) {
-    this.cfg = { sampleRate: 16000, holdMs: 2200, interruptHoldMs: 900, warmUp: true, ...cfg };
+    this.cfg = { sampleRate: 16000, holdMs: 2200, interruptHoldMs: 900, warmUp: true, autoLanguage: false, ...cfg };
     queueMicrotask(() => {
       this.readyState = FastSocket.OPEN;
       this.onopen?.();
@@ -360,6 +366,10 @@ export class FastSocket {
 
   /** Stream a raw text chunk into TTS preserving leading/trailing spaces, optionally followed by Flush. */
   sendTtsChunk(text: string, flush = false): void {
+    if (this.ttsSwitch) {
+      void this.ttsSwitch.then(() => this.sendTtsChunk(text, flush));
+      return;
+    }
     if (!text || this.tts?.readyState !== WebSocket.OPEN) return;
     this.resetKeepAliveTimer();
     this.tts.send(JSON.stringify({ type: 'Generate', text }));
@@ -518,6 +528,11 @@ export class FastSocket {
     const oldTts = this.tts;
     this.clearTtsTimers();
     try {
+      if (oldTts) {
+        // detach first: closing the old socket on purpose must not look like an unexpected close and reopen a second one
+        (oldTts as { onclose: unknown }).onclose = null;
+        (oldTts as { onmessage: unknown }).onmessage = null;
+      }
       if (oldTts?.readyState === WebSocket.OPEN) {
         oldTts.send(JSON.stringify({ type: 'Terminate' }));
       }
@@ -585,6 +600,7 @@ export class FastSocket {
       systemPrompt: String(session.system_prompt || ''),
       greeting: String(session.greeting || ''),
       voice: toAssemblyVoiceId(rawVoice, ttsLanguage),
+      rawVoice,
       ttsLanguage,
       tools: Array.isArray(session.tools) && session.tools.length > 0,
     };
@@ -829,6 +845,7 @@ export class FastSocket {
     }
     this.lastTurnOrder = order;
     this.mark('eot');
+    this.followLanguage(m);
     const full = this.carry ? `${this.carry} ${text}` : text;
     const unfinished = soundsUnfinished(full);
     if (this.spec && this.spec.key !== specKey(full)) this.dropSpec(); // they said more than the partial: start over
@@ -848,6 +865,26 @@ export class FastSocket {
     this.finishTurn(order);
   }
 
+  /**
+   * Auto-detect: AssemblyAI tells us each turn's language. When the person moves to a language that AssemblyAI TTS speaks,
+   * reopen the TTS session in it (with that language's native voice) before replying, so Spanish is spoken as Spanish.
+   * Languages TTS cannot speak (Hindi, Japanese, ...) leave the voice alone; the app tells the model how to answer.
+   */
+  private followLanguage(m: Json): void {
+    const base = String(m.language_code || '').toLowerCase().split(/[-_]/)[0];
+    if (!base) return;
+    this.detectedLang = base;
+    const next = FAST_TTS_LANGUAGE[base];
+    const confidence = typeof m.language_confidence === 'number' ? m.language_confidence : 1;
+    if (!this.cfg.autoLanguage || !this.session || !next || next === this.session.ttsLanguage || confidence < 0.8) return;
+    this.dropSpec(); // a reply prepared in the old language must not be adopted
+    this.session = { ...this.session, ttsLanguage: next, voice: toAssemblyVoiceId(this.session.rawVoice, next) };
+    this.emit({ type: 'tts.language', language: next, voice: this.session.voice });
+    this.ttsSwitch = this.rotateTtsSession().finally(() => {
+      this.ttsSwitch = null;
+    });
+  }
+
   private finishTurn(order: number): void {
     if (this.closed) return;
     const text = this.carry;
@@ -862,7 +899,7 @@ export class FastSocket {
     if (!this.inUserTurn) this.emit({ type: 'input.speech.started' });
     this.inUserTurn = false;
     this.emit({ type: 'input.speech.stopped' });
-    this.emit({ type: 'transcript.user', text, item_id: `u-${order}` });
+    this.emit({ type: 'transcript.user', text, item_id: `u-${order}`, language: this.detectedLang || undefined });
     if (this.captureOnly) {
       this.dropSpec();
       return; // capture mode: the person is rambling on purpose, so no reply and no history
@@ -983,6 +1020,10 @@ export class FastSocket {
   }
 
   private say(text: string, gen: number): void {
+    if (this.ttsSwitch) {
+      void this.ttsSwitch.then(() => this.say(text, gen)); // the voice is moving to the person's language: speak once it is open
+      return;
+    }
     if (!text || gen !== this.genId || this.tts?.readyState !== WebSocket.OPEN) return;
     if (this.spoken === '') this.emit({ type: 'reply.started' });
     this.emit({ type: 'reply.text', text });

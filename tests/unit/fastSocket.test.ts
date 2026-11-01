@@ -68,8 +68,8 @@ const tick = (n = 6) => new Promise((r) => { let i = 0; const f = () => (++i >= 
 
 let events: Array<Record<string, unknown>>;
 let fetchMock: ReturnType<typeof vi.fn>;
-async function open(opts: { tools?: boolean; greeting?: string; holdMs?: number } = {}) {
-  const s = new FastSocket({ sttToken: 'stt', ttsToken: 'tts', holdMs: opts.holdMs ?? 60, interruptHoldMs: opts.holdMs ?? 60, warmUp: false });
+async function open(opts: { tools?: boolean; greeting?: string; holdMs?: number; autoLanguage?: boolean } = {}) {
+  const s = new FastSocket({ sttToken: 'stt', ttsToken: 'tts', holdMs: opts.holdMs ?? 60, interruptHoldMs: opts.holdMs ?? 60, warmUp: false, autoLanguage: opts.autoLanguage });
   events = [];
   s.onmessage = (e) => events.push(JSON.parse(e.data));
   await tick(2);
@@ -523,5 +523,38 @@ describe('Full-duplex overlap, endpointing presets, utterance speculation & mult
     });
     await tick(25);
     expect(fetchMock).toHaveBeenCalledTimes(1); // adopted speculative request
+  });
+});
+describe('FastSocket: auto language follows what the person speaks', () => {
+  const turn = (language_code: string, language_confidence: number, order = 0) => ({
+    type: 'Turn', turn_order: order, transcript: 'Hola, necesito empezar mi tarea hoy.', end_of_turn: true, language_code, language_confidence,
+  });
+  const ttsSockets = () => FakeWS.instances.filter((w) => w.isTts);
+
+  it('a confident Spanish turn reopens TTS in Spanish with the native Spanish voice, before replying', async () => {
+    fetchMock.mockResolvedValue(sse(text('Claro, empecemos con un paso pequeño.')));
+    const { stt } = await open({ autoLanguage: true });
+    stt.push(turn('es', 0.95));
+    await tick(30);
+    expect(ttsSockets().length).toBe(2);
+    expect(ttsSockets()[1].url).toContain('language=spanish');
+    expect(ttsSockets()[1].url).toContain('voice_id=1a48e481-7f02-5e96-bb84-68fcac65c2b2');
+    expect(events.some((e) => e.type === 'tts.language' && e.language === 'spanish')).toBe(true);
+    expect(events.find((e) => e.type === 'transcript.user')?.language).toBe('es');
+    // the reply was spoken on the new Spanish session, not dropped
+    expect(ttsSockets()[1].sent.some((d) => typeof d === 'string' && d.includes('Generate'))).toBe(true);
+  });
+
+  it.each([
+    ['low confidence', 'es', 0.5, true],
+    ['a language AssemblyAI TTS cannot speak', 'hi', 0.99, true],
+    ['the same language as the session', 'en', 0.99, true],
+    ['a pinned language (auto off)', 'es', 0.99, false],
+  ])('does not move the voice for %s', async (_n, code, conf, auto) => {
+    fetchMock.mockResolvedValue(sse(text('Okay, one small step.')));
+    const { stt } = await open({ autoLanguage: auto });
+    stt.push(turn(code, conf));
+    await tick(30);
+    expect(ttsSockets().length).toBe(1);
   });
 });

@@ -2,6 +2,7 @@
 
 import { byokHeaders } from '@/lib/byok/config';
 import { ContinuousPcmPlayer } from '@/lib/voice/playback/continuousPlayback';
+import { replyLanguageInstruction } from '@/lib/voice/replyLanguage';
 import { FastSocket, FAST_TTS_LANGUAGE, toAssemblyVoiceId } from '@/lib/voice/fastSocket';
 import {
   computeProgressiveCaption,
@@ -476,6 +477,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const [isHandsFreePaused, setIsHandsFreePaused] = useState(false);
   const [selectedLanguage, setSelectedLanguageState] = useState<string>('auto');
   const selectedLanguageRef = useRef<string>('auto');
+  const lastReplyLangRef = useRef<string>('en');
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem('stay_selected_language');
@@ -2166,7 +2168,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
       // 4. Connect: either the managed Voice Agent socket (when explicitly selected in E2E), or fast voice (default)
       const socket: WebSocket = useFast
-        ? (new FastSocket({ sttToken: tokenJson.sttToken || '', ttsToken: tokenJson.ttsToken || '', keyterms: appKeyterms(), ttsConnect: speech.ref.engine === 'assemblyai' ? undefined : () => createTtsConnection(speech.ref, speech.browserVoiceName)! }) as unknown as WebSocket)
+        ? (new FastSocket({ sttToken: tokenJson.sttToken || '', ttsToken: tokenJson.ttsToken || '', keyterms: appKeyterms(), autoLanguage: selectedLanguageRef.current === 'auto', ttsConnect: speech.ref.engine === 'assemblyai' ? undefined : () => createTtsConnection(speech.ref, speech.browserVoiceName)! }) as unknown as WebSocket)
         : new WebSocket(`${tokenJson.wsUrl}?token=${encodeURIComponent(tokenJson.token || '')}`);
       setVoiceEngine(useFast ? 'fast' : 'agent');
       wsRef.current = socket;
@@ -2421,18 +2423,17 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
               playEarcon('resume');
               return;
             }
-            if (selectedLanguageRef.current === 'auto' && text.length > 3) {
-              const autoLang = detectTextLanguage(text, 'auto');
-              if (autoLang !== 'en-GB') {
-                const langMatch = SUPPORTED_LANGUAGES.find((l) => l.code === autoLang);
-                const label = langMatch ? langMatch.label : autoLang;
-                const ws = wsRef.current;
-                if (ws && ws.readyState === WebSocket.OPEN && sessionReadyRef.current) {
-                  ws.send(JSON.stringify({ type: 'conversation.message', role: 'system', content: `User is speaking ${label}. Reply in ${label}.` }));
-                }
+            // Tell the model which language to answer in: a pinned language wins; Auto follows what AssemblyAI heard.
+            const heardBase = typeof msg.language === 'string' ? msg.language : '';
+            const spokenCode = (selectedLanguageRef.current === 'auto' ? heardBase || detectTextLanguage(text, 'auto') : selectedLanguageRef.current).split('-')[0].toLowerCase();
+            if (spokenCode !== lastReplyLangRef.current && text.length > 3) {
+              lastReplyLangRef.current = spokenCode;
+              const ws = wsRef.current;
+              if (ws && ws.readyState === WebSocket.OPEN && sessionReadyRef.current) {
+                const label = SUPPORTED_LANGUAGES.find((l) => l.code.split('-')[0] === spokenCode)?.label;
+                ws.send(JSON.stringify({ type: 'conversation.message', role: 'system', content: replyLanguageInstruction(spokenCode, label) }));
               }
             }
-
             const crisis = detectCrisisSignal(text);
             if (crisis.triggered) {
               disconnectVoiceSession();
