@@ -49,7 +49,7 @@ const BANNED_PATTERNS = [
 function getCommitShas() {
   const valid = new Set();
   try {
-    const list = execSync('git rev-list HEAD -n 10', { encoding: 'utf8' }).trim().split('\n');
+    const list = execSync('git rev-list HEAD -n 50', { encoding: 'utf8' }).trim().split('\n');
     for (const sha of list) {
       const s = sha.trim();
       if (s) valid.add(s);
