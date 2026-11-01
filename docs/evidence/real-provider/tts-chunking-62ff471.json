@@ -1,0 +1,84 @@
+{
+  "status": "PASS",
+  "tier": "real-provider",
+  "gitSha": "62ff471ae56ea231f689e3082671ff1097ad6ab9",
+  "timestamp": "2026-11-01T21:05:28.067Z",
+  "voice": "Adrienne (en-GB)",
+  "limits": [
+    "Chunk arrival measured over one network; playback is simulated with a 100 ms prebuffer, not the browser worklet",
+    "2 short replies per strategy"
+  ],
+  "results": {
+    "A_clause_each": [
+      {
+        "syntheses": 4,
+        "firstAudioMs": 201,
+        "totalAudioSeconds": 10.32,
+        "arrivedByMs": 1177,
+        "stalls": 0,
+        "stallMs": 0,
+        "silenceAtJoinsMs": [
+          498,
+          568,
+          530
+        ]
+      },
+      {
+        "syntheses": 3,
+        "firstAudioMs": 199,
+        "totalAudioSeconds": 9.04,
+        "arrivedByMs": 1071,
+        "stalls": 0,
+        "stallMs": 0,
+        "silenceAtJoinsMs": [
+          629,
+          514
+        ]
+      }
+    ],
+    "B_first_then_rest": [
+      {
+        "syntheses": 2,
+        "firstAudioMs": 209,
+        "totalAudioSeconds": 9.6,
+        "arrivedByMs": 1101,
+        "stalls": 0,
+        "stallMs": 0,
+        "silenceAtJoinsMs": [
+          600
+        ]
+      },
+      {
+        "syntheses": 2,
+        "firstAudioMs": 195,
+        "totalAudioSeconds": 8.64,
+        "arrivedByMs": 1008,
+        "stalls": 0,
+        "stallMs": 0,
+        "silenceAtJoinsMs": [
+          535
+        ]
+      }
+    ],
+    "C_whole_reply": [
+      {
+        "syntheses": 1,
+        "firstAudioMs": 203,
+        "totalAudioSeconds": 9.12,
+        "arrivedByMs": 997,
+        "stalls": 0,
+        "stallMs": 0,
+        "silenceAtJoinsMs": []
+      },
+      {
+        "syntheses": 1,
+        "firstAudioMs": 191,
+        "totalAudioSeconds": 8.24,
+        "arrivedByMs": 924,
+        "stalls": 0,
+        "stallMs": 0,
+        "silenceAtJoinsMs": []
+      }
+    ]
+  }
+}

@@ -269,6 +269,8 @@ const GATED_EVENTS = new Set(['reply.started', 'reply.text', 'reply.audio', 'tra
 const STT_URL ='wss://streaming.assemblyai.com/v3/ws';
 const TTS_URL = process.env.NEXT_PUBLIC_ASSEMBLYAI_TTS_URL || 'wss://tts.us.assemblyai.com/v1/ws';
 const MAX_HISTORY = 14;
+/** Characters of a reply held back before speech starts, so the voice begins as one continuous synthesis (about two sentences). */
+const FIRST_BLOCK_CHARS = 90;
 
 /** Splits streamed text into speakable chunks: a sentence end followed by space, once there is enough to say. */
 export function takeSpeakable(buffer: string, first = false): { chunk: string; rest: string } | null {
@@ -326,6 +328,8 @@ export class FastSocket {
   // The server numbers flushes itself and may report several as one FlushDone, so completion is tracked by id range,
   // and audio from a cancelled reply is recognised by the server's Cancelled acknowledgement, not by counting.
   private sentFlushes = 0;
+  /** text has been streamed to TTS that no Flush has closed yet */
+  private unflushed = false;
   private replyBaseId: number | null = null;
   private lastDoneId = -1;
   private staleCancels = 0;
@@ -806,6 +810,19 @@ export class FastSocket {
     this.emit({ type: 'word.boundaries', words: aligned, reply_id: this.genId });
   }
 
+  /**
+   * True when what the mic just transcribed is mostly words Stay is saying (or just said): that is Stay's own voice coming back
+   * through the speakers, not the person. Needs 3+ words and 75% overlap so a genuine "wait, the folder" is never swallowed.
+   */
+  private isEchoOfOwnSpeech(text: string): boolean {
+    const words = specKey(text).split(' ').filter(Boolean);
+    if (words.length < 3) return false;
+    const lastReply = [...this.history].reverse().find((h) => h.role === 'assistant' && typeof h.content === 'string')?.content ?? '';
+    const known = new Set(specKey(`${this.spoken} ${lastReply}`).split(' ').filter(Boolean));
+    const hits = words.filter((w) => known.has(w)).length;
+    return hits / words.length >= 0.75;
+  }
+
   /** Streaming transcript -> the Voice Agent's user events. */
   private onTurn(m: Json): void {
     const text = String(m.transcript || '').trim();
@@ -820,6 +837,10 @@ export class FastSocket {
         if (speakingNow) {
           if (isBackchannelOnly(text)) return;
           if (!isExplicitInterruption(text) && text.split(/\s+/).length < 2) return;
+          if (!isExplicitInterruption(text) && this.isEchoOfOwnSpeech(text)) {
+            this.emit({ type: 'barge_in.echo_ignored', reason: 'transcript matches what Stay is saying' });
+            return; // the mic heard Stay's own voice, not the person: do not cut the reply off
+          }
         }
         this.inUserTurn = true;
         this.interrupted = speakingNow || this.spoken !== '';
@@ -845,9 +866,9 @@ export class FastSocket {
       return;
     }
     if (order === this.lastTurnOrder || !text) return; // the formatted re-send of a turn we already handled
-    if (!this.inUserTurn && speakingNow && isBackchannelOnly(text)) {
+    if (!this.inUserTurn && speakingNow && (isBackchannelOnly(text) || (!isExplicitInterruption(text) && this.isEchoOfOwnSpeech(text)))) {
       this.lastTurnOrder = order;
-      return; // conversational backchannel while Stay is speaking: do not interrupt
+      return; // a backchannel, or Stay's own voice picked up by the mic: do not interrupt and do not answer it
     }
     this.lastTurnOrder = order;
     this.mark('eot');
@@ -987,6 +1008,7 @@ export class FastSocket {
     this.genId++;
     this.abort?.abort();
     this.abort = null;
+    this.unflushed = false;
     this.sentFlushes = 0;
     this.replyBaseId = null;
     this.lastDoneId = -1;
@@ -1028,19 +1050,42 @@ export class FastSocket {
     this.maybeFinish();
   }
 
-  private say(text: string, gen: number): void {
+  /**
+   * Send text to the voice. Measured on the live API (scripts/measure-tts-chunking.mjs): every Flush is its own synthesis and adds
+   * about 0.5 to 0.6 s of silence at the join, so a reply is sent as ONE synthesis: `flush=false` streams text in, and one
+   * `flushSpeech` ends the reply. Texts are concatenated with no separator by the API, so a space is added.
+   */
+  private say(text: string, gen: number, flush = true): void {
     if (this.ttsSwitch) {
-      void this.ttsSwitch.then(() => this.say(text, gen)); // the voice is moving to the person's language: speak once it is open
+      void this.ttsSwitch.then(() => this.say(text, gen, flush)); // the voice is moving to the person's language: speak once it is open
       return;
     }
     if (!text || gen !== this.genId || this.tts?.readyState !== WebSocket.OPEN) return;
     if (this.spoken === '') this.emit({ type: 'reply.started' });
     this.emit({ type: 'reply.text', text });
     this.spoken += (this.spoken ? ' ' : '') + text;
-    this.sentFlushes++;
     this.mark('gen');
     this.resetKeepAliveTimer();
-    this.tts.send(JSON.stringify({ type: 'Generate', text }));
+    this.tts.send(JSON.stringify({ type: 'Generate', text: flush ? text : `${text} ` }));
+    if (flush) {
+      this.sentFlushes++;
+      this.unflushed = false;
+      this.tts.send(JSON.stringify({ type: 'Flush' }));
+    } else {
+      this.unflushed = true;
+    }
+  }
+
+  /** Ends the synthesis for text streamed in with say(..., false). */
+  private flushSpeech(gen: number): void {
+    if (!this.unflushed) return;
+    if (this.ttsSwitch) {
+      void this.ttsSwitch.then(() => this.flushSpeech(gen));
+      return;
+    }
+    if (gen !== this.genId || this.tts?.readyState !== WebSocket.OPEN) return;
+    this.unflushed = false;
+    this.sentFlushes++;
     this.tts.send(JSON.stringify({ type: 'Flush' }));
   }
 
@@ -1133,6 +1178,21 @@ export class FastSocket {
     let pendingText = '';
     let sawToken = false;
     const calls = new Map<number, { id: string; name: string; args: string }>();
+    // Hold the first words until about two sentences have arrived (the model's first ~90 characters take a fraction of a second),
+    // so speech starts as one continuous synthesis; everything after that streams into the same synthesis.
+    let held: string[] = [];
+    let heldChars = 0;
+    let started = false;
+    const queueSpeech = (chunk: string) => {
+      if (started) return this.say(chunk, gen, false);
+      held.push(chunk);
+      heldChars += chunk.length;
+      if (heldChars >= FIRST_BLOCK_CHARS) {
+        started = true;
+        this.say(held.join(' '), gen, false);
+        held = [];
+      }
+    };
     try {
       for (;;) {
         const { done, value } = await reader.read();
@@ -1155,9 +1215,9 @@ export class FastSocket {
               this.mark('tok1');
             }
             pendingText += delta.content;
-            for (let part = takeSpeakable(pendingText, this.spoken === ''); part; part = takeSpeakable(pendingText, this.spoken === '')) {
+            for (let part = takeSpeakable(pendingText); part; part = takeSpeakable(pendingText)) {
               pendingText = part.rest;
-              this.say(part.chunk, gen);
+              queueSpeech(part.chunk);
             }
           }
           for (const tc of delta?.tool_calls || []) {
@@ -1170,9 +1230,15 @@ export class FastSocket {
       if (gen !== this.genId) return;
     }
     if (gen !== this.genId) return;
-    if (pendingText.trim()) this.say(pendingText.trim(), gen);
+    if (pendingText.trim()) queueSpeech(pendingText.trim());
+    if (held.length > 0) {
+      started = true;
+      this.say(held.join(' '), gen, false);
+      held = [];
+    }
+    this.flushSpeech(gen); // end of the reply (or before a tool call): the one flush
 
-    const call = [...calls.values()].find((c) => c.name);
+    const call =[...calls.values()].find((c) => c.name);
     if (call) {
       const id = call.id || `call-${Date.now()}`;
       let args: Json = {};

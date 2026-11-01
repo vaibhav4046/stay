@@ -168,8 +168,10 @@ describe('FastSocket', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
     expect(body.messages.at(-1)).toEqual({ role: 'user', content: 'I keep avoiding my taxes.' });
-    const spoken = tts.sent.filter((d): d is string => typeof d === 'string').map((d) => JSON.parse(d)).filter((m) => m.type === 'Generate').map((m) => m.text);
-    expect(spoken.join(' ')).toBe('Okay, let us start. Open the tax folder.');
+    const frames = tts.sent.filter((d): d is string => typeof d === 'string').map((d) => JSON.parse(d));
+    // the API joins Generate texts with no separator: what it hears must read as the reply, and a reply is ONE synthesis (one Flush)
+    expect(frames.filter((m) => m.type === 'Generate').map((m) => m.text).join('').trim()).toBe('Okay, let us start. Open the tax folder.');
+    expect(frames.filter((m) => m.type === 'Flush')).toHaveLength(1);
     expect(events.find((e) => e.type === 'transcript.agent')?.text).toBe('Okay, let us start. Open the tax folder.');
   });
 
@@ -187,14 +189,34 @@ describe('FastSocket', () => {
     s.close();
   });
 
-  it('finishes a two-sentence reply even when the server reports both flushes as one FlushDone', async () => {
-    FakeWS.coalesce = true;
+  it('echo guard: Stay’s own words coming back through the mic do not cut the reply off, but a real interruption does', async () => {
+    FakeWS.auto = false; // the server has not finished: Stay is mid-sentence
+    fetchMock.mockResolvedValue(sse(text('Open the tax folder and look at the first page, nothing else.')));
+    const { s, stt, tts } = await open();
+    stt.push({ type: 'Turn', transcript: 'plan my day.', end_of_turn: true, turn_order: 0 });
+    await tick(12);
+    tts.push({ type: 'Audio', audio: 'AAAA'.repeat(40000), flush_id: 0 }); // about 0.6 s of speech is playing
+    const cancels = () => tts.sent.filter((d) => typeof d === 'string' && JSON.parse(d).type === 'Cancel').length;
+    const before = cancels();
+    // the speakers' output transcribed by the microphone
+    stt.push({ type: 'Turn', transcript: 'open the tax folder and look at the', end_of_turn: false, turn_order: 1 });
+    expect(cancels()).toBe(before);
+    expect(events.some((e) => e.type === 'barge_in.echo_ignored' && e.reason)).toBe(true);
+    // a person talking over it with different words
+    stt.push({ type: 'Turn', transcript: 'actually let me get water first', end_of_turn: false, turn_order: 1 });
+    expect(cancels()).toBeGreaterThan(before);
+    s.close();
+  });
+
+  it('a two-sentence reply is one synthesis: one Flush, one FlushDone, no join silence', async () => {
     fetchMock.mockResolvedValue(sse(text('Okay, let us start with one step. '), text('Open the tax folder now.')));
     const { stt } = await open();
     stt.push({ type: 'Turn', transcript: 'help me begin.', end_of_turn: true, turn_order: 0 });
     await tick(30);
     expect(types()).toEqual(expect.arrayContaining(['transcript.agent', 'reply.done']));
     expect(events.find((e) => e.type === 'transcript.agent')?.text).toBe('Okay, let us start with one step. Open the tax folder now.');
+    const tts = FakeWS.instances.find((w) => w.isTts)!;
+    expect(tts.sent.filter((d) => typeof d === 'string' && d.includes('Flush'))).toHaveLength(1);
   });
 
   it('speaking after an idle cancel still works (the server acknowledges Cancel, then fresh audio plays)', async () => {
