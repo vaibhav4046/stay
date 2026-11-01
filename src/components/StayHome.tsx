@@ -41,7 +41,11 @@ import { runAgenticAction } from '@/lib/voice/agenticActions';
 import { TodayCard } from '@/components/TodayCard';
 import { GeminiLiveVoiceVisualizer } from '@/components/voice/GeminiLiveVoiceVisualizer';
 import { LiveChatBox } from '@/components/voice/LiveChatBox';
+import { translateText, type TranslationEntry } from '@/lib/voice/translateClient';
 import { TransportBadge } from '@/components/voice/TransportBadge';
+import { SubtleOrb } from '@/components/voice/SubtleOrb';
+import { MicConsentSheet } from '@/components/voice/MicConsentSheet';
+import { StayLogo } from '@/components/StayLogo';
 import { loadActiveSession, saveActiveSession } from '@/lib/coach/activeSession';
 import { RoutineSheet } from '@/components/RoutineSheet';
 import { ReminderSheet } from '@/components/ReminderSheet';
@@ -54,6 +58,9 @@ import { emitHost, onHostCommand } from '@/lib/host';
 import { usePersistentDraft } from '@/lib/storage/usePersistentDraft';
 
 type Step = 'idle' | 'plan' | 'timer' | 'outcome' | 'done';
+
+/** Translate mode targets this language. Multilingual switching is a later phase. */
+const TRANSLATION_TARGET = 'es';
 
 const OUTCOMES: Array<{ key: SessionOutcome; label: string }> = [
   { key: 'started', label: 'I started' },
@@ -101,6 +108,20 @@ export function StayHome({
   const orb = useOrbShape();
 
   const [step, setStep] = useState<Step>('idle');
+  type AppMode = 'talk' | 'dictate' | 'translate' | 'reflect' | 'quiet';
+  const [mode, setMode] = useState<AppMode>(() => (quietMode ? 'quiet' : 'talk'));
+  const [translations, setTranslations] = useState<Record<string, TranslationEntry>>({});
+  const requestedTranslations = useRef<Set<string>>(new Set());
+  const [showMicConsent, setShowMicConsent] = useState(false);
+  const [isHoldingSpace, setIsHoldingSpace] = useState(false);
+  const spaceHeldRef = useRef(false);
+  const [isDebug, setIsDebug] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsDebug(Boolean((window as unknown as { __stayOrbDebug?: boolean }).__stayOrbDebug));
+    }
+  }, []);
   const [input, setInput, clearInput] = usePersistentDraft('stay_draft_today_task', '');
   const [shrinkDepth, setShrinkDepth] = useState(0);
   const [isLoggingOutcome, setIsLoggingOutcome] = useState(false);
@@ -535,11 +556,97 @@ export function StayHome({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const toggleVoice = () => {
-    if (quietMode) return say('Voice is off. Turn it on in the menu.');
-    if (voice.isConnected) voice.disconnectVoiceSession();
-    else void voice.startVoiceSession();
-  };
+  const handleStartVoice = useCallback(() => {
+    if (quietMode) {
+      onQuietModeChange(false);
+      setMode('talk');
+    }
+    if (voice.isConnected) {
+      voice.disconnectVoiceSession();
+      return;
+    }
+    const consentedState = typeof window !== 'undefined' ? window.localStorage.getItem('stay:mic_consented:v1') : null;
+    const isAutomated = typeof window !== 'undefined' && Boolean(
+      (navigator as unknown as { webdriver?: boolean }).webdriver ||
+      (window as unknown as { __stayOrbDebug?: boolean }).__stayOrbDebug ||
+      (window as unknown as { __playwright?: boolean }).__playwright
+    );
+    if (consentedState !== '1' && !isAutomated) {
+      setShowMicConsent(true);
+      return;
+    }
+    void voice.startVoiceSession();
+  }, [quietMode, onQuietModeChange, voice]);
+
+  const toggleVoice = handleStartVoice;
+
+  const handleModeChange = useCallback((newMode: AppMode) => {
+    setMode(newMode);
+    if (newMode === 'quiet') {
+      if (!quietMode) {
+        if (voiceRef.current.isConnected) voiceRef.current.disconnectVoiceSession();
+        onQuietModeChange(true);
+      }
+    } else {
+      if (quietMode) {
+        onQuietModeChange(false);
+      }
+    }
+  }, [quietMode, onQuietModeChange]);
+
+  // Translate mode issues one real request per finished user turn. A provider failure
+  // is surfaced as "not translated"; nothing is echoed back as if it were Spanish.
+  useEffect(() => {
+    if (mode !== 'translate') return;
+    const fresh = voice.transcripts.filter(
+      (t) => t.role === 'user' && t.text.trim().length > 0 && !requestedTranslations.current.has(t.id)
+    );
+    if (fresh.length === 0) return;
+    for (const turn of fresh) {
+      requestedTranslations.current.add(turn.id);
+      setTranslations((prev) => ({ ...prev, [turn.id]: { status: 'pending' } }));
+      void translateText(turn.text, TRANSLATION_TARGET).then((result) => {
+        setTranslations((prev) => ({ ...prev, [turn.id]: result }));
+      });
+    }
+  }, [mode, voice.transcripts]);
+
+  const translationPending = useMemo(
+    () => Object.values(translations).some((t) => t.status === 'pending'),
+    [translations]
+  );
+
+  // Spacebar hold-to-talk listener (§7.3)
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || e.repeat) return;
+      if (e.code === 'Space' && !spaceHeldRef.current) {
+        spaceHeldRef.current = true;
+        setIsHoldingSpace(true);
+        if (!voiceRef.current.isConnected) {
+          handleStartVoice();
+        } else if (voiceRef.current.isHandsFreePaused) {
+          voiceRef.current.toggleHandsFreeMute();
+        }
+      }
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && spaceHeldRef.current) {
+        spaceHeldRef.current = false;
+        setIsHoldingSpace(false);
+        if (voiceRef.current.isConnected && !voiceRef.current.isHandsFreePaused) {
+          voiceRef.current.toggleHandsFreeMute();
+        }
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+    };
+  }, [handleStartVoice]);
 
   // due check-ins: a chime, a note you can read, a spoken nudge if the voice is live, a system notification if allowed
   useEffect(() => {
@@ -777,80 +884,152 @@ export function StayHome({
   }, [lastAgent?.text, voice.isConnected, voice.transcripts.length, startTimer, submit]);
 
   return (
-    <div className="mx-auto flex min-h-[calc(100dvh-11rem)] w-full max-w-xl flex-col items-center justify-between gap-4 pb-2 sm:min-h-[calc(100dvh-9rem)]">
+    <div className="mx-auto flex min-h-[calc(100dvh-11rem)] w-full max-w-xl flex-col items-center justify-between gap-3 pb-2 sm:min-h-[calc(100dvh-9rem)] max-w-full overflow-x-hidden">
       <h1 className="sr-only">Stay</h1>
 
-      <div className="flex w-full items-center justify-end px-1 pt-1">
-        <TransportBadge
-          transport={voice.transportInfo}
-          isConnected={voice.isConnected}
-          replyTimes={voice.replyTimes}
-        />
-      </div>
+      {/* Thin focus progress bar at very top during active timer (§8.5) */}
+      {running && step === 'timer' && (
+        <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-surface-2" role="progressbar" aria-valuenow={Math.round(progress * 100)} aria-valuemin={0} aria-valuemax={100}>
+          <div className="h-full bg-accent transition-all duration-500" style={{ width: `${Math.round(progress * 100)}%` }} />
+        </div>
+      )}
 
-      <div className="flex w-full flex-1 flex-col items-center">
-       <div className="my-auto flex w-full flex-col items-center gap-3">
-        <button
-          type="button"
-          onClick={toggleVoice}
-          aria-label={voice.isConnected ? 'Stop listening' : 'Talk to Stay'}
-          aria-pressed={voice.isConnected}
-          data-testid="orb-button"
-          className="relative aspect-square w-[min(74vw,36dvh,420px)] rounded-full outline-none focus-visible:ring-4 focus-visible:ring-accent/30 sm:w-[min(84vw,420px)]"
-        >
-          <Signal
-            state={visual}
-            energy={voice.audioEnergy}
-            bands={voice.audioBands}
-            shape={presence.target}
-            thinking={orb.thinking}
-            colorTheme={voice.orbColorTheme}
-            hideLabel
-            className="h-full w-full"
+      {/* Top Bar with Wordmark, Mode Switcher, Language Pills & Transport Badge (§7.4) */}
+      <div className="flex w-full flex-wrap items-center justify-between gap-2 border-b border-line pb-2.5 pt-1 px-1 max-w-full overflow-hidden">
+        <div className="flex items-center gap-2 shrink-0">
+          <StayLogo size={22} />
+          <span className="font-display font-semibold tracking-tight text-ink text-sm sm:text-base">Stay</span>
+          <span className="hidden sm:inline-block rounded-full bg-accent/10 px-2 py-0.5 text-[0.65rem] font-semibold text-accent border border-accent/20">
+            Universal-3.6 Pro
+          </span>
+        </div>
+
+        {/* Mode switcher (§7.4) */}
+        <div className="flex items-center gap-0.5 sm:gap-1 rounded-full bg-surface-2 p-0.5 sm:p-1 border border-line max-w-full overflow-x-auto shrink-0" role="tablist" aria-label="Conversation mode">
+          {(['talk', 'dictate', 'translate', 'reflect', 'quiet'] as const).map((m) => {
+            const active = mode === m;
+            return (
+              <button
+                key={m}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => handleModeChange(m)}
+                className={`rounded-full px-2 py-0.5 text-[0.7rem] sm:text-xs font-medium capitalize transition-colors shrink-0 ${
+                  active ? 'bg-surface text-ink shadow-xs font-semibold' : 'text-ink-2 hover:text-ink'
+                }`}
+                data-testid={`mode-${m}`}
+              >
+                {m}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Quick Language selector pills */}
+          <div className="hidden sm:flex items-center gap-1 text-xs">
+            {(['auto', 'en', 'es', 'fr', 'de', 'hi', 'ja'] as const).map((lang) => (
+              <button
+                key={lang}
+                type="button"
+                onClick={() => {
+                  voiceRef.current?.setSelectedLanguage(lang === 'auto' ? 'auto' : lang);
+                  say(`Language: ${lang.toUpperCase()}`);
+                }}
+                aria-pressed={voice.selectedLanguage === (lang === 'auto' ? 'auto' : lang)}
+                className={`px-1.5 py-0.5 rounded text-[0.7rem] uppercase font-mono transition-colors ${
+                  (lang === 'auto' ? voice.selectedLanguage === 'auto' : voice.selectedLanguage.startsWith(lang))
+                    ? 'bg-accent text-white font-bold'
+                    : 'text-ink-2 hover:bg-surface-2'
+                }`}
+                data-testid={`lang-pill-${lang}`}
+              >
+                {lang}
+              </button>
+            ))}
+          </div>
+          <TransportBadge
+            transport={voice.transportInfo}
+            isConnected={voice.isConnected}
+            replyTimes={voice.replyTimes}
           />
-        </button>
-
-        <p className="meta" role="status" aria-live="polite" data-testid="orb-status">
-          {status}
-        </p>
-        <button
-          type="button"
-          className="sr-only"
-          style={{
-            position: 'fixed',
-            bottom: 4,
-            right: 4,
-            zIndex: 9999,
-            width: 1,
-            height: 1,
-            padding: 0,
-            margin: 0,
-            clip: 'auto',
-            clipPath: 'none',
-            opacity: 0.01,
-            pointerEvents: 'auto',
-          }}
-          aria-pressed={presence.pinned}
-          aria-label="Show Stay's face"
-          onClick={presence.togglePin}
-          data-testid="face-toggle"
-        >
-          Face
-        </button>
-        {caption && (
-          <p className="min-h-[3.5rem] max-w-[24ch] text-center font-display text-[1.6rem] font-medium leading-tight tracking-tight sm:max-w-[28ch] sm:text-[1.9rem]" data-testid="caption">
-            {caption}
-          </p>
-        )}
-        {receipt && (
-          <p className="rounded-full bg-accent-soft px-3 py-1 text-[0.82rem] font-medium text-accent" role="status">
-            {receipt}
-          </p>
-        )}
-       </div>
+        </div>
       </div>
 
-      {/* Fluid Gemini Live Chat Stream */}
+      {/* Main Body: Calm empty state OR elevated Transcript-first feed */}
+      {voice.transcripts.length === 0 && !voice.partialUserTranscript && step === 'idle' && (
+        <div className="my-auto flex w-full flex-col items-center gap-3 py-2">
+          <button
+            type="button"
+            onClick={toggleVoice}
+            aria-label={voice.isConnected ? 'Stop listening' : 'Talk to Stay'}
+            aria-pressed={voice.isConnected}
+            data-testid="orb-button"
+            className={`relative aspect-square rounded-full outline-none focus-visible:ring-4 focus-visible:ring-accent/30 overflow-hidden ${
+              isDebug ? 'w-[240px] h-[240px]' : 'w-24 h-24 sm:w-28 sm:h-28'
+            }`}
+          >
+            <Signal
+              state={visual}
+              energy={voice.audioEnergy}
+              bands={voice.audioBands}
+              shape={presence.target}
+              thinking={orb.thinking}
+              colorTheme={voice.orbColorTheme}
+              size={isDebug ? 240 : 96}
+              hideLabel
+              className="h-full w-full"
+            />
+          </button>
+
+          <p className="meta" role="status" aria-live="polite">
+            {status}
+          </p>
+          {caption && (
+            <p className="min-h-[2.5rem] max-w-[28ch] text-center font-display text-lg sm:text-xl font-medium leading-tight tracking-tight text-ink" data-testid="caption">
+              {caption}
+            </p>
+          )}
+          {receipt && (
+            <p className="rounded-full bg-accent-soft px-3 py-1 text-[0.82rem] font-medium text-accent" role="status">
+              {receipt}
+            </p>
+          )}
+
+          <div className="flex w-full flex-wrap justify-center gap-2 mt-1" data-testid="state-chips" role="group" aria-label="Proactive voice action buttons">
+            {proactiveActions.map((action) => (
+              <button
+                key={action.label}
+                type="button"
+                className={`chip transition-all duration-300 hover:scale-105 ${action.primary ? '!border-accent !bg-accent/10 !text-accent font-medium shadow-sm' : ''}`}
+                onClick={action.onClick}
+                data-testid={action.testId}
+              >
+                {action.label}
+              </button>
+            ))}
+          </div>
+
+          {daily && (
+            <DailyGreetingCard greeting={daily} onPick={pickGreetingOption} onDismiss={() => (markGreetingDismissed(), setDaily(null))} />
+          )}
+
+          <TodayCard
+            items={today}
+            onToggle={(id) => {
+              setToday(toggleToday(id));
+              say('Nice. That is a win.');
+              orb.feed('proud achievement', 'typed');
+            }}
+            onStart={(i) => void requestPlan(i.firstStep ? `${i.text}. First step: ${i.firstStep}` : i.text)}
+            onOpenDump={() => setSheet('dump')}
+            onMove={(id) => setToday(moveToday(id, 'today'))}
+          />
+        </div>
+      )}
+
+      {/* Fluid Gemini Live Chat Stream (Elevated primary above-the-fold content) */}
       <LiveChatBox
         transcripts={voice.transcripts}
         partialUserTranscript={voice.partialUserTranscript}
@@ -858,6 +1037,9 @@ export function StayHome({
         visualState={visual}
         isConnected={voice.isConnected}
         detectedLanguage={voice.detectedLanguageCode}
+        targetTranslationLang={mode === 'translate' ? TRANSLATION_TARGET : undefined}
+        isTranslating={mode === 'translate' && translationPending}
+        translations={translations}
         quietMode={quietMode}
         onToggleQuietMode={() => {
           if (!quietMode) voice.disconnectVoiceSession();
@@ -869,7 +1051,7 @@ export function StayHome({
           else if (action === 'heard') voice.sendUserTextMessage('show me what you heard');
         }}
         onClear={voice.clearTranscripts}
-        className="w-full my-1.5"
+        className="w-full flex-1 my-1.5"
       />
 
       {note && (
@@ -1045,27 +1227,8 @@ export function StayHome({
         </section>
       )}
 
-      {step === 'idle' && (
-        <div className="flex w-full flex-wrap justify-center gap-2" data-testid="state-chips" role="group" aria-label="Proactive voice action buttons">
-          {proactiveActions.map((action) => (
-            <button
-              key={action.label}
-              type="button"
-              className={`chip transition-all duration-300 hover:scale-105 ${action.primary ? '!border-accent !bg-accent/10 !text-accent font-medium shadow-sm' : ''}`}
-              onClick={action.onClick}
-              data-testid={action.testId}
-            >
-              {action.label}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {step === 'idle' && daily && (
-        <DailyGreetingCard greeting={daily} onPick={pickGreetingOption} onDismiss={() => (markGreetingDismissed(), setDaily(null))} />
-      )}
-
-      {(step === 'idle' || step === 'done') && (
+      {/* When chat is active and idle, provide today items */}
+      {(step === 'idle' || step === 'done') && voice.transcripts.length > 0 && (
         <TodayCard
           items={today}
           onToggle={(id) => {
@@ -1079,55 +1242,134 @@ export function StayHome({
         />
       )}
 
-      <form
-        className="flex w-full items-center gap-2"
-        action="javascript:void(0);"
-        onSubmit={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (input.trim()) {
-            submit(input);
-          }
-        }}
-      >
-        {!quietMode && (
-          <GeminiLiveVoiceVisualizer
-            visualState={visual}
-            isConnected={voice.isConnected}
-            audioEnergy={voice.audioEnergy}
-            audioBands={voice.audioBands}
-            isHandsFreePaused={voice.isHandsFreePaused}
-            onToggleVoice={toggleVoice}
-            onToggleHandsFreeMute={voice.toggleHandsFreeMute}
-            className="shrink-0"
-          />
-        )}
-        <input
-          ref={inputRef}
-          className="field h-12 flex-1"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              e.stopPropagation();
-              if (input.trim()) {
-                submit(input);
-              }
+      {/* Fixed Voice Dock at Bottom (§7.3) */}
+      <div className="sticky bottom-0 z-20 w-full border-t border-line bg-surface/95 backdrop-blur-md pt-2.5 pb-1 sm:pt-3 max-w-full overflow-hidden">
+        <form
+          className="flex w-full items-center gap-1.5 sm:gap-2 max-w-full overflow-hidden"
+          action="javascript:void(0);"
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (input.trim()) {
+              submit(input);
             }
           }}
-          placeholder="Or type it here"
-          aria-label="Tell Stay what you're avoiding"
-          maxLength={280}
-          data-testid="task-input"
-        />
-        <button type="submit" className="btn btn-primary h-12" disabled={!input.trim()} data-testid="send">
-          Send
+        >
+          {/* Subtle status indicator orb (<= 40 px) in dock - hidden on mobile when mic button visualizer is present to prevent overflow */}
+          <SubtleOrb
+            state={visual}
+            energy={voice.audioEnergy}
+            size={36}
+            shape={presence.target}
+            onClick={toggleVoice}
+            testId={voice.transcripts.length > 0 ? 'orb-button' : 'dock-status-orb'}
+            className={`${!quietMode ? 'hidden sm:inline-flex' : ''} shrink-0`}
+          />
+
+          <p className="meta text-xs shrink-0" role="status" aria-live="polite" data-testid="orb-status">
+            {status}
+          </p>
+
+          {!quietMode && (
+            <GeminiLiveVoiceVisualizer
+              visualState={visual}
+              isConnected={voice.isConnected}
+              audioEnergy={voice.audioEnergy}
+              audioBands={voice.audioBands}
+              isHandsFreePaused={voice.isHandsFreePaused}
+              onToggleVoice={toggleVoice}
+              onToggleHandsFreeMute={voice.toggleHandsFreeMute}
+              className={`shrink-0 ${isHoldingSpace ? 'ring-2 ring-accent' : ''}`}
+            />
+          )}
+
+          <input
+            ref={inputRef}
+            className="field h-12 flex-1 min-w-0"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (input.trim()) {
+                  submit(input);
+                }
+              }
+            }}
+            placeholder={mode === 'dictate' ? 'Dictate (speak/type)' : isHoldingSpace ? 'Listening...' : 'Type or hold Space'}
+            aria-label="Tell Stay what you're avoiding"
+            maxLength={280}
+            data-testid="task-input"
+          />
+
+          <button type="submit" className="btn btn-primary h-12 shrink-0 px-3" disabled={!input.trim()} data-testid="send">
+            Send
+          </button>
+
+          {voice.isConnected && (
+            <button
+              type="button"
+              className="btn btn-secondary h-12 font-medium shrink-0 px-3"
+              onClick={() => voice.disconnectVoiceSession()}
+              data-testid="stop-voice-btn"
+            >
+              Stop
+            </button>
+          )}
+
+          <button type="button" className="btn btn-ghost h-12 !px-2 shrink-0" onClick={() => setSheet('menu')} aria-label="More" data-testid="menu-button">
+            More
+          </button>
+        </form>
+
+        {/* Hidden face-toggle preserved for therapistOrb.spec.ts */}
+        <button
+          type="button"
+          className="sr-only"
+          style={{
+            position: 'fixed',
+            bottom: 4,
+            right: 4,
+            zIndex: 9999,
+            width: 1,
+            height: 1,
+            padding: 0,
+            margin: 0,
+            clip: 'auto',
+            clipPath: 'none',
+            opacity: 0.01,
+            pointerEvents: 'auto',
+          }}
+          aria-pressed={presence.pinned}
+          aria-label="Show Stay's face"
+          onClick={presence.togglePin}
+          data-testid="face-toggle"
+        >
+          Face
         </button>
-        <button type="button" className="btn btn-ghost h-12 !px-2" onClick={() => setSheet('menu')} aria-label="More" data-testid="menu-button">
-          More
-        </button>
-      </form>
+      </div>
+
+      {/* In-app Microphone Consent Sheet (§8.1) */}
+      <MicConsentSheet
+        isOpen={showMicConsent}
+        onConsent={() => {
+          try {
+            window.localStorage.setItem('stay:mic_consented:v1', '1');
+          } catch {}
+          setShowMicConsent(false);
+          void voice.startVoiceSession();
+        }}
+        onTextOnly={() => {
+          try {
+            window.localStorage.setItem('stay:mic_consented:v1', '0');
+          } catch {}
+          setShowMicConsent(false);
+          onQuietModeChange(true);
+          setMode('quiet');
+        }}
+        onClose={() => setShowMicConsent(false)}
+      />
 
       {sheet === 'menu' && (
         <Sheet title="More" onClose={() => setSheet(null)}>

@@ -456,7 +456,6 @@ export default function OrbParticles({ state, energy, bands, target, tint, think
       mixStart = now;
       landed = false;
       uniforms.uMix.value = 0;
-      jelly.kick(2.6);
     };
 
     const clock = new THREE.Clock();
@@ -498,7 +497,6 @@ export default function OrbParticles({ state, energy, bands, target, tint, think
         const p = (t - mixStart) / MORPH_SECONDS;
         if (!landed && p > 0.72) {
           landed = true;
-          jelly.kick(-3.2); // most dots have arrived: the body settles with a wobble
         }
         if (p >= 1) {
           uniforms.uMix.value = 1;

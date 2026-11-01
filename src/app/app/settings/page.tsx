@@ -19,8 +19,14 @@ export default function SettingsPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleted, setDeleted] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [playfulOrb, setPlayfulOrb] = useState(false);
 
-  useEffect(() => setAudits(getLocalAuditEvents()), []);
+  useEffect(() => {
+    setAudits(getLocalAuditEvents());
+    if (typeof window !== 'undefined') {
+      setPlayfulOrb(window.localStorage.getItem('stay:playful_orb:v1') === '1');
+    }
+  }, []);
   if (!loaded) return <PageSkeleton variant="settings" />;
 
   const download = () => {
@@ -57,6 +63,42 @@ export default function SettingsPage() {
           <input type="checkbox" className="h-5 w-5 accent-[#006A67]" checked={profile.proactiveCheckins} onChange={(e) => updateProfile({ proactiveCheckins: e.target.checked })} />
           <span>Check in when a focus block ends</span>
         </label>
+        <label className="mt-3 flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            className="mt-0.5 h-5 w-5 accent-[#006A67]"
+            checked={playfulOrb}
+            onChange={(e) => {
+              setPlayfulOrb(e.target.checked);
+              if (typeof window !== 'undefined') {
+                window.localStorage.setItem('stay:playful_orb:v1', e.target.checked ? '1' : '0');
+              }
+            }}
+            data-testid="playful-orb-toggle"
+          />
+          <span>
+            <span className="font-medium text-ink block">Playful orb</span>
+            <span className="text-xs text-ink-2 block">Experimental WebGL 3D shapes during conversation instead of the calm status light.</span>
+          </span>
+        </label>
+        <div className="mt-4 pt-3 border-t border-line flex items-center justify-between">
+          <div>
+            <span className="font-medium text-ink block text-sm">Microphone permission</span>
+            <span className="text-xs text-ink-2 block">Reset in-app consent prompt to review voice data notice.</span>
+          </div>
+          <button
+            type="button"
+            className="btn btn-secondary text-xs py-1.5 px-3"
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                window.localStorage.removeItem('stay:mic_consented:v1');
+              }
+            }}
+            data-testid="reset-mic-consent"
+          >
+            Reset consent
+          </button>
+        </div>
       </section>
 
       <section className="card p-5 sm:p-6" aria-labelledby="auth-title">

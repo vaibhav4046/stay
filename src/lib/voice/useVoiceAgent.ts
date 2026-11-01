@@ -400,22 +400,22 @@ export function buildLocalizedStayResponse(
   basePlan: CoachPlanProposal
 ): string {
   if (langCode === 'hi-IN') {
-    return `🇮🇳 नमस्ते! मैं समझ सकती हूँ कि जब दिमाग थका हो तो काम शुरू करना कितना भारी लगता है। चलिए सारा दबाव हटाते हैं — सिर्फ 60 सेकंड के लिए पहला छोटा कदम उठाते हैं: "${basePlan.firstStep}". मैं यहीं आपके साथ हूँ!`;
+    return `नमस्ते! मैं समझ सकती हूँ कि जब दिमाग थका हो तो काम शुरू करना कितना भारी लगता है। चलिए सारा दबाव हटाते हैं — सिर्फ 60 सेकंड के लिए पहला छोटा कदम उठाते हैं: "${basePlan.firstStep}". मैं यहीं आपके साथ हूँ!`;
   }
   if (langCode === 'ko-KR') {
-    return `🇰🇷 안녕하세요! 머리가 복잡하고 지칠 때 시작하는 게 얼마나 힘든지 잘 알아요. 부담을 완전히 내려놓고 딱 60초 동안만 첫 번째 작은 단계를 함께 해볼까요? "${basePlan.firstStep}" — 제가 바로 옆에서 함께할게요!`;
+    return `안녕하세요! 머리가 복잡하고 지칠 때 시작하는 게 얼마나 힘든지 잘 알아요. 부담을 완전히 내려놓고 딱 60초 동안만 첫 번째 작은 단계를 함께 해볼까요? "${basePlan.firstStep}" — 제가 바로 옆에서 함께할게요!`;
   }
   if (langCode === 'es-ES') {
-    return `🇪🇸 ¡Hola! Te entiendo perfectamente. Vamos a quitar toda la presión y dar un solo micro-paso de 60 segundos: "${basePlan.firstStep}". ¡Estoy aquí contigo!`;
+    return `¡Hola! Te entiendo perfectamente. Vamos a quitar toda la presión y dar un solo micro-paso de 60 segundos: "${basePlan.firstStep}". ¡Estoy aquí contigo!`;
   }
   if (langCode === 'fr-FR') {
-    return `🇫🇷 Salut ! Je comprends tout à fait. Enlevons toute la pression et commençons par une micro-étape de 60 secondes : "${basePlan.firstStep}". Je reste ici avec toi !`;
+    return `Salut ! Je comprends tout à fait. Enlevons toute la pression et commençons par une micro-étape de 60 secondes : "${basePlan.firstStep}". Je reste ici avec toi !`;
   }
   if (langCode === 'de-DE') {
-    return `🇩🇪 Hallo! Ich verstehe dich total. Lass uns allen Druck wegnehmen und mit einem 60-Sekunden-Schritt starten: "${basePlan.firstStep}". Ich bin direkt bei dir!`;
+    return `Hallo! Ich verstehe dich total. Lass uns allen Druck wegnehmen und mit einem 60-Sekunden-Schritt starten: "${basePlan.firstStep}". Ich bin direkt bei dir!`;
   }
   if (langCode === 'ja-JP') {
-    return `🇯🇵 こんにちは！頭が疲れている時に始めるのがどれほど大変かよく分かります。プレッシャーを手放して、まずは60秒だけ最初の小さな一歩「${basePlan.firstStep}」を一緒にやってみましょう！`;
+    return `こんにちは！頭が疲れている時に始めるのがどれほど大変かよく分かります。プレッシャーを手放して、まずは60秒だけ最初の小さな一歩「${basePlan.firstStep}」を一緒にやってみましょう！`;
   }
   return basePlan.spokenResponse;
 }

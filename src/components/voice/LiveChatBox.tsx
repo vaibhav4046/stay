@@ -2,14 +2,29 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import type { VoiceVisualState } from '@/types/domain';
+import type { TranslationEntry } from '@/lib/voice/translateClient';
 import { StayLogo } from '@/components/StayLogo';
+
+export interface ChatWordTiming {
+  word: string;
+  start: number;
+  end: number;
+  confidence?: number;
+}
 
 export interface ChatTranscriptEntry {
   id: string;
   role: 'user' | 'agent' | 'system';
   text: string;
+  verbatimText?: string;
+  targetLanguage?: string;
+  sourceLanguage?: string;
+  engine?: string;
   timestamp?: string;
   interrupted?: boolean;
+  heardText?: string;
+  unheardText?: string;
+  words?: ChatWordTiming[];
 }
 
 export interface LiveChatBoxProps {
@@ -19,12 +34,26 @@ export interface LiveChatBoxProps {
   visualState: VoiceVisualState;
   isConnected: boolean;
   detectedLanguage?: string;
+  targetTranslationLang?: string;
+  isTranslating?: boolean;
+  /** Per-turn translation outcome, keyed by transcript id. Never a fabricated string. */
+  translations?: Record<string, TranslationEntry>;
+  thinkingStatusLine?: string;
+  undoNotice?: { label: string; onUndo: () => void } | null;
   onClear?: () => void;
   onWisprAction?: (action: 'scratch' | 'change' | 'repeat' | 'heard') => void;
+  onStarterSelect?: (prompt: string) => void;
+  onAddKeyterm?: (word: string) => void;
   quietMode?: boolean;
   onToggleQuietMode?: () => void;
   className?: string;
 }
+
+const DEFAULT_STARTERS = [
+  'I feel overwhelmed by my to-do list',
+  'Help me start a 2-minute block',
+  'Help me prepare for my doctor appointment',
+];
 
 export function LiveChatBox({
   transcripts,
@@ -33,8 +62,15 @@ export function LiveChatBox({
   visualState,
   isConnected,
   detectedLanguage = 'en-GB',
+  targetTranslationLang,
+  isTranslating = false,
+  translations = {},
+  thinkingStatusLine = 'Finding the smallest first step',
+  undoNotice = null,
   onClear,
   onWisprAction,
+  onStarterSelect,
+  onAddKeyterm,
   quietMode = false,
   onToggleQuietMode,
   className = '',
@@ -42,6 +78,7 @@ export function LiveChatBox({
   const [isOpen, setIsOpen] = useState(true);
   const [recentlyInterrupted, setRecentlyInterrupted] = useState(false);
   const [showJumpToBottom, setShowJumpToBottom] = useState(false);
+  const [showVerbatimId, setShowVerbatimId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const isNearBottomRef = useRef(true);
 
@@ -64,7 +101,6 @@ export function LiveChatBox({
   const isThinking = visualState === 'thinking';
   const isInterrupted = visualState === 'interrupted' || recentlyInterrupted;
 
-  // Smart auto-scroll: only scrolls down if already near bottom
   const handleScroll = () => {
     const el = scrollRef.current;
     if (!el) return;
@@ -92,103 +128,121 @@ export function LiveChatBox({
     }
   }, [transcripts, partialUserTranscript, liveSpokenText, isThinking, isInterrupted, isOpen]);
 
-  // Turn State Machine config (IDLE, CONNECTING, LISTENING, TRANSCRIBING, THINKING, SPEAKING, INTERRUPTED, RECONNECTING, PAUSED, TEXT_ONLY_FALLBACK, ERROR)
+  // Exact 12-state labels & high-contrast tokens (§6.1, §7.2)
   const statusConfig = (() => {
     if (isInterrupted) {
       return {
+        stateCode: 'INTERRUPTED',
         label: 'Interrupted',
         srAnnouncement: 'Interrupted — listening to your thought',
-        dotClass: 'bg-rose-500 animate-pulse',
-        textClass: 'text-rose-700 dark:text-rose-300',
+        dotStyle: { backgroundColor: '#B45309' },
+        textStyle: { color: '#B45309' },
       };
     }
     if (visualState === 'transcribing' || isUserSpeaking) {
       return {
-        label: 'Transcribing speech...',
-        srAnnouncement: 'You are speaking',
-        dotClass: 'bg-cyan-500 animate-ping',
-        textClass: 'text-cyan-700 dark:text-cyan-300',
+        stateCode: 'TRANSCRIBING',
+        label: 'Transcribing speech',
+        srAnnouncement: 'Transcribing speech',
+        dotStyle: { backgroundColor: '#006A67' },
+        textStyle: { color: '#006A67' },
       };
     }
     if (isAgentSpeaking) {
       return {
-        label: 'Stay speaking...',
-        srAnnouncement: 'Stay is speaking',
-        dotClass: 'bg-indigo-500 animate-pulse',
-        textClass: 'text-indigo-700 dark:text-indigo-300',
+        stateCode: 'SPEAKING',
+        label: 'Speaking',
+        srAnnouncement: 'Speaking',
+        dotStyle: { backgroundColor: '#006A67' },
+        textStyle: { color: '#006A67' },
       };
     }
     if (isThinking) {
       return {
-        label: 'Thinking...',
-        srAnnouncement: 'Stay is thinking',
-        dotClass: 'bg-purple-500 animate-bounce',
-        textClass: 'text-purple-700 dark:text-purple-300',
+        stateCode: 'THINKING',
+        label: 'Thinking',
+        srAnnouncement: 'Thinking',
+        dotStyle: { backgroundColor: '#B45309' },
+        textStyle: { color: '#B45309' },
       };
     }
     if (visualState === 'listening') {
       return {
+        stateCode: 'LISTENING',
         label: 'Listening',
-        srAnnouncement: 'Listening for speech',
-        dotClass: 'bg-emerald-500 animate-pulse',
-        textClass: 'text-emerald-700 dark:text-emerald-300',
+        srAnnouncement: 'Listening',
+        dotStyle: { backgroundColor: '#006A67' },
+        textStyle: { color: '#006A67' },
       };
     }
     if (visualState === 'connecting') {
       return {
-        label: 'Connecting...',
-        srAnnouncement: 'Connecting to voice session',
-        dotClass: 'bg-sky-500 animate-spin',
-        textClass: 'text-sky-700 dark:text-sky-300',
+        stateCode: 'CONNECTING',
+        label: 'CONNECTING',
+        srAnnouncement: 'CONNECTING',
+        dotStyle: { backgroundColor: '#006A67' },
+        textStyle: { color: '#006A67' },
       };
     }
     if (visualState === 'reconnecting') {
       return {
-        label: 'Reconnecting...',
-        srAnnouncement: 'Reconnecting to voice stream',
-        dotClass: 'bg-amber-500 animate-pulse',
-        textClass: 'text-amber-700 dark:text-amber-300',
+        stateCode: 'RECONNECTING',
+        label: 'RECONNECTING',
+        srAnnouncement: 'RECONNECTING',
+        dotStyle: { backgroundColor: '#B45309' },
+        textStyle: { color: '#B45309' },
       };
     }
     if (visualState === 'paused') {
       return {
-        label: 'Paused',
-        srAnnouncement: 'Voice session paused',
-        dotClass: 'bg-stone-500',
-        textClass: 'text-stone-700 dark:text-stone-300',
+        stateCode: 'PAUSED',
+        label: 'PAUSED',
+        srAnnouncement: 'PAUSED',
+        dotStyle: { backgroundColor: '#4A4F4B' },
+        textStyle: { color: '#4A4F4B' },
       };
     }
     if (visualState === 'text_only_fallback' || quietMode) {
       return {
-        label: 'Text-Only Mode',
-        srAnnouncement: 'Quiet text mode active',
-        dotClass: 'bg-blue-400',
-        textClass: 'text-blue-700 dark:text-blue-300',
+        stateCode: 'TEXT_ONLY',
+        label: 'TEXT_ONLY',
+        srAnnouncement: 'TEXT_ONLY',
+        dotStyle: { backgroundColor: '#4A4F4B' },
+        textStyle: { color: '#4A4F4B' },
       };
     }
     if (visualState === 'error') {
       return {
-        label: 'Error',
-        srAnnouncement: 'Connection error',
-        dotClass: 'bg-red-500',
-        textClass: 'text-red-700 dark:text-red-400',
+        stateCode: 'ERROR',
+        label: 'ERROR',
+        srAnnouncement: 'ERROR',
+        dotStyle: { backgroundColor: '#B42318' },
+        textStyle: { color: '#B42318' },
       };
     }
     if (isConnected) {
       return {
-        label: 'Live',
-        srAnnouncement: 'Voice session active',
-        dotClass: 'bg-emerald-500',
-        textClass: 'text-emerald-700 dark:text-emerald-300',
+        stateCode: 'LISTENING',
+        label: 'LISTENING',
+        srAnnouncement: 'LISTENING',
+        dotStyle: { backgroundColor: '#006A67' },
+        textStyle: { color: '#006A67' },
       };
     }
     return {
-      label: 'Conversation history',
+      stateCode: 'IDLE',
+      label: 'IDLE',
       srAnnouncement: '',
-      dotClass: 'bg-stone-400',
-      textClass: 'text-ink-3',
+      dotStyle: { backgroundColor: '#4A4F4B' },
+      textStyle: { color: '#4A4F4B' },
     };
   })();
+
+  // Announce only state changes and final turns in aria-live="polite", never word-by-word partials (§7.4)
+  const lastFinalEntry = transcripts[transcripts.length - 1];
+  const politeAnnouncement = lastFinalEntry
+    ? `${lastFinalEntry.role === 'user' ? 'You said' : 'Stay said'}: ${lastFinalEntry.text}`
+    : statusConfig.srAnnouncement;
 
   const formatTime = (ts: string) => {
     try {
@@ -214,37 +268,46 @@ export function LiveChatBox({
 
   return (
     <section
-      className={`card relative w-full overflow-hidden transition-all duration-300 ease-out border border-line/90 bg-surface/90 shadow-sm backdrop-blur-md dark:bg-stone-900/90 ${className}`}
+      className={`card relative w-full overflow-hidden border border-[#E4DFD6] bg-[#FFFFFF] ${className}`}
+      style={{ color: '#212422', backgroundColor: '#FFFFFF' }}
       aria-label="Live conversation transcripts"
       data-testid="live-chat-box"
     >
-      {/* Polite screen reader live status announcement */}
+      {/* Single polite aria-live region for state transitions and final turns only (§7.4) */}
       <div className="sr-only" aria-live="polite" role="status" data-testid="chat-sr-announcer">
-        {statusConfig.srAnnouncement}
+        {politeAnnouncement}
       </div>
 
-      {/* Header bar with Status, Realtime Language Translation Badge, and Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-1.5 px-3.5 py-2.5 border-b border-line/60 bg-surface-2/60 dark:bg-stone-800/40">
+      {/* Header bar with Status, Language Badge, and Controls */}
+      <div
+        className="flex flex-wrap items-center justify-between gap-1.5 px-3.5 py-2 border-b border-[#E4DFD6]"
+        style={{ backgroundColor: '#FAF8F5', color: '#212422' }}
+      >
         <div className="flex items-center gap-2 min-w-0 flex-wrap">
           <div className="flex items-center gap-1.5" data-testid="chat-status-pill">
-            <span className={`h-2 w-2 rounded-full ${statusConfig.dotClass}`} aria-hidden="true" />
-            <span className={`text-xs font-semibold tracking-tight truncate ${statusConfig.textClass}`}>
+            <span className="h-2 w-2 rounded-full" style={statusConfig.dotStyle} aria-hidden="true" />
+            <span className="text-xs font-semibold tracking-tight truncate" style={statusConfig.textStyle}>
               {statusConfig.label}
             </span>
           </div>
 
-          {/* Multilingual Translation & Realtime Engine Badge */}
           <span
-            className="inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 text-[0.68rem] font-medium text-primary dark:text-primary-foreground"
+            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.72rem] font-medium border border-[#006A67]/25"
+            style={{ backgroundColor: '#E4F0EF', color: '#005653' }}
             data-testid="chat-language-badge"
-            title="Real-time voice auto-translation and multilingual reasoning enabled"
+            title="Detected speech language"
           >
-            <span>🌐</span>
             <span>{getLanguageLabel(detectedLanguage)}</span>
+            {targetTranslationLang && targetTranslationLang !== 'none' && (
+              <span>→ {targetTranslationLang.toUpperCase()}</span>
+            )}
           </span>
 
           {transcripts.length > 0 && (
-            <span className="rounded-full bg-surface-2 px-1.5 py-0.5 text-[0.68rem] font-medium text-ink-3 border border-line/60">
+            <span
+              className="tnum rounded-full px-1.5 py-0.5 text-[0.72rem] font-medium border border-[#E4DFD6]"
+              style={{ backgroundColor: '#F4F1EC', color: '#4A4F4B' }}
+            >
               {transcripts.length}
             </span>
           )}
@@ -255,15 +318,16 @@ export function LiveChatBox({
             <button
               type="button"
               onClick={onToggleQuietMode}
-              className={`text-[0.72rem] font-medium px-2 py-1 rounded transition-colors ${
+              className="text-[0.75rem] font-medium px-2.5 py-1 rounded border transition-colors"
+              style={
                 quietMode
-                  ? 'bg-primary/15 text-primary border border-primary/30'
-                  : 'text-ink-3 hover:text-ink'
-              }`}
+                  ? { backgroundColor: '#E4F0EF', color: '#005653', borderColor: '#006A67' }
+                  : { backgroundColor: '#FFFFFF', color: '#4A4F4B', borderColor: '#E4DFD6' }
+              }
               title={quietMode ? 'Switch to Duplex Voice' : 'Switch to Text-Only'}
               data-testid="chat-mode-toggle"
             >
-              {quietMode ? '⌨️ Quiet' : '🎙️ Voice'}
+              {quietMode ? 'Text only' : 'Voice'}
             </button>
           )}
 
@@ -271,7 +335,8 @@ export function LiveChatBox({
             <button
               type="button"
               onClick={onClear}
-              className="text-[0.72rem] font-medium text-ink-3 hover:text-ink hover:underline px-2 py-1 rounded transition-colors"
+              className="text-[0.75rem] font-medium hover:underline px-2 py-1 rounded"
+              style={{ color: '#4A4F4B' }}
               title="Clear transcript history"
               data-testid="chat-clear-btn"
             >
@@ -283,7 +348,8 @@ export function LiveChatBox({
             type="button"
             onClick={() => setIsOpen((prev) => !prev)}
             aria-expanded={isOpen}
-            className="p-1 rounded-md text-ink-3 hover:text-ink hover:bg-surface-2 transition-colors cursor-pointer"
+            className="p-1 rounded-md hover:bg-[#F4F1EC] cursor-pointer"
+            style={{ color: '#4A4F4B' }}
             aria-label={isOpen ? 'Collapse live chat' : 'Expand live chat'}
             data-testid="chat-toggle-btn"
           >
@@ -296,7 +362,7 @@ export function LiveChatBox({
               strokeWidth="2.4"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : 'rotate-0'}`}
+              className={isOpen ? 'rotate-180' : 'rotate-0'}
               aria-hidden="true"
             >
               <polyline points="6 9 12 15 18 9" />
@@ -305,41 +371,67 @@ export function LiveChatBox({
         </div>
       </div>
 
-      {/* Wispr Flow Action Ribbon (Correction & Backtracking Commands) */}
+      {/* Wispr Flow Action Ribbon (Correction & Backtracking Commands, §7.3 max 3 chips) */}
       {isOpen && transcripts.length > 0 && onWisprAction && (
-        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-surface/80 dark:bg-stone-900/60 border-b border-line/40 overflow-x-auto text-[0.72rem]">
-          <span className="text-ink-3 text-[0.68rem] font-medium shrink-0">Voice Actions:</span>
+        <div
+          className="flex items-center gap-1.5 px-3 py-1.5 border-b border-[#E4DFD6] overflow-x-auto text-[0.75rem]"
+          style={{ backgroundColor: '#FAF8F5', color: '#212422' }}
+        >
           <button
             type="button"
             onClick={() => onWisprAction('scratch')}
-            className="px-2 py-0.5 rounded-full bg-surface-2 text-ink-2 hover:bg-surface hover:text-ink border border-line/60 transition-colors shrink-0"
+            className="px-2.5 py-0.5 rounded-full border border-[#E4DFD6] shrink-0"
+            style={{ backgroundColor: '#FFFFFF', color: '#212422' }}
             data-testid="wispr-scratch-btn"
-            title="Erase the last spoken thought"
+            title="Scratch the last spoken thought"
           >
-            ↶ Scratch that
+            Scratch that
           </button>
           <button
             type="button"
             onClick={() => onWisprAction('repeat')}
-            className="px-2 py-0.5 rounded-full bg-surface-2 text-ink-2 hover:bg-surface hover:text-ink border border-line/60 transition-colors shrink-0"
+            className="px-2.5 py-0.5 rounded-full border border-[#E4DFD6] shrink-0"
+            style={{ backgroundColor: '#FFFFFF', color: '#212422' }}
             data-testid="wispr-repeat-btn"
             title="Repeat Stay's last response"
           >
-            🔁 Repeat
+            Repeat that
           </button>
           <button
             type="button"
             onClick={() => onWisprAction('heard')}
-            className="px-2 py-0.5 rounded-full bg-surface-2 text-ink-2 hover:bg-surface hover:text-ink border border-line/60 transition-colors shrink-0"
+            className="px-2.5 py-0.5 rounded-full border border-[#E4DFD6] shrink-0"
+            style={{ backgroundColor: '#FFFFFF', color: '#212422' }}
             data-testid="wispr-heard-btn"
-            title="Check what Stay heard"
+            title="Show what Stay heard"
           >
-            👂 What you heard
+            Show what you heard
           </button>
         </div>
       )}
 
-      {/* Collapsed Preview Pill (accessible real button when chat is minimized) */}
+      {/* Undo toast for deterministic Wispr edits (§8.2, 4s fade only) */}
+      {undoNotice && (
+        <div
+          className="flex items-center justify-between gap-2 px-3.5 py-1.5 border-b border-[#E4DFD6] text-xs"
+          style={{ backgroundColor: '#F4F1EC', color: '#212422' }}
+          role="status"
+          data-testid="wispr-undo-toast"
+        >
+          <span>{undoNotice.label}</span>
+          <button
+            type="button"
+            onClick={undoNotice.onUndo}
+            className="font-semibold underline px-2 py-0.5 rounded"
+            style={{ color: '#006A67' }}
+            data-testid="wispr-undo-btn"
+          >
+            Undo
+          </button>
+        </div>
+      )}
+
+      {/* Collapsed Preview Pill */}
       {!isOpen && (isUserSpeaking || isAgentSpeaking) && (
         <button
           type="button"
@@ -347,112 +439,250 @@ export function LiveChatBox({
           aria-expanded={false}
           aria-label="Expand live chat to view conversation"
           data-testid="chat-collapsed-preview-btn"
-          className="w-full text-left px-3.5 py-2 text-xs text-ink-2 bg-primary/5 border-t border-primary/20 flex items-center justify-between cursor-pointer hover:bg-primary/10 focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
+          className="w-full text-left px-3.5 py-2 text-xs border-t border-[#006A67]/20 flex items-center justify-between cursor-pointer"
+          style={{ backgroundColor: '#E4F0EF', color: '#212422' }}
         >
-          <span className="truncate italic">
+          <span className="truncate">
             {isUserSpeaking ? `You: ${partialUserTranscript}` : `Stay: ${liveSpokenText}`}
           </span>
-          <span className="text-[0.68rem] text-primary font-medium shrink-0 ml-2">Click to expand</span>
+          <span className="text-[0.72rem] font-semibold shrink-0 ml-2" style={{ color: '#006A67' }}>
+            Expand
+          </span>
         </button>
       )}
 
-      {/* Expanded Live Chat Stream */}
+      {/* Expanded Live Conversation Column (§7.3, §7.4) */}
       {isOpen && (
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          className="max-h-60 sm:max-h-72 overflow-y-auto p-3 space-y-2.5 text-sm overscroll-contain"
+          className="max-h-[42dvh] sm:max-h-[48dvh] overflow-y-auto p-3.5 space-y-3 overscroll-contain"
           data-testid="chat-message-list"
           role="log"
-          aria-live="polite"
+          aria-live="off"
         >
           {transcripts.length === 0 && !isUserSpeaking && !isAgentSpeaking && !isThinking ? (
-            <div className="py-6 text-center text-xs text-ink-3 flex flex-col items-center gap-1.5" data-testid="chat-empty-state">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-ink-3 opacity-60">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              </svg>
-              <span>Speak or type to begin. Transcripts will stream here in real time.</span>
+            <div
+              className="py-5 px-2 text-center flex flex-col items-center gap-3"
+              data-testid="chat-empty-state"
+              style={{ color: '#212422' }}
+            >
+              <p className="font-display text-[1.25rem] font-semibold leading-snug" style={{ color: '#212422' }}>
+                What feels hard to start?
+              </p>
+              <p className="text-[0.8125rem]" style={{ color: '#4A4F4B' }}>
+                Speak or type one messy thought. Stay turns it into one tiny step.
+              </p>
+              {onStarterSelect && (
+                <div className="flex flex-wrap justify-center gap-2 mt-1" data-testid="empty-starter-chips">
+                  {DEFAULT_STARTERS.map((prompt) => (
+                    <button
+                      key={prompt}
+                      type="button"
+                      onClick={() => onStarterSelect(prompt)}
+                      className="chip text-[0.85rem] !min-h-[38px] !py-1.5 !px-3"
+                      style={{ backgroundColor: '#F4F1EC', color: '#212422', borderColor: '#E4DFD6' }}
+                    >
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           ) : (
             <>
               {transcripts.map((entry) => {
                 const isUser = entry.role === 'user';
+                const displayText =
+                  showVerbatimId === entry.id && entry.verbatimText ? entry.verbatimText : entry.heardText ?? entry.text;
+                const tx = isUser ? translations[entry.id] : undefined;
                 return (
                   <div
                     key={entry.id}
                     className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} max-w-full`}
                     data-testid={isUser ? 'chat-user-message' : 'chat-agent-message'}
                   >
-                    <div className="flex items-center gap-1.5 mb-1 px-1 text-[0.7rem] text-ink-3">
+                    <div
+                      className="flex items-center gap-1.5 mb-1 px-1 text-[0.8125rem]"
+                      style={{ color: '#4A4F4B' }}
+                    >
                       {!isUser && <StayLogo size={13} className="shrink-0" />}
-                      <span className="font-medium text-ink-2">{isUser ? 'You' : 'Stay'}</span>
-                      {entry.timestamp && <span>· {formatTime(entry.timestamp)}</span>}
+                      <span className="font-medium" style={{ color: '#212422' }}>
+                        {isUser ? 'You' : 'Stay'}
+                      </span>
+                      {entry.timestamp && <span className="tnum">· {formatTime(entry.timestamp)}</span>}
+                      {entry.sourceLanguage && (
+                        <span className="uppercase text-[0.7rem] px-1 rounded bg-[#F4F1EC] border border-[#E4DFD6]">
+                          {entry.sourceLanguage}
+                        </span>
+                      )}
+                      {entry.interrupted && (
+                        <span
+                          className="rounded-full px-2 py-0.5 text-[0.7rem] font-semibold border border-[#B45309]/30"
+                          style={{ backgroundColor: '#FEF3C7', color: '#92400E' }}
+                          data-testid="turn-interrupted-badge"
+                        >
+                          Interrupted
+                        </span>
+                      )}
+                      {entry.verbatimText && entry.verbatimText !== entry.text && (
+                        <button
+                          type="button"
+                          onClick={() => setShowVerbatimId(showVerbatimId === entry.id ? null : entry.id)}
+                          className="text-[0.72rem] underline ml-1"
+                          style={{ color: '#006A67' }}
+                        >
+                          {showVerbatimId === entry.id ? 'Show clean' : 'Show what I heard'}
+                        </button>
+                      )}
                     </div>
                     <div
-                      className={`rounded-2xl px-3.5 py-2 max-w-[88%] text-[0.88rem] leading-relaxed break-words shadow-2xs ${
+                      className="rounded-[12px] px-3.5 py-2.5 max-w-[68ch] text-[1.0625rem] leading-[1.55] break-words border transition-opacity duration-150"
+                      style={
                         isUser
-                          ? 'rounded-tr-xs bg-primary/10 text-ink dark:text-stone-100 border border-primary/20'
-                          : 'rounded-tl-xs bg-surface-2 text-ink dark:text-stone-100 border border-line/80'
-                      }`}
-                      style={{ overflowWrap: 'anywhere' }}
+                          ? {
+                              backgroundColor: '#E4F0EF',
+                              color: '#212422',
+                              borderColor: 'rgba(0, 106, 103, 0.28)',
+                              overflowWrap: 'anywhere',
+                            }
+                          : {
+                              backgroundColor: '#F4F1EC',
+                              color: '#212422',
+                              borderColor: '#E4DFD6',
+                              overflowWrap: 'anywhere',
+                            }
+                      }
                     >
-                      {entry.text}
+                      {entry.words && entry.words.some((w) => typeof w.confidence === 'number' && w.confidence < 0.6) ? (
+                        <span>
+                          {entry.words.map((w, idx) => {
+                            const lowConf = typeof w.confidence === 'number' && w.confidence < 0.6;
+                            return (
+                              <React.Fragment key={`${w.word}-${idx}`}>
+                                {lowConf ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => onAddKeyterm?.(w.word.replace(/[^\p{L}\p{N}-]/gu, ''))}
+                                    className="underline decoration-dotted underline-offset-4 cursor-pointer font-medium"
+                                    style={{ color: '#212422', textDecorationColor: '#B45309' }}
+                                    title={`Low confidence (${Math.round((w.confidence ?? 0) * 100)}%) — click to add "${w.word}" to My words`}
+                                    data-testid="low-confidence-word"
+                                  >
+                                    {w.word}
+                                  </button>
+                                ) : (
+                                  <span>{w.word}</span>
+                                )}
+                                {idx < entry.words!.length - 1 ? ' ' : ''}
+                              </React.Fragment>
+                            );
+                          })}
+                        </span>
+                      ) : (
+                        <span>{displayText}</span>
+                      )}
+
+                      {/* Translation line under the original in --ink-2 with language tag (§7.4, §8.3).
+                          Only a real translation is shown; a failed attempt says so. */}
+                      {tx?.status === 'ok' && (
+                        <div
+                          className="mt-1.5 pt-1.5 border-t border-[#E4DFD6] text-[0.92rem] leading-snug flex items-start gap-1.5"
+                          style={{ color: '#4A4F4B' }}
+                          data-testid="turn-translation-line"
+                        >
+                          <span
+                            className="uppercase text-[0.68rem] font-semibold px-1.5 py-0.5 rounded shrink-0 border border-[#E4DFD6]"
+                            style={{ backgroundColor: '#FFFFFF', color: '#4A4F4B' }}
+                          >
+                            {tx.targetLanguage}
+                          </span>
+                          <span>{tx.text}</span>
+                        </div>
+                      )}
+                      {tx?.status === 'unavailable' && (
+                        <div
+                          className="mt-1.5 pt-1.5 border-t border-[#E4DFD6] text-[0.82rem] leading-snug flex items-start gap-1.5"
+                          style={{ color: '#4A4F4B' }}
+                          data-testid="turn-translation-unavailable"
+                        >
+                          <span
+                            className="uppercase text-[0.66rem] font-semibold px-1.5 py-0.5 rounded shrink-0 border border-[#E4DFD6]"
+                            style={{ backgroundColor: '#FFFFFF', color: '#4A4F4B' }}
+                          >
+                            {tx.targetLanguage}
+                          </span>
+                          <span>Not translated ({tx.reason}). Nothing was guessed.</span>
+                        </div>
+                      )}
+                      {tx?.status === 'pending' && (
+                        <div
+                          className="mt-1.5 pt-1.5 border-t border-[#E4DFD6] text-[0.78rem]"
+                          style={{ color: '#4A4F4B' }}
+                          data-testid="turn-translation-pending"
+                        >
+                          translating…
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
               })}
 
-              {/* Real-time streaming User partial speech */}
+              {/* Real-time streaming User partial speech in --ink-2 with reserved line-height (§7.4) */}
               {isUserSpeaking && (
-                <div
-                  className="flex flex-col items-end max-w-full animate-fade-in"
-                  data-testid="chat-live-user-partial"
-                >
-                  <div className="flex items-center gap-1.5 mb-1 px-1 text-[0.7rem] text-emerald-600 dark:text-emerald-400 font-medium">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
-                    <span>You (speaking...)</span>
+                <div className="flex flex-col items-end max-w-full" data-testid="chat-live-user-partial">
+                  <div
+                    className="flex items-center gap-1.5 mb-1 px-1 text-[0.8125rem] font-medium"
+                    style={{ color: '#006A67' }}
+                  >
+                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: '#006A67' }} />
+                    <span>You (speaking)</span>
                   </div>
                   <div
-                    className="rounded-2xl rounded-tr-xs bg-emerald-500/10 text-ink dark:text-stone-100 border border-emerald-500/30 px-3.5 py-2 max-w-[88%] text-[0.88rem] leading-relaxed break-words shadow-2xs"
-                    style={{ overflowWrap: 'anywhere' }}
+                    className="rounded-[12px] px-3.5 py-2.5 max-w-[68ch] text-[1.0625rem] leading-[1.55] break-words border border-[#006A67]/30"
+                    style={{ backgroundColor: '#FAF8F5', color: '#4A4F4B', overflowWrap: 'anywhere' }}
                   >
-                    <span className="italic">{partialUserTranscript}</span>
-                    <span className="inline-block w-1.5 h-3.5 bg-emerald-600 dark:bg-emerald-400 ml-1 translate-y-0.5 animate-pulse" />
+                    <span>{partialUserTranscript}</span>
                   </div>
                 </div>
               )}
 
-              {/* Real-time Agent thinking status */}
+              {/* Pending indicator, shown only while speech is still coming in (§8.3) */}
+              {isTranslating && isUserSpeaking && (
+                <div className="text-right text-[0.78rem]" style={{ color: '#4A4F4B' }} data-testid="chat-translating-indicator">
+                  will translate when you finish
+                </div>
+              )}
+
+              {/* Real-time Agent thinking status with user-safe status line (§7.4, §8.4) */}
               {isThinking && (
                 <div className="flex flex-col items-start max-w-full" data-testid="chat-live-thinking">
-                  <div className="flex items-center gap-1.5 mb-1 px-1 text-[0.7rem] text-purple-600 dark:text-purple-400 font-medium">
+                  <div
+                    className="flex items-center gap-1.5 mb-1 px-1 text-[0.8125rem] font-medium"
+                    style={{ color: '#B45309' }}
+                  >
                     <StayLogo size={13} className="shrink-0" />
-                    <span>Stay is thinking</span>
-                  </div>
-                  <div className="rounded-2xl rounded-tl-xs bg-surface-2 border border-line px-3.5 py-2 text-[0.88rem] flex items-center gap-1 text-ink-3">
-                    <span className="h-1.5 w-1.5 rounded-full bg-purple-500 animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="h-1.5 w-1.5 rounded-full bg-purple-500 animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="h-1.5 w-1.5 rounded-full bg-purple-500 animate-bounce" style={{ animationDelay: '300ms' }} />
+                    <span>Stay · {thinkingStatusLine}</span>
                   </div>
                 </div>
               )}
 
               {/* Real-time streaming Agent speech */}
               {showAgentStreamingBubble && (
-                <div
-                  className="flex flex-col items-start max-w-full animate-fade-in"
-                  data-testid="chat-live-agent-partial"
-                >
-                  <div className="flex items-center gap-1.5 mb-1 px-1 text-[0.7rem] text-indigo-600 dark:text-indigo-400 font-medium">
+                <div className="flex flex-col items-start max-w-full" data-testid="chat-live-agent-partial">
+                  <div
+                    className="flex items-center gap-1.5 mb-1 px-1 text-[0.8125rem] font-medium"
+                    style={{ color: '#006A67' }}
+                  >
                     <StayLogo size={13} className="shrink-0" />
-                    <span>Stay (speaking...)</span>
+                    <span>Stay (speaking)</span>
                   </div>
                   <div
-                    className="rounded-2xl rounded-tl-xs bg-indigo-500/10 text-ink dark:text-stone-100 border border-indigo-500/30 px-3.5 py-2 max-w-[88%] text-[0.88rem] leading-relaxed break-words shadow-2xs"
-                    style={{ overflowWrap: 'anywhere' }}
+                    className="rounded-[12px] px-3.5 py-2.5 max-w-[68ch] text-[1.0625rem] leading-[1.55] break-words border border-[#E4DFD6]"
+                    style={{ backgroundColor: '#F4F1EC', color: '#212422', overflowWrap: 'anywhere' }}
                   >
                     <span>{liveSpokenText}</span>
-                    <span className="inline-block w-1.5 h-3.5 bg-indigo-600 dark:bg-indigo-400 ml-1 translate-y-0.5 animate-pulse" />
                   </div>
                 </div>
               )}
@@ -460,8 +690,11 @@ export function LiveChatBox({
               {/* Interrupted notice */}
               {isInterrupted && (
                 <div className="py-1 text-center" data-testid="chat-live-interrupted-badge">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 text-[0.7rem] font-medium text-amber-700 dark:text-amber-300">
-                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                  <span
+                    className="inline-flex items-center gap-1.5 rounded-full border border-[#B45309]/30 px-2.5 py-0.5 text-[0.75rem] font-medium"
+                    style={{ backgroundColor: '#FEF3C7', color: '#92400E' }}
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: '#B45309' }} />
                     Interrupted — listening to your thought
                   </span>
                 </div>
@@ -469,7 +702,7 @@ export function LiveChatBox({
             </>
           )}
 
-          {/* Jump to latest control button */}
+          {/* Jump to latest control pill (§7.3) */}
           {showJumpToBottom && (
             <button
               type="button"
@@ -482,13 +715,11 @@ export function LiveChatBox({
                 }
               }}
               data-testid="chat-jump-latest"
-              className="sticky bottom-1 float-right flex items-center gap-1 rounded-full bg-primary text-white text-[0.72rem] font-medium px-2.5 py-1 shadow-md hover:bg-primary-hover active:scale-95 transition-all cursor-pointer z-10"
-              aria-label="Jump to latest messages"
+              className="sticky bottom-1 float-right flex items-center gap-1 rounded-full text-[0.75rem] font-medium px-3 py-1 shadow-sm cursor-pointer z-10"
+              style={{ backgroundColor: '#006A67', color: '#FFFFFF' }}
+              aria-label="Jump to latest"
             >
-              <span>Latest</span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
+              <span>Jump to latest</span>
             </button>
           )}
         </div>

@@ -6,7 +6,7 @@
  * wobbling jelly), and the whole body squashes and stretches on a separate soft spring.
  */
 
-export const SPRING_ZETA = 0.58;
+export const SPRING_ZETA = 1.0;
 export const SPRING_OMEGA = 10;
 /** Fraction of the morph timeline spent on staggered starts. */
 export const STAGGER = 0.4;
@@ -19,14 +19,17 @@ const smoothstep = (a: number, b: number, x: number) => {
   return t * t * (3 - 2 * t);
 };
 
-/** Step response of a damped spring: 0 at t=0, a soft overshoot, exactly 1 at t=1. */
+/** Step response of a critically damped spring (SPRING_ZETA >= 1.0): 0 at t=0, no overshoot, exactly 1 at t=1. */
 export function springEase(t: number): number {
   if (t <= 0) return 0;
   if (t >= 1) return 1;
+  if (SPRING_ZETA >= 1.0) {
+    const raw = 1 - (1 + SPRING_OMEGA * t) * Math.exp(-SPRING_OMEGA * t);
+    return raw + (1 - raw) * smoothstep(0.9, 1, t);
+  }
   const root = Math.sqrt(1 - SPRING_ZETA * SPRING_ZETA);
   const wd = SPRING_OMEGA * root;
   const raw = 1 - Math.exp(-SPRING_ZETA * SPRING_OMEGA * t) * (Math.cos(wd * t) + (SPRING_ZETA / root) * Math.sin(wd * t));
-  // the last few percent of the residue are blended out so the morph ends on exactly 1 (no pop on hand-over)
   return raw + (1 - raw) * smoothstep(0.9, 1, t);
 }
 
@@ -78,7 +81,11 @@ export const MORPH_GLSL = /* glsl */ `
   float springEase(float t) {
     if (t <= 0.0) return 0.0;
     if (t >= 1.0) return 1.0;
-    float root = sqrt(1.0 - SPRING_ZETA * SPRING_ZETA);
+    if (SPRING_ZETA >= 1.0) {
+      float raw = 1.0 - (1.0 + SPRING_OMEGA * t) * exp(-SPRING_OMEGA * t);
+      return raw + (1.0 - raw) * smoothstep(0.9, 1.0, t);
+    }
+    float root = sqrt(max(0.0001, 1.0 - SPRING_ZETA * SPRING_ZETA));
     float wd = SPRING_OMEGA * root;
     float raw = 1.0 - exp(-SPRING_ZETA * SPRING_OMEGA * t) * (cos(wd * t) + (SPRING_ZETA / root) * sin(wd * t));
     return raw + (1.0 - raw) * smoothstep(0.9, 1.0, t);

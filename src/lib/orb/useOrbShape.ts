@@ -167,42 +167,20 @@ export function useOrbShape() {
         }
       }
       if (!force && Date.now() - lastAI.current < AI_GAP_MS) return;
-      lastAI.current = Date.now();
-      const mine = ++intent.current;
-      setThinking(true);
-      let emoji: string | null = null;
-      let withheld = false;
-      try {
-        const res = await fetch('/api/orb/shape', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...byokHeaders() },
-          body: JSON.stringify({ keywords }),
-        });
-        if (res.ok) {
-          const json = (await res.json()) as { emoji: string | null; source: string };
-          if (json.source === 'withheld') withheld = true;
-          else if (json.emoji && isSingleEmoji(json.emoji)) emoji = json.emoji;
-        }
-      } catch {
-        // offline: fall through to procedural
-      }
-      if (intent.current !== mine) return; // the conversation moved on while we were choosing
-      setThinking(false);
-      if (withheld) return rest();
-      if (emoji) {
-        emojiStore.current.set(key, emoji);
-        saveStore(emojiStore.current);
-        const t = buildEmojiTarget(key, emoji);
-        if (t) return show(t);
-      }
+      // §7.5: Never call /api/orb/shape during a conversation; use offline procedural fallback
       showProcedural(key);
     },
     [buildEmojiTarget, rest, show, showProcedural],
   );
 
-  /** Feed a piece of conversation. Partial transcripts use only instant sources; finals may call the service. */
+  /** Feed a piece of conversation. Only active when Playful Orb is opted in (or __stayOrbDebug in orb tests), and never calls /api/orb/shape. */
   const feed = useCallback(
     (text: string, kind: FeedKind) => {
+      if (typeof window !== 'undefined') {
+        const playful = window.localStorage?.getItem('stay:playful_orb:v1') === '1';
+        const debug = Boolean((window as Window & { __stayOrbDebug?: boolean }).__stayOrbDebug);
+        if (!playful && !debug) return;
+      }
       const t = (text || '').trim();
       if (!t) return;
       if (detectCrisisSignal(t).triggered || detectMedicationAdviceRequest(t).triggered) return rest();

@@ -14,8 +14,10 @@ import { pickBrowserVoice } from './tts/browserVoices';
 export interface VoicePersona {
   /** Stable id. For AssemblyAI personas this is the provider's voice id (also what is stored in localStorage). */
   id: string;
-  /** Playful name the person can say aloud. */
+  /** Plain, respectful name + accent description (§7.7). */
   name: string;
+  /** Optional spoken/legacy aliases for voice resolution. */
+  aliases?: string[];
   gender: 'female' | 'male';
   /** What the voice really is. */
   voiceLabel: string;
@@ -44,48 +46,47 @@ type Seed = Omit<VoicePersona, 'lang' | 'recommended' | 'voices' | 'nativeLang'>
 const make = (s: Seed): VoicePersona => ({ ...s, lang: s.voices[0].lang, recommended: s.recommended ?? false, nativeLang: s.nativeLang ?? (s.voices[0].lang !== 'en' ? s.voices[0].lang : null) });
 
 export const PERSONAS: VoicePersona[] = [
-  // British (AssemblyAI documents: anna, charles, paul, vera)
-  make({ id: 'anna', name: 'Lady Lavender', gender: 'female', voiceLabel: 'British voice', style: 'Soft and calm. Slows everything down when you are overwhelmed.', shape: 'moon', voices: [BRIT('anna')], recommended: true }),
-  make({ id: 'charles', name: 'Captain Crumpet', gender: 'male', voiceLabel: 'British voice', style: 'Posh, theatrical butler. Treats the to-do list like a royal decree.', shape: 'cup', voices: [BRIT('charles')] }),
-  make({ id: 'paul', name: 'Biscuit Blitz', gender: 'male', voiceLabel: 'British voice', style: 'Quick and upbeat. Hypes two-minute sprints.', shape: 'bolt', voices: [BRIT('paul')] }),
-  make({ id: 'vera', name: 'Marmite Sprocket', gender: 'female', voiceLabel: 'British voice', style: 'Dry wit, no waffle. Keeps you grounded.', shape: 'key', voices: [BRIT('vera')] }),
-  // American (documented: alba, eve, george, jane, jean, mary, michael)
-  make({ id: 'jane', name: 'Waffle Wizard', gender: 'female', voiceLabel: 'American voice', style: 'Cozy late-night focus companion.', shape: 'star', voices: [AMER('jane')] }),
-  make({ id: 'eve', name: 'Countdown Cookie', gender: 'female', voiceLabel: 'American voice', style: 'Direct and zero-nonsense. Counts you down: three, two, one.', shape: 'clock', voices: [AMER('eve')], recommended: true }),
-  make({ id: 'george', name: 'Porch Light', gender: 'male', voiceLabel: 'American voice', style: 'Laid-back. Makes starting taxes feel zero-stakes.', shape: 'sun', voices: [AMER('george')] }),
-  make({ id: 'michael', name: 'Pancake Paladin', gender: 'male', voiceLabel: 'American voice', style: 'Ultra-polite. Celebrates every tiny check-off.', shape: 'tree', voices: [AMER('michael')] }),
-  make({ id: 'alba', name: 'Arcade Gremlin', gender: 'female', voiceLabel: 'American voice', style: 'Brisk arcade energy for speed-running your inbox.', shape: 'game', voices: [AMER('alba')] }),
-  make({ id: 'mary', name: 'Velvet Scalpel', gender: 'female', voiceLabel: 'American voice', style: 'Cool minimalist. Strips ten tasks down to one.', shape: 'mountain', voices: [AMER('mary')] }),
-  make({ id: 'jean', name: 'Pumpkin Pixel', gender: 'female', voiceLabel: 'American voice', style: 'Bubbly and kind. Gentle encouragement, never pressure.', shape: 'sprout', voices: [AMER('jean')] }),
-  // Found by probing the live endpoint; the provider's voice page does not list them or say what accent they have.
-  // Gender is assumed from the names.
-  make({ id: 'iris', name: 'Lantern Iris', gender: 'female', voiceLabel: 'English voice, accent not documented', style: 'Quiet and steady. Lights the next small step.', shape: 'bulb', voices: [UNLABELLED('iris')] }),
-  make({ id: 'reid', name: 'Compass Reid', gender: 'male', voiceLabel: 'English voice, accent not documented', style: 'Plain-spoken guide. Points at the next step and waits.', shape: 'target', voices: [UNLABELLED('reid')] }),
-  // Native-language voices (AssemblyAI: "native accent"; it does not say which regional accent)
-  make({ id: 'lola', name: 'Couch Rocket', gender: 'female', voiceLabel: 'Native Spanish voice', style: 'High-energy hype coach for beating couch paralysis.', shape: 'rocket', voices: [aai('lola', 'es', 'es', 'Spanish')] }),
-  make({ id: 'estelle', name: 'Croissant Bandit', gender: 'female', voiceLabel: 'Native French voice', style: 'Night-owl philosopher. Gently nudges you off doomscrolling.', shape: 'heart', voices: [aai('estelle', 'fr', 'fr', 'French')] }),
-  make({ id: 'juergen', name: 'Professor Pretzel', gender: 'male', voiceLabel: 'Native German voice', style: 'Deadpan engineer. Breaks big projects into tiny gears.', shape: 'bulb', voices: [aai('juergen', 'de', 'de', 'German')] }),
-  make({ id: 'giovanni', name: 'Fettuccine Maestro', gender: 'male', voiceLabel: 'Native Italian voice', style: 'Expressive and dramatic. Makes chores feel like opera.', shape: 'note', voices: [aai('giovanni', 'it', 'it', 'Italian')] }),
-  make({ id: 'rafael', name: 'Goblin Mode Gus', gender: 'male', voiceLabel: 'Native Portuguese voice', style: 'Chaotic-good peer. Whispers: just do ninety seconds, I dare you.', shape: 'target', voices: [aai('rafael', 'pt', 'pt', 'Portuguese')] }),
-  // Accent voices AssemblyAI does not have. Azure Neural when the person added a key, else the device's own voice.
+  // British (AssemblyAI §2.4)
+  make({ id: 'anna', name: 'Adrienne', aliases: ['Lady Lavender', 'Adrienne', 'Anna'], gender: 'female', voiceLabel: 'calm, British (AssemblyAI)', style: 'Soft and calm. Slows everything down when you are overwhelmed.', shape: 'moon', voices: [BRIT('anna')], recommended: true }),
+  make({ id: 'charles', name: 'Oliver', aliases: ['Captain Crumpet', 'Oliver', 'Charles'], gender: 'male', voiceLabel: 'steady, British (AssemblyAI)', style: 'Calm and composed. Keeps your to-do list orderly and unhurried.', shape: 'cup', voices: [BRIT('charles')] }),
+  make({ id: 'paul', name: 'Paul', aliases: ['Biscuit Blitz', 'Paul'], gender: 'male', voiceLabel: 'upbeat, British (AssemblyAI)', style: 'Quick and upbeat. Encourages two-minute sprints.', shape: 'bolt', voices: [BRIT('paul')] }),
+  make({ id: 'vera', name: 'Vera', aliases: ['Marmite Sprocket', 'Vera'], gender: 'female', voiceLabel: 'grounded, British (AssemblyAI)', style: 'Direct and clear, no waffle. Keeps you grounded.', shape: 'key', voices: [BRIT('vera')] }),
+  // American (AssemblyAI §2.4)
+  make({ id: 'jane', name: 'Jane', aliases: ['Waffle Wizard', 'Jane'], gender: 'female', voiceLabel: 'warm, American (AssemblyAI)', style: 'Warm late-night focus companion.', shape: 'star', voices: [AMER('jane')] }),
+  make({ id: 'eve', name: 'Audrey', aliases: ['Countdown Cookie', 'Audrey', 'Eve'], gender: 'female', voiceLabel: 'calm, American (AssemblyAI)', style: 'Direct and zero-nonsense. Counts you down: three, two, one.', shape: 'clock', voices: [AMER('eve')], recommended: true }),
+  make({ id: 'george', name: 'Blake', aliases: ['Porch Light', 'Blake', 'George'], gender: 'male', voiceLabel: 'easygoing, American (AssemblyAI)', style: 'Laid-back. Makes starting tasks feel low-stakes.', shape: 'sun', voices: [AMER('george')] }),
+  make({ id: 'michael', name: 'Michael', aliases: ['Pancake Paladin', 'Michael'], gender: 'male', voiceLabel: 'polite, American (AssemblyAI)', style: 'Polite and steady. Acknowledges every small step.', shape: 'tree', voices: [AMER('michael')] }),
+  make({ id: 'alba', name: 'Alba', aliases: ['Arcade Gremlin', 'Alba'], gender: 'female', voiceLabel: 'brisk, American (AssemblyAI)', style: 'Brisk, focused pace for clearing your inbox.', shape: 'game', voices: [AMER('alba')] }),
+  make({ id: 'mary', name: 'Mary', aliases: ['Velvet Scalpel', 'Mary'], gender: 'female', voiceLabel: 'clear, American (AssemblyAI)', style: 'Minimalist. Strips ten tasks down to one.', shape: 'mountain', voices: [AMER('mary')] }),
+  make({ id: 'jean', name: 'Jean', aliases: ['Pumpkin Pixel', 'Jean'], gender: 'female', voiceLabel: 'gentle, American (AssemblyAI)', style: 'Gentle encouragement, never pressure.', shape: 'sprout', voices: [AMER('jean')] }),
+  // Other English accents mapped via §2.4 in FastSocket
+  make({ id: 'iris', name: 'Iris', aliases: ['Lantern Iris', 'Iris'], gender: 'female', voiceLabel: 'English voice, accent not documented', style: 'Quiet and steady. Lights the next small step.', shape: 'bulb', voices: [UNLABELLED('iris')] }),
+  make({ id: 'reid', name: 'Reid', aliases: ['Compass Reid', 'Reid'], gender: 'male', voiceLabel: 'English voice, accent not documented', style: 'Plain-spoken guide. Points at the next step and waits.', shape: 'target', voices: [UNLABELLED('reid')] }),
+  // Native-language voices (AssemblyAI §2.4)
+  make({ id: 'lola', name: 'Camila', aliases: ['Couch Rocket', 'Camila', 'Lola'], gender: 'female', voiceLabel: 'warm, Spanish (AssemblyAI)', style: 'Warm Spanish coach for starting when stuck.', shape: 'rocket', voices: [aai('lola', 'es', 'es', 'Spanish')] }),
+  make({ id: 'estelle', name: 'Claire', aliases: ['Croissant Bandit', 'Claire', 'Estelle'], gender: 'female', voiceLabel: 'calm, French (AssemblyAI)', style: 'Calm French companion. Gently nudges you off distractions.', shape: 'heart', voices: [aai('estelle', 'fr', 'fr', 'French')] }),
+  make({ id: 'juergen', name: 'Greta', aliases: ['Professor Pretzel', 'Greta', 'Juergen'], gender: 'male', voiceLabel: 'steady, German (AssemblyAI)', style: 'Methodical. Breaks big projects into small steps.', shape: 'bulb', voices: [aai('juergen', 'de', 'de', 'German')] }),
+  make({ id: 'giovanni', name: 'Marco', aliases: ['Fettuccine Maestro', 'Marco', 'Giovanni'], gender: 'male', voiceLabel: 'expressive, Italian (AssemblyAI)', style: 'Warm and expressive. Keeps momentum steady.', shape: 'note', voices: [aai('giovanni', 'it', 'it', 'Italian')] }),
+  make({ id: 'rafael', name: 'Lucas', aliases: ['Goblin Mode Gus', 'Lucas', 'Rafael'], gender: 'male', voiceLabel: 'warm, Portuguese (AssemblyAI)', style: 'Supportive peer: just do ninety seconds first.', shape: 'target', voices: [aai('rafael', 'pt', 'pt', 'Portuguese')] }),
+  // Regional accent voices (Indian English, Mexican Spanish)
   make({
-    id: 'cardamom', name: 'Cardamom Calm', gender: 'female', voiceLabel: 'Indian English voice',
+    id: 'cardamom', name: 'Kavya', aliases: ['Cardamom Calm', 'Kavya'], gender: 'female', voiceLabel: 'calm, Indian English voice',
     style: 'Warm and unhurried. Turns a pile of tasks into one gentle next step.', shape: 'lotus', recommended: true,
     voices: [azure('en-IN-NeerjaNeural', 'en', 'en-IN', 'Indian English'), browser('en', 'en-IN', 'Indian English')],
   }),
   make({
-    id: 'chaiwala', name: 'Chaiwala Blitz', gender: 'male', voiceLabel: 'Indian English voice',
-    style: 'Quick and upbeat. Hypes two-minute sprints, one chai at a time.', shape: 'bolt',
+    id: 'chaiwala', name: 'Andrew', aliases: ['Chaiwala Blitz', 'Andrew'], gender: 'male', voiceLabel: 'upbeat, Indian English voice',
+    style: 'Quick and upbeat. Encourages two-minute sprints.', shape: 'bolt',
     voices: [azure('en-IN-PrabhatNeural', 'en', 'en-IN', 'Indian English'), browser('en', 'en-IN', 'Indian English')],
   }),
   make({
-    id: 'taco', name: 'Taco Tornado', gender: 'female', voiceLabel: 'Mexican Spanish voice',
-    style: 'Warm, high-energy coach. Cheers you off the couch in Mexican Spanish.', shape: 'rocket', recommended: true,
+    id: 'taco', name: 'Constanza', aliases: ['Taco Tornado', 'Constanza'], gender: 'female', voiceLabel: 'warm, Mexican Spanish voice',
+    style: 'Warm coach. Helps you start in Mexican Spanish.', shape: 'rocket', recommended: true,
     voices: [azure('es-MX-DaliaNeural', 'es', 'es-MX', 'Mexican Spanish'), browser('es', 'es-MX', 'Mexican Spanish')],
   }),
   make({
-    id: 'mariachi', name: 'Mariachi Metronome', gender: 'male', voiceLabel: 'Mexican Spanish voice',
-    style: 'Steady rhythm. Keeps you moving one beat at a time.', shape: 'note',
+    id: 'mariachi', name: 'Mateo', aliases: ['Mariachi Metronome', 'Mateo'], gender: 'male', voiceLabel: 'steady, Mexican Spanish voice',
+    style: 'Steady rhythm. Keeps you moving one step at a time.', shape: 'note',
     voices: [azure('es-MX-JorgeNeural', 'es', 'es-MX', 'Mexican Spanish'), browser('es', 'es-MX', 'Mexican Spanish')],
   }),
 ];
@@ -151,14 +152,22 @@ export function resolvePersona(query: string, currentId?: string): VoicePersona 
   }
   const byId = PERSONAS.find((p) => norm(p.id) === q);
   if (byId) return byId;
-  // name match: full name, or any distinctive word of it (min 4 letters, so "the" and "mode" do not match everything)
+  const GENERIC_DESC = new Set([
+    'calm', 'warm', 'steady', 'upbeat', 'grounded', 'easygoing', 'polite', 'brisk', 'clear', 'gentle', 'quiet', 'direct', 'expressive',
+    'british', 'american', 'indian', 'english', 'mexican', 'spanish', 'french', 'german', 'italian', 'portuguese', 'voice', 'assemblyai',
+  ]);
+  // name / alias match: full given name, or any distinctive word of it (min 4 letters)
   for (const p of PERSONAS) {
-    const n = norm(p.name);
-    if (q.includes(n) || n.includes(q)) return p;
+    const given = p.name.split('—')[0]?.trim() || p.name;
+    const names = [given, ...(p.aliases ?? [])].map(norm).filter(Boolean);
+    if (names.some((n) => q.includes(n) || (q.length >= 4 && !GENERIC_DESC.has(q) && n.includes(q)))) return p;
   }
-  const words = q.split(' ').filter((w) => w.length >= 4);
+  const words = q.split(' ').filter((w) => w.length >= 4 && !GENERIC_DESC.has(w));
   for (const p of PERSONAS) {
-    const nw = norm(p.name).split(' ');
+    const given = p.name.split('—')[0]?.trim() || p.name;
+    const nw = [given, ...(p.aliases ?? [])]
+      .flatMap((s) => norm(s).split(' '))
+      .filter((w) => !GENERIC_DESC.has(w));
     if (words.some((w) => nw.includes(w))) return p;
   }
   // trait match: gender and/or accent words

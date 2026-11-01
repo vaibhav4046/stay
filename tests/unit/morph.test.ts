@@ -9,25 +9,16 @@ describe('jelly morph easing', () => {
     expect(springEase(7)).toBe(1);
   });
 
-  it('overshoots softly (a jelly, not a pogo stick) and then settles', () => {
-    let peak = 0;
-    let peakAt = 0;
+  it('uses critically damped SPRING_ZETA >= 1.0 with zero overshoot (§7.5)', () => {
+    expect(SPRING_ZETA).toBeGreaterThanOrEqual(1.0);
+    let prev = 0;
     for (let i = 1; i < 1000; i++) {
       const t = i / 1000;
       const e = springEase(t);
-      if (e > peak) {
-        peak = e;
-        peakAt = t;
-      }
+      expect(e).toBeGreaterThanOrEqual(prev);
+      expect(e).toBeLessThanOrEqual(1.0);
+      prev = e;
     }
-    // analytic overshoot for this damping ratio is exp(-pi z / sqrt(1 - z^2)) ~ 10.6%
-    const analytic = Math.exp((-Math.PI * SPRING_ZETA) / Math.sqrt(1 - SPRING_ZETA ** 2));
-    expect(peak).toBeGreaterThan(1.04);
-    expect(peak).toBeLessThan(1.2);
-    expect(peak - 1).toBeCloseTo(analytic, 1);
-    // first peak at pi / wd
-    expect(peakAt).toBeCloseTo(Math.PI / (SPRING_OMEGA * Math.sqrt(1 - SPRING_ZETA ** 2)), 1);
-    // it has settled to within 0.5% well before the end
     expect(Math.abs(springEase(0.95) - 1)).toBeLessThan(0.005);
   });
 

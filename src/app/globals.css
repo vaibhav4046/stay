@@ -1,19 +1,33 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.stay-dark-disabled, .stay-dark-disabled *));
+
+:root {
+  --bg: #FAF8F5;
+  --surface: #FFFFFF;
+  --surface-2: #F4F1EC;
+  --line: #E4DFD6;
+  --ink: #212422;
+  --ink-2: #4A4F4B;
+  --accent: #006A67;
+  --think: #B45309;
+  --danger: #B42318;
+}
+
 @theme {
   --color-canvas: #FAF8F5;
   --color-surface: #FFFFFF;
   --color-surface-1: #FFFFFF;
-  --color-surface-2: #F1EFE9;
+  --color-surface-2: #F4F1EC;
   --color-paper: #FAF8F5;
-  --color-recessed: #F1EFE9;
+  --color-recessed: #F4F1EC;
   --color-ink: #212422;
-  --color-ink-2: #626B66;
-  --color-muted: #5C625E;
-  --color-ink-3: #5C625E;
-  --color-line: #E9E6DF;
+  --color-ink-2: #4A4F4B;
+  --color-muted: #4A4F4B;
+  --color-ink-3: #4A4F4B;
+  --color-line: #E4DFD6;
   --color-line-strong: #D5D1C8;
-  --color-edge: #E9E6DF;
+  --color-edge: #E4DFD6;
   --color-edge-strong: #D5D1C8;
   --color-accent: #006A67;
   --color-accent-hover: #005653;
@@ -21,8 +35,8 @@
   --color-primary: #006A67;
   --color-primary-hover: #005653;
   --color-success: #236B48;
-  --color-caution: #9A6318;
-  --color-danger: #B23A2E;
+  --color-caution: #B45309;
+  --color-danger: #B42318;
   /* the dark stage: video frame, results, the closing call to action */
   --color-night: #15201E;
   --color-night-2: #1E2D2A;
@@ -32,17 +46,18 @@
   --color-night-accent: #6FD0C8;
   /* one radius scale and one shadow scale for every page (landing, app, privacy, terms) */
   --radius-control: 10px;
-  --radius-card: 14px;
+  --radius-card: 12px;
   --radius-stage: 28px;
   --shadow-lift: 0 1px 2px rgb(33 36 34 / 0.05), 0 10px 24px -12px rgb(33 36 34 / 0.18);
   --shadow-stage: 0 2px 6px rgb(21 32 30 / 0.12), 0 32px 64px -24px rgb(21 32 30 / 0.45);
-  --ease-calm: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-calm: cubic-bezier(0.23, 1, 0.32, 1);
   /* DM Sans for text and Instrument Sans for headings and numerals on every device (DESIGN.md); the system face is only the fallback */
   --font-sans: var(--font-dm-sans), system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', sans-serif;
   --font-display: var(--font-instrument), var(--font-dm-sans), system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', sans-serif;
 }
 
 html {
+  color-scheme: light;
   scroll-padding-top: 4.5rem;
   background: var(--color-canvas);
   color: var(--color-ink);
@@ -221,6 +236,7 @@ body {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+    transform: none !important;
   }
 }
 
