@@ -1,10 +1,11 @@
 /**
+ * [EXPERIMENTAL / REFERENCE PROTOTYPE]
  * LiveKit Persistent WebRTC Audio Transport & Duplex Turn Manager
  *
- * Implements the real-time speech pipeline architecture:
- * [Microphone + WebRTC] -> [LiveKit room + audio buffer] -> [AssemblyAI realtime STT + turn detection]
- * -> [Stay turn manager + streaming LLM + memory] -> [Streaming TTS + interruption controller]
- * -> [LiveKit room + audio buffer]
+ * NOTE ON PRODUCTION TRANSPORT TRUTH:
+ * The live production Stay runtime operates on FastSocket (persistent full-duplex WebSockets over AssemblyAI Universal-3.6 STT,
+ * streaming LLM inference, ContinuousPcmPlayer, and AudioWorklet playback).
+ * This module is a reference prototype for future WebRTC / LiveKit room integration. It is not currently active in production.
  */
 
 export type LiveKitTurnState =

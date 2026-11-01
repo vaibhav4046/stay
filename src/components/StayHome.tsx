@@ -41,6 +41,7 @@ import { runAgenticAction } from '@/lib/voice/agenticActions';
 import { TodayCard } from '@/components/TodayCard';
 import { GeminiLiveVoiceVisualizer } from '@/components/voice/GeminiLiveVoiceVisualizer';
 import { LiveChatBox } from '@/components/voice/LiveChatBox';
+import { loadActiveSession, saveActiveSession } from '@/lib/coach/activeSession';
 import { RoutineSheet } from '@/components/RoutineSheet';
 import { ReminderSheet } from '@/components/ReminderSheet';
 import { takeDue } from '@/lib/reminders';
@@ -552,22 +553,34 @@ export function StayHome({
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem('stay_active_block');
-      if (!raw) return;
-      const b = JSON.parse(raw) as { plan: CoachPlanProposal; minutes: number; endsAt: number };
-      if (!b?.plan || typeof b.endsAt !== 'number' || Date.now() - b.endsAt > 6 * 3_600_000) return window.localStorage.removeItem('stay_active_block');
-      setPlan(b.plan);
-      setMinutes(b.minutes);
-      deadline.current = b.endsAt;
-      const left = Math.round((b.endsAt - Date.now()) / 1000);
-      if (left > 0) {
-        setRemaining(left);
-        setElapsed(b.minutes * 60 - left);
-        setRunning(true);
-        setStep('timer');
-        setNote(`Welcome back. Your block is still running, ${Math.max(1, Math.round(left / 60))} min left.`);
-      } else {
-        setStep('outcome');
-        setNote('Your block finished while you were away. How did it go?');
+      if (raw) {
+        const b = JSON.parse(raw) as { plan: CoachPlanProposal; minutes: number; endsAt: number };
+        if (b?.plan && typeof b.endsAt === 'number' && Date.now() - b.endsAt <= 6 * 3_600_000) {
+          setPlan(b.plan);
+          setMinutes(b.minutes);
+          deadline.current = b.endsAt;
+          const left = Math.round((b.endsAt - Date.now()) / 1000);
+          if (left > 0) {
+            setRemaining(left);
+            setElapsed(b.minutes * 60 - left);
+            setRunning(true);
+            setStep('timer');
+            setNote(`Welcome back. Your block is still running, ${Math.max(1, Math.round(left / 60))} min left.`);
+            return;
+          } else {
+            setStep('outcome');
+            setNote('Your block finished while you were away. How did it go?');
+            return;
+          }
+        }
+      }
+
+      // If no running timer block, restore in-flight plan from active session if present
+      const active = loadActiveSession();
+      if (active?.plan && active.step === 'plan') {
+        setPlan(active.plan);
+        setMinutes(active.plan.timerMinutes || 5);
+        setStep('plan');
       }
     } catch {
       // unreadable: start fresh
@@ -589,6 +602,14 @@ export function StayHome({
       } else {
         window.localStorage.removeItem('stay_active_block');
       }
+      saveActiveSession({
+        plan,
+        step,
+        avoidedTask: plan?.taskText ?? null,
+        smallestNextAction: plan?.firstStep ?? null,
+        minutes,
+        endsAt: step === 'timer' && running ? deadline.current : null,
+      });
     } catch {
       // private mode: not remembered
     }

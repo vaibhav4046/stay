@@ -54,21 +54,64 @@ test('Clicking voice card container selects voice and arms it immediately', asyn
   await page.keyboard.press('Escape');
   await expect(page.getByText(/Biscuit Blitz armed — ready to speak/)).toBeVisible();
 
-  // Re-open and click Card: Cardamom Calm (id: 'cardamom') in Recommended
+  // Re-open and click Card: Lady Lavender (id: 'anna') in Recommended
   await page.getByTestId('menu-button').click();
   await page.getByRole('button', { name: 'Voice and language' }).click();
   await expect(page.getByTestId('voice-picker')).toBeVisible();
 
-  const cardamomCard = page.getByTestId('voice-cardamom');
-  await expect(cardamomCard).toBeVisible();
-  await cardamomCard.click();
-  await expect(cardamomCard).toHaveClass(/!border-primary/);
+  const annaCard = page.getByTestId('voice-anna');
+  await expect(annaCard).toBeVisible();
+  await expect(annaCard).toHaveAttribute('data-usable', 'true');
+  await annaCard.click();
+  await expect(annaCard).toHaveClass(/!border-primary/);
 
-  const cardamomSelected = await page.evaluate(() => localStorage.getItem('stay_selected_voice'));
-  expect(cardamomSelected).toBe('cardamom');
+  const annaSelected = await page.evaluate(() => localStorage.getItem('stay_selected_voice'));
+  expect(annaSelected).toBe('anna');
 
   await page.keyboard.press('Escape');
-  await expect(page.getByText(/Cardamom Calm armed — ready to speak/)).toBeVisible();
+  await expect(page.getByText(/Lady Lavender armed — ready to speak/)).toBeVisible();
 
   await page.screenshot({ path: 'test-results/voice-card-armed-success.png' });
+});
+
+test('Clicking unusable voice card does not select it, shows setup explanation, and preserves prior voice', async ({ page }) => {
+  await page.goto('/app/today');
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await page.getByTestId('care-self_managing').click();
+  await page.getByTestId('onboarding-ack').click();
+  await page.getByTestId('onboarding-done').click();
+
+  // Open Voice Picker
+  await page.getByTestId('menu-button').click();
+  await page.getByRole('button', { name: 'Voice and language' }).click();
+  await expect(page.getByTestId('voice-picker')).toBeVisible();
+
+  // Open More voices
+  await page.getByTestId('voice-more').locator('summary').click();
+
+  // Find a voice that needs setup (e.g., mariachi without Azure key)
+  const unusableCard = page.locator('.el-voice-card[data-usable="false"]').first();
+  await expect(unusableCard).toBeVisible();
+
+  // Record currently selected voice before click
+  const priorVoice = await page.evaluate(() => localStorage.getItem('stay_selected_voice'));
+
+  // Click the unusable card
+  await unusableCard.click();
+
+  // Assert card is NOT selected (does not have !border-primary)
+  await expect(unusableCard).not.toHaveClass(/!border-primary/);
+
+  // Assert selected voice was NOT changed to this unusable card
+  const afterVoice = await page.evaluate(() => localStorage.getItem('stay_selected_voice'));
+  expect(afterVoice).toBe(priorVoice);
+
+  // Assert setup explanation appears (in error alert or needText banner)
+  const cardText = await unusableCard.textContent();
+  expect(cardText).toMatch(/Needs /);
+
+  // Assert user is not silently put into a broken voice mode
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('task-input')).toBeVisible();
 });

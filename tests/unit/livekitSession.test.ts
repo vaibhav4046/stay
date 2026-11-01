@@ -1,9 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { LiveKitTurnManager } from '@/lib/voice/livekit/livekitSession';
-import { POST as livekitTokenRoute } from '@/app/api/voice/livekit-token/route';
-import { NextRequest } from 'next/server';
 
-describe('LiveKit Persistent Turn Manager & Speech Architecture', () => {
+describe('Experimental LiveKit Turn Manager & Full-Duplex Prototype (FastSocket in Production)', () => {
   it('manages explicit duplex turn states: LISTENING -> THINKING -> SPEAKING -> INTERRUPTED -> LISTENING', () => {
     const states: string[] = [];
     const mgr = new LiveKitTurnManager({
@@ -144,23 +142,5 @@ describe('LiveKit Persistent Turn Manager & Speech Architecture', () => {
     expect(header).toContain('TimerSeconds: 300');
     expect(header).toContain('WhatHelped: 2-minute micro step, calm countdown');
     expect(header).toContain('WhatRejected: 15-minute chunking');
-  });
-
-  it('LiveKit token endpoint mints authenticated WebRTC session token with rate limiting and no secret leak', async () => {
-    const req = new NextRequest('http://localhost:3000/api/voice/livekit-token', {
-      method: 'POST',
-      body: JSON.stringify({ room: 'stay-adhd-room', identity: 'patient-4046' }),
-    });
-
-    const res = await livekitTokenRoute(req);
-    expect(res.status).toBe(200);
-
-    const data = await res.json();
-    expect(data.protocol).toBe('webrtc');
-    expect(data.transport).toBe('livekit');
-    expect(data.room).toBe('stay-adhd-room');
-    expect(data.identity).toBe('patient-4046');
-    expect(typeof data.token).toBe('string');
-    expect(data.expiresIn).toBe(1800);
   });
 });

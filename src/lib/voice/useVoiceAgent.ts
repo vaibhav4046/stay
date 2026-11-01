@@ -18,6 +18,7 @@ import { verifySpoken, type ToolOutcome } from '@/lib/voice/toolSelfCheck';
 import { useDumpCapture } from '@/lib/voice/useDumpCapture';
 import { loadInstructions, styleBlock } from '@/lib/coach/customInstructions';
 import { loadLearnings, learningsPromptLine } from '@/lib/coach/learnings';
+import { loadActiveSession, saveActiveSession } from '@/lib/coach/activeSession';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
   AudioSpectrumBands,
@@ -432,8 +433,18 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const replyDoneReceivedRef = useRef<boolean>(false);
   const playbackClockLockedRef = useRef<boolean>(false);
   const replyEpochRef = useRef<number>(0);
+  const interruptedAtRef = useRef<number>(0);
   const captionTickerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [transcripts, setTranscripts] = useState<VoiceTranscriptEntry[]>([]);
+  const [transcripts, setTranscripts] = useState<VoiceTranscriptEntry[]>(() => {
+    if (typeof window === 'undefined') return [];
+    return loadActiveSession()?.transcripts ?? [];
+  });
+
+  // Save active conversation turns to local active session
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    saveActiveSession({ transcripts });
+  }, [transcripts]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [streamingAnalysis, setStreamingAnalysis] = useState<RealtimeStreamingAnalysis | null>(null);
   const [isHandsFreePaused, setIsHandsFreePaused] = useState(false);
@@ -2137,7 +2148,9 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           }
           speechStartTimeRef.current = Date.now();
           medicationSuppressionRef.current = false;
-          if (!handsFreePausedRef.current) {
+          if (Date.now() - interruptedAtRef.current < 2500) {
+            setVisualState('interrupted');
+          } else if (!handsFreePausedRef.current) {
             setVisualState('listening');
           }
           setStreamingAnalysis(null);
@@ -2210,6 +2223,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         }
 
         if (type === 'input.speech.stopped') {
+          interruptedAtRef.current = 0;
           speechStoppedAtRef.current = lastLoudAtRef.current || performance.now(); // the last moment the mic heard you, not when the server noticed
           if (backchannelTimerRef.current) {
             clearTimeout(backchannelTimerRef.current);
@@ -2462,6 +2476,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           medicationSuppressionRef.current = false;
           const status = String(msg.status || 'completed');
           if (status === 'interrupted') {
+            interruptedAtRef.current = Date.now();
             pendingToolResultsRef.current = [];
             stopPlaybackQueue();
             setVisualState('interrupted');
@@ -2733,6 +2748,14 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       setLiveSpokenText('');
       liveSpokenTextRef.current = '';
       setPartialUserTranscript('');
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
+      }
+      stopPlaybackQueue();
+      const liveWs = wsRef.current;
+      const isWsLive = Boolean(liveWs && liveWs.readyState === WebSocket.OPEN && sessionReadyRef.current);
+      setVisualState(isWsLive ? 'listening' : 'idle');
+      saveActiveSession({ transcripts: [], plan: null, step: 'input', avoidedTask: null, smallestNextAction: null });
     },
   };
 }

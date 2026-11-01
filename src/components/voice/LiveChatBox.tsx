@@ -25,27 +25,56 @@ export function LiveChatBox({
   className = '',
 }: LiveChatBoxProps) {
   const [isOpen, setIsOpen] = useState(true);
+  const [showJumpToBottom, setShowJumpToBottom] = useState(false);
+  const [recentlyInterrupted, setRecentlyInterrupted] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const isNearBottomRef = useRef(true);
+
+  useEffect(() => {
+    if (visualState === 'interrupted') {
+      setRecentlyInterrupted(true);
+      const t = setTimeout(() => setRecentlyInterrupted(false), 3000);
+      return () => clearTimeout(t);
+    } else if (visualState === 'speaking') {
+      setRecentlyInterrupted(false);
+    }
+  }, [visualState]);
 
   const isUserSpeaking = Boolean(partialUserTranscript.trim());
-  const isAgentSpeaking =
-    visualState === 'speaking' &&
+  const isAgentSpeaking = visualState === 'speaking';
+  const showAgentStreamingBubble =
+    isAgentSpeaking &&
     Boolean(liveSpokenText.trim()) &&
     !transcripts.some((t) => t.role === 'agent' && t.text === liveSpokenText.trim());
   const isThinking = visualState === 'thinking';
-  const isInterrupted = visualState === 'interrupted';
+  const isInterrupted = visualState === 'interrupted' || recentlyInterrupted;
 
-  const totalEntries = transcripts.length + (isUserSpeaking ? 1 : 0) + (isAgentSpeaking ? 1 : 0);
+  // Smart auto-scroll: only scrolls down if already near bottom
+  const handleScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const near = el.scrollHeight - el.scrollTop - el.clientHeight < 65;
+    isNearBottomRef.current = near;
+    if (near && showJumpToBottom) {
+      setShowJumpToBottom(false);
+    }
+  };
 
-  // Auto-scroll whenever messages update or live text streams
   useEffect(() => {
     if (!isOpen) return;
     const el = scrollRef.current;
-    if (el) {
-      el.scrollTo({
-        top: el.scrollHeight,
-        behavior: 'smooth',
+    if (!el) return;
+
+    if (isNearBottomRef.current) {
+      // Use requestAnimationFrame without heavy smooth animations per streaming token
+      requestAnimationFrame(() => {
+        if (el) {
+          el.scrollTop = el.scrollHeight;
+        }
       });
+      setShowJumpToBottom(false);
+    } else {
+      setShowJumpToBottom(true);
     }
   }, [transcripts, partialUserTranscript, liveSpokenText, isThinking, isInterrupted, isOpen]);
 
@@ -54,6 +83,7 @@ export function LiveChatBox({
     if (isInterrupted) {
       return {
         label: 'Interrupted',
+        srAnnouncement: 'Interrupted — listening to your thought',
         dotClass: 'bg-amber-500 animate-pulse',
         textClass: 'text-amber-700 dark:text-amber-300',
       };
@@ -61,6 +91,7 @@ export function LiveChatBox({
     if (isUserSpeaking) {
       return {
         label: 'Transcribing speech...',
+        srAnnouncement: 'You are speaking',
         dotClass: 'bg-emerald-500 animate-ping',
         textClass: 'text-emerald-700 dark:text-emerald-300',
       };
@@ -68,6 +99,7 @@ export function LiveChatBox({
     if (isAgentSpeaking) {
       return {
         label: 'Stay speaking...',
+        srAnnouncement: 'Stay is speaking',
         dotClass: 'bg-indigo-500 animate-pulse',
         textClass: 'text-indigo-700 dark:text-indigo-300',
       };
@@ -75,6 +107,7 @@ export function LiveChatBox({
     if (isThinking) {
       return {
         label: 'Thinking...',
+        srAnnouncement: 'Stay is thinking',
         dotClass: 'bg-purple-500 animate-bounce',
         textClass: 'text-purple-700 dark:text-purple-300',
       };
@@ -82,12 +115,14 @@ export function LiveChatBox({
     if (isConnected) {
       return {
         label: 'Live',
+        srAnnouncement: 'Voice session active',
         dotClass: 'bg-emerald-500',
         textClass: 'text-emerald-700 dark:text-emerald-300',
       };
     }
     return {
       label: 'Conversation history',
+      srAnnouncement: '',
       dotClass: 'bg-stone-400',
       textClass: 'text-ink-3',
     };
@@ -105,10 +140,15 @@ export function LiveChatBox({
 
   return (
     <section
-      className={`card w-full overflow-hidden transition-all duration-300 ease-out border border-line/90 bg-surface/90 shadow-sm backdrop-blur-md dark:bg-stone-900/90 ${className}`}
+      className={`card relative w-full overflow-hidden transition-all duration-300 ease-out border border-line/90 bg-surface/90 shadow-sm backdrop-blur-md dark:bg-stone-900/90 ${className}`}
       aria-label="Live conversation transcripts"
       data-testid="live-chat-box"
     >
+      {/* Polite screen reader live status announcement */}
+      <div className="sr-only" aria-live="polite" role="status" data-testid="chat-sr-announcer">
+        {statusConfig.srAnnouncement}
+      </div>
+
       {/* Header bar */}
       <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-line/60 bg-surface-2/60 dark:bg-stone-800/40">
         <div className="flex items-center gap-2 min-w-0">
@@ -163,24 +203,29 @@ export function LiveChatBox({
         </div>
       </div>
 
-      {/* Collapsed Preview Pill (when user minimized chat but speaking) */}
+      {/* Collapsed Preview Pill (accessible real button when chat is minimized) */}
       {!isOpen && (isUserSpeaking || isAgentSpeaking) && (
-        <div
+        <button
+          type="button"
           onClick={() => setIsOpen(true)}
-          className="px-3.5 py-2 text-xs text-ink-2 bg-primary/5 border-t border-primary/20 flex items-center justify-between cursor-pointer hover:bg-primary/10 transition-colors"
+          aria-expanded={false}
+          aria-label="Expand live chat to view conversation"
+          data-testid="chat-collapsed-preview-btn"
+          className="w-full text-left px-3.5 py-2 text-xs text-ink-2 bg-primary/5 border-t border-primary/20 flex items-center justify-between cursor-pointer hover:bg-primary/10 focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
         >
           <span className="truncate italic">
             {isUserSpeaking ? `You: ${partialUserTranscript}` : `Stay: ${liveSpokenText}`}
           </span>
           <span className="text-[0.68rem] text-primary font-medium shrink-0 ml-2">Click to expand</span>
-        </div>
+        </button>
       )}
 
       {/* Expanded Live Chat Stream */}
       {isOpen && (
         <div
           ref={scrollRef}
-          className="max-h-60 sm:max-h-72 overflow-y-auto p-3 space-y-2.5 text-sm scroll-smooth overscroll-contain"
+          onScroll={handleScroll}
+          className="max-h-60 sm:max-h-72 overflow-y-auto p-3 space-y-2.5 text-sm overscroll-contain"
           data-testid="chat-message-list"
           role="log"
           aria-live="polite"
@@ -213,6 +258,7 @@ export function LiveChatBox({
                           ? 'rounded-tr-xs bg-primary/10 text-ink dark:text-stone-100 border border-primary/20'
                           : 'rounded-tl-xs bg-surface-2 text-ink dark:text-stone-100 border border-line/80'
                       }`}
+                      style={{ overflowWrap: 'anywhere' }}
                     >
                       {entry.text}
                     </div>
@@ -230,7 +276,10 @@ export function LiveChatBox({
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
                     <span>You (speaking...)</span>
                   </div>
-                  <div className="rounded-2xl rounded-tr-xs bg-emerald-500/10 text-ink dark:text-stone-100 border border-emerald-500/30 px-3.5 py-2 max-w-[88%] text-[0.88rem] leading-relaxed break-words shadow-2xs">
+                  <div
+                    className="rounded-2xl rounded-tr-xs bg-emerald-500/10 text-ink dark:text-stone-100 border border-emerald-500/30 px-3.5 py-2 max-w-[88%] text-[0.88rem] leading-relaxed break-words shadow-2xs"
+                    style={{ overflowWrap: 'anywhere' }}
+                  >
                     <span className="italic">{partialUserTranscript}</span>
                     <span className="inline-block w-1.5 h-3.5 bg-emerald-600 dark:bg-emerald-400 ml-1 translate-y-0.5 animate-pulse" />
                   </div>
@@ -253,7 +302,7 @@ export function LiveChatBox({
               )}
 
               {/* Real-time streaming Agent speech */}
-              {isAgentSpeaking && (
+              {showAgentStreamingBubble && (
                 <div
                   className="flex flex-col items-start max-w-full animate-fade-in"
                   data-testid="chat-live-agent-partial"
@@ -262,7 +311,10 @@ export function LiveChatBox({
                     <StayLogo size={13} className="shrink-0" />
                     <span>Stay (speaking...)</span>
                   </div>
-                  <div className="rounded-2xl rounded-tl-xs bg-indigo-500/10 text-ink dark:text-stone-100 border border-indigo-500/30 px-3.5 py-2 max-w-[88%] text-[0.88rem] leading-relaxed break-words shadow-2xs">
+                  <div
+                    className="rounded-2xl rounded-tl-xs bg-indigo-500/10 text-ink dark:text-stone-100 border border-indigo-500/30 px-3.5 py-2 max-w-[88%] text-[0.88rem] leading-relaxed break-words shadow-2xs"
+                    style={{ overflowWrap: 'anywhere' }}
+                  >
                     <span>{liveSpokenText}</span>
                     <span className="inline-block w-1.5 h-3.5 bg-indigo-600 dark:bg-indigo-400 ml-1 translate-y-0.5 animate-pulse" />
                   </div>
@@ -279,6 +331,29 @@ export function LiveChatBox({
                 </div>
               )}
             </>
+          )}
+
+          {/* Jump to latest control button */}
+          {showJumpToBottom && (
+            <button
+              type="button"
+              onClick={() => {
+                const el = scrollRef.current;
+                if (el) {
+                  el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+                  setShowJumpToBottom(false);
+                  isNearBottomRef.current = true;
+                }
+              }}
+              data-testid="chat-jump-latest"
+              className="sticky bottom-1 float-right flex items-center gap-1 rounded-full bg-primary text-white text-[0.72rem] font-medium px-2.5 py-1 shadow-md hover:bg-primary-hover active:scale-95 transition-all cursor-pointer z-10"
+              aria-label="Jump to latest messages"
+            >
+              <span>Latest</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
           )}
         </div>
       )}

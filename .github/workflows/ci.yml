@@ -16,7 +16,6 @@ jobs:
       - run: npx next build
   e2e:
     runs-on: ubuntu-latest
-    continue-on-error: true # browser tests need a real browser and a network; they are reported, not required
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

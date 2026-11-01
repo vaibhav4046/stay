@@ -55,6 +55,8 @@ export interface FakeVoice {
   speak(text: string, syllables?: number, shape?: { syllableSeconds?: number; gapSeconds?: number }): Promise<void>;
   /** The user starts talking over Stay (barge-in) with a partial transcript. */
   userSpeaks(partial: string): void;
+  sendRaw(m: Record<string, unknown>): void;
+  closeSocket(): void;
   sentTypes(): string[];
 }
 
@@ -87,7 +89,10 @@ export async function installFakeVoice(page: Page): Promise<FakeVoice> {
   return {
     ready: () => ready,
     sentTypes: () => sent,
+    sendRaw: (m: Record<string, unknown>) => send(m),
+    closeSocket: () => sock?.close(),
     userSpeaks(partial) {
+      send({ type: 'reply.done', status: 'interrupted' });
       send({ type: 'input.speech.started' });
       send({ type: 'transcript.user.delta', text: partial });
     },
