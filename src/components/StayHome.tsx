@@ -899,9 +899,7 @@ export function StayHome({
         <div className="flex items-center gap-2 shrink-0">
           <StayLogo size={22} />
           <span className="font-display font-semibold tracking-tight text-ink text-sm sm:text-base">Stay</span>
-          <span className="hidden sm:inline-block rounded-full bg-accent/10 px-2 py-0.5 text-[0.65rem] font-semibold text-accent border border-accent/20">
-            Universal-3.6 Pro
-          </span>
+          
         </div>
 
         <div className="flex items-center gap-2 shrink-0">

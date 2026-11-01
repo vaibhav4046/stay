@@ -1,6 +1,6 @@
 /* Stay service worker: the app shell keeps opening with no connection. History, memory and the Today list are local anyway;
  * voice and plans need the network, and say so. API calls are never cached. */
-const CACHE = 'stay-shell-v2';
+const CACHE = 'stay-shell-v3'; // v3: new logo and favicons
 const SHELL = ['/app/today', '/offline.html', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-maskable-192.png'];
 
 self.addEventListener('install', (event) => {

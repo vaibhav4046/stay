@@ -173,11 +173,11 @@ export function useOrbShape() {
     [buildEmojiTarget, rest, show, showProcedural],
   );
 
-  /** Feed a piece of conversation. Only active when Playful Orb is opted in (or __stayOrbDebug in orb tests), and never calls /api/orb/shape. */
+  /** Feed a piece of conversation. Active unless the person turned shapes off in Settings, and never calls /api/orb/shape. */
   const feed = useCallback(
     (text: string, kind: FeedKind) => {
       if (typeof window !== 'undefined') {
-        const playful = window.localStorage?.getItem('stay:playful_orb:v1') === '1';
+        const playful = window.localStorage?.getItem('stay:playful_orb:v1') !== '0'; // on by default; Settings can turn it off
         const debug = Boolean((window as Window & { __stayOrbDebug?: boolean }).__stayOrbDebug);
         if (!playful && !debug) return;
       }

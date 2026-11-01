@@ -6,6 +6,23 @@
 
 ---
 
+## In one minute
+
+**Stay helps you start the thing you keep avoiding.** You say it out loud (or type it). Stay answers in a calm voice with one small step, waits while you think, and checks in. It is built for adults with ADHD. It is not therapy, not a diagnosis, and never gives medication advice.
+
+**Try it (2 minutes):**
+1. Open the live app and tap **Call Stay**. It rings, then answers.
+2. Tell it something you are putting off. Interrupt it mid-sentence: it stops.
+3. Switch language mid-sentence (Spanish, French, German, Italian, Portuguese): the voice follows.
+4. Start a 2-minute focus block, then open **Report** for a one-page summary to bring to an appointment.
+
+**What AssemblyAI does here:** it turns your speech into text live (Universal-3.6 Pro) and speaks Stay's replies (AssemblyAI TTS). The badge in the corner says so, and says it plainly if anything else is speaking.
+
+**Measured, not claimed** (real AssemblyAI, synthetic speech, one machine; details in section 3): 0 to 1.2% of words wrong across 5 accents, language detected correctly in all 36 clips, first words on screen about 0.9 seconds after you start speaking, voice starts about 0.17 seconds after the reply text is ready.
+
+**Honest limits:** not tested with a human microphone in these runs; AssemblyAI's voice speaks 6 languages (Hindi gets a Roman-letter Hinglish reply in the English voice); the in-page "Stay calls you" only works while the page is open and there is no phone number; the demo video was recorded before the dark redesign.
+
+---
 ## 1. What Stay Is & Who It Helps
 
 Stay is a calm, voice-first companion for adults with ADHD who get stuck starting avoided tasks or blank out when preparing for a doctor, therapist, or coaching appointment. You speak a messy thought in your own language or accent; Stay gives a brief non-shaming acknowledgement, one concrete two-minute next step, and an optional check-in question — or interviews you in five minutes to build a one-page appointment handout in your own words.

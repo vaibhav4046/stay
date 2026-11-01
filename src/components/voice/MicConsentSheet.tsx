@@ -16,32 +16,32 @@ export function MicConsentSheet({ isOpen, onConsent, onTextOnly, onClose }: MicC
   if (!isOpen) return null;
 
   return (
-    <Sheet title="Microphone & Voice Privacy" onClose={onClose}>
+    <Sheet title="Before we use your microphone" onClose={onClose}>
       <div className="space-y-4 text-sm" style={{ color: '#F5F5F6' }} data-testid="mic-consent-sheet">
         <p className="leading-relaxed">
-          Stay sends your voice to <strong>AssemblyAI</strong> (Universal-3.6 Pro and AssemblyAI TTS) to turn speech into text and speak back in real time.
+          Stay sends your voice to <strong>AssemblyAI</strong> so it can turn it into text and speak back to you.
         </p>
 
         <div className="p-3.5 rounded-[12px] border border-[#2E2F32] space-y-2 text-xs" style={{ backgroundColor: '#353537', color: '#C9C9C9' }}>
-          <p className="font-semibold text-xs" style={{ color: '#F5F5F6' }}>What Stay stores on this device:</p>
+          <p className="font-semibold text-xs" style={{ color: '#F5F5F6' }}>What stays on this device:</p>
           <ul className="list-disc list-inside space-y-1">
-            <li>Your task notes, completed focus blocks, and custom word dictionary (saved in your local browser storage).</li>
-            <li>No audio recordings are ever saved to disk or persistent servers.</li>
-            <li>Voice audio streams ephemerally over secure WebSocket to AssemblyAI using single-use session tokens.</li>
+            <li>Your tasks, your focus blocks and your list of words.</li>
+            <li>Stay does not save your voice. AssemblyAI handles it under its own privacy terms.</li>
+            <li>Your voice goes straight from your browser to AssemblyAI, only while you are talking.</li>
           </ul>
         </div>
 
         <p className="text-xs" style={{ color: '#C9C9C9' }}>
-          💡 <strong>Headphones work best:</strong> Prevents speaker audio from leaking into your microphone during full-duplex conversations.
+          <strong>Headphones work best.</strong> Then Stay does not hear its own voice.
         </p>
 
         {showHowItWorks && (
           <div className="p-3 rounded-lg border border-[#2E2F32] text-xs space-y-1" style={{ backgroundColor: '#08090B' }}>
             <p className="font-semibold" style={{ color: '#F5F5F6' }}>How this works:</p>
-            <p>1. Clicking &ldquo;Start talking&rdquo; requests browser microphone access.</p>
-            <p>2. Your browser captures 16 kHz audio with an acoustic low-pass filter and streams it over WebSocket to AssemblyAI.</p>
-            <p>3. You can interrupt Stay at any moment by speaking, or click &ldquo;Stop&rdquo; to stop Stay speaking.</p>
-            <p>4. You can revoke microphone permission anytime in Settings.</p>
+            <p>1. Tap &ldquo;Start talking&rdquo; and your browser asks for the microphone.</p>
+            <p>2. Your voice is sent live to AssemblyAI, which turns it into text.</p>
+            <p>3. You can interrupt Stay at any moment by speaking.</p>
+            <p>4. You can turn the microphone off any time in your browser settings.</p>
           </div>
         )}
 

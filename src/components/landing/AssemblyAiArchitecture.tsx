@@ -17,76 +17,73 @@ interface PipelineStage {
 const PIPELINE_STAGES: PipelineStage[] = [
   {
     id: 'stt-stream',
-    name: '1. Streaming STT v3',
-    role: 'Browser-Direct Speech Ingestion',
-    timing: 'Turn silence 128 ms to 1.28 s (configured)',
-    assemblyAiTech: 'AssemblyAI Streaming STT (universal-3-6-pro)',
-    payload: '16kHz mono PCM chunks over wss://streaming.assemblyai.com',
-    adhdRationale: 'Eliminates recording lag and transcribes speech live without requiring the user to hold down a button or wait.',
+    name: 'Hears you live',
+    role: 'Speech turns into text as you talk',
+    timing: 'No button to hold',
+    assemblyAiTech: 'AssemblyAI streaming speech-to-text (Universal-3.6 Pro)',
+    payload: 'Your voice goes from your browser straight to AssemblyAI',
+    adhdRationale: 'You just talk. There is nothing to hold down and no recording to wait for.',
     details: [
-      'Direct browser-to-AssemblyAI WebSocket connection with a short-lived token from /api/voice/fast-token; the account key stays on the server.',
-      'Partial transcripts stream back while you speak and update the transcript live. Latency is not quoted here because it has not been re-measured on this build.',
-      'Stay\u2019s server never receives your audio: it goes from your browser to AssemblyAI. AssemblyAI\u2019s own handling is described in its privacy terms.',
+      'Your browser connects to AssemblyAI with a short-lived pass. Our account key stays on our server.',
+      'Your words appear on screen while you are still speaking.',
+      'Stay\u2019s own server never receives your audio. AssemblyAI\u2019s handling of it is in its privacy terms.',
     ],
   },
   {
     id: 'keyterms',
-    name: '2. Acoustic Keyterms Biasing',
-    role: 'Phonetic Accuracy Engine',
-    timing: 'Pre-session configuration',
-    assemblyAiTech: 'keyterms_prompt API parameter',
-    payload: 'Terms from Settings > My words (up to 100), such as names and technical words',
-    adhdRationale: 'Adults with ADHD use specialized colloquial and therapeutic phrases. Mishearing "wall of awful" or "park it" breaks trust.',
+    name: 'Knows your words',
+    role: 'Names and terms you add',
+    timing: 'You set it up once',
+    assemblyAiTech: 'AssemblyAI keyterms_prompt',
+    payload: 'Up to 100 names and terms from Settings > My words',
+    adhdRationale: 'Being misheard on your own name or a word you use often is tiring. This helps with that.',
     details: [
-      'Injected into the AssemblyAI session handshake via appKeyterms() configuration array.',
-      'Asks the recogniser to favour those words when it is unsure.',
+      'You add names and terms in Settings.',
+      'The recogniser favours them when it is unsure what it heard.',
       'Accuracy for specific accents has not been measured, so none is claimed.',
     ],
   },
   {
     id: 'turn-gate',
-    name: '3. Turn-Taking Patience Gate',
-    role: 'Hesitation & Silence Evaluator',
-    timing: '2.2 s hold on trailing speech (configured)',
-    assemblyAiTech: 'FastSocket turn-state arbitration',
-    payload: 'Trailing punctuation, filler tokens ("um", "and..."), and silence duration',
+    name: 'Waits for you to finish',
+    role: 'Pauses are not the end',
+    timing: 'About 2 seconds of patience',
+    assemblyAiTech: 'AssemblyAI turn detection plus Stay\u2019s own hold',
+    payload: 'Trailing words such as \u201cand\u2026\u201d or \u201cum\u2026\u201d, and how long the silence lasts',
     adhdRationale: 'Many people with ADHD pause mid-thought. In a small test on 19 Oct 2026 two other voice products began talking after about 1.5 to 2.1 s of silence; Stay waited. One laptop, few runs.',
     details: [
-      'Inspects partial transcripts for syntactic completion vs trailing thoughts.',
-      'Holds the turn when speech ends on trailing conjunctions or fillers rather than dispatching early.',
-      'Starts preparing a reply when a sentence looks finished, and discards it if you keep talking.',
+      'Notices when you trail off and keeps listening.',
+      'Starts preparing a reply when a sentence looks finished, and throws it away if you keep talking.',
     ],
   },
   {
     id: 'tts-visemes',
-    name: '4. Streaming TTS & Word Boundaries',
-    role: 'Voice Synthesis & Caption Sync',
-    timing: 'Chunked audio playback',
-    assemblyAiTech: 'AssemblyAI Streaming TTS (assemblyai-tts-1)',
-    payload: 'Base64 PCM16 24kHz chunks via wss://tts.us.assemblyai.com/v1/ws',
-    adhdRationale: 'Provides a calm, non-demanding spoken reply synced to rendered audio samples.',
+    name: 'Speaks back',
+    role: 'A calm voice, short replies',
+    timing: 'One continuous voice',
+    assemblyAiTech: 'AssemblyAI streaming text-to-speech (assemblyai-tts-1)',
+    payload: 'Each reply is spoken as one piece so it does not stutter',
+    adhdRationale: 'Short, steady, and never a wall of text.',
     details: [
-      'Connects with a product=tts ephemeral token and verified voice_id parameter.',
-      'Uses WordBoundaries.word with audio_start_ms and rendered sample counters to sync spoken captions and split heard vs unheard text on interruption.',
-      'Emits concise 3-beat replies: brief acknowledgement, one tiny next action, and at most one optional check-in question.',
+      'Replies are a few words, then one small step.',
+      'The words on screen follow the voice as it speaks.',
+      'Measured on the live service: sending each sentence separately added about half a second of silence at every join, so Stay sends the whole reply at once.',
     ],
   },
   {
     id: 'barge-in',
-    name: '5. Barge-in',
-    role: 'Stop speaking and clear queued audio',
-    timing: 'Lowers volume at speech start, stops on your first words',
-    assemblyAiTech: 'AssemblyAI speech onset trigger + FastSocket flush',
-    payload: 'Cancel packet + lipSyncBus.reset() + AudioContext buffer discard',
+    name: 'Lets you interrupt',
+    role: 'Your voice is the stop button',
+    timing: 'Quiets as you start',
+    assemblyAiTech: 'AssemblyAI speech-start signal and cancel',
+    payload: 'Stay lowers its volume when you start, and stops on your first words',
     adhdRationale: 'If you need to stop Stay or correct yourself, it stops talking. Stop time is measured in the test lab, not claimed here.',
     details: [
-      'Triggers on the very first frame of user speech detected by AssemblyAI streaming STT.',
-      'Immediately cuts scheduled audio in the Web Audio buffer queue.',
-      'Returns the status light to its listening state straight away.',
+      'When you speak over Stay it gets quieter, then stops.',
+      'It ignores its own voice coming back through your speakers.',
     ],
   },
 ];
-
 export function AssemblyAiArchitecture() {
   const [activeStage, setActiveStage] = useState<string>('stt-stream');
   const [isSimulating, setIsSimulating] = useState<boolean>(false);
@@ -125,14 +122,12 @@ export function AssemblyAiArchitecture() {
       data-testid="assemblyai-architecture"
     >
       <div className="lp-wrap">
-        <p className="eyebrow">Technical Architecture</p>
+        <p className="eyebrow">How it works</p>
         <h2 id="arch-title" className="section-title max-w-[28ch]">
-          The AssemblyAI real-time voice pipeline
+          How Stay hears you and talks back
         </h2>
         <p className="mt-3 max-w-[66ch] text-ink-2">
-          Stay does not use a black-box voice wrapper. We engineered a dual-socket, low-latency conversational pipeline
-          using AssemblyAI streaming STT, acoustic keyterm biasing, turn-taking arbitration, and streaming TTS with
-          viseme decomposition.
+          Everything runs on AssemblyAI: it turns your speech into text as you talk, and it speaks the reply. Stay adds the patience, the short replies and the one small step.
         </p>
 
         {/* Pipeline Flow Visualization */}
@@ -140,17 +135,17 @@ export function AssemblyAiArchitecture() {
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-ink/10 pb-4">
             <div>
               <h3 className="font-display text-base font-semibold text-ink sm:text-lg">
-                Conversational Pipeline Flow
+                From your voice to Stay's reply
               </h3>
               <p className="text-xs text-ink-2 sm:text-sm">
-                Select a stage to inspect its AssemblyAI implementation, or simulate a live user turn.
+                Pick a step to see what happens, or replay the steps one by one.
               </p>
             </div>
             <button
               type="button"
               onClick={runSimulation}
               disabled={isSimulating}
-              aria-label="Simulate audio packet flowing through AssemblyAI pipeline"
+              aria-label="Replay the five steps one by one"
               className="inline-flex items-center gap-2 rounded-full border border-ink/15 bg-paper px-4 py-2 text-xs font-medium text-ink transition hover:border-ink/30 hover:bg-surface disabled:opacity-50"
             >
               <span
@@ -159,7 +154,7 @@ export function AssemblyAiArchitecture() {
                 }`}
                 aria-hidden="true"
               />
-              {isSimulating ? `Transmitting (Stage ${simStep + 1} of 5)...` : 'Simulate Live Turn'}
+              {isSimulating ? `Step ${simStep + 1} of 5...` : 'Replay the steps'}
             </button>
           </div>
 
@@ -203,7 +198,7 @@ export function AssemblyAiArchitecture() {
                   {current.timing}
                 </span>
                 <span className="rounded-md bg-success/10 px-2.5 py-1 text-xs font-medium text-success">
-                  AssemblyAI Integration
+                  Made with AssemblyAI
                 </span>
               </div>
               <h3 className="mt-2 font-display text-xl font-bold text-ink sm:text-2xl">
@@ -211,7 +206,7 @@ export function AssemblyAiArchitecture() {
               </h3>
             </div>
             <div className="rounded-lg border border-ink/10 bg-paper px-3 py-2 text-xs">
-              <span className="font-semibold text-ink">AssemblyAI Technology: </span>
+              <span className="font-semibold text-ink">AssemblyAI feature: </span>
               <span className="font-mono text-ink-2">{current.assemblyAiTech}</span>
             </div>
           </div>
@@ -219,14 +214,14 @@ export function AssemblyAiArchitecture() {
           <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
             <div>
               <h4 className="text-xs font-mono font-semibold uppercase tracking-wider text-ink-2">
-                Wire Protocol & Payload
+                What is sent
               </h4>
               <p className="mt-2 rounded-lg bg-ink/5 p-3 font-mono text-xs text-ink">
                 {current.payload}
               </p>
 
               <h4 className="mt-6 text-xs font-mono font-semibold uppercase tracking-wider text-ink-2">
-                ADHD Clinical Impact
+                Why this helps
               </h4>
               <p className="mt-2 text-sm leading-relaxed text-ink-2">
                 {current.adhdRationale}
@@ -235,7 +230,7 @@ export function AssemblyAiArchitecture() {
 
             <div>
               <h4 className="text-xs font-mono font-semibold uppercase tracking-wider text-ink-2">
-                Implementation Details
+                What Stay does
               </h4>
               <ul className="mt-2 space-y-2.5 text-sm text-ink-2">
                 {current.details.map((d) => (

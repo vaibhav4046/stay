@@ -70,7 +70,7 @@ export function useOrbPresence({ topical, speaking, userTalking }: { topical: Or
 
   const playfulAllowed =
     typeof window !== 'undefined' &&
-    (window.localStorage?.getItem('stay:playful_orb:v1') === '1' ||
+    (window.localStorage?.getItem('stay:playful_orb:v1') !== '0' || // on by default; Settings can turn it off
       Boolean((window as Window & { __stayOrbDebug?: boolean }).__stayOrbDebug) ||
       state.pinned);
 

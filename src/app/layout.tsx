@@ -13,7 +13,15 @@ export const metadata: Metadata = {
   title: 'Stay: start the thing you have been avoiding',
   description:
     'A voice companion for adults with ADHD. Tell it the task you cannot begin and get one small first step, a short block to do it in, and a note of what helped.',
-  icons: { icon: '/icons/icon-192.png', apple: '/icons/icon-180.png' },
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icons/favicon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icons/favicon-16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
+    apple: [{ url: '/icons/icon-180.png', sizes: '180x180', type: 'image/png' }],
+  },
   appleWebApp: { capable: true, title: 'Stay', statusBarStyle: 'default' },
   openGraph: {
     title: 'Stay: start the thing you have been avoiding',

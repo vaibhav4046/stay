@@ -19,12 +19,12 @@ export default function SettingsPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleted, setDeleted] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [playfulOrb, setPlayfulOrb] = useState(false);
+  const [playfulOrb, setPlayfulOrb] = useState(true);
 
   useEffect(() => {
     setAudits(getLocalAuditEvents());
     if (typeof window !== 'undefined') {
-      setPlayfulOrb(window.localStorage.getItem('stay:playful_orb:v1') === '1');
+      setPlayfulOrb(window.localStorage.getItem('stay:playful_orb:v1') !== '0');
     }
   }, []);
   if (!loaded) return <PageSkeleton variant="settings" />;
@@ -77,8 +77,8 @@ export default function SettingsPage() {
             data-testid="playful-orb-toggle"
           />
           <span>
-            <span className="font-medium text-ink block">Playful orb</span>
-            <span className="text-xs text-ink-2 block">Experimental WebGL 3D shapes during conversation instead of the calm status light.</span>
+            <span className="font-medium text-ink block">Shapes and face</span>
+            <span className="text-xs text-ink-2 block">The orb turns into what you talk about, and into a face while Stay speaks. Turn off for a still orb.</span>
           </span>
         </label>
         <div className="mt-4 pt-3 border-t border-line flex items-center justify-between">
