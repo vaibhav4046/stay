@@ -16,7 +16,7 @@ export const ENDPOINTING_PRESETS: Record<
   EndpointingMode,
   { end_of_turn_confidence_threshold: number; min_turn_silence: number; max_turn_silence: number }
 > = {
-  coaching: { end_of_turn_confidence_threshold: 0.4, min_turn_silence: 400, max_turn_silence: 1280 },
+  coaching: { end_of_turn_confidence_threshold: 0.4, min_turn_silence: 128, max_turn_silence: 1280 },
   reflective: { end_of_turn_confidence_threshold: 0.6, min_turn_silence: 700, max_turn_silence: 2400 },
   crisis: { end_of_turn_confidence_threshold: 0.7, min_turn_silence: 800, max_turn_silence: 3000 },
 };
@@ -65,14 +65,161 @@ export interface FastSession {
 type Json = Record<string, unknown>;
 type ChatMessage = { role: 'system' | 'user' | 'assistant' | 'tool'; content: string | null; tool_calls?: unknown[]; tool_call_id?: string };
 
-/** AssemblyAI TTS voices are tied to one language: an English voice on a Spanish connection is rejected. One native voice per language. */
-export const FAST_NATIVE_VOICE: Record<string, string> = { es: 'lola', fr: 'estelle', de: 'juergen', it: 'giovanni', pt: 'rafael' };
-/** The voice to open the TTS connection with: the person's pick when it speaks that language, else the language's native voice. */
+/** Verified AssemblyAI-TTS-1 voice_id values (§2.4). */
+export const VALID_ASSEMBLY_VOICE_IDS = new Set([
+  'aai-jane',
+  'aai-anna',
+  'aai-john',
+  'aai-nicole',
+  'aai-emily',
+  'aai-daniel',
+  'aai-michael',
+  'aai-sarah',
+  'aai-david',
+  'aai-emma',
+  'aai-james',
+  'aai-olivia',
+  'aai-sophia',
+  'aai-liam',
+  'aai-noah',
+  'aai-ava',
+  'aai-isabella',
+  'aai-mia',
+  'aai-charlotte',
+  'aai-amelia',
+  'aai-harper',
+  'aai-evelyn',
+  'aai-abigail',
+  '49c443a4-8a1d-5f7e-b70b-98bdbd9823c3', // Callum (en-GB)
+  '87df35db-c5c5-580f-a802-40fb03efafe9', // Harper (en-AU)
+  '66c6bf99-bc69-5e32-a0cd-f9cef8ceb550', // Mateo (es)
+  '97cd5fb8-b7d8-5555-82bc-7a9b6ee0acdc', // Elena (es)
+  '213be0fa-a416-5a9f-8338-bd2fa4be096d', // Claire (fr)
+  '9022fd34-f1be-5414-a929-f0c4a82a4528', // Henri (fr)
+  'd845fc5c-96f9-5cb1-bf06-b9fa1dc125f0', // Greta (de)
+  'be6fe4c9-c9fb-5bb8-8c28-c5cabd9ef510', // Lukas (de)
+  'e93dc061-d4fb-5d32-9b1f-cf3e5f8c3fd9', // Giulia (it)
+  '9664fb8c-b411-57aa-a704-f8ed151de0f0', // Marco (it)
+  'd51e3418-a9d3-5999-a06c-d7bb2be9b2d3', // Camila (pt)
+  'c85aa079-c365-5f2b-9084-f722eeef9aa0', // Lucas (pt)
+]);
+
+/** AssemblyAI TTS voices are tied to one language: an English voice on a Spanish connection is rejected. One native voice_id per language. */
+export const FAST_NATIVE_VOICE: Record<string, string> = {
+  es: '66c6bf99-bc69-5e32-a0cd-f9cef8ceb550', // Mateo
+  fr: '213be0fa-a416-5a9f-8338-bd2fa4be096d', // Claire
+  de: 'd845fc5c-96f9-5cb1-bf06-b9fa1dc125f0', // Greta
+  it: 'e93dc061-d4fb-5d32-9b1f-cf3e5f8c3fd9', // Giulia
+  pt: 'c85aa079-c365-5f2b-9084-f722eeef9aa0', // Lucas
+};
+
+const NON_ENGLISH_VOICE_KEYS = new Set([
+  'lola', 'mateo', 'carlos', 'elena',
+  'estelle', 'claire', 'henri',
+  'juergen', 'greta', 'lukas',
+  'giovanni', 'giulia', 'marco',
+  'rafael', 'camila', 'lucas',
+  ...Object.values(FAST_NATIVE_VOICE),
+  '97cd5fb8-b7d8-5555-82bc-7a9b6ee0acdc',
+  '9022fd34-f1be-5414-a929-f0c4a82a4528',
+  'be6fe4c9-c9fb-5bb8-8c28-c5cabd9ef510',
+  '9664fb8c-b411-57aa-a704-f8ed151de0f0',
+  'd51e3418-a9d3-5999-a06c-d7bb2be9b2d3',
+]);
+
+const VOICE_NAME_TO_ID: Record<string, string> = {
+  jane: 'aai-jane',
+  anna: 'aai-anna',
+  john: 'aai-john',
+  george: 'aai-john',
+  reid: 'aai-john',
+  callum: '49c443a4-8a1d-5f7e-b70b-98bdbd9823c3',
+  charles: '49c443a4-8a1d-5f7e-b70b-98bdbd9823c3',
+  paul: '49c443a4-8a1d-5f7e-b70b-98bdbd9823c3',
+  harper: '87df35db-c5c5-580f-a802-40fb03efafe9',
+  nicole: 'aai-nicole',
+  vera: 'aai-nicole',
+  emily: 'aai-emily',
+  eve: 'aai-emily',
+  daniel: 'aai-daniel',
+  michael: 'aai-michael',
+  sarah: 'aai-sarah',
+  alba: 'aai-sarah',
+  david: 'aai-david',
+  emma: 'aai-emma',
+  mary: 'aai-emma',
+  james: 'aai-james',
+  olivia: 'aai-olivia',
+  jean: 'aai-olivia',
+  sophia: 'aai-sophia',
+  iris: 'aai-sophia',
+  liam: 'aai-liam',
+  noah: 'aai-noah',
+  ava: 'aai-ava',
+  isabella: 'aai-isabella',
+  mia: 'aai-mia',
+  charlotte: 'aai-charlotte',
+  amelia: 'aai-amelia',
+  evelyn: 'aai-evelyn',
+  abigail: 'aai-abigail',
+  // Spanish
+  mateo: '66c6bf99-bc69-5e32-a0cd-f9cef8ceb550',
+  lola: '66c6bf99-bc69-5e32-a0cd-f9cef8ceb550',
+  carlos: '66c6bf99-bc69-5e32-a0cd-f9cef8ceb550',
+  elena: '97cd5fb8-b7d8-5555-82bc-7a9b6ee0acdc',
+  // French
+  claire: '213be0fa-a416-5a9f-8338-bd2fa4be096d',
+  estelle: '213be0fa-a416-5a9f-8338-bd2fa4be096d',
+  henri: '9022fd34-f1be-5414-a929-f0c4a82a4528',
+  // German
+  greta: 'd845fc5c-96f9-5cb1-bf06-b9fa1dc125f0',
+  juergen: 'd845fc5c-96f9-5cb1-bf06-b9fa1dc125f0',
+  lukas: 'be6fe4c9-c9fb-5bb8-8c28-c5cabd9ef510',
+  // Italian
+  giulia: 'e93dc061-d4fb-5d32-9b1f-cf3e5f8c3fd9',
+  marco: '9664fb8c-b411-57aa-a704-f8ed151de0f0',
+  giovanni: '9664fb8c-b411-57aa-a704-f8ed151de0f0',
+  // Portuguese
+  camila: 'd51e3418-a9d3-5999-a06c-d7bb2be9b2d3',
+  lucas: 'c85aa079-c365-5f2b-9084-f722eeef9aa0',
+  rafael: 'c85aa079-c365-5f2b-9084-f722eeef9aa0',
+};
+
+const LANG_NAME_TO_ISO: Record<string, string> = {
+  english: 'en', en: 'en',
+  spanish: 'es', es: 'es',
+  french: 'fr', fr: 'fr',
+  german: 'de', de: 'de',
+  italian: 'it', it: 'it',
+  portuguese: 'pt', pt: 'pt',
+};
+
+/** Maps any persona voice name, slug, or UUID to a verified §2.4 AssemblyAI voice_id. */
+export function toAssemblyVoiceId(selected: string, lang?: string): string {
+  const raw = (selected || '').trim();
+  const iso = lang ? (LANG_NAME_TO_ISO[lang.toLowerCase().split('-')[0]] ?? lang.toLowerCase().split('-')[0]) : '';
+  if (iso && iso !== 'en' && FAST_NATIVE_VOICE[iso]) {
+    const mapped = VOICE_NAME_TO_ID[raw.toLowerCase()] ?? raw;
+    if (NON_ENGLISH_VOICE_KEYS.has(raw.toLowerCase()) && VALID_ASSEMBLY_VOICE_IDS.has(mapped)) {
+      return mapped;
+    }
+    return FAST_NATIVE_VOICE[iso];
+  }
+  if (VALID_ASSEMBLY_VOICE_IDS.has(raw)) return raw;
+  const lower = raw.toLowerCase();
+  if (VOICE_NAME_TO_ID[lower]) return VOICE_NAME_TO_ID[lower];
+  if (VALID_ASSEMBLY_VOICE_IDS.has(`aai-${lower}`)) return `aai-${lower}`;
+  return 'aai-anna';
+}
+
+/** The voice_id to open the TTS connection with: the person's pick when it speaks that language, else the language's native voice_id. */
 export function fastVoiceFor(selected: string, lang: string): string {
-  const native = FAST_NATIVE_VOICE[lang];
-  const isNative = Object.values(FAST_NATIVE_VOICE).includes(selected);
-  if (native) return native;
-  return isNative ? 'anna' : selected || 'anna';
+  const iso = LANG_NAME_TO_ISO[(lang || 'en').toLowerCase().split('-')[0]] ?? 'en';
+  const native = FAST_NATIVE_VOICE[iso];
+  if (native) return toAssemblyVoiceId(selected, iso);
+  const raw = (selected || '').trim().toLowerCase();
+  if (!raw || NON_ENGLISH_VOICE_KEYS.has(raw)) return 'aai-anna';
+  return toAssemblyVoiceId(raw, 'en');
 }
 export const FAST_TTS_LANGUAGE: Record<string, string> = { en: 'english', es: 'spanish', fr: 'french', de: 'german', it: 'italian', pt: 'portuguese' };
 /**
@@ -190,9 +337,15 @@ export class FastSocket {
   private gated = false;
   private held: Json[] = [];
   private captureOnly = false; // brain dump: hear and transcribe, but never answer
+  private keepAliveTimer: ReturnType<typeof setInterval> | undefined;
+  private ttsRotationTimer: ReturnType<typeof setTimeout> | undefined;
+  private ttsNeedsRotation = false;
+  private ttsReconnectAttempts = 0;
+  private sttTermResolve: (() => void) | null = null;
+  private ttsTermResolve: (() => void) | null = null;
 
   constructor(cfg: FastSocketConfig) {
-    this.cfg = { sampleRate: 24000, holdMs: 2200, interruptHoldMs: 900, warmUp: true, ...cfg };
+    this.cfg = { sampleRate: 16000, holdMs: 2200, interruptHoldMs: 900, warmUp: true, ...cfg };
     queueMicrotask(() => {
       this.readyState = FastSocket.OPEN;
       this.onopen?.();
@@ -200,6 +353,57 @@ export class FastSocket {
   }
 
   // ---- WebSocket-like surface -------------------------------------------------------------------------------------
+
+  /** Stream a raw text chunk into TTS preserving leading/trailing spaces, optionally followed by Flush. */
+  sendTtsChunk(text: string, flush = false): void {
+    if (!text || this.tts?.readyState !== WebSocket.OPEN) return;
+    this.resetKeepAliveTimer();
+    this.tts.send(JSON.stringify({ type: 'Generate', text }));
+    if (flush) {
+      this.sentFlushes++;
+      this.tts.send(JSON.stringify({ type: 'Flush' }));
+    }
+  }
+
+  /** Gracefully send Terminate on both sockets and wait up to 5 s for server Termination frames before closing. */
+  async terminateGracefully(timeoutMs = 5000): Promise<void> {
+    if (this.closed) return;
+    this.closed = true;
+    this.clearTtsTimers();
+    if (this.holdTimer) clearTimeout(this.holdTimer);
+    this.cancel();
+
+    const waitSocket = (s: WebSocket | TtsConnection | null, isTts: boolean): Promise<void> => {
+      if (!s || s.readyState !== WebSocket.OPEN) return Promise.resolve();
+      return new Promise<void>((resolve) => {
+        const timer = setTimeout(() => {
+          resolve();
+        }, timeoutMs);
+        const done = () => {
+          clearTimeout(timer);
+          resolve();
+        };
+        if (isTts) this.ttsTermResolve = done;
+        else this.sttTermResolve = done;
+        try {
+          s.send(JSON.stringify({ type: 'Terminate' }));
+        } catch {
+          done();
+        }
+      });
+    };
+
+    await Promise.all([waitSocket(this.stt, false), waitSocket(this.tts, true)]);
+    for (const s of [this.stt, this.tts]) {
+      try {
+        s?.close();
+      } catch {
+        // already gone
+      }
+    }
+    this.readyState = 3;
+    this.onclose?.();
+  }
 
   send(raw: string): void {
     let m: Json;
@@ -244,6 +448,7 @@ export class FastSocket {
   close(): void {
     if (this.closed) return;
     this.closed = true;
+    this.clearTtsTimers();
     if (this.holdTimer) clearTimeout(this.holdTimer);
     this.cancel();
     for (const s of [this.stt, this.tts]) {
@@ -256,6 +461,83 @@ export class FastSocket {
     }
     this.readyState = 3;
     this.onclose?.();
+  }
+
+  private clearTtsTimers(): void {
+    if (this.keepAliveTimer) {
+      clearInterval(this.keepAliveTimer);
+      this.keepAliveTimer = undefined;
+    }
+    if (this.ttsRotationTimer) {
+      clearTimeout(this.ttsRotationTimer);
+      this.ttsRotationTimer = undefined;
+    }
+  }
+
+  private resetKeepAliveTimer(): void {
+    if (this.keepAliveTimer) clearInterval(this.keepAliveTimer);
+    this.keepAliveTimer = setInterval(() => {
+      if (this.closed || !this.tts || this.tts.readyState !== WebSocket.OPEN) return;
+      try {
+        this.tts.send(JSON.stringify({ type: 'KeepAlive' }));
+      } catch {
+        // socket closing
+      }
+    }, 30_000);
+  }
+
+  private startTtsRotationTimer(): void {
+    if (this.ttsRotationTimer) clearTimeout(this.ttsRotationTimer);
+    this.ttsNeedsRotation = false;
+    this.ttsRotationTimer = setTimeout(() => {
+      this.ttsNeedsRotation = true;
+      if (!this.agentSpeaking && this.spoken === '') {
+        void this.rotateTtsSession();
+      }
+    }, 55 * 60 * 1000);
+  }
+
+  private async rotateTtsSession(): Promise<void> {
+    if (this.closed || !this.session) return;
+    this.ttsNeedsRotation = false;
+    const oldTts = this.tts;
+    this.clearTtsTimers();
+    try {
+      if (oldTts?.readyState === WebSocket.OPEN) {
+        oldTts.send(JSON.stringify({ type: 'Terminate' }));
+      }
+      oldTts?.close();
+    } catch {
+      // ignore
+    }
+    try {
+      await this.openTts();
+    } catch {
+      this.handleTtsUnexpectedClose(1006);
+    }
+  }
+
+  private handleTtsUnexpectedClose(code = 1006): void {
+    if (this.closed || !this.session) return;
+    this.clearTtsTimers();
+    if (this.ttsReconnectAttempts < 3) {
+      const attempt = ++this.ttsReconnectAttempts;
+      const delayMs = 200 * Math.pow(2, attempt - 1);
+      this.emit({ type: 'tts.reconnecting', attempt, code });
+      setTimeout(() => {
+        if (this.closed) return;
+        this.openTts()
+          .then(() => {
+            this.ttsReconnectAttempts = 0;
+            this.emit({ type: 'tts.reconnected' });
+          })
+          .catch(() => {
+            this.handleTtsUnexpectedClose(code);
+          });
+      }, delayMs);
+      return;
+    }
+    this.emit({ type: 'tts.unavailable', code, message: 'AssemblyAI TTS connection lost after 3 retries; STT remains active.' });
   }
 
   // ---- internals --------------------------------------------------------------------------------------------------
@@ -281,11 +563,14 @@ export class FastSocket {
   }
 
   private async start(session: Json): Promise<void> {
+    const rawLang = String((session as Json).tts_language || 'english').toLowerCase();
+    const ttsLanguage = FAST_TTS_LANGUAGE[rawLang] ?? (Object.values(FAST_TTS_LANGUAGE).includes(rawLang) ? rawLang : 'english');
+    const rawVoice = String((session.output as Json | undefined)?.voice || 'anna');
     this.session = {
       systemPrompt: String(session.system_prompt || ''),
       greeting: String(session.greeting || ''),
-      voice: String((session.output as Json | undefined)?.voice || 'anna'),
-      ttsLanguage: String((session as Json).tts_language || 'english'),
+      voice: toAssemblyVoiceId(rawVoice, ttsLanguage),
+      ttsLanguage,
       tools: Array.isArray(session.tools) && session.tools.length > 0,
     };
     try {
@@ -300,29 +585,66 @@ export class FastSocket {
 
   private openStt(): Promise<void> {
     return new Promise((resolve, reject) => {
-      const q = new URLSearchParams({ sample_rate: String(this.cfg.sampleRate), encoding: 'pcm_s16le', speech_model: 'universal-3-6-pro', token: this.cfg.sttToken });
+      const preset = this.cfg.endpointingMode ? ENDPOINTING_PRESETS[this.cfg.endpointingMode] : ENDPOINTING_PRESETS.coaching;
+      const q = new URLSearchParams({
+        sample_rate: String(this.cfg.sampleRate),
+        encoding: 'pcm_s16le',
+        speech_model: 'universal-3-6-pro',
+        min_turn_silence: String(preset?.min_turn_silence ?? 128),
+        max_turn_silence: String(preset?.max_turn_silence ?? 1280),
+        vad_threshold: '0.2',
+        language_detection: 'true',
+        token: this.cfg.sttToken,
+      });
       const terms = (this.cfg.keyterms ?? []).filter((t) => t.length > 2 && t.length <= 50).slice(0, 100);
       if (terms.length > 0) q.set('keyterms_prompt', JSON.stringify(terms));
-      if (this.cfg.endpointingMode && ENDPOINTING_PRESETS[this.cfg.endpointingMode]) {
-        const preset = ENDPOINTING_PRESETS[this.cfg.endpointingMode];
-        q.set('end_of_turn_confidence_threshold', String(preset.end_of_turn_confidence_threshold));
-        q.set('min_turn_silence', String(preset.min_turn_silence));
-        q.set('max_turn_silence', String(preset.max_turn_silence));
-      }
       // benchmark hook: extra turn-detection query parameters, e.g. 'min_turn_silence=50' (debug flag only)
       const g = globalThis as { __stayFastDebug?: boolean; __stayFastSttExtra?: string };
-      if (g.__stayFastDebug && g.__stayFastSttExtra) for (const [k, v] of new URLSearchParams(g.__stayFastSttExtra)) q.set(k, v);
+      if (g.__stayFastDebug && g.__stayFastSttExtra) {
+        for (const [k, v] of new URLSearchParams(g.__stayFastSttExtra)) {
+          if (k !== 'end_of_turn_confidence_threshold' && k !== 'format_turns' && k !== 'prompt') {
+            q.set(k, v);
+          }
+        }
+      }
       const ws = new WebSocket(`${STT_URL}?${q}`);
       this.stt = ws;
+      let begun = false;
+      const beginTimer = setTimeout(() => {
+        if (!begun) reject(new Error('stt_begin_timeout'));
+      }, 5000);
       ws.onmessage = (e) => {
         if (typeof e.data !== 'string') return;
-        const m = JSON.parse(e.data) as Json;
-        if (m.type === 'Begin') resolve();
-        else if (m.type === 'Turn') this.onTurn(m);
-        else if (m.type === 'Error') this.fail('stt_error');
+        let m: Json;
+        try {
+          m = JSON.parse(e.data) as Json;
+        } catch {
+          return;
+        }
+        if (m.type === 'Begin') {
+          begun = true;
+          clearTimeout(beginTimer);
+          resolve();
+        } else if (m.type === 'SpeechStarted') {
+          this.emit({ type: 'input.speech.started', timestamp: m.timestamp, source: 'vad' });
+        } else if (m.type === 'Turn') {
+          this.onTurn(m);
+        } else if (m.type === 'Termination') {
+          this.sttTermResolve?.();
+          this.sttTermResolve = null;
+        } else if (m.type === 'Error') {
+          clearTimeout(beginTimer);
+          this.fail('stt_error');
+        }
       };
-      ws.onerror = () => reject(new Error('stt'));
+      ws.onerror = () => {
+        clearTimeout(beginTimer);
+        reject(new Error('stt'));
+      };
       ws.onclose = () => {
+        clearTimeout(beginTimer);
+        this.sttTermResolve?.();
+        this.sttTermResolve = null;
         if (!this.closed) this.fail('stt_closed');
       };
     });
@@ -331,42 +653,99 @@ export class FastSocket {
   private openTts(): Promise<void> {
     return new Promise((resolve, reject) => {
       const s = this.session as FastSession;
-      const q = new URLSearchParams({ token: this.cfg.ttsToken, voice: s.voice, language: s.ttsLanguage, encoding: 'pcm_s16le', sample_rate: '24000' });
+      const voiceId = toAssemblyVoiceId(s.voice, s.ttsLanguage);
+      const q = new URLSearchParams({
+        token: this.cfg.ttsToken,
+        model_id: 'assemblyai-tts-1',
+        voice_id: voiceId,
+        language: s.ttsLanguage,
+        encoding: 'pcm_s16le',
+        sample_rate: '24000',
+      });
       const ws: WebSocket | TtsConnection = this.cfg.ttsConnect ? this.cfg.ttsConnect() : new WebSocket(`${TTS_URL}?${q}`);
       this.tts = ws;
+      let begun = false;
+      const beginTimer = setTimeout(() => {
+        if (!begun) reject(new Error('tts_begin_timeout'));
+      }, 5000);
       ws.onmessage = (e: { data: unknown }) => {
         if (typeof e.data !== 'string') return;
-        const m = JSON.parse(e.data) as Json;
-        if (m.type === 'Begin') resolve();
-        else if (m.type === 'Audio' && typeof m.audio === 'string') this.onTtsAudio(m);
-        else if (m.type === 'FlushDone') this.onFlushDone(Number(m.flush_id));
-        else if (m.type === 'WordBoundaries' && Array.isArray(m.words)) this.onWordBoundaries(m.words as Array<Record<string, unknown>>);
-        else if (m.type === 'Cancelled') this.staleCancels = Math.max(0, this.staleCancels - 1);
-        else if (m.type === 'Error') this.fail('tts_error');
+        let m: Json;
+        try {
+          m = JSON.parse(e.data) as Json;
+        } catch {
+          return;
+        }
+        if (m.type === 'Begin') {
+          begun = true;
+          clearTimeout(beginTimer);
+          const cfg = m.configuration as { unknown_params?: unknown[] } | undefined;
+          if (cfg && Array.isArray(cfg.unknown_params) && cfg.unknown_params.length > 0) {
+            this.emit({ type: 'tts.warning', unknown_params: cfg.unknown_params });
+          }
+          this.resetKeepAliveTimer();
+          this.startTtsRotationTimer();
+          resolve();
+        } else if (m.type === 'Audio' && typeof m.audio === 'string') {
+          this.onTtsAudio(m);
+        } else if (m.type === 'FlushDone') {
+          this.onFlushDone(Number(m.flush_id));
+        } else if (m.type === 'WordBoundaries' && Array.isArray(m.words)) {
+          this.onWordBoundaries(m);
+        } else if (m.type === 'Cancelled') {
+          this.staleCancels = Math.max(0, this.staleCancels - 1);
+        } else if (m.type === 'Termination') {
+          this.ttsTermResolve?.();
+          this.ttsTermResolve = null;
+        } else if (m.type === 'Error') {
+          clearTimeout(beginTimer);
+          if (!begun) reject(new Error(String(m.error || 'tts_error')));
+          else this.handleTtsUnexpectedClose(Number(m.error_code ?? 3006));
+        }
       };
-      ws.onerror = () => reject(new Error('tts'));
-      ws.onclose = () => {
-        if (!this.closed) this.fail('tts_closed');
+      ws.onerror = () => {
+        clearTimeout(beginTimer);
+        if (!begun) reject(new Error('tts'));
+      };
+      ws.onclose = (ev?: { code?: number }) => {
+        clearTimeout(beginTimer);
+        this.ttsTermResolve?.();
+        this.ttsTermResolve = null;
+        if (!this.closed) {
+          if (!begun) reject(new Error('tts_closed'));
+          else this.handleTtsUnexpectedClose(ev?.code ?? 1006);
+        }
       };
     });
   }
 
-  private onWordBoundaries(rawWords: Array<Record<string, unknown>>): void {
+  private onWordBoundaries(m: Json): void {
+    const rawWords = Array.isArray(m.words) ? (m.words as Array<Record<string, unknown>>) : [];
     if (this.staleCancels > 0 || rawWords.length === 0) return;
-    const firstStart = Number(rawWords[0]?.start ?? 0);
-    const lastEnd = Number(rawWords[rawWords.length - 1]?.end ?? 0);
+    const audioStartMs = typeof m.audio_start_ms === 'number' ? m.audio_start_ms : 0;
+    const usesStartMs = rawWords[0]?.start_ms !== undefined;
+    const firstRawStart = usesStartMs
+      ? Number(rawWords[0]?.start_ms ?? 0) - audioStartMs
+      : Number(rawWords[0]?.start ?? 0);
+    const lastRawEnd = usesStartMs
+      ? Number(rawWords[rawWords.length - 1]?.end_ms ?? 0) - audioStartMs
+      : Number(rawWords[rawWords.length - 1]?.end ?? 0);
     const isSeconds =
+      !usesStartMs &&
       rawWords.some((w) => !Number.isInteger(Number(w.start ?? 0)) || !Number.isInteger(Number(w.end ?? 0))) &&
-      lastEnd < 120;
+      lastRawEnd < 120;
     const scale = isSeconds ? 1000 : 1;
-    if (firstStart * scale < this.lastWordEndMs && this.lastWordEndMs > 0) {
+    if (firstRawStart * scale < this.lastWordEndMs && this.lastWordEndMs > 0) {
       this.wordBoundaryOffsetMs = this.lastWordEndMs + 60;
     }
     const aligned = rawWords.map((w) => {
-      const start = Math.round(Number(w.start ?? 0) * scale) + this.wordBoundaryOffsetMs;
-      const end = Math.max(start + 40, Math.round(Number(w.end ?? start) * scale) + this.wordBoundaryOffsetMs);
+      const rStart = usesStartMs ? Number(w.start_ms ?? 0) - audioStartMs : Number(w.start ?? 0);
+      const rEnd = usesStartMs ? Number(w.end_ms ?? rStart) - audioStartMs : Number(w.end ?? rStart);
+      const start = Math.max(0, Math.round(rStart * scale) + this.wordBoundaryOffsetMs);
+      const end = Math.max(start + 40, Math.round(rEnd * scale) + this.wordBoundaryOffsetMs);
       this.lastWordEndMs = Math.max(this.lastWordEndMs, end);
-      return { text: String(w.text ?? ''), start, end };
+      const wordText = String(w.word ?? w.text ?? '');
+      return { word: wordText, text: wordText, start, end, start_ms: start, end_ms: end };
     });
     this.emit({ type: 'word.boundaries', words: aligned, reply_id: this.genId });
   }
@@ -561,6 +940,7 @@ export class FastSocket {
     this.spoken += (this.spoken ? ' ' : '') + text;
     this.sentFlushes++;
     this.mark('gen');
+    this.resetKeepAliveTimer();
     this.tts.send(JSON.stringify({ type: 'Generate', text }));
     this.tts.send(JSON.stringify({ type: 'Flush' }));
   }
@@ -578,8 +958,18 @@ export class FastSocket {
     this.lastWordEndMs = 0;
     this.agentSpeaking = false;
     this.history = [...this.history, { role: 'assistant' as const, content: text }].slice(-MAX_HISTORY);
+    if (this.stt?.readyState === WebSocket.OPEN) {
+      try {
+        this.stt.send(JSON.stringify({ type: 'UpdateConfiguration', agent_context: text.slice(0, 1750) }));
+      } catch {
+        // ignore if closing
+      }
+    }
     this.emit({ type: 'transcript.agent', text, item_id: `a-${Date.now()}` });
     this.emit({ type: 'reply.done' });
+    if (this.ttsNeedsRotation) {
+      void this.rotateTtsSession();
+    }
   }
 
   private speakOnly(text: string): void {

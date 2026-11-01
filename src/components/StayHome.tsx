@@ -41,6 +41,7 @@ import { runAgenticAction } from '@/lib/voice/agenticActions';
 import { TodayCard } from '@/components/TodayCard';
 import { GeminiLiveVoiceVisualizer } from '@/components/voice/GeminiLiveVoiceVisualizer';
 import { LiveChatBox } from '@/components/voice/LiveChatBox';
+import { TransportBadge } from '@/components/voice/TransportBadge';
 import { loadActiveSession, saveActiveSession } from '@/lib/coach/activeSession';
 import { RoutineSheet } from '@/components/RoutineSheet';
 import { ReminderSheet } from '@/components/ReminderSheet';
@@ -778,6 +779,14 @@ export function StayHome({
   return (
     <div className="mx-auto flex min-h-[calc(100dvh-11rem)] w-full max-w-xl flex-col items-center justify-between gap-4 pb-2 sm:min-h-[calc(100dvh-9rem)]">
       <h1 className="sr-only">Stay</h1>
+
+      <div className="flex w-full items-center justify-end px-1 pt-1">
+        <TransportBadge
+          transport={voice.transportInfo}
+          isConnected={voice.isConnected}
+          replyTimes={voice.replyTimes}
+        />
+      </div>
 
       <div className="flex w-full flex-1 flex-col items-center">
        <div className="my-auto flex w-full flex-col items-center gap-3">

@@ -2,7 +2,7 @@
 
 import { byokHeaders } from '@/lib/byok/config';
 import { ContinuousPcmPlayer } from '@/lib/voice/playback/continuousPlayback';
-import { FastSocket, FAST_TTS_LANGUAGE } from '@/lib/voice/fastSocket';
+import { FastSocket, FAST_TTS_LANGUAGE, toAssemblyVoiceId } from '@/lib/voice/fastSocket';
 import {
   computeProgressiveCaption,
   transitionConversationState,
@@ -76,6 +76,32 @@ import {
 } from '@/lib/voice/generativeShapeEngine';
 
 export type OrbColorTheme = 'default' | 'aurora' | 'sunset' | 'ocean' | 'cyber' | 'emerald';
+
+export interface VoiceTransportInfo {
+  mode: 'assemblyai' | 'backup' | 'device' | 'text_only';
+  label: string;
+  reason?: string;
+  sttModel: string;
+  ttsModel: string;
+  voiceId: string;
+  sttSampleRate: number;
+  ttsSampleRate: number;
+  lastCloseCode: number | null;
+}
+
+export function isStrictTransportEnabled(): boolean {
+  if (process.env.NEXT_PUBLIC_STAY_STRICT_TRANSPORT === '1') return true;
+  if (typeof window !== 'undefined') {
+    const w = window as unknown as { __STAY_STRICT_TRANSPORT?: boolean };
+    if (w.__STAY_STRICT_TRANSPORT === true) return true;
+    try {
+      if (window.localStorage.getItem('stay_strict_transport') === '1') return true;
+    } catch {
+      // ignore
+    }
+  }
+  return false;
+}
 
 export interface VoiceTranscriptEntry {
   id: string;
@@ -627,8 +653,18 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   // Fast voice (beta): own speech-to-text + chat model + text-to-speech instead of the managed Voice Agent.
   const [fastVoice, setFastVoiceState] = useState(true);
   const fastVoiceRef = useRef(true);
-  const fastDisabledRef = useRef(false); // set when fast voice failed this page session: the managed agent takes over
+  const fastDisabledRef = useRef(false);
   const [voiceEngine, setVoiceEngine] = useState<'fast' | 'agent' | null>(null);
+  const [transportInfo, setTransportInfo] = useState<VoiceTransportInfo>({
+    mode: 'assemblyai',
+    label: 'AssemblyAI voice',
+    sttModel: 'universal-3-6-pro',
+    ttsModel: 'assemblyai-tts-1',
+    voiceId: 'aai-anna',
+    sttSampleRate: 16000,
+    ttsSampleRate: 24000,
+    lastCloseCode: null,
+  });
   useEffect(() => {
     try {
       const on = window.localStorage.getItem('stay_fast_voice') !== '0'; // fast voice is the default; '0' means the person turned it off
@@ -1997,11 +2033,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     }
 
     try {
-      // 1. Request microphone with hardware echo cancellation, noise suppression, single-channel isolation, and auto gain
+      // 1. Request microphone with hardware echo cancellation, noise suppression, single-channel isolation, and auto gain at 16 kHz
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           channelCount: 1,
-          sampleRate: { ideal: 24000 },
+          sampleRate: { ideal: 16000 },
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
@@ -2052,23 +2088,21 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       // which detects the spoken language itself.
       const uiLang = selectedLanguageRef.current === 'auto' ? (typeof navigator !== 'undefined' ? navigator.language : 'en') : selectedLanguageRef.current;
       const fastLangBase = (uiLang || 'en').split('-')[0].toLowerCase();
-      let useFast = fastVoiceRef.current && !fastDisabledRef.current && Boolean(FAST_TTS_LANGUAGE[fastLangBase]);
+      const useFast = fastVoiceRef.current && Boolean(FAST_TTS_LANGUAGE[fastLangBase]);
       const speech = planSpeech(selectedVoiceRef.current, fastLangBase, cachedTtsCaps());
       const longQuery = companionRef.current ? '?long=1' : '';
-      let tokenRes = await fetch(`/api/voice/${useFast ? 'fast-token' : 'token'}${longQuery}`, {
+      const tokenRes = await fetch(`/api/voice/${useFast ? 'fast-token' : 'token'}${longQuery}`, {
         method: 'POST',
         headers: byokHeaders(),
       });
-      if (useFast && !tokenRes.ok) {
-        const code = String(((await tokenRes.clone().json().catch(() => ({}))) as { code?: string }).code || '');
-        // out of allowance or a bad own key: say so. Anything else (provider down): quietly use the managed agent instead.
-        if (!['quota', 'invalid_user_key', 'rate_limited'].includes(code)) {
-          useFast = false;
-          tokenRes = await fetch(`/api/voice/token${longQuery}`, { method: 'POST', headers: byokHeaders() });
-        }
-      }
       if (!tokenRes.ok) {
         const errBody = await tokenRes.json().catch(() => ({}));
+        setTransportInfo((prev) => ({
+          ...prev,
+          mode: 'text_only',
+          label: 'Text only',
+          reason: String(errBody.code || 'token_unavailable'),
+        }));
         throw new Error(
           errBody.error ||
             'Voice session token unavailable. You can continue immediately in Quiet Text Mode.'
@@ -2076,7 +2110,61 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       }
       const tokenJson = (await tokenRes.json()) as { token?: string; agentId?: string; wsUrl?: string; sttToken?: string; ttsToken?: string };
 
-      // 4. Connect: either the managed Voice Agent socket, or fast voice (same events, built from STT + chat model + TTS)
+      const resolvedTtsLang = FAST_TTS_LANGUAGE[fastLangBase] || 'english';
+      const resolvedVoiceId = useFast
+        ? toAssemblyVoiceId(speech.assemblyVoice, resolvedTtsLang)
+        : agentVoiceFor(selectedVoiceRef.current);
+
+      if (useFast) {
+        if (speech.ref.engine === 'assemblyai') {
+          setTransportInfo({
+            mode: 'assemblyai',
+            label: speech.fellBack ? `AssemblyAI voice (${speech.fellBack})` : 'AssemblyAI voice',
+            reason: speech.fellBack,
+            sttModel: 'universal-3-6-pro',
+            ttsModel: 'assemblyai-tts-1',
+            voiceId: resolvedVoiceId,
+            sttSampleRate: 16000,
+            ttsSampleRate: 24000,
+            lastCloseCode: null,
+          });
+        } else if (speech.ref.engine === 'browser') {
+          setTransportInfo({
+            mode: 'device',
+            label: `Device voice (${speech.ref.locale || uiLang})`,
+            sttModel: 'universal-3-6-pro',
+            ttsModel: 'window.speechSynthesis',
+            voiceId: speech.browserVoiceName || speech.ref.locale,
+            sttSampleRate: 16000,
+            ttsSampleRate: 24000,
+            lastCloseCode: null,
+          });
+        } else {
+          setTransportInfo({
+            mode: 'backup',
+            label: `Backup voice — Azure (${speech.ref.locale})`,
+            sttModel: 'universal-3-6-pro',
+            ttsModel: 'azure-neural',
+            voiceId: speech.ref.voice,
+            sttSampleRate: 16000,
+            ttsSampleRate: 24000,
+            lastCloseCode: null,
+          });
+        }
+      } else {
+        setTransportInfo({
+          mode: 'backup',
+          label: 'Backup voice — Managed agent',
+          sttModel: 'universal-3-6-pro',
+          ttsModel: 'assemblyai-agent',
+          voiceId: resolvedVoiceId,
+          sttSampleRate: 16000,
+          ttsSampleRate: 24000,
+          lastCloseCode: null,
+        });
+      }
+
+      // 4. Connect: either the managed Voice Agent socket (when explicitly selected in E2E), or fast voice (default)
       const socket: WebSocket = useFast
         ? (new FastSocket({ sttToken: tokenJson.sttToken || '', ttsToken: tokenJson.ttsToken || '', keyterms: appKeyterms(), ttsConnect: speech.ref.engine === 'assemblyai' ? undefined : () => createTtsConnection(speech.ref, speech.browserVoiceName)! }) as unknown as WebSocket)
         : new WebSocket(`${tokenJson.wsUrl}?token=${encodeURIComponent(tokenJson.token || '')}`);
@@ -2581,18 +2669,80 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           return;
         }
 
+        if (type === 'tts.reconnecting') {
+          setTransportInfo((prev) => ({
+            ...prev,
+            mode: 'backup',
+            label: `Backup voice — reconnecting TTS (${String(msg.attempt || 1)}/3)`,
+            lastCloseCode: Number(msg.code ?? 1006),
+          }));
+          return;
+        }
+
+        if (type === 'tts.reconnected') {
+          setTransportInfo((prev) => ({
+            ...prev,
+            mode: 'assemblyai',
+            label: 'AssemblyAI voice',
+            reason: undefined,
+          }));
+          return;
+        }
+
+        if (type === 'tts.unavailable') {
+          const closeCode = Number(msg.code ?? 1006);
+          if (isStrictTransportEnabled()) {
+            setTransportInfo((prev) => ({
+              ...prev,
+              mode: 'text_only',
+              label: 'Text only',
+              reason: `TTS closed (${closeCode})`,
+              lastCloseCode: closeCode,
+            }));
+            setErrorMessage(`AssemblyAI TTS connection closed (${closeCode}) in strict transport mode.`);
+            disconnectVoiceSession();
+            return;
+          }
+          setTransportInfo((prev) => ({
+            ...prev,
+            mode: 'device',
+            label: `Backup voice — TTS closed (${closeCode})`,
+            reason: String(msg.message || 'AssemblyAI TTS unavailable'),
+            lastCloseCode: closeCode,
+          }));
+          return;
+        }
+
         if (type === 'session.error' && socket instanceof FastSocket) {
-          console.warn('fast voice failed, switching to the managed voice agent', msg.code);
-          fastDisabledRef.current = true;
+          const code = String(msg.code || 'connection_failed');
+          setTransportInfo((prev) => ({
+            ...prev,
+            mode: 'text_only',
+            label: 'Text only',
+            reason: code,
+          }));
+          setErrorMessage(`AssemblyAI voice connection interrupted (${code}). Text mode is ready, or tap Talk to reconnect.`);
           disconnectVoiceSession();
-          window.setTimeout(() => restartVoiceRef.current?.(), 200);
+          setVisualState('error');
           return;
         }
 
         if (type === 'session.error') {
           const code = String(msg.code || msg.error_code || '');
           if (FATAL_SESSION_ERRORS.has(code) || !sessionReadyRef.current) {
-            console.warn('AssemblyAI session cannot continue; using browser speech recognition', code);
+            if (isStrictTransportEnabled()) {
+              setTransportInfo((prev) => ({ ...prev, mode: 'text_only', label: 'Text only', reason: code }));
+              setErrorMessage(`Voice session failed (${code}).`);
+              disconnectVoiceSession();
+              setVisualState('error');
+              return;
+            }
+            setTransportInfo((prev) => ({
+              ...prev,
+              mode: 'device',
+              label: `Device voice (${selectedLanguageRef.current === 'auto' ? 'browser' : selectedLanguageRef.current})`,
+              reason: code,
+            }));
             if (!speechRecRef.current) startNativeSpeechRecognition();
           } else {
             console.warn('AssemblyAI non-fatal session error ignored', code, msg.message);
@@ -2767,6 +2917,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     fastVoice,
     setFastVoice,
     voiceEngine,
+    transportInfo,
     availableVoices: AVAILABLE_VOICES,
     topicShape,
     setTopicShape,

@@ -26,18 +26,19 @@ export async function POST(req: NextRequest) {
   const key = hasUserKey ? userKey : getNextAssemblyAiKey() || process.env.ASSEMBLYAI_API_KEY;
   if (!key) return NextResponse.json({ code: 'quota', error: 'Server voice credentials are not configured. Add your own AssemblyAI key in Settings, or use Quiet Text Mode.' }, { status: 503 });
 
-  // three-hour sessions only on the person's own allowance; the shared one is capped at 30 minutes (all-day mode renews)
+  // three-hour sessions only on the person's own allowance; default max_session_duration_seconds is 3600
   const long = req.nextUrl.searchParams.get('long') === '1' && hasUserKey;
-  const url = `https://streaming.assemblyai.com/v3/token?expires_in_seconds=120&max_session_duration_seconds=${long ? 10800 : 1800}`;
+  const sttUrl = `https://streaming.assemblyai.com/v3/token?expires_in_seconds=60&max_session_duration_seconds=${long ? 10800 : 3600}`;
+  const ttsUrl = `https://token.us.assemblyai.com/v1/token?product=tts&expires_in_seconds=60&max_session_duration_seconds=3600`;
   try {
-    const mint = async () => {
-      const r = await fetch(url, { headers: { Authorization: key }, cache: 'no-store' });
+    const mint = async (targetUrl: string) => {
+      const r = await fetch(targetUrl, { headers: { Authorization: key }, cache: 'no-store' });
       if (!r.ok) throw Object.assign(new Error('mint'), { status: r.status });
       return ((await r.json()) as { token?: string }).token;
     };
-    const [sttToken, ttsToken] = await Promise.all([mint(), mint()]);
+    const [sttToken, ttsToken] = await Promise.all([mint(sttUrl), mint(ttsUrl)]);
     if (!sttToken || !ttsToken) return NextResponse.json({ error: 'Invalid token response from voice provider.' }, { status: 502 });
-    return NextResponse.json({ sttToken, ttsToken, keySource: hasUserKey ? 'user' : 'server' }, { headers: { 'Cache-Control': 'no-store, max-age=0' } });
+    return NextResponse.json({ sttToken, ttsToken, keySource: hasUserKey ? 'user' : 'server' }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (e) {
     const status = (e as { status?: number }).status;
     if (status && [401, 402, 403, 429].includes(status)) {

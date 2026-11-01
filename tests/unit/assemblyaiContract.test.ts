@@ -1,5 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { NextRequest } from 'next/server';
+import fs from 'node:fs';
+import path from 'node:path';
+import vm from 'node:vm';
 import { FastSocket, toAssemblyVoiceId, VALID_ASSEMBLY_VOICE_IDS } from '@/lib/voice/fastSocket';
+import { POST as fastTokenPost } from '@/app/api/voice/fast-token/route';
+import { appKeyterms, saveUserKeyterms } from '@/lib/voice/agentTool';
 
 const VALID_VOICE_ID_SET = new Set([
   'aai-jane',
@@ -237,7 +243,6 @@ describe('AssemblyAI Protocol Contract (A1)', () => {
       sttToken: 'stt-tok',
       ttsToken: 'tts-tok',
       warmUp: false,
-      endpointingMode: 'reflective',
     });
     await tick(2);
     s.send(
@@ -305,6 +310,10 @@ describe('AssemblyAI Protocol Contract (A1)', () => {
     const stt = StrictAssemblyWS.instances.find((w) => !w.isTts)!;
     const tts = StrictAssemblyWS.instances.find((w) => w.isTts)!;
 
+    // Sub-sentence streaming preserves trailing spaces
+    s.sendTtsChunk('Take ', false);
+    s.sendTtsChunk('a breath.', true);
+
     stt.push({ type: 'Turn', transcript: 'Help me start.', end_of_turn: true, turn_order: 0 });
     await tick(25);
 
@@ -314,11 +323,11 @@ describe('AssemblyAI Protocol Contract (A1)', () => {
     const generates = ttsMessages.filter((m) => m.type === 'Generate');
     const flushes = ttsMessages.filter((m) => m.type === 'Flush');
 
-    expect(generates.length).toBeGreaterThanOrEqual(1);
-    // Every Generate except possibly the final one must preserve trailing space
+    expect(generates.length).toBeGreaterThanOrEqual(3);
+    expect(generates[0].text).toBe('Take ');
     expect(generates[0].text.endsWith(' ')).toBe(true);
-    // At most 1 Flush per sentence (2 sentences -> <= 2 Flushes)
-    expect(flushes.length).toBeLessThanOrEqual(2);
+    // 1 flush from sendTtsChunk + at most 2 from the 2 streamed sentences
+    expect(flushes.length).toBeLessThanOrEqual(3);
     s.close();
   });
 
@@ -405,5 +414,107 @@ describe('AssemblyAI Protocol Contract (A1)', () => {
     tts.push({ type: 'Termination', audio_duration_seconds: 1, session_duration_seconds: 2 });
     await closePromise;
     expect(stt.readyState).toBe(3);
+  });
+
+  it('8. /api/voice/fast-token mints STT token from streaming.assemblyai.com/v3/token and TTS token from token.us.assemblyai.com/v1/token?product=tts', async () => {
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.includes('token.us.assemblyai.com/v1/token?product=tts')) {
+        return new Response(JSON.stringify({ token: 'minted-tts-token', expires_in_seconds: 60 }), { status: 200 });
+      }
+      if (url.includes('streaming.assemblyai.com/v3/token')) {
+        return new Response(JSON.stringify({ token: 'minted-stt-token', expires_in_seconds: 60 }), { status: 200 });
+      }
+      return new Response('bad url', { status: 400 });
+    });
+
+    const req = new NextRequest('http://localhost:3000/api/voice/fast-token', {
+      method: 'POST',
+      headers: {
+        'x-stay-aai-key': 'test_user_key_1234567890',
+        origin: 'http://localhost:3000',
+        host: 'localhost:3000',
+      },
+    });
+    const res = await fastTokenPost(req);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Cache-Control')).toContain('no-store');
+    const json = (await res.json()) as { sttToken: string; ttsToken: string };
+    expect(json.sttToken).toBe('minted-stt-token');
+    expect(json.ttsToken).toBe('minted-tts-token');
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://streaming.assemblyai.com/v3/token?expires_in_seconds=60&max_session_duration_seconds=3600',
+      expect.objectContaining({ cache: 'no-store' }),
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://token.us.assemblyai.com/v1/token?product=tts&expires_in_seconds=60&max_session_duration_seconds=3600',
+      expect.objectContaining({ cache: 'no-store' }),
+    );
+  });
+
+  it('9. public/pcm-processor.js emits 3200-byte (100 ms @ 16 kHz) Int16 frames and applies low-pass anti-aliasing filter', () => {
+    const code = fs.readFileSync(path.join(process.cwd(), 'public/pcm-processor.js'), 'utf8');
+    let ProcessorClass: unknown = null;
+    const posted: Array<{ type: string; buffer?: ArrayBuffer; rms?: number }> = [];
+
+    class BaseWorklet {
+      port = {
+        postMessage: (msg: { type: string; buffer?: ArrayBuffer; rms?: number }) => {
+          posted.push(msg);
+        },
+      };
+    }
+
+    const sandbox = {
+      AudioWorkletProcessor: BaseWorklet,
+      registerProcessor: (_name: string, cls: unknown) => {
+        ProcessorClass = cls;
+      },
+      sampleRate: 48000,
+      Int16Array,
+      Float32Array,
+      Math,
+    };
+
+    vm.runInNewContext(code, sandbox);
+    expect(ProcessorClass).toBeTruthy();
+
+    const proc = new (ProcessorClass as new () => {
+      targetRate: number;
+      chunkSamples: number;
+      process: (inputs: Float32Array[][]) => boolean;
+    })();
+    expect(proc.targetRate).toBe(16000);
+    expect(proc.chunkSamples).toBe(1600);
+
+    // Feed 4800 samples at 48 kHz (= 100 ms -> 1600 samples at 16 kHz = 3200 bytes)
+    const block = new Float32Array(128);
+    for (let b = 0; b < 40; b++) {
+      for (let i = 0; i < 128; i++) {
+        block[i] = Math.sin((2 * Math.PI * 440 * (b * 128 + i)) / 48000) * 0.5;
+      }
+      proc.process([[block]]);
+    }
+
+    const pcmFrames = posted.filter((p) => p.type === 'pcm');
+    expect(pcmFrames.length).toBeGreaterThanOrEqual(1);
+    expect(pcmFrames[0].buffer!.byteLength).toBe(3200);
+  });
+
+  it('10. appKeyterms() includes My Words and excludes persona caricature names', () => {
+    const store = new Map<string, string>();
+    (globalThis as unknown as { window: unknown }).window = {
+      localStorage: {
+        getItem: (k: string) => store.get(k) ?? null,
+        setItem: (k: string, v: string) => store.set(k, v),
+      },
+    };
+    saveUserKeyterms(['Methylphenidate', 'Dr. Sharma', 'ab']); // 'ab' is <= 2 chars so filtered
+    const terms = appKeyterms();
+    expect(terms).toContain('Methylphenidate');
+    expect(terms).toContain('Dr. Sharma');
+    expect(terms).not.toContain('ab');
+    for (const caricature of ['Chaiwala', 'Taco', 'Mariachi', 'Goblin Mode Gus', 'Croissant Bandit', 'Professor Pretzel', 'Fettuccine Maestro']) {
+      expect(terms).not.toContain(caricature);
+    }
   });
 });

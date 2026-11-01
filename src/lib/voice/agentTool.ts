@@ -87,13 +87,56 @@ export function buildGreeting(persona: VoicePersona, memory: UserMemoryProfile, 
   return `${persona.name} here. What are you putting off?`;
 }
 
+export const USER_KEYTERMS_STORAGE_KEY = 'stay:keyterms:v1';
+
+export function loadUserKeyterms(): string[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = window.localStorage.getItem(USER_KEYTERMS_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((t): t is string => typeof t === 'string')
+      .map((t) => t.trim())
+      .filter((t) => t.length > 2 && t.length <= 50)
+      .slice(0, 100);
+  } catch {
+    return [];
+  }
+}
+
+export function saveUserKeyterms(terms: string[]): string[] {
+  const cleaned = Array.from(
+    new Set(
+      terms
+        .filter((t): t is string => typeof t === 'string')
+        .map((t) => t.trim())
+        .filter((t) => t.length > 2 && t.length <= 50),
+    ),
+  ).slice(0, 100);
+  if (typeof window !== 'undefined') {
+    try {
+      window.localStorage.setItem(USER_KEYTERMS_STORAGE_KEY, JSON.stringify(cleaned));
+    } catch {
+      // ignore storage errors
+    }
+  }
+  return cleaned;
+}
+
 export function appKeyterms(): string[] {
-  return [
-    'Stay', 'ADHD', 'micro-step', 'parking lot', 'brain dump', 'wall of awful', 'two-minute timer',
-    'step next', 'wrap up', 'park it', 'rejection sensitivity', 'Cardamom', 'Chaiwala', 'Taco', 'Mariachi',
-    'Lady Lavender', 'Captain Crumpet', 'Biscuit Blitz', 'Marmite Sprocket', 'Waffle Wizard',
-    'Countdown Cookie', 'Porch Light', 'Pancake Paladin', 'Arcade Gremlin', 'Velvet Scalpel',
-    'Pumpkin Pixel', 'Lantern Iris', 'Compass Reid', 'Couch Rocket', 'Croissant Bandit',
-    'Professor Pretzel', 'Fettuccine Maestro', 'Goblin Mode Gus',
+  const userTerms = loadUserKeyterms();
+  const baseTerms = [
+    'Stay',
+    'ADHD',
+    'micro-step',
+    'parking lot',
+    'brain dump',
+    'two-minute timer',
+    'step next',
+    'wrap up',
+    'park it',
   ];
+  return Array.from(new Set([...userTerms, ...baseTerms])).slice(0, 100);
 }
