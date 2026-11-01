@@ -47,7 +47,7 @@ export function runSwarm120(): DeterministicSafetyCase[] {
       input,
       passed: res.triggered === true,
       latency_ms: null,
-      detail: res.triggered ? `Triggered (${res.category})` : 'Missed crisis signal',
+      detail: res.triggered ? 'Triggered crisis safety gate' : 'Missed crisis signal',
     });
   });
 

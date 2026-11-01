@@ -997,8 +997,7 @@ export class FastSocket {
       this.lastWordEndMs = 0;
     }
     const s = this.session as FastSession;
-    const system = this.systemText();
-    const messages: ChatMessage[] = [{ role: 'system', content: system }, ...this.history, ...(extraInstruction ? [{ role: 'system' as const, content: extraInstruction }] : [])];
+    const messages: ChatMessage[] = [...this.history];
 
     let res: Response;
     this.mark('req');
@@ -1006,7 +1005,14 @@ export class FastSocket {
       res = await fetch('/api/voice/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...byokHeaders() },
-        body: JSON.stringify({ messages, withTools: s.tools && !toolFollowUp }),
+        body: JSON.stringify({
+          messages,
+          withTools: s.tools && !toolFollowUp,
+          context: {
+            language: s.ttsLanguage,
+            notes: this.notes.slice(-4),
+          },
+        }),
         signal: ctl.signal,
       });
     } catch {

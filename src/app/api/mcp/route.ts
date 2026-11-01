@@ -1,8 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { buildDeterministicFirstStep } from '@/lib/coach/strategies';
 import { fallbackTriage } from '@/lib/coach/triage';
+import { attachGuardHeaders, guardPaidRoute, readBoundedJson } from '@/lib/security/apiGuard';
 
 export const runtime = 'nodejs';
+
+function checkAgentAuth(req: NextRequest): NextResponse | null {
+  const configuredToken = process.env.STAY_AGENT_API_TOKEN?.trim();
+  const requireAuth =
+    Boolean(configuredToken) ||
+    req.headers.get('x-stay-require-agent-auth') === '1' ||
+    process.env.NODE_ENV === 'production';
+
+  if (!requireAuth) return null;
+
+  const authHeader = req.headers.get('authorization')?.trim() || '';
+  const expected = configuredToken ? `Bearer ${configuredToken}` : '';
+  if (!expected || authHeader !== expected) {
+    return NextResponse.json(
+      { jsonrpc: '2.0', id: null, error: { code: -32001, message: 'Unauthorized: valid Bearer token required.' } },
+      { status: 401 }
+    );
+  }
+  return null;
+}
 
 interface McpTool {
   name: string;
@@ -55,26 +76,40 @@ const MCP_TOOLS: McpTool[] = [
 ];
 
 export async function POST(req: NextRequest) {
+  const guard = guardPaidRoute(req, 'agent');
+  if (!guard.ok && guard.response) return guard.response;
+
+  const authErr = checkAgentAuth(req);
+  if (authErr) return authErr;
+
   try {
-    const body = await req.json();
+    const parsedBody = await readBoundedJson<Record<string, any>>(req, 32_768);
+    if (!parsedBody.ok) return parsedBody.response;
+    const body = parsedBody.data;
     const { jsonrpc, id, method, params } = body || {};
 
     if (jsonrpc !== '2.0') {
-      return NextResponse.json(
-        { jsonrpc: '2.0', id: id ?? null, error: { code: -32600, message: 'Invalid Request: jsonrpc must be 2.0' } },
-        { status: 400 }
+      return attachGuardHeaders(
+        NextResponse.json(
+          { jsonrpc: '2.0', id: id ?? null, error: { code: -32600, message: 'Invalid Request: jsonrpc must be 2.0' } },
+          { status: 400 }
+        ),
+        guard
       );
     }
 
     // 1. tools/list
     if (method === 'tools/list') {
-      return NextResponse.json({
-        jsonrpc: '2.0',
-        id,
-        result: {
-          tools: MCP_TOOLS,
-        },
-      });
+      return attachGuardHeaders(
+        NextResponse.json({
+          jsonrpc: '2.0',
+          id,
+          result: {
+            tools: MCP_TOOLS,
+          },
+        }),
+        guard
+      );
     }
 
     // 2. tools/call
@@ -83,26 +118,29 @@ export async function POST(req: NextRequest) {
       const args = params?.arguments || {};
 
       if (toolName === 'break_down_task') {
-        const taskText = String(args.taskText || 'start task');
+        const taskText = String(args.taskText || 'start task').slice(0, 500);
         const strategy = args.strategy || 'task_shrinking';
         const step = buildDeterministicFirstStep(taskText, strategy);
-        return NextResponse.json({
-          jsonrpc: '2.0',
-          id,
-          result: {
-            content: [
-              {
-                type: 'text',
-                text: JSON.stringify({
-                  firstStep: step,
-                  strategyUsed: strategy,
-                  suggestedMinutes: 2,
-                  whyThisFits: 'Reduces dopamine activation threshold to overcome ADHD task initiation paralysis.',
-                }),
-              },
-            ],
-          },
-        });
+        return attachGuardHeaders(
+          NextResponse.json({
+            jsonrpc: '2.0',
+            id,
+            result: {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify({
+                    firstStep: step,
+                    strategyUsed: strategy,
+                    suggestedMinutes: 2,
+                    whyThisFits: 'Shrinks the opening move into a concrete 2-minute physical step to lower initiation friction.',
+                  }),
+                },
+              ],
+            },
+          }),
+          guard
+        );
       }
 
       if (toolName === 'triage_brain_dump') {

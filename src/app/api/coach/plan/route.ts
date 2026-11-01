@@ -17,23 +17,27 @@ import {
 } from '@/lib/safety/crisis';
 import { compressPromptForTokenEfficiency } from '@/lib/voice/tokenOptimizer';
 import { callLlm, llmHeaders } from '@/lib/llm/provider';
+import { attachGuardHeaders, guardPaidRoute, readBoundedJson } from '@/lib/security/apiGuard';
 import type { CoachPlanProposal } from '@/types/domain';
 
 export async function POST(req: NextRequest) {
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON request body.' }, { status: 400 });
-  }
+  const guard = guardPaidRoute(req, 'coach');
+  if (!guard.ok && guard.response) return guard.response;
+
+  const parsedBody = await readBoundedJson(req, 32_768);
+  if (!parsedBody.ok) return parsedBody.response;
+  const body = parsedBody.data;
 
   const parsedReq = CoachPlanRequestSchema.safeParse(body);
   if (!parsedReq.success) {
-    return NextResponse.json(
-      {
-        error: parsedReq.error.issues[0]?.message || 'Please enter a valid task description.',
-      },
-      { status: 400 }
+    return attachGuardHeaders(
+      NextResponse.json(
+        {
+          error: parsedReq.error.issues[0]?.message || 'Please enter a valid task description.',
+        },
+        { status: 400 }
+      ),
+      guard
     );
   }
 

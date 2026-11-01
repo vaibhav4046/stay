@@ -1,18 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { detectCrisisSignal, detectMedicationAdviceRequest } from '@/lib/safety/crisis';
-import { APP_TOOL } from '@/lib/voice/agentTool';
+import { APP_TOOL, buildServerVoiceSystemPrompt } from '@/lib/voice/agentTool';
 import { llmHeaders } from '@/lib/llm/provider';
 import { openLlmStream } from '@/lib/llm/stream';
 import { resolveDeterministicVoice, createDeterministicSseResponse } from '@/lib/voice/deterministicVoiceFallback';
+import { attachGuardHeaders, guardPaidRoute, readBoundedJson } from '@/lib/security/apiGuard';
 
-const Message = z.object({
-  role: z.enum(['system', 'user', 'assistant', 'tool']),
+const MAX_HISTORY_TURNS = 20;
+const MAX_HISTORY_BYTES = 8_192;
+
+const ClientMessageSchema = z.object({
+  role: z.enum(['user', 'assistant', 'tool']),
   content: z.string().max(4000).nullable().optional(),
   tool_calls: z.array(z.unknown()).max(4).optional(),
   tool_call_id: z.string().max(80).optional(),
 });
-const Body = z.object({ messages: z.array(Message).min(1).max(40), withTools: z.boolean().optional() });
+
+const ContextSchema = z
+  .object({
+    language: z.string().max(32).optional(),
+    notes: z.array(z.string().max(300)).max(4).optional(),
+  })
+  .optional();
+
+const BodySchema = z.object({
+  messages: z.array(ClientMessageSchema).min(1).max(MAX_HISTORY_TURNS),
+  withTools: z.boolean().optional(),
+  context: ContextSchema,
+});
 
 /** Warm-up: the voice session calls this when it starts so the first real turn does not pay for a cold function. */
 export async function GET() {
@@ -113,32 +129,100 @@ function createResilientStream(incoming: ReadableStream<Uint8Array>, lastUser: s
 
 /** Fast voice brain: streams the model's reply (and at most one app tool call). The safety gates run before any model. */
 export async function POST(req: NextRequest) {
-  const parsed = Body.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: 'Bad request.' }, { status: 400 });
-  const { messages, withTools } = parsed.data;
+  const guard = guardPaidRoute(req, 'chat');
+  if (!guard.ok && guard.response) return guard.response;
 
-  const lastUser = [...messages].reverse().find((m) => m.role === 'user')?.content || '';
-  if (detectCrisisSignal(lastUser).triggered) return NextResponse.json({ safety: 'crisis' });
-  if (detectMedicationAdviceRequest(lastUser).triggered) return NextResponse.json({ safety: 'medication' });
+  const bodyRes = await readBoundedJson(req, 32_768);
+  if (!bodyRes.ok) return bodyRes.response;
 
-  const tools = withTools === false ? undefined : [{ type: 'function', function: { name: APP_TOOL.name, description: APP_TOOL.description, parameters: APP_TOOL.parameters } }];
+  const parsed = BodySchema.safeParse(bodyRes.data);
+  if (!parsed.success) {
+    return attachGuardHeaders(
+      NextResponse.json(
+        { error: 'Bad request: only user/assistant/tool roles allowed (max 20 turns).' },
+        { status: 400 }
+      ),
+      guard
+    );
+  }
+  const { messages: clientMessages, withTools, context } = parsed.data;
+
+  const totalHistoryBytes = Buffer.byteLength(
+    clientMessages.map((m) => m.content || '').join('\n'),
+    'utf8'
+  );
+  if (totalHistoryBytes > MAX_HISTORY_BYTES) {
+    return attachGuardHeaders(
+      NextResponse.json(
+        { error: `Conversation history exceeds ${MAX_HISTORY_BYTES} bytes.` },
+        { status: 413 }
+      ),
+      guard
+    );
+  }
+
+  const lastUser = [...clientMessages].reverse().find((m) => m.role === 'user')?.content || '';
+  if (detectCrisisSignal(lastUser).triggered) {
+    return attachGuardHeaders(NextResponse.json({ safety: 'crisis' }), guard);
+  }
+  if (detectMedicationAdviceRequest(lastUser).triggered) {
+    return attachGuardHeaders(NextResponse.json({ safety: 'medication' }), guard);
+  }
+
+  const serverSystemPrompt = buildServerVoiceSystemPrompt(context);
+  const outboundMessages = [
+    { role: 'system' as const, content: serverSystemPrompt },
+    ...clientMessages,
+  ];
+
+  const tools =
+    withTools === false
+      ? undefined
+      : [
+          {
+            type: 'function',
+            function: {
+              name: APP_TOOL.name,
+              description: APP_TOOL.description,
+              parameters: APP_TOOL.parameters,
+            },
+          },
+        ];
   const r = await openLlmStream(req, {
-    messages,
+    messages: outboundMessages,
     tools,
     maxTokens: 75,
     temperature: 0.5,
     serverModel: process.env.GROQ_VOICE_MODEL || 'openai/gpt-oss-120b',
     timeoutMs: 6000,
   });
-  const hdr = llmHeaders({ ok: Boolean(r.res), text: '', source: r.source, error: r.error, userKeyError: r.userKeyError });
+  const hdr = llmHeaders({
+    ok: Boolean(r.res),
+    text: '',
+    source: r.source,
+    error: r.error,
+    userKeyError: r.userKeyError,
+  });
   if (!r.res) {
-    const isExplicitConfigError = r.userKeyError === 'invalid_key' || r.userKeyError === 'bad_endpoint';
+    const isExplicitConfigError =
+      r.userKeyError === 'invalid_key' || r.userKeyError === 'bad_endpoint';
     if (!isExplicitConfigError) {
       const fallbackResult = resolveDeterministicVoice(lastUser);
       return createDeterministicSseResponse(fallbackResult);
     }
-    return NextResponse.json({ error: r.error || 'unavailable' }, { status: 502, headers: hdr });
+    return attachGuardHeaders(
+      NextResponse.json({ error: r.error || 'unavailable' }, { status: 502, headers: hdr }),
+      guard
+    );
   }
   const stream = createResilientStream(r.res.body as ReadableStream<Uint8Array>, lastUser);
-  return new Response(stream, { headers: { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-store', ...(r.timing ? { 'Server-Timing': r.timing } : {}), ...hdr } });
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-store',
+      ...(guard.setCookieHeader ? { 'Set-Cookie': guard.setCookieHeader } : {}),
+      ...(r.timing ? { 'Server-Timing': r.timing } : {}),
+      ...hdr,
+    },
+  });
 }

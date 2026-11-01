@@ -34,7 +34,7 @@ async function openStream(t: LlmTarget, call: LlmStreamCall, timings?: string[])
     const res = await fetch(`${t.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${t.key}`, 'Content-Type': 'application/json' },
-      redirect: 'manual',
+      redirect: 'error',
       body: JSON.stringify({
         model: t.model,
         messages: call.messages,

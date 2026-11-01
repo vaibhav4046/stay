@@ -4,6 +4,7 @@ import { normalizeConceptKey } from '@/lib/orb/lexicon';
 import { isSingleEmoji } from '@/lib/orb/points';
 import { callLlm } from '@/lib/llm/provider';
 import { detectCrisisSignal, detectMedicationAdviceRequest } from '@/lib/safety/crisis';
+import { attachGuardHeaders, guardPaidRoute, readBoundedJson } from '@/lib/security/apiGuard';
 
 /**
  * Shape service: maps up to three keywords to the single emoji that best depicts them.
@@ -16,24 +17,22 @@ const SYSTEM =
   'You pick emoji. Given a concept, reply with exactly ONE emoji that best depicts it as a concrete object, animal, place or symbol. ' +
   'Prefer a literal picture over a face or a gesture. Reply with the emoji only, nothing else.';
 
-const hits = new Map<string, number[]>();
-function allow(ip: string): boolean {
-  const now = Date.now();
-  const recent = (hits.get(ip) || []).filter((t) => now - t < 60_000);
-  if (recent.length >= 40) return false;
-  recent.push(now);
-  hits.set(ip, recent);
-  return true;
-}
-
 const cache = new Map<string, string>();
 
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'local';
-  if (!allow(ip)) return NextResponse.json({ error: 'Too many shape requests.' }, { status: 429 });
+  const guard = guardPaidRoute(req, 'orb');
+  if (!guard.ok && guard.response) return guard.response;
 
-  const parsed = BodySchema.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: 'Send up to three keywords.' }, { status: 400 });
+  const bodyRes = await readBoundedJson(req, 32_768);
+  if (!bodyRes.ok) return bodyRes.response;
+
+  const parsed = BodySchema.safeParse(bodyRes.data);
+  if (!parsed.success) {
+    return attachGuardHeaders(
+      NextResponse.json({ error: 'Send up to three keywords.' }, { status: 400 }),
+      guard
+    );
+  }
 
   const keywords = parsed.data.keywords.map((k) => k.toLowerCase().replace(/[^\p{L}\p{N} -]/gu, '').trim()).filter(Boolean);
   if (keywords.length === 0) return NextResponse.json({ error: 'Send up to three keywords.' }, { status: 400 });

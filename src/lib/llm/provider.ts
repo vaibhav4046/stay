@@ -32,36 +32,87 @@ export interface LlmTarget {
 
 export const GROQ_BASE = 'https://api.groq.com/openai/v1';
 const PRIVATE_V4 = /^(0\.|10\.|127\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.)/;
+const BLOCKED_HOST_SUFFIXES = [
+  '.localhost',
+  '.local',
+  '.internal',
+  '.nip.io',
+  '.sslip.io',
+  '.xip.io',
+  '.localtest.me',
+];
+const BLOCKED_EXACT_HOSTS = new Set([
+  'localhost',
+  'localtest.me',
+  'metadata',
+  'metadata.google.internal',
+  'metadata.goog',
+  'instance-data',
+]);
 
-/** https only, no credentials in the URL, and never a loopback, private-range, link-local or internal host. */
+/** https only, no credentials in the URL, and never a loopback, private-range, link-local, hex/octal IP, or internal host. */
 export function safeBaseUrl(raw: string): string | null {
+  if (typeof raw !== 'string') return null;
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  // Reject raw URL strings whose authority attempts hex/octal/integer IP encoding before URL normalization
+  const rawHostMatch = trimmed.match(/^https:\/\/([^/:?#]+)/i);
+  if (rawHostMatch) {
+    const rawHost = rawHostMatch[1].toLowerCase();
+    if (/^(0x[0-9a-f]+|0[0-7]+|\d+)$/i.test(rawHost)) return null;
+    if (rawHost.split('.').every((part) => /^(0x[0-9a-f]+|0[0-7]+|\d+)$/i.test(part))) return null;
+  }
+
   let u: URL;
   try {
-    u = new URL(raw.trim());
+    u = new URL(trimmed);
   } catch {
     return null;
   }
   const host = u.hostname.toLowerCase();
   if (u.protocol !== 'https:' || u.username || u.password) return null;
-  if (host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local') || host.endsWith('.internal') || !host.includes('.')) return null;
+  if (BLOCKED_EXACT_HOSTS.has(host) || !host.includes('.')) return null;
+  if (BLOCKED_HOST_SUFFIXES.some((sfx) => host.endsWith(sfx))) return null;
   if (host.startsWith('[') || /^\d+\.\d+\.\d+\.\d+$/.test(host)) return null; // IP literals are never a real provider
+  if (host.split('.').every((part) => /^(0x[0-9a-f]+|\d+)$/i.test(part))) return null;
   if (PRIVATE_V4.test(host)) return null;
   return `${u.origin}${u.pathname.replace(/\/+$/, '')}`;
 }
 
-/** True for loopback, private, link-local, CGNAT, benchmarking, multicast and reserved addresses, v4 and v6. Unparseable means unsafe. */
+/** True for loopback, private, link-local, CGNAT, benchmarking, multicast, Teredo, 6to4, and mapped addresses, v4 and v6. Unparseable means unsafe. */
 export function isPrivateIp(ip: string): boolean {
-  const v = ip.toLowerCase();
+  const v = ip.trim().toLowerCase();
+  if (!v) return true;
   if (v.includes(':')) {
-    if (v === '::' || v === '::1') return true;
-    const mapped = v.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
-    if (mapped) return isPrivateIp(mapped[1]);
-    return /^(fc|fd|fe[89ab]|ff)/.test(v);
+    if (v === '::' || v === '::1' || v === '0:0:0:0:0:0:0:0' || v === '0:0:0:0:0:0:0:1') return true;
+    const mappedQuad = v.match(/^(?:::ffff:|0:0:0:0:0:ffff:)(\d+\.\d+\.\d+\.\d+)$/);
+    if (mappedQuad) return isPrivateIp(mappedQuad[1]);
+    const mappedHex = v.match(/^(?:::ffff:|0:0:0:0:0:ffff:)([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
+    if (mappedHex) {
+      const hi = parseInt(mappedHex[1], 16);
+      const lo = parseInt(mappedHex[2], 16);
+      const v4 = `${(hi >> 8) & 0xff}.${hi & 0xff}.${(lo >> 8) & 0xff}.${lo & 0xff}`;
+      return isPrivateIp(v4);
+    }
+    // Teredo (2001:0000::/32), 6to4 (2002::/16), Documentation (2001:db8::/32), Unique local (fc00::/7), Link-local (fe80::/10), Multicast (ff00::/8)
+    if (/^(fc|fd|fe[89ab]|ff|2001:0*:|2001:db8:|2002:|::ffff:)/.test(v)) return true;
+    return false;
   }
+  if (!/^\d+\.\d+\.\d+\.\d+$/.test(v)) return true;
   const p = v.split('.').map(Number);
   if (p.length !== 4 || p.some((n) => !Number.isInteger(n) || n < 0 || n > 255)) return true;
   const [a, b] = p;
-  return a === 0 || a === 10 || a === 127 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127) || (a === 198 && (b === 18 || b === 19)) || a >= 224;
+  return (
+    a === 0 ||
+    a === 10 ||
+    a === 127 ||
+    (a === 169 && b === 254) ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 168) ||
+    (a === 100 && b >= 64 && b <= 127) ||
+    (a === 198 && (b === 18 || b === 19)) ||
+    a >= 224
+  );
 }
 
 const PRESET_HOSTS = new Set(['api.groq.com', 'api.mistral.ai', 'api.openai.com']);
@@ -71,19 +122,29 @@ const dnsCache = new Map<string, { ok: boolean; at: number }>();
  * A public-looking name can still resolve to a private address (localtest.me, 127.0.0.1.nip.io, a rebinding domain).
  * Before a request goes to someone else's address, resolve it and refuse if any answer is private.
  */
-export async function resolvesPublic(host: string): Promise<boolean> {
-  if (PRESET_HOSTS.has(host)) return true;
-  const hit = dnsCache.get(host);
-  if (hit && Date.now() - hit.at < 60_000) return hit.ok;
+export async function resolvesPublic(
+  host: string,
+  customLookup?: (hostname: string) => Promise<Array<{ address: string }>>
+): Promise<boolean> {
+  const cleanHost = host.trim().toLowerCase();
+  if (PRESET_HOSTS.has(cleanHost)) return true;
+  if (!customLookup) {
+    const hit = dnsCache.get(cleanHost);
+    if (hit && Date.now() - hit.at < 60_000) return hit.ok;
+  }
   let ok = false;
   try {
-    const answers = await lookup(host, { all: true });
+    const answers = customLookup
+      ? await customLookup(cleanHost)
+      : await lookup(cleanHost, { all: true });
     ok = answers.length > 0 && answers.every((a) => !isPrivateIp(a.address));
   } catch {
     ok = false;
   }
-  dnsCache.set(host, { ok, at: Date.now() });
-  if (dnsCache.size > 500) dnsCache.delete(dnsCache.keys().next().value as string);
+  if (!customLookup) {
+    dnsCache.set(cleanHost, { ok, at: Date.now() });
+    if (dnsCache.size > 500) dnsCache.delete(dnsCache.keys().next().value as string);
+  }
   return ok;
 }
 
@@ -130,7 +191,7 @@ async function post(t: LlmTarget, call: LlmCall): Promise<{ ok: boolean; status:
     const res = await fetch(`${t.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${t.key}`, 'Content-Type': 'application/json' },
-      redirect: 'manual', // a provider that redirects is not a provider; never follow into another host
+      redirect: 'error', // a provider that redirects is not a provider; never follow into another host
       body: JSON.stringify({
         model: t.model,
         messages: call.messages,
