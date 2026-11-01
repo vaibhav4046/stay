@@ -1,6 +1,7 @@
 'use client';
 
 import { useReveal } from './useReveal';
+import { CURRENT } from './currentMeasured';
 import { LANGS_NO, LANGS_OK, MEASURED, PAUSE, SPAN_CARDS, STAY_BEHIND, TALKED_OVER, WHO_LABEL, type SpanCard, type Who } from './resultsData';
 
 const pct = (v: number, scale: number) => `${Math.min(100, (v / scale) * 100)}%`;
@@ -135,6 +136,24 @@ export function Results() {
   const { ref, state } = useReveal<HTMLDivElement>(0.12);
   return (
     <div ref={ref} data-reveal={state}>
+      <div className="lp-rhead" data-testid="measured-now">
+        <h3 className="sub-title">Measured on this build, {CURRENT.date}</h3>
+        <p className="lp-night-copy">
+          Real AssemblyAI, run by <code>scripts/measure-voice.mjs</code> at commit {CURRENT.gitSha}: {CURRENT.clips} synthetic-speech clips streamed in real time through Universal-3.6 Pro. Numbers are read from the evidence file, not typed in.
+        </p>
+        <ul className="lp-behind-list">
+          <li>Words wrong in {CURRENT.englishN} English sentences across American, British, Indian, Australian and Irish voices: {CURRENT.englishWer}.</li>
+          <li>Language detected correctly: {CURRENT.langCorrect} (English, Spanish, French, German, Italian, Portuguese).</li>
+          <li>First words on screen: {CURRENT.firstPartialMs} ms after speech starts (95th percentile {CURRENT.firstPartialP95} ms).</li>
+          <li>Final transcript: {CURRENT.finalMs} ms after speech ends (95th percentile {CURRENT.finalP95} ms).</li>
+          <li>Voice starts {CURRENT.ttsFirstAudioMs} ms after the text is sent (95th percentile {CURRENT.ttsFirstAudioP95} ms).</li>
+          <li>Hard names ({CURRENT.namesN} sentences): {CURRENT.namesPlain} of words wrong, {CURRENT.namesBoosted} once they are in My words.</li>
+        </ul>
+        <p className="lp-limits">
+          Limits: {CURRENT.limits.join('; ')}. Not measured: {CURRENT.notMeasured.join('; ')}.
+        </p>
+      </div>
+
       <div className="lp-rhead">
         <h3 className="sub-title" data-testid="vs-products">Next to ChatGPT voice and Gemini Live, same day, same script</h3>
         <p className="lp-night-copy">

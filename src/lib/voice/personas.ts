@@ -75,19 +75,19 @@ export const PERSONAS: VoicePersona[] = [
     voices: [azure('en-IN-NeerjaNeural', 'en', 'en-IN', 'Indian English'), browser('en', 'en-IN', 'Indian English')],
   }),
   make({
-    id: 'chaiwala', name: 'Andrew', aliases: ['Chaiwala Blitz', 'Andrew'], gender: 'male', voiceLabel: 'upbeat, Indian English voice',
-    style: 'Quick and upbeat. Encourages two-minute sprints.', shape: 'bolt',
-    voices: [azure('en-IN-PrabhatNeural', 'en', 'en-IN', 'Indian English'), browser('en', 'en-IN', 'Indian English')],
+    id: 'chaiwala', name: 'Andrew', aliases: ['Chaiwala Blitz', 'Andrew'], gender: 'male', voiceLabel: 'calm, Indian English (AssemblyAI)',
+    style: 'Calm and steady. Encourages two-minute sprints.', shape: 'bolt',
+    voices: [aai('chaiwala', 'en', 'en-IN', 'Indian English'), azure('en-IN-PrabhatNeural', 'en', 'en-IN', 'Indian English'), browser('en', 'en-IN', 'Indian English')],
   }),
   make({
-    id: 'taco', name: 'Constanza', aliases: ['Taco Tornado', 'Constanza'], gender: 'female', voiceLabel: 'warm, Mexican Spanish voice',
+    id: 'taco', name: 'Constanza', aliases: ['Taco Tornado', 'Constanza'], gender: 'female', voiceLabel: 'warm, Mexican Spanish (AssemblyAI)',
     style: 'Warm coach. Helps you start in Mexican Spanish.', shape: 'rocket', recommended: true,
-    voices: [azure('es-MX-DaliaNeural', 'es', 'es-MX', 'Mexican Spanish'), browser('es', 'es-MX', 'Mexican Spanish')],
+    voices: [aai('taco', 'es', 'es-MX', 'Mexican Spanish'), azure('es-MX-DaliaNeural', 'es', 'es-MX', 'Mexican Spanish'), browser('es', 'es-MX', 'Mexican Spanish')],
   }),
   make({
-    id: 'mariachi', name: 'Mateo', aliases: ['Mariachi Metronome', 'Mateo'], gender: 'male', voiceLabel: 'steady, Mexican Spanish voice',
+    id: 'mariachi', name: 'Mateo', aliases: ['Mariachi Metronome', 'Mateo'], gender: 'male', voiceLabel: 'steady, Mexican Spanish (AssemblyAI)',
     style: 'Steady rhythm. Keeps you moving one step at a time.', shape: 'note',
-    voices: [azure('es-MX-JorgeNeural', 'es', 'es-MX', 'Mexican Spanish'), browser('es', 'es-MX', 'Mexican Spanish')],
+    voices: [aai('mariachi', 'es', 'es-MX', 'Mexican Spanish'), azure('es-MX-JorgeNeural', 'es', 'es-MX', 'Mexican Spanish'), browser('es', 'es-MX', 'Mexican Spanish')],
   }),
 ];
 

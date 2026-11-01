@@ -191,8 +191,8 @@ export async function POST(req: NextRequest) {
   const r = await openLlmStream(req, {
     messages: outboundMessages,
     tools,
-    maxTokens: 75,
-    temperature: 0.5,
+    maxTokens: 110, // room for 2 to 4 spoken sentences; the first sentence still streams to the voice at once
+    temperature: 0.7,
     serverModel: process.env.GROQ_VOICE_MODEL || 'openai/gpt-oss-120b',
     timeoutMs: 6000,
   });

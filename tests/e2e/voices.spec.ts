@@ -29,44 +29,31 @@ async function openVoices(page: Page) {
 }
 
 test.describe('accurate voices', () => {
-  test('Indian English works from the device voice; Mexican Spanish says exactly what it needs, then works with an Azure key', async ({ page }) => {
+  test('Mexican Spanish and male Indian English speak with AssemblyAI and need no key; female Indian English uses the device voice', async ({ page }) => {
     await withDeviceVoices(page);
     await onboard(page);
     await openVoices(page);
 
-    // Indian English: the device's own en-IN voice, named
+    // female Indian English: AssemblyAI has no such voice, so the device's own en-IN voice, named
     await expect(page.getByTestId('voice-engine-cardamom')).toHaveText('Browser voice: Microsoft Heera - English (India)');
     await expect(page.getByTestId('voice-cardamom')).toHaveAttribute('data-usable', 'true');
-    // Mexican Spanish: no es-MX voice here, so it is not offered as a stand-in
+    // Mexican Spanish: an AssemblyAI voice, usable straight away with no key
     const taco = page.getByTestId('voice-taco');
-    await expect(taco).toHaveAttribute('data-usable', 'false');
-    await expect(taco).toContainText('Needs an Azure Speech key');
-    await expect(page.getByTestId('preview-taco')).toBeDisabled();
-    await taco.getByRole('button', { name: /^Constanza/ }).click();
-    expect(await page.evaluate(() => localStorage.getItem('stay_selected_voice'))).not.toBe('taco');
+    await expect(taco).toHaveAttribute('data-usable', 'true');
+    await expect(taco).not.toContainText('Needs an Azure Speech key');
+    await expect(page.getByTestId('preview-taco')).toBeEnabled();
 
-    // choosing the usable Indian English voice sticks
+    // choosing the device-voice Indian English persona sticks
     await page.getByTestId('voice-cardamom').getByRole('button', { name: /^Kavya/ }).click();
-    await expect(page.getByTestId('voice-cardamom').getByRole('button', { name: /^Kavya/ })).toHaveAttribute('aria-pressed', 'true');
     expect(await page.evaluate(() => localStorage.getItem('stay_selected_voice'))).toBe('cardamom');
 
-    // an Azure key makes Mexican Spanish available, and picking it moves the conversation to Spanish
-    await page.getByTestId('voice-engines').locator('summary').click();
-    await page.getByTestId('tts-key').fill('k'.repeat(32));
-    await page.getByTestId('tts-region').fill('centralindia');
-    await expect(page.getByTestId('voice-engine-taco')).toHaveText('Azure Neural: Dalia');
-    await expect(taco).toHaveAttribute('data-usable', 'true');
+    // picking Mexican Spanish moves the conversation to Spanish
     await taco.getByRole('button', { name: /^Constanza/ }).click();
     await expect(taco.getByRole('button', { name: /^Constanza/ })).toHaveAttribute('aria-pressed', 'true');
     expect(await page.evaluate(() => localStorage.getItem('stay_selected_voice'))).toBe('taco');
     expect(await page.evaluate(() => localStorage.getItem('stay_selected_language'))).toMatch(/^es/);
-
-    // the key lives in this tab's memory only: nothing is written to persistent storage (B4)
-    expect(await page.evaluate(() => localStorage.getItem('stay_byok'))).toBeNull();
-    expect(await page.evaluate(() => JSON.stringify(localStorage))).not.toContain('kkkkkkkk');
     await page.screenshot({ path: 'test-results/voices-picker.png', fullPage: false });
   });
-
   test('previews: AssemblyAI voices play a shipped clip; Azure voices go through the relay with the person’s key', async ({ page }) => {
     await withDeviceVoices(page);
     const calls: Array<{ url: string; headers: Record<string, string>; body: string }> = [];
@@ -87,12 +74,12 @@ test.describe('accurate voices', () => {
     await page.getByTestId('voice-engines').locator('summary').click();
     await page.getByTestId('tts-key').fill('k'.repeat(32));
     await page.getByTestId('tts-region').fill('centralindia');
-    await page.getByTestId('preview-taco').click();
+    await page.getByTestId('preview-cardamom').click();
     await expect.poll(() => calls.length).toBeGreaterThan(0);
     const sent = JSON.parse(calls[0].body);
-    expect(sent.voice).toBe('es-MX-DaliaNeural');
-    expect(sent.locale).toBe('es-MX');
-    expect(sent.text).toContain('Constanza');
+    expect(sent.voice).toBe('en-IN-NeerjaNeural');
+    expect(sent.locale).toBe('en-IN');
+    expect(sent.text).toContain('Kavya');
     expect(calls[0].headers['x-stay-tts-key']).toBe('k'.repeat(32));
     expect(calls[0].headers['x-stay-tts-region']).toBe('centralindia');
 

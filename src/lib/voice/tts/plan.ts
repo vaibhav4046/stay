@@ -59,6 +59,10 @@ export function personaAfterLanguageChange(currentId: string, lang: string): str
 
 /** The AssemblyAI voice for the managed Voice Agent, which only knows AssemblyAI voices. */
 export function agentVoiceFor(personaId: string): string {
+  if (REGIONAL_VOICE_PERSONAS.has(personaId)) return DEFAULT_PERSONA_ID; // regional TTS-1 voices; the managed agent has not got them
   const ref = personaById(personaId).voices.find((v) => v.engine === 'assemblyai');
   return ref ? ref.voice : DEFAULT_PERSONA_ID;
 }
+
+/** Personas on a regional AssemblyAI-TTS-1 voice (Indian English, Mexican Spanish): only the fast path can speak them. */
+const REGIONAL_VOICE_PERSONAS = new Set(['chaiwala', 'taco', 'mariachi']);

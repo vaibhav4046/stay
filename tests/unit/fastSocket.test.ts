@@ -546,7 +546,7 @@ describe('FastSocket: auto language follows what the person speaks', () => {
   });
 
   it.each([
-    ['low confidence', 'es', 0.5, true],
+    ['low confidence (0.5)', 'es', 0.5, true],
     ['a language AssemblyAI TTS cannot speak', 'hi', 0.99, true],
     ['the same language as the session', 'en', 0.99, true],
     ['a pinned language (auto off)', 'es', 0.99, false],
@@ -556,5 +556,26 @@ describe('FastSocket: auto language follows what the person speaks', () => {
     stt.push(turn(code, conf));
     await tick(30);
     expect(ttsSockets().length).toBe(1);
+  });
+
+  it('a one- or two-word turn ("Hola.") never moves the voice, even when confidently Spanish', async () => {
+    fetchMock.mockResolvedValue(sse(text('Hi.')));
+    const { stt } = await open({ autoLanguage: true });
+    stt.push({ type: 'Turn', turn_order: 0, transcript: 'Hola.', end_of_turn: true, language_code: 'es', language_confidence: 0.99 });
+    await tick(30);
+    expect(ttsSockets().length).toBe(1);
+  });
+});
+describe('regional AssemblyAI voices', () => {
+  it('Indian English and Mexican Spanish personas resolve to their real AssemblyAI voices', () => {
+    expect(fastVoiceFor('chaiwala', 'en')).toBe('d9e70892-1ace-5638-b749-dd6a0ba44686'); // Andrew
+    expect(fastVoiceFor('taco', 'es')).toBe('2aadec9a-80cc-5181-a9fc-f2a9fda0cf50'); // Constanza
+    expect(fastVoiceFor('mariachi', 'es')).toBe('bff56a11-dc95-552e-a93a-59f68ca60b64'); // Antonio Luis
+  });
+  it('a Spanish-only voice never speaks English: it falls back to the default English voice', () => {
+    expect(fastVoiceFor('taco', 'en')).toBe('aai-anna');
+  });
+  it('an Indian English voice asked for Spanish speaks the native Spanish voice', () => {
+    expect(fastVoiceFor('chaiwala', 'es')).toBe('1a48e481-7f02-5e96-bb84-68fcac65c2b2');
   });
 });

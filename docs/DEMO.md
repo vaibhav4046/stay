@@ -31,7 +31,7 @@
   - Click the **Transport Badge** to reveal the diagnostics sheet: `streaming.assemblyai.com`, `universal-3-6-pro`, `tts.us.assemblyai.com`, `assemblyai-tts-1`.
 
 ### 0:40 – 1:00 | Multilingual Code-Switching & Accent Switching
-- **Action:** Open Voice and language and pick another voice (Adrienne, British, is AssemblyAI; the Indian English and Mexican Spanish voices use Azure or the device and are labelled that way), or speak Hinglish:
+- **Action:** Open Voice and language and pick another voice (Adrienne, British; Andrew, Indian English; and Constanza, Mexican Spanish, are all AssemblyAI voices; Kavya, female Indian English, uses Azure or the device and is labelled that way), or speak Hinglish:
   > "Mujhe taxes file karna hai lekin shuruat kahan se karun?"
 - **Visual Callout:**
   - Universal-3.6 Pro detects Hindi/Hinglish.

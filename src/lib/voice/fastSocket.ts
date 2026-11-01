@@ -75,6 +75,9 @@ export const VALID_ASSEMBLY_VOICE_IDS = new Set([
   'aai-anna',
   '478badc1-a7eb-5bef-b916-c6e51bd2771e', // Adrienne (en-GB)
   '1edcb3f4-d874-5c38-8839-8a29b854d294', // Aaron (en-GB)
+  'd9e70892-1ace-5638-b749-dd6a0ba44686', // Andrew (en-IN)
+  '2aadec9a-80cc-5181-a9fc-f2a9fda0cf50', // Constanza (es-MX)
+  'bff56a11-dc95-552e-a93a-59f68ca60b64', // Antonio Luis (es-MX)
   'aai-john',
   'aai-nicole',
   'aai-emily',
@@ -123,7 +126,7 @@ const NON_ENGLISH_VOICE_KEYS = new Set([
   'estelle', 'claire', 'henri',
   'juergen', 'greta', 'lukas',
   'giovanni', 'giulia', 'marco',
-  'rafael', 'camila', 'lucas',
+  'rafael', 'camila', 'lucas', 'taco', 'mariachi',
   ...Object.values(FAST_NATIVE_VOICE),
   '5db34b17-ccd6-542f-bb62-8b947a04947b',
   '94806d12-dfd6-5155-b951-2c60263fc3c2',
@@ -134,6 +137,9 @@ const NON_ENGLISH_VOICE_KEYS = new Set([
 
 const VOICE_NAME_TO_ID: Record<string, string> = {
   jane: 'aai-jane',
+  chaiwala: 'd9e70892-1ace-5638-b749-dd6a0ba44686', // Andrew (en-IN)
+  taco: '2aadec9a-80cc-5181-a9fc-f2a9fda0cf50', // Constanza (es-MX)
+  mariachi: 'bff56a11-dc95-552e-a93a-59f68ca60b64', // Antonio Luis (es-MX)
   anna: '478badc1-a7eb-5bef-b916-c6e51bd2771e', // Adrienne (en-GB)
   john: 'aai-john',
   george: 'aai-john',
@@ -876,9 +882,12 @@ export class FastSocket {
     this.detectedLang = base;
     const next = FAST_TTS_LANGUAGE[base];
     const confidence = typeof m.language_confidence === 'number' ? m.language_confidence : 1;
-    if (!this.cfg.autoLanguage || !this.session || !next || next === this.session.ttsLanguage || confidence < 0.8) return;
+    // measured on 1 Nov 2026: correct detections ranged from 0.65 to 0.999 on one-sentence clips, so 0.6; and a one- or two-word
+    // turn ("ok", "si") is too short to move the voice on
+    const words = String(m.transcript || '').trim().split(/\s+/).filter(Boolean).length;
+    if (!this.cfg.autoLanguage || !this.session || !next || next === this.session.ttsLanguage || confidence < 0.6 || words < 3) return;
     this.dropSpec(); // a reply prepared in the old language must not be adopted
-    this.session = { ...this.session, ttsLanguage: next, voice: toAssemblyVoiceId(this.session.rawVoice, next) };
+    this.session = { ...this.session, ttsLanguage: next, voice: fastVoiceFor(this.session.rawVoice, base) };
     this.emit({ type: 'tts.language', language: next, voice: this.session.voice });
     this.ttsSwitch = this.rotateTtsSession().finally(() => {
       this.ttsSwitch = null;

@@ -75,6 +75,10 @@ test('Clicking voice card container selects voice and arms it immediately', asyn
 });
 
 test('Clicking unusable voice card does not select it, shows setup explanation, and preserves prior voice', async ({ page }) => {
+  // Kavya (female Indian English) is the one voice that needs Azure or a device voice; give the device none so it is unusable
+  await page.addInitScript(() => {
+    window.speechSynthesis.getVoices = () => [] as unknown as SpeechSynthesisVoice[];
+  });
   await page.goto('/app/today');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
@@ -90,7 +94,7 @@ test('Clicking unusable voice card does not select it, shows setup explanation, 
   // Open More voices
   await page.getByTestId('voice-more').locator('summary').click();
 
-  // Find a voice that needs setup (e.g., mariachi without Azure key)
+  // Find a voice that needs setup (Kavya, with no Azure key and no en-IN device voice)
   const unusableCard = page.locator('.el-voice-card[data-usable="false"]').first();
   await expect(unusableCard).toBeVisible();
 

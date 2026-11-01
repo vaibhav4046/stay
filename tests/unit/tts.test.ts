@@ -90,19 +90,17 @@ describe('which voice is usable, and what is said when none is', () => {
     expect(none.needs).toMatch(/Azure/);
     expect(none.needs).toMatch(/en-IN/);
   });
-  it('Mexican Spanish is unavailable on this machine without a key, and available with one', () => {
-    const taco = personaById('taco');
-    expect(chooseVoice(taco, WIN).ref).toBeNull();
-    expect(chooseVoice(taco, AZ).ref?.voice).toBe('es-MX-DaliaNeural');
-    expect(chooseVoice(personaById('mariachi'), AZ).ref?.voice).toBe('es-MX-JorgeNeural');
-    expect(chooseVoice(personaById('chaiwala'), AZ).ref?.voice).toBe('en-IN-PrabhatNeural');
+  it('Mexican Spanish and male Indian English work with no key, on AssemblyAI; female Indian English still needs Azure or the device', () => {
+    for (const id of ['taco', 'mariachi', 'chaiwala']) expect(chooseVoice(personaById(id), NONE).ref?.engine).toBe('assemblyai');
+    expect(chooseVoice(personaById('cardamom'), NONE).ref).toBeNull();
+    expect(chooseVoice(personaById('cardamom'), AZ).ref?.voice).toBe('en-IN-NeerjaNeural');
   });
 });
 
 describe('planSpeech: the language and the persona agree, and a fallback is always stated', () => {
   it('a native persona speaks its own language', () => {
     const p = planSpeech('taco', 'es', AZ);
-    expect(p.ref.engine).toBe('azure');
+    expect(p.ref.engine).toBe('assemblyai');
     expect(p.ttsLanguage).toBe('spanish');
     expect(p.fellBack).toBeUndefined();
   });
@@ -115,16 +113,16 @@ describe('planSpeech: the language and the persona agree, and a fallback is alwa
     const p = planSpeech('cardamom', 'en', NONE);
     expect(p.ref.engine).toBe('assemblyai');
     expect(p.fellBack).toMatch(/Azure/);
-    expect(planSpeech('taco', 'es', WIN).fellBack).toMatch(/es-MX/);
+    expect(planSpeech('taco', 'es', WIN).fellBack).toBeUndefined(); // Mexican Spanish is an AssemblyAI voice now
   });
   it('a persona of another language never speaks English with a foreign accent', () => {
     expect(planSpeech('lola', 'en', NONE).assemblyVoice).toBe('anna');
     expect(planSpeech('taco', 'en', AZ).ref.engine).toBe('assemblyai');
   });
   it('the browser voice carries the installed voice name', () => {
-    const p = planSpeech('chaiwala', 'en', WIN);
+    const p = planSpeech('cardamom', 'en', WIN);
     expect(p.ref.engine).toBe('browser');
-    expect(p.browserVoiceName).toContain('Ravi');
+    expect(p.browserVoiceName).toContain('Heera');
     expect(p.assemblyVoice).toBe('anna');
   });
 });

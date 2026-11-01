@@ -339,7 +339,7 @@ export function VoicePicker({ selected, onSelect, fastVoice }: Props) {
       <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
         <div>
           <p className="label">Recommended</p>
-          <p className="meta mt-0.5">Four voices that are clear and calm, with the accent each name promises.</p>
+          <p className="meta mt-0.5">Four voices that are clear and calm, with the accent each one has.</p>
         </div>
 
         <div className="relative w-full sm:w-56">
@@ -418,18 +418,18 @@ export function VoicePicker({ selected, onSelect, fastVoice }: Props) {
       <details className="mt-5" data-testid="voice-more">
         <summary className="label cursor-pointer select-none py-1">More voices ({others.length})</summary>
         <p className="meta mt-1">
-          Every name matches its voice: British and American voices are British and American, and only the native voices speak Spanish, French, German, Italian or Portuguese. Some English voices are labelled "accent not documented" because the provider does not say.
+          Every name matches its voice: British, American, Indian English and Mexican Spanish voices have those accents, and only the native voices speak Spanish, French, German, Italian or Portuguese. Some English voices are labelled "accent not documented" because the provider does not say.
         </p>
         <div className="mt-3 grid gap-2.5 sm:grid-cols-2">{others.map(card)}</div>
       </details>
 
       <details className="mt-5" data-testid="voice-engines">
-        <summary className="label cursor-pointer select-none py-1">Accent voices: Indian English and Mexican Spanish</summary>
+        <summary className="label cursor-pointer select-none py-1">Female Indian English: Azure or your device</summary>
         <p className="meta mt-2">
-          Stay's AssemblyAI voices are British, American and five native-language voices. AssemblyAI's library also has Indian English (male) and Mexican Spanish voices that Stay does not use yet, so these two accents come from other engines, shown on each voice:
+          Mexican Spanish and male Indian English (Andrew) speak with AssemblyAI and need no setup. AssemblyAI has no female Indian English voice, so Kavya uses another engine, shown on her card:
         </p>
         <ul className="meta mt-2 list-disc pl-5 space-y-1">
-          <li><strong>{ENGINES.browser.label}.</strong> {ENGINES.browser.note} On this device: {caps.browserVoices.filter((v) => /^(en[-_]IN|es[-_]MX)/i.test(v.lang)).map((v) => `${v.name} (${v.lang})`).join(', ') || 'no Indian English or Mexican Spanish voice found'}.</li>
+          <li><strong>{ENGINES.browser.label}.</strong> {ENGINES.browser.note} On this device: {caps.browserVoices.filter((v) => /^(en[-_]IN|es[-_]MX)/i.test(v.lang)).map((v) => `${v.name} (${v.lang})`).join(', ') || 'no Indian English voice found'}.</li>
           <li><strong>{ENGINES.azure.label}.</strong> {ENGINES.azure.note}</li>
         </ul>
         <div className="mt-3 grid gap-3">

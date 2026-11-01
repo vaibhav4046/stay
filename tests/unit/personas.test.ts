@@ -5,25 +5,26 @@ import { APP_ACTIONS, APP_TOOL, buildGreeting, buildSystemPrompt, memoryLine } f
 import { DEFAULT_USER_MEMORY, type UserMemoryProfile } from '@/lib/coach/userMemory';
 import { LIBRARY } from '@/lib/orb/library';
 
-const AAI_VOICES = ['alba', 'eve', 'george', 'jane', 'jean', 'mary', 'michael', 'anna', 'charles', 'paul', 'vera', 'iris', 'reid', 'giovanni', 'lola', 'juergen', 'rafael', 'estelle'];
-const ACCENT_ENGINE_VOICES = ['cardamom', 'chaiwala', 'taco', 'mariachi'];
+const AAI_VOICES = ['alba', 'eve', 'george', 'jane', 'jean', 'mary', 'michael', 'anna', 'charles', 'paul', 'vera', 'iris', 'reid', 'giovanni', 'lola', 'juergen', 'rafael', 'estelle', 'chaiwala', 'taco', 'mariachi'];
+// AssemblyAI has no female Indian English voice, so Kavya is the one persona that needs Azure or the device
 const withMemory = (m: Partial<UserMemoryProfile>): UserMemoryProfile => ({ ...DEFAULT_USER_MEMORY, ...m });
 
 describe('voice personas', () => {
-  it('is 22 personas: 18 real AssemblyAI voices plus 4 accent voices from other engines, with unique names', () => {
+  it('is 22 personas: 21 on AssemblyAI voices plus 1 (Kavya, female Indian English) from other engines, with unique names', () => {
     expect(PERSONAS.length).toBe(22);
     expect(new Set(PERSONAS.map((p) => p.id)).size).toBe(22);
     expect(new Set(PERSONAS.map((p) => p.name)).size).toBe(22);
-    for (const p of PERSONAS) expect([...AAI_VOICES, ...ACCENT_ENGINE_VOICES]).toContain(p.id);
+    for (const p of PERSONAS) expect([...AAI_VOICES, 'cardamom']).toContain(p.id);
     for (const id of AAI_VOICES) expect(personaById(id).voices[0].engine).toBe('assemblyai');
-    for (const id of ACCENT_ENGINE_VOICES) expect(personaById(id).voices.map((v) => v.engine)).toEqual(['azure', 'browser']);
+    expect(personaById('cardamom').voices.map((v) => v.engine)).toEqual(['azure', 'browser']);
+    for (const id of ['chaiwala', 'taco', 'mariachi']) expect(personaById(id).voices.map((v) => v.engine)).toEqual(['assemblyai', 'azure', 'browser']);
     expect(PERSONAS.some((p) => p.gender === 'male')).toBe(true);
     expect(PERSONAS.some((p) => p.gender === 'female')).toBe(true);
   });
   it('only claims a native language for voices that really speak it, and an accent only where the provider or locale guarantees it', () => {
     const native = PERSONAS.filter((p) => p.lang !== 'en').map((p) => p.id).sort();
     expect(native).toEqual(['estelle', 'giovanni', 'juergen', 'lola', 'mariachi', 'rafael', 'taco']);
-    for (const p of PERSONAS.filter((x) => x.voices[0].engine === 'assemblyai' && x.lang === 'en' && !['iris', 'reid'].includes(x.id))) expect(p.voiceLabel).toMatch(/British|American/);
+    for (const p of PERSONAS.filter((x) => x.voices[0].engine === 'assemblyai' && x.lang === 'en' && !['iris', 'reid'].includes(x.id))) expect(p.voiceLabel).toMatch(/British|American|Indian English/);
     for (const id of ['iris', 'reid']) expect(personaById(id).voiceLabel).toMatch(/not documented/);
     // AssemblyAI says "Spanish", not "Mexican": the provider voice must not be labelled with a regional accent
     expect(personaById('lola').voices[0].accent).toBe('Spanish');
@@ -46,12 +47,12 @@ describe('voice personas', () => {
     expect(personaById('chaiwala').voices[0].accent).toBe('Indian English');
     expect(personaById('taco').voices[0].accent).toBe('Mexican Spanish');
   });
-  it('recommends four: one Indian English, one Mexican Spanish, and two voices that need no setup', () => {
+  it('recommends four: one Indian English, one Mexican Spanish, and the rest', () => {
     const rec = RECOMMENDED_PERSONAS;
     expect(rec).toHaveLength(4);
     expect(rec.some((p) => p.voices[0].accent === 'Indian English')).toBe(true);
     expect(rec.some((p) => p.voices[0].accent === 'Mexican Spanish')).toBe(true);
-    expect(rec.filter((p) => p.voices[0].engine === 'assemblyai')).toHaveLength(2);
+    expect(rec.filter((p) => p.voices[0].engine === 'assemblyai')).toHaveLength(3); // Kavya is the one that needs another engine
   });
   it('every persona points at an orb shape that exists', () => {
     const ids = new Set(LIBRARY.map((e) => e.id));
@@ -80,8 +81,8 @@ describe('agent prompt, greeting and tool (latency budget)', () => {
   it('system prompt stays tiny: long prompts doubled reply time in measurement', () => {
     const empty = buildSystemPrompt(persona, DEFAULT_USER_MEMORY);
     const full = buildSystemPrompt(persona, withMemory({ name: 'Sam', roleOrField: 'product designer', facts: ['dog is called Biscuit', 'works best at 20 minutes', 'dreads tax paperwork', 'prefers mornings', 'sister is Ana'], recentSessionsSummary: [{ task: 'Reply to the landlord about the renewal', outcome: 'partly_started', minutes: 20, timestamp: '2026-10-18' }] }));
-    expect(empty.length).toBeLessThan(1010); // was 780 before the planning, list-edit, style and learning tools were named (+~190 chars, measured on the real model)
-    expect(full.length).toBeLessThan(1360); // about 340 tokens with a full memory line (was 1130)
+    expect(empty.length).toBeLessThan(1750); // was 1010 before the conversational rules (about +160 tokens); 4 real replies took 0.44 to 0.85 s with it on 1 Nov 2026; was 780 before the planning, list-edit, style and learning tools were named (+~190 chars, measured on the real model)
+    expect(full.length).toBeLessThan(2100); // about 340 tokens with a full memory line (was 1130)
     expect(full).toContain('Biscuit');
     expect(full).toContain(persona.name);
   });
@@ -89,7 +90,7 @@ describe('agent prompt, greeting and tool (latency budget)', () => {
     const style = styleBlock({ preset: 'direct_kind', notes: 'x'.repeat(MAX_NOTES) });
     const learned = 'Learned: Starting has gone best with shrinking the task: 4 of 5 blocks got started. Mornings have worked best: 4 of 5 blocks got started.';
     const p = buildSystemPrompt(persona, DEFAULT_USER_MEMORY, { style, learned });
-    expect(p.length).toBeLessThan(1650); // worst case: full-length notes + two learnings, about 390 tokens
+    expect(p.length).toBeLessThan(2450); // worst case: full-length notes + two learnings, about 390 tokens
     expect(p).toContain('never advise on medication');
     expect(p.indexOf(style)).toBeLessThan(p.indexOf('never advise on medication')); // style comes before the safety line, not after it
     expect(buildSystemPrompt(persona, DEFAULT_USER_MEMORY, { style: '', learned: '' })).toBe(buildSystemPrompt(persona, DEFAULT_USER_MEMORY));
