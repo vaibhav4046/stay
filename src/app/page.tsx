@@ -6,8 +6,6 @@ import { DemoPlayer } from '@/components/landing/DemoPlayer';
 import { Story } from '@/components/landing/Story';
 import { WeekExplorer } from '@/components/landing/WeekExplorer';
 import { Results } from '@/components/landing/Results';
-import { VoiceBenchmarkArena } from '@/components/landing/VoiceBenchmarkArena';
-import { PersonaStressTestExplorer } from '@/components/landing/PersonaStressTestExplorer';
 import { AssemblyAiArchitecture } from '@/components/landing/AssemblyAiArchitecture';
 import { AdhdScienceHistory } from '@/components/landing/AdhdScienceHistory';
 import { NeuralOrbArtifact } from '@/components/landing/NeuralOrbArtifact';
@@ -115,21 +113,15 @@ export default function Home() {
               What we tested
             </h2>
             <ul className="lp-night-copy mt-6 max-w-[66ch] space-y-3">
-              <li><strong className="lp-night-strong">Safety first.</strong> 634 unit tests (37 test files, 100% pass) and 95 browser tests pass. They include crisis wording in more than 30 languages against real phrasings and ordinary sentences that must not trigger, spacing-evasion protection, the medication boundary, and the rule that voice never deletes your data.</li>
-              <li><strong className="lp-night-strong">Patience.</strong> A simulated speaker trailed off mid-sentence for 2.3 seconds, in several accents with room noise. Stay waited in every run. The managed voice it replaced talked over the pause.</li>
-              <li><strong className="lp-night-strong">Honesty.</strong> Every number below comes from a script in the repository, and the tests that found our own mistakes are in it too.</li>
+              <li><strong className="lp-night-strong">Safety first.</strong> Unit and browser suites (recorded in <code>docs/evidence/phase0-vitest.txt</code> and <code>docs/evidence/phase0-playwright.txt</code>) verify crisis wording in more than 30 languages against real phrasings and ordinary sentences that must not trigger, spacing-evasion protection, the medication boundary, and the rule that voice never deletes your data.</li>
+              <li><strong className="lp-night-strong">Patience.</strong> A simulated speaker trailed off mid-sentence for 2.3 seconds, in several accents with room noise. Stay waited in every run. The managed voice it replaced talked over the pause (<code>docs/BENCHMARK_REAL_PRODUCTS_2026-10-19.md</code>).</li>
+              <li><strong className="lp-night-strong">Honesty.</strong> Every number below comes from a script in the repository (<code>docs/evidence/</code>), and the tests that found our own mistakes are in it too.</li>
             </ul>
             <div className="mt-12">
               <Results />
             </div>
           </div>
         </section>
-
-        {/* Head-to-Head Real-World Voice Benchmark Arena */}
-        <VoiceBenchmarkArena />
-
-        {/* 100+ Neurodivergent Personas Stress Test Explorer */}
-        <PersonaStressTestExplorer />
 
         {/* AssemblyAI Real-Time Voice Pipeline Architecture */}
         <AssemblyAiArchitecture />

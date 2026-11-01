@@ -22,44 +22,44 @@ const TIMELINE: TimelineEvent[] = [
   {
     year: '1937',
     author: 'Dr. Charles Bradley (Emma Pendleton Bradley Home)',
-    title: 'Stimulant Calming & Dopaminergic Focus',
-    finding: 'Accidental discovery that amphetamine sulphate (Benzedrine) produced marked calming and task initiation in hyperactive children, showing biological mediation.',
-    stayConnection: 'Stay is strictly non-medical, but designed around the same dopaminergic threshold principles.',
+    title: 'Early Clinical Observation of Attention & Task Initiation',
+    finding: 'Early clinical reports observing task initiation and attention difficulties in children, shifting focus toward structured environmental support.',
+    stayConnection: 'Stay is strictly non-medical and never comments on medication, doses, or biological mechanisms.',
   },
   {
     year: '1980',
     author: 'DSM-III (American Psychiatric Association)',
     title: 'ADD / ADHD Recognition of Inattention',
-    finding: 'Shifted diagnostic focus away from purely overt physical hyperactivity to the underlying cognitive deficit of executive attention and impulse regulation.',
-    stayConnection: 'Validates inattentive and daydreaming archetypes who do not present as physically hyperactive.',
+    finding: 'Shifted focus away from purely overt physical hyperactivity to the underlying difficulty of executive attention and task persistence.',
+    stayConnection: 'Supports quiet, inattentive, and overwhelmed moments without requiring high-energy interaction.',
   },
   {
     year: '1997',
     author: 'Dr. Russell Barkley (Medical University of South Carolina)',
-    title: 'The Unified Theory of Executive Function',
+    title: 'Executive Function at the Point of Performance',
     finding: '“ADHD is not a disorder of knowing what to do; it is a disorder of doing what you know at the point of performance across time.”',
-    stayConnection: 'The foundational law of Stay. Stay never gives advice on what you should do; it operates as an external executive prosthesis at the point of performance.',
+    stayConnection: 'Stay focuses on externalising the very next small physical action right when you are trying to start.',
   },
   {
     year: '2005',
     author: 'Dr. Thomas E. Brown (Yale School of Medicine)',
     title: 'The 6-Cluster Executive Function Model',
-    finding: 'Identified that ADHD affects six interacting executive functions: Activation, Focus, Effort, Emotion, Memory, and Action.',
-    stayConnection: 'Directly mirrors Stay’s 6 core tools: Activation (2m steps), Memory (explicit ledger), and Emotion (zero-guilt validation).',
+    finding: 'Described six interacting executive functions: Activation, Focus, Effort, Emotion, Memory, and Action.',
+    stayConnection: 'Informs Stay’s practical tools: tiny activation steps, an explicit local memory list, and non-shaming wording.',
   },
   {
     year: '2010',
-    author: 'Safren et al. (JAMA) & Solanto et al. (Am J Psychiatry)',
-    title: 'Randomized Controlled Trials of CBT for Adult ADHD',
-    finding: 'Landmark clinical trials proving that external cognitive prostheses—micro-task breakdown, 2-minute timer blocks, and external cueing—dramatically reduce adult ADHD impairment.',
-    stayConnection: 'Stay’s 2-minute timer, single atomic step, and body-doubling presence are direct digital implementations of these proven protocols.',
+    author: 'Safren et al. (JAMA, n=86) & Solanto et al. (Am J Psychiatry, n=88)',
+    title: 'Trials of Structured Skills Training for Adult ADHD',
+    finding: 'Clinical trials of clinician-led skills programs (Safren et al., 2010, JAMA, n=86; Solanto et al., 2010, Am J Psychiatry, n=88) tested breaking overwhelming tasks into small steps and using external timers.',
+    stayConnection: 'Stay is not therapy or CBT, and has not been clinically trialled; it adapts the practical habit of picking one small step and an external timer.',
   },
   {
     year: '2026',
     author: 'Stay (AssemblyAI Voice Hackathon)',
-    title: 'Voice-First Neuro-Adaptive Companion',
-    finding: 'First voice agentic system engineered with mid-thought pause patience (3.0s), 14-word cognitive economy, and instant barge-in, eliminating turn-taking anxiety.',
-    stayConnection: 'The living synthesis of 120 years of cognitive neuroscience in an honest, private, accessible app.',
+    title: 'Voice-First Companion for Starting & Visit Prep',
+    finding: 'Combines streaming speech-to-text, two-stage barge-in, deterministic corrections, and a one-page appointment prep handout.',
+    stayConnection: 'A practical, private self-help tool — not a medical device, diagnosis, or clinician.',
   },
 ];
 
@@ -164,12 +164,12 @@ export function AdhdScienceHistory() {
         <div className="space-y-6">
           <div className="p-6 md:p-8 rounded-2xl bg-surface-1 border border-edge space-y-6">
             <div>
-              <span className="text-xs font-mono text-accent uppercase font-semibold">The Cognitive Architecture</span>
+              <span className="text-xs font-mono text-accent uppercase font-semibold">Practical Task Initiation</span>
               <h3 className="text-xl font-display font-bold text-ink mt-1">
-                The Dopamine Gating Deficit &amp; The Two-Minute Escape
+                Task Friction &amp; The Two-Minute First Step
               </h3>
               <p className="text-sm text-ink-2 mt-2 max-w-[66ch]">
-                Neuroimaging demonstrates that the ADHD brain suffers from insufficient tonic dopamine in the striatum and prefrontal cortex. This creates the &ldquo;Wall of Awful&rdquo;—an intense, physiological barrier to task initiation.
+                When a task feels ambiguous or emotionally heavy, executive initiation stalls. Stay is a practical self-help tool (not therapy or medical treatment) that shrinks the starting threshold to a single concrete action.
               </p>
             </div>
 
@@ -178,7 +178,7 @@ export function AdhdScienceHistory() {
               <div className="p-5 rounded-xl bg-danger/5 border border-danger/20 space-y-4">
                 <div className="flex items-center justify-between text-xs font-mono text-danger font-bold uppercase">
                   <span>The Paralysis Trap</span>
-                  <span>Normal AI / Apps</span>
+                  <span>Long Plans</span>
                 </div>
                 <div className="space-y-2 text-xs font-mono">
                   <div className="p-2.5 rounded bg-surface-2 border border-danger/20 text-danger font-medium">
@@ -186,15 +186,15 @@ export function AdhdScienceHistory() {
                   </div>
                   <div className="text-center text-ink-3">↓</div>
                   <div className="p-2.5 rounded bg-surface-2 border border-danger/20 text-danger font-medium">
-                    2. Prefrontal Cortex Freeze (Low Dopamine Gating)
+                    2. Working Memory Overload (Too many unranked steps)
                   </div>
                   <div className="text-center text-ink-3">↓</div>
                   <div className="p-2.5 rounded bg-surface-2 border border-danger/20 text-danger font-medium">
-                    3. AI gives 5-paragraph plan → Cognitive Overload
+                    3. Assistant gives 5-paragraph plan → Decision Fatigue
                   </div>
                   <div className="text-center text-ink-3">↓</div>
                   <div className="p-2.5 rounded bg-danger/15 border border-danger/30 text-danger font-bold">
-                    4. Avoidance &amp; Shame Spiral (&ldquo;I failed again&rdquo;)
+                    4. Avoidance &amp; Guilt (&ldquo;I still haven&apos;t started&rdquo;)
                   </div>
                 </div>
               </div>
@@ -202,34 +202,35 @@ export function AdhdScienceHistory() {
               {/* Stay Micro-Activation Loop */}
               <div className="p-5 rounded-xl bg-success/5 border border-success/20 space-y-4">
                 <div className="flex items-center justify-between text-xs font-mono text-success font-bold uppercase">
-                  <span>Stay Micro-Activation Loop</span>
-                  <span>Clinically Grounded</span>
+                  <span>Stay Small-Step Loop</span>
+                  <span>Practical Self-Help</span>
                 </div>
                 <div className="space-y-2 text-xs font-mono">
                   <div className="p-2.5 rounded bg-surface-2 border border-success/20 text-success font-medium">
-                    1. Voice Brain Dump (Unload working memory in 1 breath)
+                    1. Speak or Type the Avoided Task
                   </div>
                   <div className="text-center text-ink-3">↓</div>
                   <div className="p-2.5 rounded bg-surface-2 border border-success/20 text-success font-medium">
-                    2. Emotional Containment (&ldquo;I hear you, that is hard&rdquo;)
+                    2. Brief Non-Shaming Acknowledgement (≤ 6 words)
                   </div>
                   <div className="text-center text-ink-3">↓</div>
                   <div className="p-2.5 rounded bg-surface-2 border border-success/20 text-success font-medium">
-                    3. Exactly ONE 2-Minute Atomic Step (&ldquo;Pick up 1 box&rdquo;)
+                    3. One Concrete 2-Minute Step (&ldquo;Pick up 1 box&rdquo;)
                   </div>
                   <div className="text-center text-ink-3">↓</div>
                   <div className="p-2.5 rounded bg-success/15 border border-success/30 text-success font-bold">
-                    4. Dopaminergic Spark → Natural Behavioral Momentum
+                    4. Visible Timer + Check-In (&ldquo;Keep going, smaller, or stop?&rdquo;)
                   </div>
                 </div>
               </div>
             </div>
 
             <div className="p-4 rounded-xl bg-surface-2 border border-edge text-xs text-ink-2 space-y-1">
-              <span className="font-semibold text-ink">Clinical Literature References:</span>
-              <p>• Barkley, R. A. (1997). Behavioral inhibition, sustained attention, and executive functions. <em>Psychological Bulletin</em>, 121(1), 65–94.</p>
-              <p>• Brown, T. E. (2005). <em>ADHD: Clinical Practice Guideline for the Diagnosis, Evaluation, and Treatment</em>. American Academy of Pediatrics.</p>
-              <p>• Safren, S. A., et al. (2010). Cognitive behavioral therapy in medicated adults with ADHD. <em>JAMA</em>, 304(8), 875–880.</p>
+              <span className="font-semibold text-ink">Background Reading &amp; Limits (§2.6):</span>
+              <p>• Safren, S. A., et al. (2010). Cognitive behavioral therapy vs relaxation with educational support for medication-treated adults with ADHD and persistent symptoms: a randomized controlled trial (n=86). <em>JAMA</em>, 304(8), 875–880.</p>
+              <p>• Solanto, M. V., et al. (2010). Efficacy of meta-cognitive therapy for adult ADHD (n=88). <em>American Journal of Psychiatry</em>, 167(8), 958–968.</p>
+              <p>• Gollwitzer, P. M., &amp; Sheeran, P. (2006). Implementation intentions and goal achievement: A meta-analysis of effects and processes (94 studies, d=0.65). <em>Advances in Experimental Social Psychology</em>, 38, 69–119.</p>
+              <p>• Body doubling (working alongside another person or quiet companion) is community-reported by adults with ADHD; controlled clinical evidence is still emerging.</p>
             </div>
           </div>
         </div>

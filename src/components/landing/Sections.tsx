@@ -149,9 +149,9 @@ const RECEIPTS = [
     body: 'Stay came out slowest on typical reply time and best at waiting through a pause. The run also caught the memory feature saving facts nobody said; that is fixed.',
   },
   {
-    date: '20 Oct 2026',
-    title: '100 neurodivergent personas and keyterm biasing',
-    body: 'Tested 100 diverse persona scenarios across 6 clinical archetypes. Caught keyterm misalignments on multi-word trigger phrases and non-English phonetic boundaries. Added appKeyterms biasing to AssemblyAI STT; all 100 passed with 100% safety adherence and a 9.1-word average spoken length.',
+    date: '01 Nov 2026',
+    title: 'Protocol and dark-mode audit',
+    body: 'A live browser audit caught a retired TTS query parameter (voice= instead of voice_id=, error 3006) causing silent fallback to the managed agent, and white-on-white chat bubbles in dark OS mode (1.05:1 contrast). Both are fixed and locked by contract and contrast tests (docs/evidence/phase0-browser-audit.json).',
   },
 ];
 

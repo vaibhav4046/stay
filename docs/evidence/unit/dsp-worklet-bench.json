@@ -1,0 +1,115 @@
+{
+  "gitSha": "056484115c251c633a2842e0021a31b6aafe9a37",
+  "dirty": true,
+  "tier": "unit",
+  "scenarioId": "dsp-worklet-jitter-matrix",
+  "timestamp": "2026-11-01T05:36:45.100Z",
+  "environment": {
+    "platform": "win32",
+    "arch": "x64",
+    "nodeVersion": "v24.12.0"
+  },
+  "sampleRate": 24000,
+  "quantumSamples": 128,
+  "runs": [
+    {
+      "jitterConditionMs": 0,
+      "chunkDurationMs": 100,
+      "totalChunks": 20,
+      "renderedNonZeroSamples": 48000,
+      "underflows": 1,
+      "overflows": 0,
+      "fadeTransitions": 2,
+      "staleSamplesAfterCancel": 0,
+      "enqueueToFirstRenderMs": 0
+    },
+    {
+      "jitterConditionMs": 20,
+      "chunkDurationMs": 100,
+      "totalChunks": 20,
+      "renderedNonZeroSamples": 48000,
+      "underflows": 1,
+      "overflows": 0,
+      "fadeTransitions": 2,
+      "staleSamplesAfterCancel": 0,
+      "enqueueToFirstRenderMs": 0
+    },
+    {
+      "jitterConditionMs": 40,
+      "chunkDurationMs": 100,
+      "totalChunks": 20,
+      "renderedNonZeroSamples": 48000,
+      "underflows": 1,
+      "overflows": 0,
+      "fadeTransitions": 2,
+      "staleSamplesAfterCancel": 0,
+      "enqueueToFirstRenderMs": 0
+    },
+    {
+      "jitterConditionMs": 60,
+      "chunkDurationMs": 100,
+      "totalChunks": 20,
+      "renderedNonZeroSamples": 48000,
+      "underflows": 1,
+      "overflows": 0,
+      "fadeTransitions": 2,
+      "staleSamplesAfterCancel": 0,
+      "enqueueToFirstRenderMs": 0
+    },
+    {
+      "jitterConditionMs": 80,
+      "chunkDurationMs": 100,
+      "totalChunks": 20,
+      "renderedNonZeroSamples": 48000,
+      "underflows": 1,
+      "overflows": 0,
+      "fadeTransitions": 2,
+      "staleSamplesAfterCancel": 0,
+      "enqueueToFirstRenderMs": 0
+    },
+    {
+      "jitterConditionMs": 100,
+      "chunkDurationMs": 100,
+      "totalChunks": 20,
+      "renderedNonZeroSamples": 48000,
+      "underflows": 2,
+      "overflows": 0,
+      "fadeTransitions": 4,
+      "staleSamplesAfterCancel": 0,
+      "enqueueToFirstRenderMs": 0
+    },
+    {
+      "jitterConditionMs": 120,
+      "chunkDurationMs": 100,
+      "totalChunks": 20,
+      "renderedNonZeroSamples": 48000,
+      "underflows": 1,
+      "overflows": 0,
+      "fadeTransitions": 2,
+      "staleSamplesAfterCancel": 0,
+      "enqueueToFirstRenderMs": 0
+    },
+    {
+      "jitterConditionMs": 200,
+      "chunkDurationMs": 100,
+      "totalChunks": 20,
+      "renderedNonZeroSamples": 48000,
+      "underflows": 1,
+      "overflows": 0,
+      "fadeTransitions": 2,
+      "staleSamplesAfterCancel": 0,
+      "enqueueToFirstRenderMs": 0
+    },
+    {
+      "jitterConditionMs": 400,
+      "chunkDurationMs": 100,
+      "totalChunks": 20,
+      "renderedNonZeroSamples": 48000,
+      "underflows": 2,
+      "overflows": 0,
+      "fadeTransitions": 4,
+      "staleSamplesAfterCancel": 0,
+      "enqueueToFirstRenderMs": 0
+    }
+  ]
+}

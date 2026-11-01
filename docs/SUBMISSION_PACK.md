@@ -1,63 +1,29 @@
-# Submission pack: Stay (AssemblyAI Online Hackathon #2)
+# Submission Pack: Stay (AssemblyAI Voice Hackathon)
 
-Everything here is checkable in the repo. Numbers come from `docs/STAY_VERIFICATION_2026-10-18.md`, `tests/`, and `README.md`; limits are stated where the evidence stops.
+All metrics and claims in this pack link to reproducible outputs under `docs/evidence/` and `docs/audit/`.
 
 ## Links
 
-- Live app: https://stay-two-swart.vercel.app
-- Repo: https://github.com/vaibhav4046/stay
-- Demo video: https://stay-two-swart.vercel.app/demo/stay-demo.mp4 (also embedded on the landing page, with captions and chapter seeking)
-- Submission form: https://forms.gle/XCW2RdZGbarVLnKEA (Active round #2 form) / https://forms.gle/NtYDsi3bgqMDK29j9
+- **Live App:** https://stay-two-swart.vercel.app/app/today
+- **Repository:** https://github.com/vaibhav4046/stay
+- **Primary Submission Doc:** [`HACKATHON_SUBMISSION.md`](../HACKATHON_SUBMISSION.md)
 
-## One line
+## One-Sentence Summary
 
-A voice companion for adults with ADHD that gets you from "I can't start" to a two-minute first step, with turn-taking patience, an expressive dot-drawn therapist orb, and zero guilt.
+Stay is a calm, voice-first companion for adults with ADHD that turns overwhelming tasks into one two-minute starting step and prepares one-page doctor/therapist visit handouts in your own words.
 
-## Description (paste into the form)
+## AssemblyAI Integration Summary
 
-Adults with ADHD rarely lack the wish to start. They get stuck at the threshold: too many steps, no clear first one, a wall of guilt. Stay is a voice-first companion built specifically for that moment. You say the thing you are avoiding, in whatever mess it comes out; Stay names what makes it hard and gives you one concrete step you can start in two minutes, then runs a short block with you and checks in when it ends.
+- **Universal-3.6 Pro Streaming STT (`wss://streaming.assemblyai.com/v3/ws`):** 16 kHz mono PCM with 7.2 kHz low-pass anti-aliasing filter, `min_turn_silence=128`, `max_turn_silence=1280`, `vad_threshold=0.2`, `language_detection=true`, `keyterms_prompt` from user's "My words", and dynamic `UpdateConfiguration.agent_context` after each reply.
+- **AssemblyAI-TTS-1 Streaming TTS (`wss://tts.us.assemblyai.com/v1/ws`):** Product-scoped ephemeral tokens (`product=tts`), verified `voice_id=` parameters across 13 regional voices in 6 languages, 30 s `KeepAlive`, `WordBoundaries` caption sync, and `Cancel`/`Cancelled` barge-in.
+- **AssemblyAI LLM Gateway (`/api/voice/translate`):** Parallel real-time turn translation without blocking reply generation.
 
-It is built around how neurodivergent adults actually talk:
-1. **Turn-taking patience:** Stay waits through a 2.5–3.0 second mid-thought pause instead of talking over it (where ChatGPT Voice and Gemini Live interrupt prematurely).
-2. **Instant barge-in:** If you interrupt, Stay cuts playback and flushes its pipeline in under 0.45 seconds.
-3. **Therapist Orb:** A 5,200-dot procedural WebGL/SDF bust that morphs between fluid shapes and a calm human figure with real-audio lip syncing, eye glints, and breathing cues.
-4. **Agentic Voice Brain Dump:** Dump a scattered pile of worries by voice; Stay parses them live into Today, Later, and Parked, and speaks back exactly ONE 2-minute step to start right now.
-5. **Self-Improving Memory with Consent:** Tracks what strategies and times work best for you, attaches clear derivation evidence ("Learned from session on Oct 19"), and lets you pin, edit, delete, or turn learning off anytime.
-6. **22 Honest Voices:** Culturally accurate Indian English (Cardamom, Chaiwala) and Mexican Spanish (Taco, Mariachi) with multi-engine adapters (AssemblyAI + Web Speech API + Azure Neural BYOK), replacing mismatched personas.
-7. **Complete Ecosystem:** Available on Web, Desktop (Electron app with global shortcut `Ctrl+Shift+Space`), Mobile (Capacitor Android with native haptics), and Browser Extension (Manifest V3 quick thought-parking).
+## Evidence Files
 
-The voice is AssemblyAI end to end. The default "fast voice" engine uses AssemblyAI streaming speech-to-text (`universal-3-6-pro`) straight from the browser, a gated speculative execution pipeline for low reply latency, and AssemblyAI streaming text-to-speech, emitting the same events as the Voice Agent API so one hook drives both. The managed Voice Agent API is preserved as the automatic fallback.
-
-Safety is deterministic and runs before any model: crisis wording (30+ languages) stops coaching and shows emergency numbers and a findahelpline fallback; medication and dose questions get a fixed reply that points to a prescriber. Data stays in the browser by default, with one-click export and delete. You can bring your own keys (Groq GPT-OSS, Mistral, OpenAI or any OpenAI-compatible address, Azure Speech, and AssemblyAI).
-
-## Where the AssemblyAI platform is used
-
-| Piece | Use |
-|---|---|
-| Streaming STT v3, `universal-3-6-pro` | Browser-direct, ephemeral token minted by `/api/voice/fast-token`. End-of-turn about 0.31 s measured. `keyterms_prompt` biases ADHD task and strategy vocabulary. |
-| Streaming TTS | Browser-direct chunked audio. Protocol probed and wrapped with volume/brightness envelope extraction driving the real-time lip-sync rig. |
-| Voice Agent API | Managed engine and automatic fallback; also the baseline in every comparison. |
-| Tokens | Ephemeral short-lived credentials minted by server routes; secrets never exposed to clients. |
-
-## What is verified (and how)
-
-- **Unit tests:** 677 passing tests across 46 test files (`npm test`). Typecheck clean.
-- **105-Agent Extreme Swarm Stress Test:** 105 distinct adversarial scenarios across 7 neurodivergent archetypes in `scripts/voice-e2e/swarm-voice-stress.mjs` (**105 of 105 passed, 100% pass rate**, 180 ms backend latency, 8.0 words average response economy, 0 guilt words, 100% crisis interception under 5ms, zero-failure deterministic fallback engine). Recorded at `docs/bench-results/swarm-voice-stress-105.json` and detailed in `docs/SWARM_STRESS_TEST_RESULTS.md`.
-- **Browser tests:** 95 Playwright tests against production build (`tests/e2e/`), covering Core loop (36), Landing page (24), Responsive layout (11), Safety & CSP (10), Therapist Orb (5), Voices (3), and Multi-platform Ecosystem (6) (100% pass rate).
-- **ADHD Clinical / Agentic Evaluation:** 29 scripted scenarios in `scripts/voice-e2e/agentic-eval.mjs` (137 of 137 checks passing, 100% pass rate) verifying safety gates, 2-minute task shrinking, brain dump controls, and tone hygiene.
-- **100+ Neurodivergent Personas Stress Test:** 100 scripted personas in `scripts/voice-e2e/persona-stress-test.mjs` (100% pass rate across paralysis, impatient turn-takers, RSD emotional dysregulation, tangents, global accents, and safety boundaries) recorded at `docs/bench-results/persona-stress-test-100.json`.
-- **120-Year ADHD Cognitive Science:** Comprehensive historical analysis (1902 Still through 1997 Barkley and 2010 Safren/Solanto RCTs) with interactive dopamine gating & "Wall of Awful" escape loop diagrams.
-- **Interactive 3D Procedural Rig:** 5,200-dot real-time WebGL/Canvas mathematical bust and neural synapse visualizer with live audio viseme lip-sync simulation.
-- **Voice Benchmarks (Simulated Human Speaker Rig):**
-  - Fast voice reply latency: ~1.25s - 1.45s median.
-  - Mid-thought pause patience: 100% waited through 2.3s - 3.0s trailing pauses.
-  - Interruption latency: 0.42s - 0.54s.
-  - Response length: 4 to 8 seconds maximum (concise, actionable).
-- **Security:** Strict CSP on every route, SSRF guard with DNS pinning on custom provider URLs, no shared data cache.
-
-## Ecosystem Artifacts
-
-- **Desktop App:** `apps/desktop/` (Electron, packaged executable at `apps/desktop/dist/Stay-1.0.0-win-x64.exe`).
-- **Mobile App:** `apps/mobile/` (Capacitor Android & iOS wrappers with native haptics).
-- **Chrome Extension:** `apps/extension/` (Manifest V3 quick thought capture popup).
-- **PWA:** Installable web app with service worker offline cache and Web Share Target.
+- `docs/evidence/phase0-tsc.txt` — TypeScript check
+- `docs/evidence/phase0-vitest.txt` — Unit, contract, and DSP test run
+- `docs/evidence/phase0-build.txt` — Production Next.js build
+- `docs/evidence/phase0-playwright.txt` — Playwright E2E suite
+- `docs/evidence/phase0-browser-audit.json` — Multi-viewport contrast & layout audit
+- `docs/evidence/unit/dsp-worklet-bench.json` — AudioWorklet jitter & cancel benchmark
+- `docs/evidence/unit/safety-command-checks.json` — Deterministic crisis, medication, and SSRF checks

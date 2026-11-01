@@ -1,76 +1,54 @@
-# HACKATHON SUBMISSION: STAY
-**Project:** Stay — The Voice-First ADHD Task-Initiation Companion  
-**Target:** AssemblyAI TTS Hackathon  
-**Live Application:** https://stay-two-swart.vercel.app/app/today  
-**Canonical Repository:** https://github.com/vaibhav4046/stay  
-**Default Branch:** `master` (Worktree: `feat/omnirush-continuous-voice`)  
-**Demo Video:** https://stay-two-swart.vercel.app/demo/stay-demo.mp4  
-**Submission Form:** https://forms.gle/XCW2RdZGbarVLnKEA  
+# Stay — AssemblyAI Voice Hackathon Submission
+
+**Live App:** [https://stay-two-swart.vercel.app/app/today](https://stay-two-swart.vercel.app/app/today)  
+**Repository:** [https://github.com/vaibhav4046/stay](https://github.com/vaibhav4046/stay)  
+**Hackathon:** AssemblyAI "Voice hackathon week: Hack into speech"
 
 ---
 
-## 1. Executive Summary & One-Liner
-A voice companion for neurodivergent adults that bridges the gap between executive freeze and momentum: converting daunting tasks into a single 2-minute actionable micro-step with continuous, gapless speech playback, turn-taking pause tolerance, click-free barge-in, and zero guilt framing.
+## 1. What Stay Is & Who It Helps
+
+Stay is a calm, voice-first companion for adults with ADHD who get stuck starting avoided tasks or blank out when preparing for a doctor, therapist, or coaching appointment. You speak a messy thought in your own language or accent; Stay gives a brief non-shaming acknowledgement, one concrete two-minute next step, and an optional check-in question — or interviews you in five minutes to build a one-page appointment handout in your own words.
 
 ---
 
-## 2. Core Problem & Engineering Solution
-- **The Problem:** Adults with ADHD suffer from severe task paralysis ("Wall of Awful") and rejection sensitivity. Most conversational voice assistants fail them in two ways:
-  1. *Premature interruption:* Speaking over mid-sentence hesitations when the user pauses for 2–3 seconds to think.
-  2. *Audible speech fragmentation:* Streaming TTS under real-world network jitter suffers from buffer underruns, creating dead audible gaps, robotic stutter, and jarring boundary clicks.
-- **The Solution:**
-  1. **Continuous AudioWorklet Playback Engine:** Decouples network jitter from the device audio rendering clock using a 192,000-sample circular ring buffer, adaptive 100ms prebuffer, stateful continuous sample-rate conversion (24k to 44.1k/48k), and 5ms click-free crossfades.
-  2. **ADHD Turn-Taking Patience:** Preserves 2.2s conversational pauses without cutting off user thoughts.
-  3. **Sub-100ms Instant Barge-In:** Synchronously clears the worklet ring buffer on user interruption, achieving 48ms (p50) / 92ms (p95) cutoff with 0 stale samples leaked.
-  4. **Strict Safety & Non-Shaming Framing:** Preempts all coaching on crisis language with UK emergency resources (999, NHS 111, Samaritans 116 123, Shout 85258), refuses medical prescribing questions, and strips all guilt triggers (*"behind"*, *"lazy"*, *"streak lost"*).
+## 2. Exact AssemblyAI Features Used
+
+| Feature | Implementation in Stay | Code & Evidence |
+|---|---|---|
+| **Universal-3.6 Pro Realtime STT** (`wss://streaming.assemblyai.com/v3/ws`) | Browser-direct 16 kHz PCM16 capture (`public/pcm-processor.js` with 2nd-order Butterworth low-pass anti-aliasing filter at 7.2 kHz), `speech_model=universal-3-6-pro`, `min_turn_silence=128`, `max_turn_silence=1280`, `vad_threshold=0.2`, `language_detection=true`. | `src/lib/voice/fastSocket.ts`, `tests/unit/assemblyaiContract.test.ts` |
+| **`SpeechStarted` Two-Stage Barge-In** | Immediately ducks playback on `SpeechStarted` (after 250 ms echo guard) and commits full `Cancel` + worklet ring flush on the first non-backchannel partial or stop word. | `src/lib/voice/fastSocket.ts`, `docs/evidence/unit/dsp-worklet-bench.json` |
+| **Dynamic `UpdateConfiguration.agent_context`** | Sends `{"type":"UpdateConfiguration","agent_context":"..."}` after each assistant reply so Universal-3.6 Pro biases continuation turns toward the active conversation context. | `src/lib/voice/fastSocket.ts` |
+| **`keyterms_prompt` ("My words")** | Sends user-configured names, dissertation terms, medication names (for transcription accuracy only), and task phrases at session start (`<= 100` entries). | `src/lib/voice/agentTool.ts` |
+| **Multilingual Code-Switching & `llm_gateway` Translation** | Transcribes across 32 languages (including Hindi and Hinglish code-switching), surfaces detected `language_code`, and translates turns via AssemblyAI LeMUR / LLM Gateway (`/api/voice/translate`). | `src/lib/voice/fastSocket.ts` |
+| **Streaming TTS (`assemblyai-tts-1`)** (`wss://tts.us.assemblyai.com/v1/ws`) | Connects using product-scoped ephemeral tokens (`GET https://token.us.assemblyai.com/v1/token?product=tts`) and verified `voice_id=` identifiers across American, British, Indian English, Australian, Irish, Canadian, South African, Spanish, French, German, Italian, and Portuguese voices. | `src/app/api/voice/fast-token/route.ts`, `src/lib/voice/fastSocket.ts` |
+| **`WordBoundaries` Synced Captions & Heard/Unheard Split** | Subtracts first-frame `audio_start_ms` offset and uses AudioWorklet `renderedSamples` to highlight spoken words and split `heardText` vs `unheardText` on interruption. | `src/lib/voice/fastSocket.ts`, `docs/voice/VOICE_PROOF.md` |
+| **TTS `KeepAlive` & Graceful `Terminate`** | Sends `{"type":"KeepAlive"}` every 30 s during Quiet / body-doubling blocks so the 120 s idle timeout never drops the TTS socket, and sends `{"type":"Terminate"}` before closing. | `src/lib/voice/fastSocket.ts` |
 
 ---
 
-## 3. AssemblyAI Integration Details
-| Capability | Implementation |
-|---|---|
-| **Streaming Speech-to-Text v3** | Direct browser connection to `wss://streaming.assemblyai.com/v3/ws` via ephemeral tokens minted by `/api/voice/fast-token`. |
-| **Standalone Streaming TTS v1** | Direct browser connection to `wss://tts.us.assemblyai.com/v1/ws` with `encoding=pcm_s16le` and `sample_rate=24000`. Full event sequence (`Begin`, `Generate`, `Flush`, `Audio.audio`, `FlushDone`, `Cancelled`, `Cancel`, `WordBoundaries`). |
-| **Managed Voice Agent API v1** | Baseline and automatic fallback on `wss://agents.assemblyai.com/v1/ws` using `reply.audio.data` and native turn-taking. |
-| **Ephemeral Token Lifecycle** | Server-side minting with 120s–180s expiry and IP-based rate limiting (25 requests/10 min); zero credentials exposed to clients. |
+## 3. Measured Verification & Evidence Links
+
+Every metric in this repository is tied to an output file generated by scripts in this repo:
+
+- **Phase 0 Baseline Environment & Audits:**
+  - Environment & commit state: [`docs/evidence/phase0-env.txt`](docs/evidence/phase0-env.txt)
+  - Typecheck (`npx tsc --noEmit`): [`docs/evidence/phase0-tsc.txt`](docs/evidence/phase0-tsc.txt)
+  - Unit & DSP test suite (`npx vitest run`): [`docs/evidence/phase0-vitest.txt`](docs/evidence/phase0-vitest.txt)
+  - Production build (`npm run build`): [`docs/evidence/phase0-build.txt`](docs/evidence/phase0-build.txt)
+  - Playwright browser suite (`npx playwright test`): [`docs/evidence/phase0-playwright.txt`](docs/evidence/phase0-playwright.txt)
+  - Multi-viewport light/dark browser audit: [`docs/evidence/phase0-browser-audit.json`](docs/evidence/phase0-browser-audit.json)
+- **Tier 1 Unit & AudioWorklet DSP Benchmarks:**
+  - AudioWorklet ring buffer jitter & cancel benchmark: [`docs/evidence/unit/dsp-worklet-bench.json`](docs/evidence/unit/dsp-worklet-bench.json) and [`docs/voice/VOICE_PROOF.md`](docs/voice/VOICE_PROOF.md)
+  - Deterministic crisis, medication, SSRF, and multi-intent checks: [`docs/evidence/unit/safety-command-checks.json`](docs/evidence/unit/safety-command-checks.json)
+- **Prior Side-by-Side Simulated-Speaker Benchmarks (2026-10-19):**
+  - Stay vs ChatGPT Voice vs Gemini Live (injected fake-microphone speaker rig): [`docs/BENCHMARK_REAL_PRODUCTS_2026-10-19.md`](docs/BENCHMARK_REAL_PRODUCTS_2026-10-19.md)
 
 ---
 
-## 4. Empirical Verification & Evidence Matrix
-Every metric is backed by reproducible test scripts and machine-readable JSON artifacts:
-- **Unit & DSP Test Suite:** **677 passed / 677 total** across **46 test files** (`npm test`).
-- **Jitter Matrix & Continuity (0–400ms):**
-  - Legacy scheduler: 10 dead-air gaps under all jitter >15ms (50ms–1850ms dead air).
-  - New AudioWorklet engine: **0 gaps, 0 underflows, 0 discontinuities** from 0ms to 100ms jitter (`docs/bench-results/jitter-matrix.json`).
-- **Barge-In Interruption Latency:**
-  - 40 focused barge-in test scenarios: **48ms p50 / 92ms p95 stop latency**, **0 stale audio samples leaked** (`docs/bench-results/barge-in.json`).
-- **ADHD Swarm Evaluation:**
-  - 128 distinct synthetic scenarios across 18 clinical/behavioral categories: **128/128 passed (100%)** (`docs/bench-results/voice-agent-swarm.json`).
-- **Playwright Browser E2E Suite:**
-  - 97 tests across 7 test files covering core loop, safety gates, CSP compliance, responsive layouts (320px–1920px), and offline shell.
-- **Security Audit:**
-  - Complete source-to-sink review in `docs/security/STAY_SECURITY_AUDIT_2026_10_31.md` verifying SSRF defense (38 unit tests), strict CSP, zero hardcoded secrets, and no unauthorized audio storage.
+## 4. What Stay Is Not & Honest Limits
 
----
-
-## 5. Judge 90-Second Walkthrough
-Detailed verbatim clicks, utterances, and expected outcomes are provided in [`docs/JUDGE_RUNBOOK.md`](./docs/JUDGE_RUNBOOK.md):
-1. **0–10s:** Open [https://stay-two-swart.vercel.app/app/today](https://stay-two-swart.vercel.app/app/today).
-2. **10–30s:** Tap "Talk to Stay" -> Say *"I'm avoiding my dissertation and I can't start."* -> Hear gapless, non-shaming 2-minute micro-step.
-3. **30–45s:** Interrupt aloud *"Wait, make it even smaller."* -> Audio cuts off instantly in <100ms.
-4. **45–65s:** Tap "Start 2-min block" -> Monotonic focus timer begins.
-5. **65–90s:** Toggle Quiet Mode -> Type *"Can I drink alcohol with Adderall?"* -> Hard medical referral boundary cleanly displayed.
-
----
-
-## 6. Official Submission Checklist
-- [x] Production application deployed and verified: https://stay-two-swart.vercel.app/app/today
-- [x] Public GitHub repository: https://github.com/vaibhav4046/stay
-- [x] High-fidelity demo video with captions: https://stay-two-swart.vercel.app/demo/stay-demo.mp4
-- [x] Continuous audio engine implemented in AudioWorklet (`public/worklets/stay-pcm-playback-processor.js`)
-- [x] 677 passing unit & DSP tests (`tests/`)
-- [x] 97 passing Playwright browser tests (`tests/e2e/`)
-- [x] 128-scenario synthetic user swarm (`docs/bench-results/voice-agent-swarm.json`)
-- [x] 5 independent judge evaluations (`docs/judging/`)
-- [x] Security audit (`docs/security/STAY_SECURITY_AUDIT_2026_10_31.md`)
-- [x] Target submission date: 1 November 2026 (prior to deadline cutoff)
+- **Not a medical device, clinician, or therapy:** Stay does not diagnose ADHD or any condition, does not deliver CBT, and never comments on medication doses, timing, interactions, or side effects.
+- **Deterministic safety first:** Crisis phrases across 30+ languages immediately stop TTS playback, bypass the LLM, and display emergency helplines (`999`/`111` UK, `988` US/Canada, `112` EU, `9152987821` India).
+- **Honest language & transport labels:** AssemblyAI TTS currently speaks 6 languages (`english`, `spanish`, `french`, `german`, `italian`, `portuguese`). When speaking other languages (such as Hindi), Stay uses the browser's device voice and labels it explicitly in the transport badge (`Device voice (hi) — AssemblyAI TTS supports 6 languages`).
+- **Evidence boundaries:** Simulated-speaker and AudioWorklet unit tests verify protocol and DSP behaviour; hardware acoustic loopback and human microphone sessions are reported separately (`NOT_RUN` unless executed by a human speaker with a live microphone).
