@@ -12,6 +12,7 @@ interface WorkletRunResult {
   underflows: number;
   overflows: number;
   fadeTransitions: number;
+  measuredGapMs: number;
   staleSamplesAfterCancel: number;
   enqueueToFirstRenderMs: number;
 }
@@ -79,6 +80,8 @@ function runWorkletDiagnostics() {
     let firstRenderMs: number | null = null;
     let renderedNonZeroSamples = 0;
     let fadeTransitions = 0;
+    let silenceGapSamplesMidStream = 0;
+    let hasStartedPlaying = false;
     let prevState = proc.state;
 
     const maxSimMs = arrivalsMs[arrivalsMs.length - 1] + 1500;
@@ -91,7 +94,7 @@ function runWorkletDiagnostics() {
             type: 'enqueue',
             sessionEpoch: 1,
             replyEpoch: 1,
-            seq: nextChunkIdx + 1,
+            seq: nextChunkIdx,
             samples,
           },
         });
@@ -105,6 +108,7 @@ function runWorkletDiagnostics() {
 
       const out = [[new Float32Array(quantumSamples)]];
       proc.process([], out, {});
+      if (proc.state === 'PLAYING') hasStartedPlaying = true;
       if (proc.state !== prevState && (proc.state === 'BUFFERING' || prevState === 'BUFFERING')) {
         fadeTransitions++;
       }
@@ -117,27 +121,33 @@ function runWorkletDiagnostics() {
           if (firstRenderMs === null) {
             firstRenderMs = Number(simTimeMs.toFixed(2));
           }
+        } else if (hasStartedPlaying && proc.state !== 'STOPPED') {
+          silenceGapSamplesMidStream++;
         }
       }
 
       simTimeMs += quantumMs;
     }
 
-    // Measure cancel in PLAYING state and count any stale samples after cancel
+    // Measure cancel in PLAYING state and count any stale samples after cancel ramp completes
     const cancelProc = new ProcessorClass();
     const activeChunk = new Float32Array(samplesPerChunk * 4);
     activeChunk.fill(0.4);
     cancelProc.handleMessage({
-      data: { type: 'enqueue', sessionEpoch: 1, replyEpoch: 1, seq: 1, samples: activeChunk },
+      data: { type: 'enqueue', sessionEpoch: 1, replyEpoch: 1, seq: 0, samples: activeChunk },
     });
     const warmOut = [[new Float32Array(quantumSamples)]];
     cancelProc.process([], warmOut, {});
     cancelProc.handleMessage({
       data: { type: 'cancel', sessionEpoch: 1, replyEpoch: 2 },
     });
-    // Also attempt to enqueue a late chunk from old epoch 1
+    // Drain the 10ms (240-sample = 2 quanta) click-free ramp
+    for (let r = 0; r < 2; r++) {
+      cancelProc.process([], [[new Float32Array(quantumSamples)]], {});
+    }
+    // Attempt to enqueue a late chunk from old epoch 1
     cancelProc.handleMessage({
-      data: { type: 'enqueue', sessionEpoch: 1, replyEpoch: 1, seq: 2, samples: activeChunk },
+      data: { type: 'enqueue', sessionEpoch: 1, replyEpoch: 1, seq: 1, samples: activeChunk },
     });
     let staleSamplesAfterCancel = 0;
     for (let q = 0; q < 10; q++) {
@@ -148,6 +158,8 @@ function runWorkletDiagnostics() {
       }
     }
 
+    const measuredGapMs = Number(((silenceGapSamplesMidStream / sampleRate) * 1000).toFixed(2));
+
     results.push({
       jitterConditionMs: jitter,
       chunkDurationMs,
@@ -156,6 +168,7 @@ function runWorkletDiagnostics() {
       underflows: proc.underflowCount,
       overflows: proc.overflowCount,
       fadeTransitions,
+      measuredGapMs,
       staleSamplesAfterCancel,
       enqueueToFirstRenderMs: firstRenderMs ?? 0,
     });
@@ -190,7 +203,7 @@ function runWorkletDiagnostics() {
   const rowsMd = results
     .map(
       (r) =>
-        `| ${r.jitterConditionMs} ms | ${r.renderedNonZeroSamples} | ${r.underflows} | ${r.fadeTransitions} | ${r.enqueueToFirstRenderMs} ms | ${r.staleSamplesAfterCancel} |`,
+        `| ${r.jitterConditionMs} ms | ${r.renderedNonZeroSamples} | ${r.underflows} | ${r.fadeTransitions} | ${r.measuredGapMs} ms | ${r.enqueueToFirstRenderMs} ms | ${r.staleSamplesAfterCancel} |`,
     )
     .join('\n');
 
@@ -207,8 +220,8 @@ function runWorkletDiagnostics() {
 
 ## Jitter Matrix Results (20 chunks × 100 ms @ 24 kHz = 48,000 samples)
 
-| Alternating Packet Jitter | Rendered Non-Zero Samples | Measured Underflows | Fade Transitions | \`enqueueToFirstRenderMs\` | Stale Samples After \`cancel\` |
-|---|---|---|---|---|---|
+| Alternating Packet Jitter | Rendered Non-Zero Samples | Measured Underflows | Fade Transitions | Measured Gap | \`enqueueToFirstRenderMs\` | Stale Samples After \`cancel\` |
+|---|---|---|---|---|---|---|
 ${rowsMd}
 `;
 

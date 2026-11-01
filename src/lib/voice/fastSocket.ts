@@ -21,11 +21,11 @@ export const ENDPOINTING_PRESETS: Record<
   crisis: { end_of_turn_confidence_threshold: 0.7, min_turn_silence: 800, max_turn_silence: 3000 },
 };
 
-/** True when a short utterance during agent speech is a conversational backchannel ("yeah", "mm-hmm", "got it") that should NOT interrupt Stay. */
+/** True when a short utterance during agent speech is a conversational backchannel ("yeah", "mm-hmm", "got it") that should NOT interrupt Stay. Note: "sure" is excluded per §6.3.4. */
 export function isBackchannelOnly(text: string): boolean {
   const clean = text.toLowerCase().replace(/[^\p{L}\p{N}\s-]+/gu, '').trim();
   if (!clean || clean.split(/\s+/).length > 3) return false;
-  return /^(?:yeah|yep|yup|mm[- ]?hmm|mhm|uh[- ]?huh|mm|hm+|hmm+|okay|ok|right|sure|got it|i see|ah|oh|true|fair)(?:\s+(?:yeah|okay|ok|right|sure|got it|i see))?$/i.test(clean);
+  return /^(?:yeah|yep|yup|mm[- ]?hm+|mhm|uh[- ]?huh|mm|hm+|hmm+|okay|ok|right|got it|i see|ah|oh|true|fair)(?:\s+(?:yeah|okay|ok|right|got it|i see))?$/i.test(clean);
 }
 
 /** True when the user utters an explicit interruption keyword ("stop", "wait", "pause", "hold on") that should barge in immediately even on a single word. */
@@ -343,6 +343,9 @@ export class FastSocket {
   private ttsReconnectAttempts = 0;
   private sttTermResolve: (() => void) | null = null;
   private ttsTermResolve: (() => void) | null = null;
+  private ttsAudioStartedAt = 0;
+  private unduckTimer: ReturnType<typeof setTimeout> | undefined;
+  private cancelFallbackTimer: ReturnType<typeof setTimeout> | undefined;
 
   constructor(cfg: FastSocketConfig) {
     this.cfg = { sampleRate: 16000, holdMs: 2200, interruptHoldMs: 900, warmUp: true, ...cfg };
@@ -626,6 +629,20 @@ export class FastSocket {
           clearTimeout(beginTimer);
           resolve();
         } else if (m.type === 'SpeechStarted') {
+          const speakingNow = this.agentSpeaking || Date.now() < this.playEndAt;
+          const sinceAudioStartMs = Date.now() - this.ttsAudioStartedAt;
+          if (speakingNow && this.ttsAudioStartedAt > 0 && sinceAudioStartMs >= 0 && sinceAudioStartMs < 250) {
+            this.emit({ type: 'barge_in.echo_ignored', sinceAudioStartMs });
+            return;
+          }
+          if (speakingNow) {
+            this.emit({ type: 'playback.duck', ducked: true, db: -18 });
+            if (this.unduckTimer) clearTimeout(this.unduckTimer);
+            this.unduckTimer = setTimeout(() => {
+              this.unduckTimer = undefined;
+              this.emit({ type: 'playback.duck', ducked: false });
+            }, 600);
+          }
           this.emit({ type: 'input.speech.started', timestamp: m.timestamp, source: 'vad' });
         } else if (m.type === 'Turn') {
           this.onTurn(m);
@@ -693,7 +710,12 @@ export class FastSocket {
         } else if (m.type === 'WordBoundaries' && Array.isArray(m.words)) {
           this.onWordBoundaries(m);
         } else if (m.type === 'Cancelled') {
+          if (this.cancelFallbackTimer) {
+            clearTimeout(this.cancelFallbackTimer);
+            this.cancelFallbackTimer = undefined;
+          }
           this.staleCancels = Math.max(0, this.staleCancels - 1);
+          this.emit({ type: 'barge_in.ready_listening', source: 'cancelled_ack' });
         } else if (m.type === 'Termination') {
           this.ttsTermResolve?.();
           this.ttsTermResolve = null;
@@ -767,8 +789,16 @@ export class FastSocket {
         }
         this.inUserTurn = true;
         this.interrupted = speakingNow || this.spoken !== '';
+        if (this.unduckTimer) {
+          clearTimeout(this.unduckTimer);
+          this.unduckTimer = undefined;
+          this.emit({ type: 'playback.duck', ducked: false });
+        }
         this.playEndAt = 0;
         this.cancel();
+        if (this.interrupted) {
+          this.emit({ type: 'barge_in.committed', replyEpoch: this.genId });
+        }
         this.emit({ type: 'input.speech.started' });
       }
       if (this.holdTimer) {
@@ -910,6 +940,12 @@ export class FastSocket {
       if (this.tts?.readyState === WebSocket.OPEN) {
         this.tts.send(JSON.stringify({ type: 'Cancel' }));
         this.staleCancels++;
+        if (this.cancelFallbackTimer) clearTimeout(this.cancelFallbackTimer);
+        this.cancelFallbackTimer = setTimeout(() => {
+          this.cancelFallbackTimer = undefined;
+          this.staleCancels = Math.max(0, this.staleCancels - 1);
+          this.emit({ type: 'barge_in.ready_listening', source: 'timeout_800ms' });
+        }, 800);
       }
     } catch {
       // closing
@@ -920,6 +956,7 @@ export class FastSocket {
     if (this.staleCancels > 0) return; // audio of a reply that was cancelled, still in flight
     if (this.replyBaseId === null) {
       this.replyBaseId = Number(m.flush_id);
+      this.ttsAudioStartedAt = Date.now();
       this.mark('aud1');
     }
     this.agentSpeaking = true;

@@ -1,6 +1,6 @@
 {
-  "gitSha": "056484115c251c633a2842e0021a31b6aafe9a37",
+  "gitSha": "fa97596b1aa93be060e9b23246e2c5dddfb08e8e",
   "status": "NOT_RUN",
   "reason": "LIVE_BENCH=1 not set; refusing to generate unmeasured persona latencies or hardcoded replies.",
-  "timestamp": "2026-11-01T05:36:48.622Z"
+  "timestamp": "2026-11-01T05:55:22.337Z"
 }

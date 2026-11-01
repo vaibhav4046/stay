@@ -5,9 +5,17 @@ import { PlaybackEpoch } from './epochs';
 export interface PlaybackTelemetry {
   state: 'BUFFERING' | 'PLAYING' | 'DRAINING' | 'STOPPED';
   bufferedMs: number;
+  prebufferMs?: number;
+  backpressure?: boolean;
   renderedSamples: number;
+  underflows: number;
   underflowCount: number;
+  overflows: number;
   overflowCount: number;
+  staleDropped: number;
+  dupDropped: number;
+  fadeCount?: number;
+  lastNonZeroAt: number;
   rms: number;
   peak: number;
 }
@@ -17,6 +25,7 @@ export interface EnqueueMeta {
   replyEpoch?: number;
   sampleRate?: number;
   sequence?: number;
+  seq?: number;
   provider?: string;
   flushId?: number;
 }
@@ -34,20 +43,28 @@ export class ContinuousPcmPlayer {
   private fallbackMode = false;
   private fallbackNextTime = 0;
   private fallbackSources = new Set<AudioBufferSourceNode>();
-  private lastSequence = -1;
+  private autoSeq = 0;
 
   private telemetry: PlaybackTelemetry = {
     state: 'STOPPED',
     bufferedMs: 0,
+    prebufferMs: 100,
+    backpressure: false,
     renderedSamples: 0,
+    underflows: 0,
     underflowCount: 0,
+    overflows: 0,
     overflowCount: 0,
+    staleDropped: 0,
+    dupDropped: 0,
+    fadeCount: 0,
+    lastNonZeroAt: 0,
     rms: 0,
     peak: 0,
   };
 
-  private firstAudioTimestamp: number | null = null;
-  private replyStartTimestamp: number | null = null;
+  private firstRenderTimestamp: number | null = null;
+  private replyEnqueueStartTimestamp: number | null = null;
   private onTelemetryCallback: ((t: PlaybackTelemetry) => void) | null = null;
   private onAudioRenderedCallback: ((float32: Float32Array, sampleRate: number) => void) | null = null;
 
@@ -68,15 +85,10 @@ export class ContinuousPcmPlayer {
     this.gainNode = ctx.createGain();
     this.gainNode.gain.value = 1.0;
 
-    // Connect gain directly to destination or provided master playback gain node
     const targetDest = options?.destinationNode ?? ctx.destination;
     this.gainNode.connect(targetDest);
 
-    // Feed analyser for visualization (lip-sync, orb bands, wave ribbons).
-    // CRITICAL: NEVER connect this.analyserNode to targetDest / ctx.destination!
-    // An AnalyserNode does NOT require an output connection to compute FFT or time-domain data.
-    // If connected to destination, any other audio routed to the analyser (e.g. microphone)
-    // is piped straight to the speakers, causing severe mic loopback, echo, and acoustic feedback.
+    // Feed analyser for visualization without connecting analyser to destination (prevents mic feedback loop)
     if (this.analyserNode) {
       this.gainNode.connect(this.analyserNode);
     }
@@ -92,14 +104,22 @@ export class ContinuousPcmPlayer {
             this.telemetry = {
               state: msg.state,
               bufferedMs: msg.bufferedMs,
+              prebufferMs: msg.prebufferMs ?? 100,
+              backpressure: Boolean(msg.backpressure || msg.bufferedMs > 20000),
               renderedSamples: msg.renderedSamples,
-              underflowCount: msg.underflowCount,
-              overflowCount: msg.overflowCount,
+              underflows: msg.underflows ?? msg.underflowCount ?? 0,
+              underflowCount: msg.underflowCount ?? msg.underflows ?? 0,
+              overflows: msg.overflows ?? msg.overflowCount ?? 0,
+              overflowCount: msg.overflowCount ?? msg.overflows ?? 0,
+              staleDropped: msg.staleDropped ?? 0,
+              dupDropped: msg.dupDropped ?? 0,
+              fadeCount: msg.fadeCount ?? 0,
+              lastNonZeroAt: msg.lastNonZeroAt ?? 0,
               rms: msg.rms,
               peak: msg.peak,
             };
-            if (this.telemetry.state === 'PLAYING' && this.firstAudioTimestamp === null) {
-              this.firstAudioTimestamp = performance.now();
+            if (this.telemetry.state === 'PLAYING' && this.firstRenderTimestamp === null) {
+              this.firstRenderTimestamp = performance.now();
             }
             this.onTelemetryCallback?.(this.telemetry);
           }
@@ -121,28 +141,26 @@ export class ContinuousPcmPlayer {
     return this.fallbackMode;
   }
 
+  isBackpressured(): boolean {
+    return this.telemetry.bufferedMs > 20000;
+  }
+
   /**
-   * Enqueue a PCM16 chunk (base64 string or Uint8Array/ArrayBuffer)
+   * Enqueue a PCM16 chunk (base64 string or Uint8Array/ArrayBuffer) with { replyEpoch, seq }.
    */
   enqueuePcm16(input: string | Uint8Array | ArrayBuffer, meta?: EnqueueMeta): void {
     const sEpoch = meta?.sessionEpoch ?? this.epochs.sessionEpoch;
     const rEpoch = meta?.replyEpoch ?? this.epochs.replyEpoch;
 
-    // Discard stale or canceled generations
     if (!this.epochs.isValid(sEpoch, rEpoch)) {
+      this.telemetry.staleDropped++;
       return;
     }
 
-    // Sequence tracking: reject duplicate or out-of-order packets
-    if (meta?.sequence !== undefined) {
-      if (meta.sequence <= this.lastSequence) {
-        return; // drop duplicate or out-of-order
-      }
-      this.lastSequence = meta.sequence;
-    }
+    const seq = meta?.seq ?? meta?.sequence ?? this.autoSeq++;
 
-    if (this.replyStartTimestamp === null) {
-      this.replyStartTimestamp = performance.now();
+    if (this.replyEnqueueStartTimestamp === null) {
+      this.replyEnqueueStartTimestamp = performance.now();
     }
 
     const pcm16 = this.decoder.decode(input);
@@ -151,7 +169,6 @@ export class ContinuousPcmPlayer {
     const sourceRate = meta?.sampleRate ?? 24000;
     const targetRate = this.ctx?.sampleRate ?? sourceRate;
 
-    // Stateful resampler
     if (!this.resampler || this.resampler.sourceRate !== sourceRate || this.resampler.targetRate !== targetRate) {
       this.resampler = new StreamingResampler(sourceRate, targetRate);
     }
@@ -169,6 +186,7 @@ export class ContinuousPcmPlayer {
         samples: resampledFloat32,
         sessionEpoch: sEpoch,
         replyEpoch: rEpoch,
+        seq,
       });
     } else if (this.ctx) {
       this.scheduleFallbackChunk(resampledFloat32, targetRate);
@@ -184,7 +202,6 @@ export class ContinuousPcmPlayer {
     source.buffer = buffer;
     source.connect(this.gainNode);
 
-    // Bounded prebuffer for fallback (80ms minimum lookahead)
     const now = this.ctx.currentTime;
     const startAt = Math.max(now + 0.08, this.fallbackNextTime);
     source.start(startAt);
@@ -194,6 +211,18 @@ export class ContinuousPcmPlayer {
     source.onended = () => {
       this.fallbackSources.delete(source);
     };
+  }
+
+  /**
+   * §6.3.1 — Duck playback to -18 dB within one audio render quantum when SpeechStarted arrives.
+   */
+  setDucked(ducked: boolean): void {
+    const targetLinear = ducked ? 0.1258925 : 1.0;
+    if (!this.fallbackMode && this.workletNode) {
+      this.workletNode.port.postMessage({ type: 'duck', ducked });
+    } else if (this.gainNode && this.ctx) {
+      this.gainNode.gain.setTargetAtTime(targetLinear, this.ctx.currentTime, 0.003);
+    }
   }
 
   markReplyEnd(meta?: { replyEpoch?: number }): void {
@@ -211,11 +240,11 @@ export class ContinuousPcmPlayer {
 
   cancelReply(reason = 'barge-in'): void {
     const nextEpoch = this.epochs.cancelReply();
-    this.lastSequence = -1;
+    this.autoSeq = 0;
     this.decoder.reset();
     this.resampler?.reset();
-    this.firstAudioTimestamp = null;
-    this.replyStartTimestamp = null;
+    this.firstRenderTimestamp = null;
+    this.replyEnqueueStartTimestamp = null;
 
     if (!this.fallbackMode && this.workletNode) {
       this.workletNode.port.postMessage({
@@ -255,18 +284,35 @@ export class ContinuousPcmPlayer {
   }
 
   getUnderflowCount(): number {
-    return this.telemetry.underflowCount;
+    return this.telemetry.underflows;
   }
 
   getOverflowCount(): number {
-    return this.telemetry.overflowCount;
+    return this.telemetry.overflows;
   }
 
-  getFirstAudibleLatency(): number | null {
-    if (this.firstAudioTimestamp !== null && this.replyStartTimestamp !== null) {
-      return Math.round(this.firstAudioTimestamp - this.replyStartTimestamp);
+  getStaleDropped(): number {
+    return this.telemetry.staleDropped;
+  }
+
+  getDupDropped(): number {
+    return this.telemetry.dupDropped;
+  }
+
+  /**
+   * §6.5 — Renamed from getFirstAudibleLatency: measures ms from first enqueue to first PLAYING telemetry,
+   * which is internal buffer delay, NOT end-to-end audible acoustic latency.
+   */
+  getEnqueueToFirstRenderMs(): number | null {
+    if (this.firstRenderTimestamp !== null && this.replyEnqueueStartTimestamp !== null) {
+      return Math.round(this.firstRenderTimestamp - this.replyEnqueueStartTimestamp);
     }
     return null;
+  }
+
+  /** @deprecated Use getEnqueueToFirstRenderMs() — enqueue-to-render is not end-to-end audible latency. */
+  getFirstAudibleLatency(): number | null {
+    return this.getEnqueueToFirstRenderMs();
   }
 
   getPlaybackPositionMs(): number {
