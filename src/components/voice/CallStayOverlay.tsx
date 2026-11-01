@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { VoiceVisualState } from '@/types/domain';
-import { SubtleOrb } from '@/components/voice/SubtleOrb';
-import { SignalWave } from '@/components/signal/SignalWave';
+import type { AudioSpectrumBands, VoiceVisualState } from '@/types/domain';
+import { Signal } from '@/components/Signal';
 import { TransportBadge } from '@/components/voice/TransportBadge';
 import type { VoiceTransportInfo } from '@/lib/voice/useVoiceAgent';
 import { NUDGE_INSTRUCTIONS, WRAP_INSTRUCTION, formatClock, nextCallAction } from '@/lib/voice/callMode';
@@ -18,6 +17,7 @@ export interface CallVoice {
   injectContext: (content: string) => boolean;
   disconnectVoiceSession: () => void;
   audioEnergy: number;
+  audioBands?: AudioSpectrumBands;
   transcripts: Array<{ id: string; role: string; text: string }>;
   /** the assistant's words as they are being rendered (word-synced to playback) */
   liveSpokenText: string;
@@ -150,9 +150,10 @@ export function CallStayOverlay({ voice, connected, name, paused = false, onEnd 
       </div>
 
       <div className="flex flex-col items-center gap-5">
-        <SubtleOrb state={signalState} energy={connected && !voice.isHandsFreePaused ? voice.audioEnergy : 0} size={96} />
-        {/* the wave follows the real microphone while listening and the audible assistant audio while speaking; flat otherwise */}
-        <SignalWave state={signalState} height={64} className="w-[min(24rem,84vw)]" />
+        {/* the same particle orb as the landing page */}
+        <div className="h-[min(17rem,42vh)] w-[min(17rem,70vw)]" data-testid="call-orb">
+          <Signal state={signalState} energy={connected && !voice.isHandsFreePaused ? voice.audioEnergy : 0} bands={connected && !voice.isHandsFreePaused ? voice.audioBands : undefined} hideLabel className="h-full w-full" />
+        </div>
         <p aria-live="polite" className="text-lg" data-testid="call-state">{label}</p>
         {captions && connected && (
           <div className="min-h-[5.5rem] w-[min(32rem,88vw)] space-y-1 text-center" data-testid="call-captions">

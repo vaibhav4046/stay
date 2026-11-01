@@ -59,14 +59,12 @@ test.describe('STAY Signal: the wave is driven by real audio and tells the truth
     await page.getByTestId('call-direct-stay-btn').click();
     const overlay = page.getByTestId('call-overlay');
     await expect(overlay).toHaveAttribute('data-call-state', 'ringing');
-    await expect(overlay.getByTestId('signal-wave')).toHaveAttribute('data-signal-state', 'connecting');
+    await expect(overlay.getByTestId('call-orb')).toBeVisible(); // the same particle orb as the landing page
     const consent = page.getByRole('button', { name: /start talking/i });
     if (await consent.isVisible({ timeout: 5000 }).catch(() => false)) await consent.click();
     await expect(overlay).toHaveAttribute('data-call-state', 'connected', { timeout: 12000 });
 
     await page.getByTestId('call-mute').click();
-    await expect(overlay.getByTestId('signal-wave')).toHaveAttribute('data-signal-state', 'paused');
-    await expect.poll(async () => Number((await overlay.getByTestId('signal-wave').getAttribute('data-drive')) ?? '1'), { timeout: 2000 }).toBe(0);
     await expect(page.getByTestId('call-state')).toHaveText('You are muted');
 
     // captions can be hidden and shown; the controls are real buttons
@@ -97,15 +95,12 @@ test.describe('STAY Signal: the wave is driven by real audio and tells the truth
     await page.mouse.wheel(0, 1800);
     await page.waitForTimeout(600);
     expect(await page.evaluate(() => (window as unknown as { __gum: number }).__gum)).toBe(0);
-    // the hero wave is decorative and flat of audio
-    await expect(page.getByTestId('hero-orb').getByTestId('signal-wave')).toHaveAttribute('data-drive', '0.00');
   });
 
   test('reduced motion: the hero shows a still wave and everything still works', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
-    const w = page.getByTestId('hero-orb').getByTestId('signal-wave');
-    await expect(w).toBeVisible();
+    await expect(page.getByTestId('hero-orb').locator('canvas').first()).toBeVisible();
     await expect(page.getByTestId('hero-start')).toBeVisible();
     await page.getByTestId('hero-chips').getByRole('button', { name: 'Taxes' }).click();
     await expect(page.getByTestId('hero-input')).toHaveValue('my taxes');

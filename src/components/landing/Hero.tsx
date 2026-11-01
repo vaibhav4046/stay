@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Signal } from '@/components/Signal';
 import type { OrbTarget } from '@/components/orb/OrbParticles';
-import { SignalWave } from '@/components/signal/SignalWave';
 import { useOrbShape } from '@/lib/orb/useOrbShape';
 
 /** What the orb shows on its own until you touch the field: the kind of thing people actually avoid. */
@@ -159,8 +158,6 @@ export function Hero() {
 
       <div className="lp-hero-orb" data-testid="hero-orb" style={{ position: 'relative' }}>
         <Signal state={orb.thinking ? 'thinking' : 'idle'} energy={0} hideLabel shape={figure ?? orb.target} thinking={orb.thinking} className="h-full w-full" />
-        {/* decorative: resting breath, or the travelling highlight while the orb is working; never live audio on this page */}
-        <SignalWave state={orb.thinking ? 'thinking' : 'idle'} height={44} className="pointer-events-none absolute inset-x-[22%] bottom-[9%] w-[56%]" getLevels={() => ({ input: 0, output: 0 })} />
       </div>
     </section>
   );
