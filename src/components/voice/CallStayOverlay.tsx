@@ -137,7 +137,7 @@ export function CallStayOverlay({ voice, connected, name, paused = false, onEnd 
       data-testid="call-overlay"
       data-call-state={connected ? 'connected' : 'ringing'}
       className="fixed inset-0 z-40 flex flex-col items-center justify-between px-6"
-      style={{ background: 'radial-gradient(900px 520px at 50% 22%, rgb(57 124 232 / 0.30), transparent 65%), radial-gradient(600px 400px at 100% 100%, rgb(255 255 255 / 0.05), transparent 60%), linear-gradient(180deg, #111214 0%, #08090B 60%, #040405 100%)', color: 'var(--ink)', paddingTop: 'max(2.5rem, env(safe-area-inset-top))', paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}
+      style={{ background: 'radial-gradient(900px 520px at 50% 22%, rgb(62 143 214 / 0.30), transparent 65%), radial-gradient(600px 400px at 100% 100%, rgb(255 255 255 / 0.05), transparent 60%), linear-gradient(180deg, #0A1018 0%, #05080C 60%, #03060A 100%)', color: 'var(--ink)', paddingTop: 'max(2.5rem, env(safe-area-inset-top))', paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}
     >
       <div className="absolute right-4" style={{ top: 'max(1rem, env(safe-area-inset-top))' }}>
         <TransportBadge transport={voice.transportInfo} isConnected={connected} replyTimes={voice.replyTimes} />

@@ -56,17 +56,17 @@ export default function SettingsPage() {
           </div>
         </fieldset>
         <label className="mt-5 flex items-center gap-3 cursor-pointer">
-          <input type="checkbox" className="h-5 w-5 accent-[#85B6FF]" checked={profile.interactionMode === 'quiet_text_only'} onChange={(e) => updateProfile({ interactionMode: e.target.checked ? 'quiet_text_only' : 'voice_and_text' })} />
+          <input type="checkbox" className="h-5 w-5 accent-[#8FD3FF]" checked={profile.interactionMode === 'quiet_text_only'} onChange={(e) => updateProfile({ interactionMode: e.target.checked ? 'quiet_text_only' : 'voice_and_text' })} />
           <span>Quiet mode by default (text only)</span>
         </label>
         <label className="mt-3 flex items-center gap-3 cursor-pointer">
-          <input type="checkbox" className="h-5 w-5 accent-[#85B6FF]" checked={profile.proactiveCheckins} onChange={(e) => updateProfile({ proactiveCheckins: e.target.checked })} />
+          <input type="checkbox" className="h-5 w-5 accent-[#8FD3FF]" checked={profile.proactiveCheckins} onChange={(e) => updateProfile({ proactiveCheckins: e.target.checked })} />
           <span>Check in when a focus block ends</span>
         </label>
         <label className="mt-3 flex items-start gap-3 cursor-pointer">
           <input
             type="checkbox"
-            className="mt-0.5 h-5 w-5 accent-[#85B6FF]"
+            className="mt-0.5 h-5 w-5 accent-[#8FD3FF]"
             checked={playfulOrb}
             onChange={(e) => {
               setPlayfulOrb(e.target.checked);

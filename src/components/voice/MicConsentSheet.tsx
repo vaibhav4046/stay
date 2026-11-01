@@ -17,13 +17,13 @@ export function MicConsentSheet({ isOpen, onConsent, onTextOnly, onClose }: MicC
 
   return (
     <Sheet title="Before we use your microphone" onClose={onClose}>
-      <div className="space-y-4 text-sm" style={{ color: '#F5F5F6' }} data-testid="mic-consent-sheet">
+      <div className="space-y-4 text-sm" style={{ color: '#EEF6FF' }} data-testid="mic-consent-sheet">
         <p className="leading-relaxed">
           Stay sends your voice to <strong>AssemblyAI</strong> so it can turn it into text and speak back to you.
         </p>
 
-        <div className="p-3.5 rounded-[12px] border border-[#2E2F32] space-y-2 text-xs" style={{ backgroundColor: '#353537', color: '#C9C9C9' }}>
-          <p className="font-semibold text-xs" style={{ color: '#F5F5F6' }}>What stays on this device:</p>
+        <div className="p-3.5 rounded-[12px] border border-[#1E2B3D] space-y-2 text-xs" style={{ backgroundColor: '#1A2433', color: '#C5D6E6' }}>
+          <p className="font-semibold text-xs" style={{ color: '#EEF6FF' }}>What stays on this device:</p>
           <ul className="list-disc list-inside space-y-1">
             <li>Your tasks, your focus blocks and your list of words.</li>
             <li>Stay does not save your voice. AssemblyAI handles it under its own privacy terms.</li>
@@ -31,13 +31,13 @@ export function MicConsentSheet({ isOpen, onConsent, onTextOnly, onClose }: MicC
           </ul>
         </div>
 
-        <p className="text-xs" style={{ color: '#C9C9C9' }}>
+        <p className="text-xs" style={{ color: '#C5D6E6' }}>
           <strong>Headphones work best.</strong> Then Stay does not hear its own voice.
         </p>
 
         {showHowItWorks && (
-          <div className="p-3 rounded-lg border border-[#2E2F32] text-xs space-y-1" style={{ backgroundColor: '#08090B' }}>
-            <p className="font-semibold" style={{ color: '#F5F5F6' }}>How this works:</p>
+          <div className="p-3 rounded-lg border border-[#1E2B3D] text-xs space-y-1" style={{ backgroundColor: '#05080C' }}>
+            <p className="font-semibold" style={{ color: '#EEF6FF' }}>How this works:</p>
             <p>1. Tap &ldquo;Start talking&rdquo; and your browser asks for the microphone.</p>
             <p>2. Your voice is sent live to AssemblyAI, which turns it into text.</p>
             <p>3. You can interrupt Stay at any moment by speaking.</p>
@@ -50,7 +50,7 @@ export function MicConsentSheet({ isOpen, onConsent, onTextOnly, onClose }: MicC
             type="button"
             onClick={onConsent}
             className="btn btn-primary flex-1 font-semibold"
-            style={{ backgroundColor: '#85B6FF', color: '#08090B' }}
+            style={{ backgroundColor: '#8FD3FF', color: '#05080C' }}
             data-testid="consent-start-talking"
           >
             Start talking
@@ -59,7 +59,7 @@ export function MicConsentSheet({ isOpen, onConsent, onTextOnly, onClose }: MicC
             type="button"
             onClick={onTextOnly}
             className="btn btn-secondary flex-1"
-            style={{ backgroundColor: '#353537', color: '#F5F5F6', borderColor: '#2E2F32' }}
+            style={{ backgroundColor: '#1A2433', color: '#EEF6FF', borderColor: '#1E2B3D' }}
             data-testid="consent-text-only"
           >
             Use text only
@@ -71,7 +71,7 @@ export function MicConsentSheet({ isOpen, onConsent, onTextOnly, onClose }: MicC
             type="button"
             onClick={() => setShowHowItWorks((prev) => !prev)}
             className="text-xs underline hover:opacity-80"
-            style={{ color: '#85B6FF' }}
+            style={{ color: '#8FD3FF' }}
           >
             {showHowItWorks ? 'Hide details' : 'How this works'}
           </button>

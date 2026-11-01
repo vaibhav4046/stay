@@ -1444,7 +1444,7 @@ export function StayHome({
         <Sheet title="Voice and language" onClose={() => setSheet(null)}>
           <VoicePicker selected={voice.selectedVoice} onSelect={(id) => { const p = voice.setSelectedVoice(id); if (p) setReceipt(`${p.name} armed — ready to speak`); }} fastVoice={voice.fastVoice} />
           <label className="mt-5 flex cursor-pointer items-start gap-3" data-testid="fast-voice-row">
-            <input type="checkbox" className="mt-1 h-5 w-5 accent-[#85B6FF]" checked={voice.fastVoice} onChange={(e) => voice.setFastVoice(e.target.checked)} data-testid="fast-voice-toggle" />
+            <input type="checkbox" className="mt-1 h-5 w-5 accent-[#8FD3FF]" checked={voice.fastVoice} onChange={(e) => voice.setFastVoice(e.target.checked)} data-testid="fast-voice-toggle" />
             <span>
               <span className="label block">Fast voice</span>
               <span className="meta block">On by default. Faster replies, and it waits through your pauses and stops when you talk. The thinking part uses your own key if you added one. Speaks English, Spanish, French, German, Italian and Portuguese; other languages use the standard voice.</span>

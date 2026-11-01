@@ -8,8 +8,8 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import sharp from 'sharp';
 
-const LIGHT = [217, 238, 255]; // #D9EEFF glow ring
-const BLUE = [57, 124, 232]; // #397CE8 blue core
+const LIGHT = [228, 246, 255]; // #E4F6FF glow ring
+const BLUE = [62, 143, 214]; // #3E8FD6 blue core
 const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
 const hex = (c) => `#${c.map((v) => v.toString(16).padStart(2, '0')).join('')}`;
 
@@ -38,8 +38,8 @@ function markSvg({ size = 512, kind = 'tile', dots = 340, sphere = 0.36, dotScal
   let body = '';
   if (kind === 'tile' || kind === 'square') {
     const rx = kind === 'tile' ? size * 0.22 : 0;
-    body += `<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16181C"/><stop offset="1" stop-color="#08090B"/></linearGradient>` +
-      `<radialGradient id="glow" cx="50%" cy="46%" r="52%"><stop offset="0" stop-color="#397CE8" stop-opacity="0.38"/><stop offset="1" stop-color="#397CE8" stop-opacity="0"/></radialGradient></defs>` +
+    body += `<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#101A26"/><stop offset="1" stop-color="#05080C"/></linearGradient>` +
+      `<radialGradient id="glow" cx="50%" cy="46%" r="52%"><stop offset="0" stop-color="#3E8FD6" stop-opacity="0.38"/><stop offset="1" stop-color="#3E8FD6" stop-opacity="0"/></radialGradient></defs>` +
       `<rect width="${size}" height="${size}" rx="${rx}" fill="url(#bg)"/><rect width="${size}" height="${size}" rx="${rx}" fill="url(#glow)"/>` +
       (kind === 'tile' ? `<rect x="0.5" y="0.5" width="${size - 1}" height="${size - 1}" rx="${rx}" fill="none" stroke="#ffffff" stroke-opacity="0.09"/>` : '');
   }

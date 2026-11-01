@@ -20,6 +20,8 @@
 
 **Measured, not claimed** (real AssemblyAI, synthetic speech, one machine; details in section 3): 0 to 1.2% of words wrong across 5 accents, language detected correctly in all 36 clips, first words on screen about 0.9 seconds after you start speaking, voice starts about 0.17 seconds after the reply text is ready.
 
+**Real end-to-end run** (`scripts/real-voice-e2e.mjs`, evidence in `docs/evidence/real-e2e/`): AssemblyAI's own voices played the human speaker into the live app's microphone stream; the app used real AssemblyAI speech-to-text, the language model and AssemblyAI text-to-speech. It transcribed English and Spanish correctly, replied in short conversational turns, switched the voice to Spanish, never opened the managed-agent socket, and in one run stopped speaking about 0.1 s after being talked over. Measured end of speech to Stay speaking was 2.7 to 4.4 s for English and 2.7 to 10 s for the Spanish switch on this headless machine (no GPU; screen recording slows it). That is slower than the isolated speech-to-text test (0.9 s to a final transcript), the cause is not yet found, and one of four runs left the call stuck in Speaking after the Spanish switch. Runs also hit AssemblyAI's account limit of 5 new voice sessions per minute.
+
 **Honest limits:** not tested with a human microphone in these runs; AssemblyAI's voice speaks 6 languages (Hindi gets a Roman-letter Hinglish reply in the English voice); the in-page "Stay calls you" only works while the page is open and there is no phone number; the demo video was recorded before the dark redesign.
 
 ---

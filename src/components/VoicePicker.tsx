@@ -90,7 +90,7 @@ function VoiceCard({
       <div>
         <div className="flex items-start gap-2.5">
           {/* Logo container with 3D hover transform animation */}
-          <div className="relative w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-2xl bg-surface-2/90 border border-line/80 p-1.5 transition-all duration-300 ease-out group-hover:scale-110 group-hover:-rotate-2 group-hover:bg-primary/[0.08] group-hover:border-primary/40 group-hover:shadow-[0_8px_20px_-4px_rgba(133, 182, 255,0.3)]">
+          <div className="relative w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-2xl bg-surface-2/90 border border-line/80 p-1.5 transition-all duration-300 ease-out group-hover:scale-110 group-hover:-rotate-2 group-hover:bg-primary/[0.08] group-hover:border-primary/40 group-hover:shadow-[0_8px_20px_-4px_rgba(143, 211, 255,0.3)]">
             <svg
               viewBox="0 0 100 100"
               className={`voice-card-glyph ${
@@ -142,7 +142,7 @@ function VoiceCard({
                 data-testid={`voice-radio-${p.id}`}
                 className={`flex-shrink-0 mt-0.5 w-5 h-5 rounded-full border flex items-center justify-center transition-all duration-200 ${
                   selected
-                    ? 'bg-primary border-primary text-[#08090B] scale-100 shadow-xs'
+                    ? 'bg-primary border-primary text-[#05080C] scale-100 shadow-xs'
                     : 'border-line-strong bg-surface group-hover:border-primary/60'
                 }`}
               >
@@ -196,7 +196,7 @@ function VoiceCard({
             type="button"
             className={`inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-medium transition-all duration-200 cursor-pointer ${
               playing
-                ? 'bg-primary text-[#08090B] shadow-sm scale-105'
+                ? 'bg-primary text-[#05080C] shadow-sm scale-105'
                 : usable
                   ? 'bg-surface-2 text-ink hover:bg-primary/10 hover:text-primary hover:scale-105 active:scale-95 hover:shadow-xs'
                   : 'bg-surface-2 text-ink-3 opacity-50 cursor-not-allowed'
@@ -360,7 +360,7 @@ export function VoicePicker({ selected, onSelect, fastVoice }: Props) {
             type="button"
             onClick={() => setFilter('all')}
             className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all ${
-              filter === 'all' ? 'bg-primary text-[#08090B] shadow-sm' : 'bg-surface-2 text-ink-2 hover:text-ink'
+              filter === 'all' ? 'bg-primary text-[#05080C] shadow-sm' : 'bg-surface-2 text-ink-2 hover:text-ink'
             }`}
           >
             All ({PERSONAS.length})
@@ -379,7 +379,7 @@ export function VoicePicker({ selected, onSelect, fastVoice }: Props) {
             type="button"
             onClick={() => setFilter('british')}
             className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all ${
-              filter === 'british' ? 'bg-primary text-[#08090B] shadow-sm' : 'bg-surface-2 text-ink-2 hover:text-ink'
+              filter === 'british' ? 'bg-primary text-[#05080C] shadow-sm' : 'bg-surface-2 text-ink-2 hover:text-ink'
             }`}
           >
             British ({britishCount})
@@ -388,7 +388,7 @@ export function VoicePicker({ selected, onSelect, fastVoice }: Props) {
             type="button"
             onClick={() => setFilter('american')}
             className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all ${
-              filter === 'american' ? 'bg-primary text-[#08090B] shadow-sm' : 'bg-surface-2 text-ink-2 hover:text-ink'
+              filter === 'american' ? 'bg-primary text-[#05080C] shadow-sm' : 'bg-surface-2 text-ink-2 hover:text-ink'
             }`}
           >
             American ({americanCount})
@@ -397,7 +397,7 @@ export function VoicePicker({ selected, onSelect, fastVoice }: Props) {
             type="button"
             onClick={() => setFilter('native')}
             className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all ${
-              filter === 'native' ? 'bg-primary text-[#08090B] shadow-sm' : 'bg-surface-2 text-ink-2 hover:text-ink'
+              filter === 'native' ? 'bg-primary text-[#05080C] shadow-sm' : 'bg-surface-2 text-ink-2 hover:text-ink'
             }`}
           >
             Native ({nativeCount})

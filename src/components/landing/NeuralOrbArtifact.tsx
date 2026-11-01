@@ -219,7 +219,7 @@ export function NeuralOrbArtifact() {
             type="button"
             onClick={() => setMode('figure')}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-              mode === 'figure' ? 'bg-primary text-[#08090B] shadow-sm' : 'text-ink-2 hover:text-ink'
+              mode === 'figure' ? 'bg-primary text-[#05080C] shadow-sm' : 'text-ink-2 hover:text-ink'
             }`}
           >
             Therapist Bust
@@ -228,7 +228,7 @@ export function NeuralOrbArtifact() {
             type="button"
             onClick={() => setMode('neural')}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-              mode === 'neural' ? 'bg-primary text-[#08090B] shadow-sm' : 'text-ink-2 hover:text-ink'
+              mode === 'neural' ? 'bg-primary text-[#05080C] shadow-sm' : 'text-ink-2 hover:text-ink'
             }`}
           >
             Neural Pathways
@@ -237,7 +237,7 @@ export function NeuralOrbArtifact() {
             type="button"
             onClick={() => setMode('sphere')}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-              mode === 'sphere' ? 'bg-primary text-[#08090B] shadow-sm' : 'text-ink-2 hover:text-ink'
+              mode === 'sphere' ? 'bg-primary text-[#05080C] shadow-sm' : 'text-ink-2 hover:text-ink'
             }`}
           >
             Hypersphere
@@ -273,7 +273,7 @@ export function NeuralOrbArtifact() {
             onClick={() => setIsSpeaking(!isSpeaking)}
             className={`px-3 py-2 rounded-xl text-xs font-medium border transition-all flex items-center gap-2 shadow-lg backdrop-blur-md ${
               isSpeaking
-                ? 'bg-accent text-[#08090B] border-accent'
+                ? 'bg-accent text-[#05080C] border-accent'
                 : 'bg-surface-2/90 text-ink border-edge hover:bg-surface-3'
             }`}
           >

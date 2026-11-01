@@ -11,7 +11,7 @@ import type { CoachSessionRecord } from '@/types/domain';
 
 const OUTCOME_LABEL: Record<string, { text: string; color: string }> = {
   started: { text: 'Started', color: '#5BD6A0' },
-  partly_started: { text: 'Partly started', color: '#85B6FF' },
+  partly_started: { text: 'Partly started', color: '#8FD3FF' },
   not_started: { text: 'Not started', color: '#747A75' },
   paused_or_stopped: { text: 'Paused', color: '#F0B35A' },
 };

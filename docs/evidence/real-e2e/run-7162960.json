@@ -1,0 +1,109 @@
+{
+  "gitSha": "7162960",
+  "tier": "real provider + real browser; synthetic speaker injected as the microphone",
+  "base": "http://localhost:3120",
+  "steps": [
+    {
+      "step": "task",
+      "spoken": "I keep putting off replying to my landlord about the renewal.",
+      "speaker": "Betty (Irish English)",
+      "endOfSpeechToStaySpeakingMs": 4130,
+      "audibleOutputDetected": true,
+      "appMarksAfterEndOfSpeech": [
+        "spec@+3105ms",
+        "req@+3106ms",
+        "eot@+3109ms",
+        "adopt@+3112ms",
+        "hdr@+3581ms",
+        "srv@+3581ms",
+        "tok1@+3660ms",
+        "gen@+3734ms",
+        "aud1@+3945ms"
+      ]
+    },
+    {
+      "step": "barge-in",
+      "spoken": "Wait, stop. Actually, can we just make it smaller?",
+      "speaker": "Audrey (American English)",
+      "wasSpeakingBefore": false,
+      "speakStartToStayStoppedMs": 2
+    },
+    {
+      "step": "spanish",
+      "spoken": "Hola, ahora necesito empezar mi declaración de impuestos, pero no sé por dónde empezar.",
+      "speaker": "Aday (Spanish)",
+      "endOfSpeechToStaySpeakingMs": 9919,
+      "appMarksAfterEndOfSpeech": [
+        "spec@+2704ms",
+        "req@+2704ms",
+        "spec@+2708ms",
+        "req@+2708ms",
+        "hdr@+3599ms",
+        "srv@+3599ms",
+        "tok1@+3819ms",
+        "gen@+3831ms",
+        "aud1@+4037ms",
+        "eot@+8379ms",
+        "req@+8381ms",
+        "hdr@+9778ms",
+        "srv@+9778ms",
+        "tok1@+9850ms",
+        "gen@+9884ms"
+      ]
+    }
+  ],
+  "failures": [],
+  "transcript": [
+    {
+      "who": "stay",
+      "text": "Stay· 11:21 PMHi. It is late, so nothing big is needed. What would feel kind to start with? just keep me company, or empty my head, or one small start?"
+    },
+    {
+      "who": "person",
+      "text": "You· 11:21 PMI keep putting off replying to my landlord about the renewal."
+    },
+    {
+      "who": "stay",
+      "text": "Stay· 11:21 PMGot it, that’s okay. Open your email and draft a quick “yes, I’d like to renew” line. Want a reminder to send it later?"
+    },
+    {
+      "who": "person",
+      "text": "You· 11:21 PMCan you break this down into an ultra-micro step?"
+    },
+    {
+      "who": "person",
+      "text": "You· 11:21 PMWait, stop. Actually, can we just make it smaller?"
+    },
+    {
+      "who": "stay",
+      "text": "Stay· 11:21 PMOpen your email, type “I’d like to renew.” Then hit send."
+    },
+    {
+      "who": "person",
+      "text": "You· 11:22 PMScratch thatHola, ahora necesito empezar mi declaración de impuestos, pero no sé por dónde empezar."
+    },
+    {
+      "who": "stay",
+      "text": "Stay· 11:22 PMRepeatWhat you heardHola, no te preocupes. Abre tu carpeta de finanzas y busca el último recibo de ingresos. ¿Quieres que te ayude a organizarlo?"
+    }
+  ],
+  "websockets": [
+    "wss://streaming.assemblyai.com/v3/ws?sample_rate=16000&encoding=pcm_s16le&speech_model=universal-3-6-pro&min_turn_silence=128&max_turn_silence=1280&vad_threshold=0.2&language_detection=true&token=REDACTED&keyterms_prompt=%5B%22Stay%22%2C%22ADHD%22%2C%22micro-step%22%2C%22parking+lot%22%2C%22brain+dump%22%2C%22two-minute+timer%22%2C%22step+next%22%2C%22wrap+up%22%2C%22park+it%22%5D",
+    "wss://tts.us.assemblyai.com/v1/ws?token=REDACTED&model_id=assemblyai-tts-1&voice_id=478badc1-a7eb-5bef-b916-c6e51bd2771e&language=english&encoding=pcm_s16le&sample_rate=24000",
+    "wss://tts.us.assemblyai.com/v1/ws?token=REDACTED&model_id=assemblyai-tts-1&voice_id=1a48e481-7f02-5e96-bb84-68fcac65c2b2&language=spanish&encoding=pcm_s16le&sample_rate=24000"
+  ],
+  "managedAgentSocketOpened": false,
+  "ttsLanguages": [
+    "english",
+    "spanish"
+  ],
+  "sttOpened": true,
+  "consoleErrors": [],
+  "status": "PASS",
+  "limits": [
+    "Synthetic speaker (AssemblyAI TTS) played into the page microphone stream; no human voice, no room acoustics",
+    "One run, one machine, one network",
+    "Screen recording has no audio track (Chromium does not capture it)",
+    "Timings are polled from the call screen about every 40 ms; end of speech is the last loud sample of the clip; reply time is until the call screen first says Speaking"
+  ]
+}

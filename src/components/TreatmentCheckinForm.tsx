@@ -111,7 +111,7 @@ export function TreatmentCheckinForm({
       <label className="mt-5 flex items-center gap-3 cursor-pointer">
         <input
           type="checkbox"
-          className="h-5 w-5 accent-[#85B6FF]"
+          className="h-5 w-5 accent-[#8FD3FF]"
           checked={sideEffects}
           onChange={(e) => setSideEffects(e.target.checked)}
           data-testid="side-effects-toggle"

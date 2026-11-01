@@ -77,7 +77,7 @@ export function WaveProgress({ value, label, className = '' }: WaveProgressProps
     >
       {/* the remaining straight line */}
       <div className="absolute inset-y-0 right-0 flex items-center" style={{ left: pct }}>
-        <div className="h-[5px] w-full rounded-full bg-[#C9C9C9]/45" />
+        <div className="h-[5px] w-full rounded-full bg-[#C5D6E6]/45" />
       </div>
       {/* the wavy line already travelled */}
       <div className="absolute inset-y-0 left-0 overflow-hidden" style={{ width: pct, color: 'var(--color-accent)' }}>
@@ -87,7 +87,7 @@ export function WaveProgress({ value, label, className = '' }: WaveProgressProps
         </div>
       </div>
       <div
-        className="absolute top-1/2 h-[18px] w-[18px] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[#D9EEFF] bg-[#397CE8] shadow-[0_0_0_4px_rgb(217_238_255_/_0.22),0_0_18px_rgb(57_124_232_/_0.6)]"
+        className="absolute top-1/2 h-[18px] w-[18px] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[#E4F6FF] bg-[#3E8FD6] shadow-[0_0_0_4px_rgb(228_246_255_/_0.22),0_0_18px_rgb(62_143_214_/_0.6)]"
         style={{ left: pct }}
       />
     </div>

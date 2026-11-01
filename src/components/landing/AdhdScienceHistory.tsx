@@ -85,7 +85,7 @@ export function AdhdScienceHistory() {
             type="button"
             onClick={() => setActiveTab('timeline')}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-              activeTab === 'timeline' ? 'bg-primary text-[#08090B] shadow-sm' : 'text-ink-2 hover:text-ink'
+              activeTab === 'timeline' ? 'bg-primary text-[#05080C] shadow-sm' : 'text-ink-2 hover:text-ink'
             }`}
           >
             History Timeline
@@ -94,7 +94,7 @@ export function AdhdScienceHistory() {
             type="button"
             onClick={() => setActiveTab('neurobiology')}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-              activeTab === 'neurobiology' ? 'bg-primary text-[#08090B] shadow-sm' : 'text-ink-2 hover:text-ink'
+              activeTab === 'neurobiology' ? 'bg-primary text-[#05080C] shadow-sm' : 'text-ink-2 hover:text-ink'
             }`}
           >
             Neurobiology &amp; The Wall of Awful

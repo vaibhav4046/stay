@@ -123,8 +123,8 @@ export function Personas({ personas, glyphs }: { personas: VoicePersona[]; glyph
                 <div className="relative">
                   <svg
                     viewBox="0 0 100 100"
-                    className={`lp-glyph transition-all duration-500 ease-out group-hover:scale-125 group-hover:-rotate-6 group-hover:drop-shadow-[0_8px_16px_rgba(133, 182, 255,0.35)] ${
-                      isPlaying ? 'scale-125 -rotate-6 animate-pulse drop-shadow-[0_0_14px_rgba(133, 182, 255,0.6)]' : ''
+                    className={`lp-glyph transition-all duration-500 ease-out group-hover:scale-125 group-hover:-rotate-6 group-hover:drop-shadow-[0_8px_16px_rgba(143, 211, 255,0.35)] ${
+                      isPlaying ? 'scale-125 -rotate-6 animate-pulse drop-shadow-[0_0_14px_rgba(143, 211, 255,0.6)]' : ''
                     }`}
                     aria-hidden="true"
                     focusable="false"
@@ -145,7 +145,7 @@ export function Personas({ personas, glyphs }: { personas: VoicePersona[]; glyph
                   <span
                     className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-all duration-300 ${
                       isPlaying
-                        ? 'bg-accent text-[#08090B] shadow-sm'
+                        ? 'bg-accent text-[#05080C] shadow-sm'
                         : 'bg-surface-2 text-ink-2 group-hover:bg-accent-soft group-hover:text-accent-hover'
                     }`}
                   >
@@ -177,7 +177,7 @@ export function Personas({ personas, glyphs }: { personas: VoicePersona[]; glyph
                     aria-hidden="true"
                     className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all duration-200 ${
                       isSelected || isPlaying
-                        ? 'bg-primary border-primary text-[#08090B] shadow-xs'
+                        ? 'bg-primary border-primary text-[#05080C] shadow-xs'
                         : 'border-line-strong bg-surface group-hover:border-primary/60'
                     }`}
                   >

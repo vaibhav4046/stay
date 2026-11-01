@@ -20,10 +20,10 @@ export interface SubtleOrbProps {
  * - Status light, not a character: <= 40 px in the dock (still 96 px in empty state).
  * - No emoji, "!", pictograms, text, or faces during voice conversation.
  * - States:
- *   IDLE: still, --line (#2E2F32) ring
- *   LISTENING: scale 1.00 -> 1.06 from mic RMS in --accent (#85B6FF)
+ *   IDLE: still, --line (#1E2B3D) ring
+ *   LISTENING: scale 1.00 -> 1.06 from mic RMS in --accent (#8FD3FF)
  *   THINKING: opacity 0.6 <-> 1.0 breathe over 1.6 s in --think (#F0B35A)
- *   SPEAKING: scale 1.00 -> 1.05 from rendered output RMS in --accent (#85B6FF)
+ *   SPEAKING: scale 1.00 -> 1.05 from rendered output RMS in --accent (#8FD3FF)
  *   INTERRUPTED: snap to still within 1 frame
  *   ERROR: static --danger (#FF8A80) dot + label
  */
@@ -111,8 +111,8 @@ export function SubtleOrb({
   const isSpeaking = state === 'speaking';
   const isListening = state === 'listening';
 
-  let fillColor = '#85B6FF';
-  let strokeColor = '#2E2F32';
+  let fillColor = '#8FD3FF';
+  let strokeColor = '#1E2B3D';
   let ringOpacity = 1;
 
   if (isThinking || isInterrupted) {
@@ -122,11 +122,11 @@ export function SubtleOrb({
     fillColor = '#FF8A80';
     strokeColor = '#FF8A80';
   } else if (isSpeaking || isListening) {
-    fillColor = '#85B6FF';
-    strokeColor = '#D9EEFF';
+    fillColor = '#8FD3FF';
+    strokeColor = '#E4F6FF';
   } else {
-    fillColor = '#2F5FB0';
-    strokeColor = 'rgba(133, 182, 255,0.55)';
+    fillColor = '#2B6CA3';
+    strokeColor = 'rgba(143, 211, 255,0.55)';
     ringOpacity = 1;
   }
 
@@ -136,7 +136,7 @@ export function SubtleOrb({
       onClick={onClick}
       aria-label={`Stay status orb: ${state}`}
       data-testid={testId}
-      className={`relative inline-flex items-center justify-center rounded-full cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#85B6FF] ${className}`}
+      className={`relative inline-flex items-center justify-center rounded-full cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8FD3FF] ${className}`}
       style={{
         width: size,
         height: size,
@@ -155,7 +155,7 @@ export function SubtleOrb({
         aria-hidden="true"
         style={{
           animation: isThinking ? 'stay-thinking-breathe 1.6s ease-in-out infinite' : 'none',
-          filter: isSpeaking || isListening ? 'drop-shadow(0 0 10px rgba(133, 182, 255,0.55))' : 'none',
+          filter: isSpeaking || isListening ? 'drop-shadow(0 0 10px rgba(143, 211, 255,0.55))' : 'none',
         }}
       >
         <circle

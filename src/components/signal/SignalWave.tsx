@@ -16,10 +16,10 @@ export function readSignalLevels(): SignalLevels {
 }
 
 const TINTS = {
-  accent: { a: '#85B6FF', b: '#D9EEFF', glow: 'rgba(57,124,232,0.55)' },
+  accent: { a: '#8FD3FF', b: '#E4F6FF', glow: 'rgba(62, 143, 214,0.55)' },
   warm: { a: '#F0B35A', b: '#FFE2AE', glow: 'rgba(240,179,90,0.4)' },
   danger: { a: '#FF8A80', b: '#FFD0CC', glow: 'rgba(255,138,128,0.4)' },
-  muted: { a: '#5A5B5C', b: '#8A8B8D', glow: 'rgba(90,91,92,0)' },
+  muted: { a: '#3A4A5E', b: '#6F8199', glow: 'rgba(90,91,92,0)' },
 } as const;
 
 /** Three layered, tapered strands: calm and nearly flat in quiet, filling out with the real level. */

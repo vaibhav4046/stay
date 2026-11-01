@@ -107,7 +107,7 @@ export function ReportBuilder({
             <label key={t.key} className="flex items-center gap-3 cursor-pointer text-[0.95rem]">
               <input
                 type="checkbox"
-                className="h-5 w-5 accent-[#85B6FF]"
+                className="h-5 w-5 accent-[#8FD3FF]"
                 checked={Boolean(config[t.key])}
                 onChange={(e) => set(t.key, e.target.checked as never)}
               />

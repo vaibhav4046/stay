@@ -91,7 +91,7 @@ export const LIBRARY: LibraryEntry[] = [
   { id: 'bowl', words: ['food', 'eat', 'eating', 'dinner', 'lunch', 'cook', 'cooking', 'hungry', 'meal', 'meals', 'groceries', 'shopping', 'restaurant', 'takeaway', 'comida', 'nourriture', 'essen', 'खाना', '음식'], palette: ['#FCA5A5', '#EA580C'], parts: [C(0, 0.1, 0.85), R(0, 0.7, 2.4, 1.2, 0, 0, true), R(0, -0.8, 0.6, 0.12, 0.5), L([[-0.3, 0.3], [-0.2, 0.55], [-0.3, 0.8]], 0.06), L([[0.1, 0.3], [0.2, 0.55], [0.1, 0.8]], 0.06)] },
 ];
 
-export const DEFAULT_PALETTE: [string, string] = ['#D9EEFF', '#397CE8']; // Stay Tide: white-blue to deep blue
+export const DEFAULT_PALETTE: [string, string] = ['#E4F6FF', '#3E8FD6']; // Stay Tide: white-blue to deep blue
 
 export function libraryProgram(id: string): ShapeProgram | null {
   const e = LIBRARY.find((x) => x.id === id);

@@ -48,3 +48,6 @@ demo-out/
 /apps/extension/dist
 /apps/extension/dist-dev
 /apps/mobile/dist
+
+# silent screen recording from scripts/real-voice-e2e.mjs (large); regenerate with the script
+docs/evidence/real-e2e/*.webm

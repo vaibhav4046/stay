@@ -52,7 +52,7 @@ export function MemorySheet({ memory, onChanged, onClose }: { memory: UserMemory
         <div className="flex items-center justify-between gap-3">
           <h3 className="label">What Stay has learned</h3>
           <label className="flex cursor-pointer items-center gap-2 text-[0.9rem]">
-            <input type="checkbox" className="h-5 w-5 accent-[#85B6FF]" checked={state.enabled} onChange={(e) => sync(setLearningsEnabled(e.target.checked))} data-testid="learning-toggle" />
+            <input type="checkbox" className="h-5 w-5 accent-[#8FD3FF]" checked={state.enabled} onChange={(e) => sync(setLearningsEnabled(e.target.checked))} data-testid="learning-toggle" />
             Learn from my blocks
           </label>
         </div>

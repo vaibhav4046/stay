@@ -119,7 +119,7 @@ export function GroundingPanel({ isOpen, onClose }: GroundingPanelProps) {
                   <div className="flex items-center gap-2.5">
                     <span
                       className={`h-5 w-5 rounded-full flex items-center justify-center text-[0.7rem] font-bold ${
-                        done ? 'bg-accent text-[#08090B]' : 'bg-surface border border-line text-ink-3'
+                        done ? 'bg-accent text-[#05080C]' : 'bg-surface border border-line text-ink-3'
                       }`}
                     >
                       {item.count}
