@@ -1,0 +1,138 @@
+
+Running 130 tests using 1 worker
+
+[1/130] [chromium] › tests\e2e\captureCard22.spec.ts:13:5 › preview 22nd card mariachi metronome with logo and hover transform
+[2/130] [chromium] › tests\e2e\captureElevenLabsVoicePicker.spec.ts:13:5 › capture ElevenLabs voice cards in Voice Picker
+[3/130] [chromium] › tests\e2e\captureFullerDots.spec.ts:3:5 › capture updated fuller dots on neural orb artifact
+[4/130] [chromium] › tests\e2e\core.spec.ts:28:7 › Landing › promise, real orb, and no demo surfaces
+[5/130] [chromium] › tests\e2e\core.spec.ts:41:7 › Landing › typing words reshapes the orb: library, offline emoji, and a fallback for anything
+[6/130] [chromium] › tests\e2e\core.spec.ts:60:7 › Landing › crisis wording never turns into a playful shape
+[7/130] [chromium] › tests\e2e\core.spec.ts:68:7 › Landing › the orb is drawn with dots only (canvas has coloured pixels, no img or svg overlay)
+[8/130] [chromium] › tests\e2e\core.spec.ts:79:7 › The loop › say it, shrink it, start it, log it, see it in history
+[9/130] [chromium] › tests\e2e\core.spec.ts:87:7 › The loop › a task typed on the landing page is handed to the app once, not through the URL
+[10/130] [chromium] › tests\e2e\core.spec.ts:97:7 › The loop › the orb in the app reshapes with what you type
+[11/130] [chromium] › tests\e2e\core.spec.ts:106:7 › Safety › crisis wording stops coaching and shows UK emergency help
+[12/130] [chromium] › tests\e2e\core.spec.ts:114:7 › Safety › a dosing question gets the boundary, never a plan
+[13/130] [chromium] › tests\e2e\core.spec.ts:124:7 › Menu and memory › new users start with an empty memory, and the sheet works
+[14/130] [chromium] › tests\e2e\core.spec.ts:134:5 › the voice sheet shows four recommended voices and every other voice, honest about which are native accents
+[15/130] [chromium] › tests\e2e\core.spec.ts:148:5 › two people on two browsers never see each other’s history
+[16/130] [chromium] › tests\e2e\core.spec.ts:162:7 › Your own keys and block lengths › own-key settings: a private address is refused, the choice survives a reload, and removal clears it
+[17/130] [chromium] › tests\e2e\core.spec.ts:179:7 › Your own keys and block lengths › delete-all-data also removes saved keys
+[18/130] [chromium] › tests\e2e\core.spec.ts:191:7 › Your own keys and block lengths › short blocks are the default and long ones are one tap away
+[19/130] [chromium] › tests\e2e\core.spec.ts:201:7 › Your own keys and block lengths › all-day mode is a visible switch in the menu
+[20/130] [chromium] › tests\e2e\core.spec.ts:213:7 › Parking lot and reply-speed readout › parked thoughts list, start-from, and remove; wiped with all data
+[21/130] [chromium] › tests\e2e\core.spec.ts:227:7 › Parking lot and reply-speed readout › the voice sheet shows a measured-here reply speed, never a claim
+[22/130] [chromium] › tests\e2e\core.spec.ts:235:5 › fast voice is on by default, can be switched off in the voice sheet, and the choice is remembered
+[23/130] [chromium] › tests\e2e\core.spec.ts:249:5 › one typed task makes exactly one plan request and the card never jumps back after you start
+[24/130] [chromium] › tests\e2e\core.spec.ts:264:5 › the landing page shows measured results with their limits, including where Stay is slower than ChatGPT voice and Gemini Live
+[25/130] [chromium] › tests\e2e\core.spec.ts:277:5 › the landing page has the demo video with a captions track, custom controls, and the files are served
+[26/130] [chromium] › tests\e2e\core.spec.ts:291:7 › Brain dump and today list › dump everything, get one thing to start, tick a win, and it persists
+[27/130] [chromium] › tests\e2e\core.spec.ts:308:7 › Brain dump and today list › a crisis in a brain dump goes to help, never into a list
+[28/130] [chromium] › tests\e2e\core.spec.ts:317:7 › Brain dump and today list › feeling chips start a plan, and the mobile bottom nav and urgent help are reachable
+[29/130] [chromium] › tests\e2e\core.spec.ts:328:7 › Routines, check-ins and the offline shell › run the morning routine step by step and finish with a win
+[30/130] [chromium] › tests\e2e\core.spec.ts:339:7 › Routines, check-ins and the offline shell › a custom routine can be written and run
+[31/130] [chromium] › tests\e2e\core.spec.ts:350:7 › Routines, check-ins and the offline shell › a check-in that is due shows up, and a new one can be set
+[32/130] [chromium] › tests\e2e\core.spec.ts:361:7 › Routines, check-ins and the offline shell › the app shell registers an offline service worker
+[33/130] [chromium] › tests\e2e\core.spec.ts:368:7 › Content Security Policy › is sent, forbids framing and unknown connections, and nothing in the main flows violates it
+[34/130] [chromium] › tests\e2e\core.spec.ts:402:7 › Judge feedback: blocks, trust copy, check-in, urgent help › a running block survives a reload and can be extended or shrunk
+[35/130] [chromium] › tests\e2e\core.spec.ts:418:7 › Judge feedback: blocks, trust copy, check-in, urgent help › a block that ended while you were away asks how it went
+[36/130] [chromium] › tests\e2e\core.spec.ts:425:7 › Judge feedback: blocks, trust copy, check-in, urgent help › someday items are saved for later, can be shown and moved to today
+[37/130] [chromium] › tests\e2e\core.spec.ts:438:7 › Judge feedback: blocks, trust copy, check-in, urgent help › urgent help is in the landing header, not floating over the page
+[38/130] [chromium] › tests\e2e\core.spec.ts:450:7 › Judge feedback: blocks, trust copy, check-in, urgent help › the trust copy does not contradict itself, and the check-in hides medication questions for people who did not choose that
+[39/130] [chromium] › tests\e2e\core.spec.ts:460:7 › Judge feedback: blocks, trust copy, check-in, urgent help › both comparison tables are readable on a phone without sideways scrolling
+[40/130] [chromium] › tests\e2e\ecosystem.spec.ts:13:5 › wrapper bridge: a command starts the timer and the page announces it
+[41/130] [chromium] › tests\e2e\ecosystem.spec.ts:28:5 › wrapper bridge: unknown commands are ignored
+[42/130] [chromium] › tests\e2e\ecosystem.spec.ts:37:5 › brain dump shortcut opens the brain dump sheet
+[43/130] [chromium] › tests\e2e\ecosystem.spec.ts:43:5 › manifest is installable and complete
+[44/130] [chromium] › tests\e2e\ecosystem.spec.ts:61:5 › share target parks the shared text locally
+[45/130] [chromium] › tests\e2e\ecosystem.spec.ts:69:5 › offline page is served and themed
+[46/130] [chromium] › tests\e2e\landing.spec.ts:11:7 › Landing: hero › chips reshape the same dots, and one of them becomes the face, still dots only
+[47/130] [chromium] › tests\e2e\landing.spec.ts:28:7 › Landing: hero › hovering a chip with a mouse previews it
+[48/130] [chromium] › tests\e2e\landing.spec.ts:36:7 › Landing: demo player › custom chrome: big play, scrubber, captions toggle, chapters that seek
+[49/130] [chromium] › tests\e2e\landing.spec.ts:62:7 › Landing: demo player › the player keeps one consistent frame: 16:9, never wider than the screen, same radius token as the stage
+[50/130] [chromium] › tests\e2e\landing.spec.ts:74:7 › Landing: demo player › a transcript is there for anyone who cannot watch
+[51/130] [chromium] › tests\e2e\landing.spec.ts:82:7 › Landing: week explorer (sample data) › is labelled as a sample, links to the real History, and every denominator is shown
+[52/130] [chromium] › tests\e2e\landing.spec.ts:94:7 › Landing: week explorer (sample data) › range and strategy filters change the numbers; the heatmap and bars open the blocks behind them
+[53/130] [chromium] › tests\e2e\landing.spec.ts:123:7 › Landing: week explorer (sample data) › says there are no streaks, and a quiet day costs nothing
+[54/130] [chromium] › tests\e2e\landing.spec.ts:132:7 › Landing: measured results › shows Stay slower, ChatGPT voice talking over a pause, and the limits without opening anything
+[55/130] [chromium] › tests\e2e\landing.spec.ts:150:7 › Landing: measured results › the bars animate in when scrolled to, and stay still with reduced motion
+[56/130] [chromium] › tests\e2e\landing.spec.ts:166:7 › Landing: scroll story and artifacts › the story follows the scroll: the step in the middle is the active one
+[57/130] [chromium] › tests\e2e\landing.spec.ts:180:7 › Landing: scroll story and artifacts › brain dump: move a later item to today
+[58/130] [chromium] › tests\e2e\landing.spec.ts:190:7 › Landing: scroll story and artifacts › summary preview: sections toggle, sample banner stays, numbers come from the sample records
+[59/130] [chromium] › tests\e2e\landing.spec.ts:202:7 › Landing: scroll story and artifacts › routine and check-in cards respond
+[60/130] [chromium] › tests\e2e\landing.spec.ts:216:7 › Landing: scroll story and artifacts › the voices filter to the native accents
+[61/130] [chromium] › tests\e2e\landing.spec.ts:228:7 › Landing: platforms and honesty › says plainly what exists: web and installable now, desktop and mobile apps not
+[62/130] [chromium] › tests\e2e\landing.spec.ts:238:7 › Landing: platforms and honesty › the manifest and offline shell behind "installable" exist
+[63/130] [chromium] › tests\e2e\landing.spec.ts:247:7 › Landing: platforms and honesty › no invented social proof anywhere on the page
+[64/130] [chromium] › tests\e2e\landing.spec.ts:255:7 › Landing: accessibility and policy › headings never skip a level, every section label points at a heading, one h1, every control has a name
+[65/130] [chromium] › tests\e2e\landing.spec.ts:271:7 › Landing: accessibility and policy › no CSP violations and no console errors while scrolling the whole page
+[66/130] [chromium] › tests\e2e\landing.spec.ts:291:7 › Landing: accessibility and policy › the keyboard can reach and operate the hero chips, the player and the week explorer
+[67/130] [chromium] › tests\e2e\landing.spec.ts:303:7 › Landing: accessibility and policy › reduced motion: no looping animation runs on the landing page
+[68/130] [chromium] › tests\e2e\landing.spec.ts:319:7 › Landing: layout and speed › no horizontal overflow at 320 and 1920 with every disclosure open
+[69/130] [chromium] › tests\e2e\landing.spec.ts:329:7 › Landing: layout and speed › largest paint is text and fast, and nothing shifts, on a throttled phone profile (median of 3 loads)
+[chromium] › tests\e2e\landing.spec.ts:329:7 › Landing: layout and speed › largest paint is text and fast, and nothing shifts, on a throttled phone profile (median of 3 loads)
+LCP/CLS runs (390px, 4x CPU, slow 4G-ish): [{"lcp":1028,"tag":"P","cls":0},{"lcp":1048,"tag":"P","cls":0},{"lcp":1036,"tag":"P","cls":0}]
+
+[70/130] [chromium] › tests\e2e\layout.spec.ts:8:9 › Responsive layout › no horizontal overflow at 320px
+[71/130] [chromium] › tests\e2e\layout.spec.ts:8:9 › Responsive layout › no horizontal overflow at 375px
+[72/130] [chromium] › tests\e2e\layout.spec.ts:8:9 › Responsive layout › no horizontal overflow at 390px
+[73/130] [chromium] › tests\e2e\layout.spec.ts:8:9 › Responsive layout › no horizontal overflow at 430px
+[74/130] [chromium] › tests\e2e\layout.spec.ts:8:9 › Responsive layout › no horizontal overflow at 768px
+[75/130] [chromium] › tests\e2e\layout.spec.ts:8:9 › Responsive layout › no horizontal overflow at 1024px
+[76/130] [chromium] › tests\e2e\layout.spec.ts:8:9 › Responsive layout › no horizontal overflow at 1280px
+[77/130] [chromium] › tests\e2e\layout.spec.ts:8:9 › Responsive layout › no horizontal overflow at 1440px
+[78/130] [chromium] › tests\e2e\layout.spec.ts:8:9 › Responsive layout › no horizontal overflow at 1920px
+[79/130] [chromium] › tests\e2e\layout.spec.ts:18:7 › Responsive layout › hero orb is square, sits within the hero stage on desktop and mobile
+[80/130] [chromium] › tests\e2e\layout.spec.ts:32:7 › Responsive layout › orb draws at a steady 60fps-class pace
+[81/130] [chromium] › tests\e2e\liveChatBox.spec.ts:4:7 › Gemini Live-style Live Chat Box & Real-Time Transcripts › renders live chat box, streams submitted tasks, shows Stay response, and supports collapse/expand
+[82/130] [chromium] › tests\e2e\liveChatBox.spec.ts:53:7 › Gemini Live-style Live Chat Box & Real-Time Transcripts › no horizontal overflow at mobile 375px with chat box
+[83/130] [chromium] › tests\e2e\liveVoiceSync.spec.ts:18:5 › live voice caption synchronization and logo persistence
+[84/130] [chromium] › tests\e2e\personaPreviewVerification.spec.ts:15:5 › persona card hover transform and audio preview click
+[85/130] [chromium] › tests\e2e\personaPreviewVerification.spec.ts:34:5 › today view has idle sparkle voice visualizer and no visible face button
+[86/130] [chromium] › tests\e2e\safetyAndPrivacy.spec.ts:19:9 › Safety gates over HTTP › crisis route: I want to take my own life
+[87/130] [chromium] › tests\e2e\safetyAndPrivacy.spec.ts:19:9 › Safety gates over HTTP › crisis route: I don't want to live anymore
+[88/130] [chromium] › tests\e2e\safetyAndPrivacy.spec.ts:19:9 › Safety gates over HTTP › crisis route: quiero morir
+[89/130] [chromium] › tests\e2e\safetyAndPrivacy.spec.ts:19:9 › Safety gates over HTTP › crisis route: मैं मरना चाहता हूँ
+[90/130] [chromium] › tests\e2e\safetyAndPrivacy.spec.ts:19:9 › Safety gates over HTTP › crisis route: 死にたい
+[91/130] [chromium] › tests\e2e\safetyAndPrivacy.spec.ts:29:9 › Safety gates over HTTP › medication route: can I drink alcohol with adderall
+[92/130] [chromium] › tests\e2e\safetyAndPrivacy.spec.ts:29:9 › Safety gates over HTTP › medication route: how much vyvanse is too much
+[93/130] [chromium] › tests\e2e\safetyAndPrivacy.spec.ts:29:9 › Safety gates over HTTP › medication route: should I increase my elvanse
+[94/130] [chromium] › tests\e2e\safetyAndPrivacy.spec.ts:36:7 › Safety gates over HTTP › ordinary task still gets a timer plan
+[95/130] [chromium] › tests\e2e\safetyAndPrivacy.spec.ts:44:5 › Delete-all wipes memory, calibration and voice prefs, not just history
+[96/130] [chromium] › tests\e2e\scorecardRegressions.spec.ts:29:7 › Scorecard regressions (each asserts the real behaviour, not a toast) › onboarding cannot be finished without the support-tool acknowledgement
+[97/130] [chromium] › tests\e2e\scorecardRegressions.spec.ts:40:7 › Scorecard regressions (each asserts the real behaviour, not a toast) › +5 min really adds 300 seconds to the live clock
+[98/130] [chromium] › tests\e2e\scorecardRegressions.spec.ts:48:7 › Scorecard regressions (each asserts the real behaviour, not a toast) › stopping a block clears it: no stale "still running" block after a reload
+[99/130] [chromium] › tests\e2e\scorecardRegressions.spec.ts:57:7 › Scorecard regressions (each asserts the real behaviour, not a toast) › an unsent draft survives leaving Today and coming back
+[100/130] [chromium] › tests\e2e\scorecardRegressions.spec.ts:65:7 › Scorecard regressions (each asserts the real behaviour, not a toast) › "Make it smaller" reaches a floor instead of looping forever
+[101/130] [chromium] › tests\e2e\scorecardRegressions.spec.ts:79:7 › Scorecard regressions (each asserts the real behaviour, not a toast) › saving an empty routine explains why instead of failing silently
+[102/130] [chromium] › tests\e2e\scorecardRegressions.spec.ts:87:7 › Scorecard regressions (each asserts the real behaviour, not a toast) › a logged session can be deleted and the delete can be undone
+[103/130] [chromium] › tests\e2e\scorecardRegressions.spec.ts:104:7 › Scorecard regressions (each asserts the real behaviour, not a toast) › Enter key submission produces plan card reliably
+[104/130] [chromium] › tests\e2e\scorecardRegressions.spec.ts:112:7 › Scorecard regressions (each asserts the real behaviour, not a toast) › text submission does not expose pause auto microphone button
+[105/130] [chromium] › tests\e2e\scorecardRegressions.spec.ts:120:7 › Scorecard regressions (each asserts the real behaviour, not a toast) › daily check-in updates existing entry instead of creating duplicates on same day
+[106/130] [chromium] › tests\e2e\scorecardRegressions.spec.ts:147:7 › Scorecard regressions (each asserts the real behaviour, not a toast) › PDF download provides explicit success receipt with filename
+[107/130] [chromium] › tests\e2e\scorecardRegressions.spec.ts:156:7 › Scorecard regressions (each asserts the real behaviour, not a toast) › running focus session displays active timer warning banner
+[108/130] [chromium] › tests\e2e\scorecardRegressions.spec.ts:162:7 › Scorecard regressions (each asserts the real behaviour, not a toast) › "More" sheet presents structured sections for overwhelmed users
+[109/130] [chromium] › tests\e2e\visualVerification.spec.ts:16:5 › Capture complete browser visual verification suite
+[110/130] [chromium] › tests\e2e\voiceCardDirectClick.spec.ts:3:5 › Clicking voice card container selects voice and arms it immediately
+[111/130] [chromium] › tests\e2e\voiceCardDirectClick.spec.ts:77:5 › Clicking unusable voice card does not select it, shows setup explanation, and preserves prior voice
+[112/130] [chromium] › tests\e2e\voices.spec.ts:32:7 › accurate voices › Indian English works from the device voice; Mexican Spanish says exactly what it needs, then works with an Azure key
+[113/130] [chromium] › tests\e2e\voices.spec.ts:70:7 › accurate voices › previews: AssemblyAI voices play a shipped clip; Azure voices go through the relay with the person’s key
+[114/130] [chromium] › tests\e2e\voices.spec.ts:103:7 › accurate voices › the speech key never rides on chat or token requests
+[115/130] [chromium] › tests\e2e\liveChatVoiceStream.spec.ts:39:7 › Deterministic Fake-Voice Browser Live Chat Stream Suite › User partial speech -> final speech -> thinking -> assistant streaming -> finalized message
+[116/130] [chromium] › tests\e2e\liveChatVoiceStream.spec.ts:88:7 › Deterministic Fake-Voice Browser Live Chat Stream Suite › Instant barge-in interruption while Stay is speaking
+[117/130] [chromium] › tests\e2e\liveChatVoiceStream.spec.ts:116:7 › Deterministic Fake-Voice Browser Live Chat Stream Suite › User partial ending in hesitation, rapid speech, and empty transcript handling
+[118/130] [chromium] › tests\e2e\liveChatVoiceStream.spec.ts:140:7 › Deterministic Fake-Voice Browser Live Chat Stream Suite › Collapse while streaming, accessible preview button, and reopening after collapse
+[119/130] [chromium] › tests\e2e\liveChatVoiceStream.spec.ts:164:7 › Deterministic Fake-Voice Browser Live Chat Stream Suite › Clear transcripts during active session leaves input usable
+[120/130] [chromium] › tests\e2e\liveChatVoiceStream.spec.ts:188:7 › Deterministic Fake-Voice Browser Live Chat Stream Suite › Active session persistence survives page reload and restores chat turns and plan
+[121/130] [chromium] › tests\e2e\liveChatVoiceStream.spec.ts:210:7 › Deterministic Fake-Voice Browser Live Chat Stream Suite › Wispr Flow: Scratch that and Actually change that to voice commands
+[122/130] [chromium] › tests\e2e\liveChatVoiceStream.spec.ts:234:7 › Deterministic Fake-Voice Browser Live Chat Stream Suite › Wispr Flow: Repeat last thing and What you heard commands
+[123/130] [chromium] › tests\e2e\liveChatVoiceStream.spec.ts:257:7 › Deterministic Fake-Voice Browser Live Chat Stream Suite › Mobile 375px responsive layout has no overflow and live chat is fully contained
+[124/130] [chromium] › tests\e2e\therapistOrb.spec.ts:49:7 › The therapist orb › the face button morphs the orb into a person and back, with dots only
+[125/130] [chromium] › tests\e2e\therapistOrb.spec.ts:63:7 › The therapist orb › keyword shapes still work, and a keyword evicts the face
+[126/130] [chromium] › tests\e2e\therapistOrb.spec.ts:72:7 › The therapist orb › while Stay speaks the face engages and the mouth follows the real audio, then rests in silence
+[127/130] [chromium] › tests\e2e\therapistOrb.spec.ts:102:7 › The therapist orb › when the user talks the face gives way to the topical shape
+[128/130] [chromium] › tests\e2e\therapistOrb.spec.ts:112:7 › The therapist orb › prefers-reduced-motion: the face still forms and the mouth still moves, but no blink, no head motion, no wobble
+[129/130] [chromium] › tests\e2e\therapistOrb.spec.ts:139:7 › The therapist orb › screenshots for the docs (only with ORB_SHOTS=1)
+[130/130] [chromium] › tests\e2e\therapistOrb.spec.ts:177:7 › The therapist orb › frame times: sphere, morph and speaking (only with ORB_PERF=1)
+  2 skipped
+  128 passed (4.8m)

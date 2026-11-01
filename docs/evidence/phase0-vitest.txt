@@ -1,0 +1,86 @@
+
+ RUN  v3.2.7 C:/Users/lalwa/.gemini/antigravity/scratch/stay
+
+ ✓ tests/unit/learnings.test.ts (20 tests) 46ms
+ ✓ tests/unit/lipSync.test.ts (20 tests) 53ms
+ ✓ tests/unit/voiceCommands.test.ts (15 tests) 36ms
+ ✓ tests/unit/personas.test.ts (24 tests) 18ms
+ ✓ tests/unit/agenticTools.test.ts (30 tests) 53ms
+ ✓ tests/unit/agenticActions.test.ts (21 tests) 113ms
+ ✓ tests/unit/languages.test.ts (9 tests) 36ms
+ ✓ tests/unit/captionSync.test.ts (5 tests) 6ms
+ ✓ tests/unit/core.test.ts (35 tests) 389ms
+ ✓ tests/unit/executiveEngine.test.ts (11 tests) 24ms
+ ✓ tests/voice-audio/jitter.test.ts (7 tests) 7ms
+ ✓ tests/unit/customInstructions.test.ts (14 tests) 13ms
+ ✓ tests/voice-audio/playbackClock.test.ts (3 tests) 6ms
+ ✓ tests/unit/livekitSession.test.ts (5 tests) 8ms
+ ✓ tests/unit/activeSession.test.ts (5 tests) 6ms
+ ✓ tests/unit/morph.test.ts (10 tests) 90ms
+ ✓ tests/unit/dailyGreeting.test.ts (12 tests) 1365ms
+   ✓ content rules: calm, no guilt > no generated greeting, over 60 days x names x data x hours, contains a banned phrase  1333ms
+ ✓ tests/unit/tts.test.ts (69 tests) 1059ms
+ ✓ tests/unit/topicShape.test.ts (8 tests) 16ms
+ ✓ tests/unit/userMemory.test.ts (9 tests) 15ms
+ ✓ tests/unit/fastSocketCapture.test.ts (4 tests) 1199ms
+   ✓ agentic additions to FastSocket > capture mode off: the next turn is answered normally, and the captured turns are not in the history  647ms
+   ✓ agentic additions to FastSocket > reply.say speaks the exact words, with no model call  355ms
+ ✓ tests/unit/coachRoute.test.ts (7 tests) 52ms
+ ✓ tests/unit/landing.test.ts (9 tests) 145ms
+ ✓ tests/unit/generativeShapeEngine.test.ts (5 tests) 32ms
+ ✓ tests/unit/ssrf.test.ts (38 tests) 14ms
+ ✓ tests/unit/routinesReminders.test.ts (8 tests) 11ms
+ ✓ tests/unit/selfImprovement.test.ts (6 tests) 7ms
+ ✓ tests/unit/a2aProtocol.test.ts (4 tests) 42ms
+ ✓ tests/unit/deterministicVoiceFallback.test.ts (11 tests) 32ms
+ ✓ tests/unit/knowledge.test.ts (7 tests) 10ms
+ ✓ tests/unit/presence.test.ts (8 tests) 5ms
+ ✓ tests/voice-audio/providerAdapters.test.ts (3 tests) 65ms
+ ✓ tests/unit/triage.test.ts (8 tests) 15ms
+ ✓ tests/unit/byok.test.ts (23 tests) 11ms
+ ✓ tests/voice-audio/pcmCodec.test.ts (6 tests) 5ms
+ ✓ tests/unit/todayList.test.ts (4 tests) 8ms
+ ✓ tests/voice-audio/resampler.test.ts (5 tests) 11ms
+ ✓ tests/unit/volumetric3d.test.ts (4 tests) 476ms
+   ✓ 3D Volumetric Shape Generation > generate3DRocket generates a fully 3D volumetric spacecraft with wings and flame  433ms
+ ✓ tests/unit/safetyGates.test.ts (55 tests) 30ms
+ ✓ tests/voice-audio/reproduceDropout.test.ts (3 tests) 10ms
+ ✓ tests/unit/host.test.ts (5 tests) 7ms
+ ✓ tests/unit/detectLanguage.test.ts (21 tests) 9ms
+ ✓ tests/unit/continuousLearning.test.ts (4 tests) 8ms
+ ✓ tests/unit/vocalAffectAnalyzer.test.ts (4 tests) 5ms
+ ✓ tests/unit/parkingLot.test.ts (4 tests) 10ms
+ ✓ tests/unit/memoryGraph.test.ts (3 tests) 6ms
+ ✓ tests/unit/mcpApi.test.ts (3 tests) 18ms
+ ✓ tests/unit/usePersistentDraft.test.ts (4 tests) 4ms
+ ✓ tests/unit/streamFallback.test.ts (2 tests) 12ms
+ ✓ tests/voice-audio/epochs.test.ts (4 tests) 5ms
+ ✓ tests/unit/orbShapes.test.ts (60 tests) 3327ms
+ ✓ tests/unit/weekTally.test.ts (3 tests) 5ms
+ ✓ tests/unit/humanFigure.test.ts (7 tests) 2525ms
+   ✓ procedural therapist figure > is exactly N finite dots with matching colour and rig arrays  1635ms
+   ✓ procedural therapist figure > is deterministic and also builds the phone-sized cloud  369ms
+   ✓ procedural therapist figure > the rig encodes valid roles and head weights (torso still, head moves, neck ramps)  489ms
+ ✓ tests/unit/a2aOrchestrator.test.ts (3 tests) 6ms
+ ✓ tests/unit/smallTalk.test.ts (10 tests) 5ms
+ ✓ tests/unit/fastSocket.test.ts (43 tests) 9711ms
+   ✓ FastSocket > turns a spoken sentence into Voice Agent events, streams the model into speech, and records history  495ms
+   ✓ FastSocket > finishes a two-sentence reply even when the server reports both flushes as one FlushDone  524ms
+   ✓ FastSocket > speaking after an idle cancel still works (the server acknowledges Cancel, then fresh audio plays)  511ms
+   ✓ FastSocket > waits through a pause: a turn that trails off is held, and the finished thought is answered once, merged  669ms
+   ✓ FastSocket > asks the model early when a partial already ends the sentence, and uses that request when the final transcript agrees  541ms
+   ✓ FastSocket > speculates immediately on short greetings like "Hi hello" even without terminal punctuation  552ms
+   ✓ FastSocket > drops the early request and asks again when they said more than the partial  616ms
+   ✓ FastSocket > answers anyway when the hesitation never ends (after the hold)  521ms
+   ✓ FastSocket > a simple command is confirmed at once, without a second model call  650ms
+   ✓ FastSocket > never goes silent after a command: if the model has nothing to add, Stay says Done  649ms
+   ✓ FastSocket > after an interruption, a short fragment is held so the rest of the sentence is heard too  788ms
+   ✓ FastSocket > runs one app tool, waits for its result, then speaks the confirmation without tools  620ms
+   ✓ FastSocket > a safety answer from the server means no speech from the model  384ms
+   ✓ Full-duplex overlap, endpointing presets, utterance speculation & multi-flush WordBoundaries > starts speculative LLM generation early when AssemblyAI Turn emits utterance before end_of_turn  496ms
+
+ Test Files  56 passed (56)
+      Tests  730 passed (730)
+   Start at  05:05:09
+   Duration  10.56s (transform 3.07s, setup 0ms, collect 7.85s, tests 21.20s, environment 13ms, prepare 11.36s)
+

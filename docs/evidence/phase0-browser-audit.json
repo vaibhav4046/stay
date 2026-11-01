@@ -1,0 +1,330 @@
+{
+  "timestamp": "2026-11-01T05:15:08.020Z",
+  "baseUrl": "http://localhost:3000",
+  "phase0_2_viewports": [
+    {
+      "viewport": "1526x726",
+      "colorScheme": "light",
+      "screenshot": "docs/evidence/phase0-screenshots/before-1526x726-light.png",
+      "boundingBoxY": {
+        "statusLabel": 183,
+        "latestBubble": 460,
+        "textInput": 924,
+        "micButton": 928,
+        "belowFoldInput": true
+      },
+      "userBubble": {
+        "fgRaw": "rgb(33, 36, 34)",
+        "bgRaw": "oklab(0.473536 -0.0798248 -0.0160267 / 0.1)",
+        "fgRgb": "rgb(33, 36, 34)",
+        "bgRgb": "rgb(224, 233, 231)",
+        "contrastRatio": 12.67
+      },
+      "stayBubble": {
+        "fgRaw": "rgb(33, 36, 34)",
+        "bgRaw": "rgb(241, 239, 233)",
+        "fgRgb": "rgb(33, 36, 34)",
+        "bgRgb": "rgb(241, 239, 233)",
+        "contrastRatio": 13.63
+      },
+      "horizontalOverflow": false
+    },
+    {
+      "viewport": "1440x900",
+      "colorScheme": "light",
+      "screenshot": "docs/evidence/phase0-screenshots/before-1440x900-light.png",
+      "boundingBoxY": {
+        "statusLabel": 161,
+        "latestBubble": 438,
+        "textInput": 902,
+        "micButton": 906,
+        "belowFoldInput": true
+      },
+      "userBubble": {
+        "fgRaw": "rgb(33, 36, 34)",
+        "bgRaw": "oklab(0.473536 -0.0798248 -0.0160267 / 0.1)",
+        "fgRgb": "rgb(33, 36, 34)",
+        "bgRgb": "rgb(224, 233, 231)",
+        "contrastRatio": 12.67
+      },
+      "stayBubble": {
+        "fgRaw": "rgb(33, 36, 34)",
+        "bgRaw": "rgb(241, 239, 233)",
+        "fgRgb": "rgb(33, 36, 34)",
+        "bgRgb": "rgb(241, 239, 233)",
+        "contrastRatio": 13.63
+      },
+      "horizontalOverflow": false
+    },
+    {
+      "viewport": "768x1024",
+      "colorScheme": "light",
+      "screenshot": "docs/evidence/phase0-screenshots/before-768x1024-light.png",
+      "boundingBoxY": {
+        "statusLabel": 481,
+        "latestBubble": 758,
+        "textInput": 1222,
+        "micButton": 1226,
+        "belowFoldInput": true
+      },
+      "userBubble": {
+        "fgRaw": "rgb(33, 36, 34)",
+        "bgRaw": "oklab(0.473536 -0.0798248 -0.0160267 / 0.1)",
+        "fgRgb": "rgb(33, 36, 34)",
+        "bgRgb": "rgb(224, 233, 231)",
+        "contrastRatio": 12.67
+      },
+      "stayBubble": {
+        "fgRaw": "rgb(33, 36, 34)",
+        "bgRaw": "rgb(241, 239, 233)",
+        "fgRgb": "rgb(33, 36, 34)",
+        "bgRgb": "rgb(241, 239, 233)",
+        "contrastRatio": 13.63
+      },
+      "horizontalOverflow": false
+    },
+    {
+      "viewport": "375x740",
+      "colorScheme": "light",
+      "screenshot": "docs/evidence/phase0-screenshots/before-375x740-light.png",
+      "boundingBoxY": {
+        "statusLabel": -268,
+        "latestBubble": -16,
+        "textInput": 598,
+        "micButton": 602,
+        "belowFoldInput": false
+      },
+      "userBubble": {
+        "fgRaw": "rgb(33, 36, 34)",
+        "bgRaw": "oklab(0.473536 -0.0798248 -0.0160267 / 0.1)",
+        "fgRgb": "rgb(33, 36, 34)",
+        "bgRgb": "rgb(224, 233, 231)",
+        "contrastRatio": 12.67
+      },
+      "stayBubble": {
+        "fgRaw": "rgb(33, 36, 34)",
+        "bgRaw": "rgb(241, 239, 233)",
+        "fgRgb": "rgb(33, 36, 34)",
+        "bgRgb": "rgb(241, 239, 233)",
+        "contrastRatio": 13.63
+      },
+      "horizontalOverflow": false
+    },
+    {
+      "viewport": "320x640",
+      "colorScheme": "light",
+      "screenshot": "docs/evidence/phase0-screenshots/before-320x640-light.png",
+      "boundingBoxY": {
+        "statusLabel": -662,
+        "latestBubble": -356,
+        "textInput": 331,
+        "micButton": 335,
+        "belowFoldInput": false
+      },
+      "userBubble": {
+        "fgRaw": "rgb(33, 36, 34)",
+        "bgRaw": "oklab(0.473536 -0.0798248 -0.0160267 / 0.1)",
+        "fgRgb": "rgb(33, 36, 34)",
+        "bgRgb": "rgb(224, 233, 231)",
+        "contrastRatio": 12.67
+      },
+      "stayBubble": {
+        "fgRaw": "rgb(33, 36, 34)",
+        "bgRaw": "rgb(241, 239, 233)",
+        "fgRgb": "rgb(33, 36, 34)",
+        "bgRgb": "rgb(241, 239, 233)",
+        "contrastRatio": 13.63
+      },
+      "horizontalOverflow": true
+    },
+    {
+      "viewport": "1526x726",
+      "colorScheme": "dark",
+      "screenshot": "docs/evidence/phase0-screenshots/before-1526x726-dark.png",
+      "boundingBoxY": {
+        "statusLabel": -10,
+        "latestBubble": 267,
+        "textInput": 731,
+        "micButton": 735,
+        "belowFoldInput": true
+      },
+      "userBubble": {
+        "fgRaw": "oklch(0.97 0.001 106.424)",
+        "bgRaw": "oklab(0.473536 -0.0798248 -0.0160267 / 0.1)",
+        "fgRgb": "rgb(245, 245, 244)",
+        "bgRgb": "rgb(224, 233, 231)",
+        "contrastRatio": 1.13
+      },
+      "stayBubble": {
+        "fgRaw": "oklch(0.97 0.001 106.424)",
+        "bgRaw": "rgb(241, 239, 233)",
+        "fgRgb": "rgb(245, 245, 244)",
+        "bgRgb": "rgb(241, 239, 233)",
+        "contrastRatio": 1.05
+      },
+      "horizontalOverflow": false
+    },
+    {
+      "viewport": "1440x900",
+      "colorScheme": "dark",
+      "screenshot": "docs/evidence/phase0-screenshots/before-1440x900-dark.png",
+      "boundingBoxY": {
+        "statusLabel": 164,
+        "latestBubble": 441,
+        "textInput": 905,
+        "micButton": 909,
+        "belowFoldInput": true
+      },
+      "userBubble": {
+        "fgRaw": "oklch(0.97 0.001 106.424)",
+        "bgRaw": "oklab(0.473536 -0.0798248 -0.0160267 / 0.1)",
+        "fgRgb": "rgb(245, 245, 244)",
+        "bgRgb": "rgb(224, 233, 231)",
+        "contrastRatio": 1.13
+      },
+      "stayBubble": {
+        "fgRaw": "oklch(0.97 0.001 106.424)",
+        "bgRaw": "rgb(241, 239, 233)",
+        "fgRgb": "rgb(245, 245, 244)",
+        "bgRgb": "rgb(241, 239, 233)",
+        "contrastRatio": 1.05
+      },
+      "horizontalOverflow": false
+    },
+    {
+      "viewport": "768x1024",
+      "colorScheme": "dark",
+      "screenshot": "docs/evidence/phase0-screenshots/before-768x1024-dark.png",
+      "boundingBoxY": {
+        "statusLabel": 288,
+        "latestBubble": 565,
+        "textInput": 1029,
+        "micButton": 1033,
+        "belowFoldInput": true
+      },
+      "userBubble": {
+        "fgRaw": "oklch(0.97 0.001 106.424)",
+        "bgRaw": "oklab(0.473536 -0.0798248 -0.0160267 / 0.1)",
+        "fgRgb": "rgb(245, 245, 244)",
+        "bgRgb": "rgb(224, 233, 231)",
+        "contrastRatio": 1.13
+      },
+      "stayBubble": {
+        "fgRaw": "oklch(0.97 0.001 106.424)",
+        "bgRaw": "rgb(241, 239, 233)",
+        "fgRgb": "rgb(245, 245, 244)",
+        "bgRgb": "rgb(241, 239, 233)",
+        "contrastRatio": 1.05
+      },
+      "horizontalOverflow": false
+    },
+    {
+      "viewport": "375x740",
+      "colorScheme": "dark",
+      "screenshot": "docs/evidence/phase0-screenshots/before-375x740-dark.png",
+      "boundingBoxY": {
+        "statusLabel": -266,
+        "latestBubble": 9,
+        "textInput": 600,
+        "micButton": 604,
+        "belowFoldInput": false
+      },
+      "userBubble": {
+        "fgRaw": "oklch(0.97 0.001 106.424)",
+        "bgRaw": "oklab(0.473536 -0.0798248 -0.0160267 / 0.1)",
+        "fgRgb": "rgb(245, 245, 244)",
+        "bgRgb": "rgb(224, 233, 231)",
+        "contrastRatio": 1.13
+      },
+      "stayBubble": {
+        "fgRaw": "oklch(0.97 0.001 106.424)",
+        "bgRaw": "rgb(241, 239, 233)",
+        "fgRgb": "rgb(245, 245, 244)",
+        "bgRgb": "rgb(241, 239, 233)",
+        "contrastRatio": 1.05
+      },
+      "horizontalOverflow": false
+    },
+    {
+      "viewport": "320x640",
+      "colorScheme": "dark",
+      "screenshot": "docs/evidence/phase0-screenshots/before-320x640-dark.png",
+      "boundingBoxY": {
+        "statusLabel": -662,
+        "latestBubble": -334,
+        "textInput": 331,
+        "micButton": 335,
+        "belowFoldInput": false
+      },
+      "userBubble": {
+        "fgRaw": "oklch(0.97 0.001 106.424)",
+        "bgRaw": "oklab(0.473536 -0.0798248 -0.0160267 / 0.1)",
+        "fgRgb": "rgb(245, 245, 244)",
+        "bgRgb": "rgb(224, 233, 231)",
+        "contrastRatio": 1.13
+      },
+      "stayBubble": {
+        "fgRaw": "oklch(0.97 0.001 106.424)",
+        "bgRaw": "rgb(241, 239, 233)",
+        "fgRgb": "rgb(245, 245, 244)",
+        "bgRgb": "rgb(241, 239, 233)",
+        "contrastRatio": 1.05
+      },
+      "horizontalOverflow": true
+    }
+  ],
+  "phase0_3_websockets": [
+    {
+      "url": "wss://streaming.assemblyai.com/v3/ws?sample_rate=24000&encoding=pcm_s16le&speech_model=universal-3-6-pro&token=[REDACTED]&keyterms_prompt=%5B%22Stay%22%2C%22ADHD%22%2C%22micro-step%22%2C%22parking+lot%22%2C%22brain+dump%22%2C%22wall+of+awful%22%2C%22two-minute+timer%22%2C%22step+next%22%2C%22wrap+up%22%2C%22park+it%22%2C%22rejection+sensitivity%22%2C%22Cardamom%22%2C%22Chaiwala%22%2C%22Taco%22%2C%22Mariachi%22%2C%22Lady+Lavender%22%2C%22Captain+Crumpet%22%2C%22Biscuit+Blitz%22%2C%22Marmite+Sprocket%22%2C%22Waffle+Wizard%22%2C%22Countdown+Cookie%22%2C%22Porch+Light%22%2C%22Pancake+Paladin%22%2C%22Arcade+Gremlin%22%2C%22Velvet+Scalpel%22%2C%22Pumpkin+Pixel%22%2C%22Lantern+Iris%22%2C%22Compass+Reid%22%2C%22Couch+Rocket%22%2C%22Croissant+Bandit%22%2C%22Professor+Pretzel%22%2C%22Fettuccine+Maestro%22%2C%22Goblin+Mode+Gus%22%5D",
+      "sentFrames": [
+        "{\"type\":\"Terminate\"}"
+      ],
+      "receivedFrames": [],
+      "closeError": null,
+      "closed": true
+    },
+    {
+      "url": "wss://tts.us.assemblyai.com/v1/ws?token=[REDACTED]&voice=anna&language=english&encoding=pcm_s16le&sample_rate=24000",
+      "sentFrames": [
+        "{\"type\":\"Cancel\"}",
+        "{\"type\":\"Terminate\"}"
+      ],
+      "receivedFrames": [
+        "{\"type\":\"Error\",\"error_code\":3006,\"error\":\"Bad connection parameters: voice: voice is retired: name the voice with voice_id, for example voice_id=aai-anna\",\"error_type\":\"invalid_parameter\",\"retryable\""
+      ],
+      "closeError": null,
+      "closed": true
+    },
+    {
+      "url": "wss://agents.assemblyai.com/v1/ws?token=[REDACTED]",
+      "sentFrames": [
+        "{\"type\":\"session.update\",\"session\":{\"system_prompt\":\"You are Stay, a calm friend who helps an adult with ADHD start tasks. Voice: Lady Lavender. Soft and calm. Slows everything down when you are overw",
+        "{\"type\":\"conversation.message\",\"role\":\"system\",\"content\":\"User care context: self_managing. Never give medication advice.\"}",
+        "{\"type\":\"input.audio\",\"audio\":\"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "{\"type\":\"input.audio\",\"audio\":\"GQAZABkAGQAZABkAGQAZABkAGQAZABkAGQAZABkAGQAZABkAGQAZABkAGQAYABgAGAAYABgAGAAYABgAFwAXABcAFwAXABcAFgAWABYAFgAWABYAFQAVABUAFQAUABQAFAAUABMAEwATABMAEgASABIAEgARABEAEQAQABAAE",
+        "{\"type\":\"input.audio\",\"audio\":\"CAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgABwAHAAcABwAHAAcABwAHAAcABwAHAAcABwAHAAcABwAHAAcABgAGAAYAB",
+        "{\"type\":\"session.end\"}"
+      ],
+      "receivedFrames": [
+        "{\"config\":{\"id\":\"sess_f36b602eb4ad4c638650b13fbf23ed03\",\"system_prompt\":\"You are Stay, a calm friend who helps an adult with ADHD start tasks. Voice: Lady Lavender. Soft and calm. Slows everything dow",
+        "{\"session_id\":\"sess_f36b602eb4ad4c638650b13fbf23ed03\",\"config\":{\"id\":\"sess_f36b602eb4ad4c638650b13fbf23ed03\",\"system_prompt\":\"You are Stay, a calm friend who helps an adult with ADHD start tasks. Voic",
+        "{\"reply_id\":\"resp_5afa4f4bbaf04748b707c7e2a6705c4d\",\"item_id\":\"msg_ef31209fc9c84e4e9bcb4f885ebdc954\",\"type\":\"reply.started\",\"timestamp\":1793510141.6482916}"
+      ],
+      "closeError": null,
+      "closed": true
+    }
+  ],
+  "phase0_4_walkthrough": {
+    "onboarding": true,
+    "talkClickStatus": "Speaking",
+    "enterSubmit": false,
+    "doubleClickSendUserMsgCount": 2,
+    "moreOpenClose": true,
+    "timerStartReloadStopReload": true,
+    "pdfExport": false,
+    "historyLoaded": true,
+    "micDeniedStatus": "Tap the orb to talk"
+  },
+  "consoleErrors": [],
+  "networkFailures": []
+}

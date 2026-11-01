@@ -1,0 +1,55 @@
+
+> stay@1.0.0 build
+> next build
+
+   ▲ Next.js 15.5.28
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 3.5s
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/28) ...
+   Generating static pages (7/28) 
+   Generating static pages (14/28) 
+   Generating static pages (21/28) 
+ ✓ Generating static pages (28/28)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+┌ ○ /                                    48.1 kB         333 kB
+├ ○ /_not-found                            175 B         103 kB
+├ ƒ /.well-known/agent.json                175 B         103 kB
+├ ƒ /api/a2a/rpc                           175 B         103 kB
+├ ƒ /api/account/delete                    175 B         103 kB
+├ ƒ /api/coach/plan                        175 B         103 kB
+├ ƒ /api/coach/triage                      175 B         103 kB
+├ ƒ /api/keys/check                        175 B         103 kB
+├ ƒ /api/mcp                               175 B         103 kB
+├ ƒ /api/orb/shape                         175 B         103 kB
+├ ƒ /api/voice/chat                        175 B         103 kB
+├ ƒ /api/voice/fast-token                  175 B         103 kB
+├ ƒ /api/voice/token                       175 B         103 kB
+├ ƒ /api/voice/tts                         175 B         103 kB
+├ ○ /app                                   175 B         103 kB
+├ ○ /app/history                            8 kB         188 kB
+├ ○ /app/reports                         8.18 kB         185 kB
+├ ○ /app/settings                        10.3 kB         182 kB
+├ ○ /app/share                           1.09 kB         107 kB
+├ ○ /app/today                            105 kB         455 kB
+├ ○ /app/treatment                       2.64 kB         189 kB
+├ ○ /manifest.webmanifest                  175 B         103 kB
+├ ○ /privacy                               504 B         113 kB
+├ ○ /robots.txt                            175 B         103 kB
+├ ○ /sitemap.xml                           175 B         103 kB
+└ ○ /terms                                 504 B         113 kB
++ First Load JS shared by all             103 kB
+  ├ chunks/1255-60d8dc7c8c9309a1.js      46.3 kB
+  ├ chunks/4bd1b696-100b9d70ed4e49c1.js  54.2 kB
+  └ other shared chunks (total)          2.23 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
