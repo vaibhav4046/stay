@@ -2949,11 +2949,23 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       setLiveSpokenText('');
       liveSpokenTextRef.current = '';
       setPartialUserTranscript('');
+      fullReplyTextRef.current = '';
+      pendingSpeechTextRef.current = '';
       if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
         try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
       }
       stopPlaybackQueue();
       const liveWs = wsRef.current;
+      if (liveWs) {
+        try {
+          if (typeof (liveWs as any).clear === 'function') {
+            (liveWs as any).clear();
+          }
+          if (liveWs.readyState === WebSocket.OPEN) {
+            liveWs.send(JSON.stringify({ type: 'session.clear' }));
+          }
+        } catch { /* ignore */ }
+      }
       const isWsLive = Boolean(liveWs && liveWs.readyState === WebSocket.OPEN && sessionReadyRef.current);
       setVisualState(isWsLive ? 'listening' : 'idle');
       saveActiveSession({ transcripts: [], plan: null, step: 'input', avoidedTask: null, smallestNextAction: null });

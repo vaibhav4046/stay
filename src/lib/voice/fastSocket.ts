@@ -419,6 +419,10 @@ export class FastSocket {
       case 'session.update':
         void this.start((m.session || {}) as Json);
         break;
+      case 'session.clear':
+      case 'conversation.clear':
+        this.clear();
+        break;
       case 'input.audio':
         if (this.stt?.readyState === WebSocket.OPEN && typeof m.audio === 'string' && !(this.tts as TtsConnection | null)?.muteMic) this.stt.send(b64ToBytes(m.audio)); // muteMic: a browser voice cannot be heard around, so the mic is closed while it talks
         break;
@@ -446,6 +450,13 @@ export class FastSocket {
         this.close();
         break;
     }
+  }
+
+  clear(): void {
+    this.cancel();
+    this.history = [];
+    this.notes = [];
+    this.spoken = '';
   }
 
   close(): void {
