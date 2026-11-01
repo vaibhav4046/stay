@@ -56,6 +56,7 @@ import {
 import { buildDeterministicCoachPlan } from '@/lib/coach/strategies';
 import { analyzeStreamingUtterance, type RealtimeStreamingAnalysis } from '@/lib/coach/knowledge';
 import { lipSyncBus } from '@/lib/orb/lipSync';
+import { signalBus } from '@/lib/signal/signalBus';
 import { loadUserCalibration, buildAdaptiveSystemPrompt } from '@/lib/coach/selfImprovement';
 import {
   loadUserMemory,
@@ -1107,6 +1108,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     if (workletNodeRef.current) {
       try {
         workletNodeRef.current.port.onmessage = null;
+        signalBus.reset(); // capture has stopped: no visual may keep listening
         workletNodeRef.current.disconnect();
       } catch {
         // ignore
@@ -2237,6 +2239,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
             if (!payload) return;
 
             if (payload.type === 'energy') {
+              signalBus.setInput(payload.rms); // the real microphone level, for the Signal visuals (module state, no render)
               if (payload.rms > 0.08) lastLoudAtRef.current = performance.now();
               pushAudioLevels(payload.rms);
               // Barge-in without waiting ~1 s for the server: sustained loud mic input while the agent is audible ducks it.

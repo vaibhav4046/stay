@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState } from 'react';
 import type { VoiceVisualState } from '@/types/domain';
 import { SubtleOrb } from '@/components/voice/SubtleOrb';
-import { Wave } from '@/components/Wave';
+import { SignalWave } from '@/components/signal/SignalWave';
+import { TransportBadge } from '@/components/voice/TransportBadge';
+import type { VoiceTransportInfo } from '@/lib/voice/useVoiceAgent';
 import { NUDGE_INSTRUCTIONS, WRAP_INSTRUCTION, formatClock, nextCallAction } from '@/lib/voice/callMode';
 import { CALL_STYLE_INSTRUCTION, startTone } from '@/lib/voice/ringtone';
 
@@ -15,6 +17,12 @@ export interface CallVoice {
   speakProactively: (instructions: string) => boolean;
   injectContext: (content: string) => boolean;
   disconnectVoiceSession: () => void;
+  audioEnergy: number;
+  transcripts: Array<{ id: string; role: string; text: string }>;
+  /** the assistant's words as they are being rendered (word-synced to playback) */
+  liveSpokenText: string;
+  transportInfo: VoiceTransportInfo;
+  replyTimes?: number[];
 }
 
 const STATE_LABEL: Partial<Record<VoiceVisualState, string>> = {
@@ -57,6 +65,7 @@ export function CallStayOverlay({ voice, connected, name, paused = false, onEnd 
   const voiceRef = useRef(voice);
   voiceRef.current = voice;
   const endRef = useRef<HTMLButtonElement>(null);
+  const [captions, setCaptions] = useState(true);
 
   // ringback while we wait for the other end to pick up
   useEffect(() => {
@@ -115,6 +124,9 @@ export function CallStayOverlay({ voice, connected, name, paused = false, onEnd 
     : voice.isHandsFreePaused
       ? STATE_LABEL.paused
       : STATE_LABEL[voice.visualState] ?? 'Connected';
+  const signalState = !connected ? 'connecting' : voice.isHandsFreePaused ? 'paused' : voice.visualState;
+  const lastUser = [...voice.transcripts].reverse().find((x) => x.role === 'user')?.text ?? '';
+  const lastStay = [...voice.transcripts].reverse().find((x) => x.role === 'agent')?.text ?? '';
   const clock = connected && startedAt.current !== null ? formatClock(now - startedAt.current) : 'Calling…';
 
   return (
@@ -124,9 +136,12 @@ export function CallStayOverlay({ voice, connected, name, paused = false, onEnd 
       aria-label={`Call with ${name}`}
       data-testid="call-overlay"
       data-call-state={connected ? 'connected' : 'ringing'}
-      className="fixed inset-0 z-40 flex flex-col items-center justify-between px-6 py-12"
-      style={{ background: 'radial-gradient(900px 520px at 50% 22%, rgb(57 124 232 / 0.30), transparent 65%), radial-gradient(600px 400px at 100% 100%, rgb(255 255 255 / 0.05), transparent 60%), linear-gradient(180deg, #111214 0%, #08090B 60%, #040405 100%)', color: 'var(--ink)' }}
+      className="fixed inset-0 z-40 flex flex-col items-center justify-between px-6"
+      style={{ background: 'radial-gradient(900px 520px at 50% 22%, rgb(57 124 232 / 0.30), transparent 65%), radial-gradient(600px 400px at 100% 100%, rgb(255 255 255 / 0.05), transparent 60%), linear-gradient(180deg, #111214 0%, #08090B 60%, #040405 100%)', color: 'var(--ink)', paddingTop: 'max(2.5rem, env(safe-area-inset-top))', paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}
     >
+      <div className="absolute right-4" style={{ top: 'max(1rem, env(safe-area-inset-top))' }}>
+        <TransportBadge transport={voice.transportInfo} isConnected={connected} replyTimes={voice.replyTimes} />
+      </div>
       <div className="text-center">
         <p className="text-2xl font-semibold" data-testid="call-name">{name}</p>
         <p className="mt-1 text-base tabular-nums" style={{ color: 'var(--ink-2)' }} data-testid="call-clock">
@@ -135,22 +150,29 @@ export function CallStayOverlay({ voice, connected, name, paused = false, onEnd 
       </div>
 
       <div className="flex flex-col items-center gap-5">
-        <SubtleOrb state={!connected ? 'connecting' : voice.isHandsFreePaused ? 'paused' : voice.visualState} size={96} />
-        <div className="w-[min(22rem,80vw)] text-accent">
-          <Wave amplitude={connected && voice.visualState === 'speaking' ? 14 : 5} periods={5} slow={!(connected && voice.visualState === 'speaking')} />
-        </div>
+        <SubtleOrb state={signalState} energy={connected && !voice.isHandsFreePaused ? voice.audioEnergy : 0} size={96} />
+        {/* the wave follows the real microphone while listening and the audible assistant audio while speaking; flat otherwise */}
+        <SignalWave state={signalState} height={64} className="w-[min(24rem,84vw)]" />
         <p aria-live="polite" className="text-lg" data-testid="call-state">{label}</p>
-        <p className="min-h-[3rem] max-w-md text-center text-base" style={{ color: 'var(--ink-2)' }}>
-          {connected ? voice.partialUserTranscript : ''}
-        </p>
+        {captions && connected && (
+          <div className="min-h-[5.5rem] w-[min(32rem,88vw)] space-y-1 text-center" data-testid="call-captions">
+            <p className="text-base" style={{ color: 'var(--ink-2)' }} data-testid="caption-user">{voice.partialUserTranscript || lastUser}</p>
+            <p className="text-lg" data-testid="caption-stay">{voice.visualState === 'speaking' ? voice.liveSpokenText : lastStay}</p>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col items-center gap-4">
         <div className="flex items-center gap-3">
           {connected && (
-            <button type="button" className="btn btn-secondary px-5 py-3" onClick={voice.toggleHandsFreeMute} data-testid="call-mute">
-              {voice.isHandsFreePaused ? 'Unmute' : 'Mute'}
-            </button>
+            <>
+              <button type="button" className="btn btn-secondary px-5 py-3" onClick={voice.toggleHandsFreeMute} data-testid="call-mute">
+                {voice.isHandsFreePaused ? 'Unmute' : 'Mute'}
+              </button>
+              <button type="button" className="btn btn-secondary px-5 py-3" aria-pressed={captions} onClick={() => setCaptions((c) => !c)} data-testid="call-captions-toggle">
+                {captions ? 'Hide captions' : 'Show captions'}
+              </button>
+            </>
           )}
           <button
             ref={endRef}

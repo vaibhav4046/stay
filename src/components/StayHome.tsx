@@ -50,6 +50,7 @@ import { RoutineSheet } from '@/components/RoutineSheet';
 import { ReminderSheet } from '@/components/ReminderSheet';
 import { takeDue } from '@/lib/reminders';
 import { WaveProgress } from '@/components/Wave';
+import { SignalWave } from '@/components/signal/SignalWave';
 import { CallStayCard } from '@/components/voice/CallStayCard';
 import { CallStayOverlay } from '@/components/voice/CallStayOverlay';
 import { RING_MS } from '@/lib/voice/ringtone';
@@ -1273,6 +1274,9 @@ export function StayHome({
           <p className="meta text-xs shrink-0" role="status" aria-live="polite" data-testid="orb-status">
             {status}
           </p>
+
+          {/* compact Signal: the real microphone level while listening, the audible assistant level while speaking */}
+          {!quietMode && <SignalWave state={visual} height={28} className="hidden sm:block w-24 shrink-0" />}
 
           {!quietMode && (
             <GeminiLiveVoiceVisualizer
