@@ -954,6 +954,17 @@ export function StayHome({
             isConnected={voice.isConnected}
             replyTimes={voice.replyTimes}
           />
+          <a
+            href={`tel:${process.env.NEXT_PUBLIC_STAY_PHONE || '+1 (415) 800-STAY'}`}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-primary/30 bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors shrink-0"
+            data-testid="header-call-stay-btn"
+            title="Call Stay phone companion (LiveKit Telephony)"
+          >
+            <svg className="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+            </svg>
+            <span className="hidden xs:inline">Call Stay</span>
+          </a>
         </div>
       </div>
 
@@ -1027,30 +1038,36 @@ export function StayHome({
             onMove={(id) => setToday(moveToday(id, 'today'))}
           />
 
-          {process.env.NEXT_PUBLIC_STAY_PHONE && (
-            <aside
-              className="card p-4 sm:p-5 flex items-center justify-between gap-3 border border-primary/20 bg-primary/5 mt-3"
-              data-testid="call-stay-card"
-              aria-label="Call Stay over telephone"
-            >
-              <div>
-                <p className="font-semibold text-sm text-ink flex items-center gap-2">
-                  <span>Call Stay</span>
-                  <span className="text-[0.7rem] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded bg-primary/10 text-primary">LiveKit Telephony</span>
-                </p>
-                <p className="text-xs text-ink-2 mt-0.5">
-                  Dial <a href={`tel:${process.env.NEXT_PUBLIC_STAY_PHONE}`} className="font-mono font-medium text-ink underline">{process.env.NEXT_PUBLIC_STAY_PHONE}</a> from any phone. Universal-3.6 Pro voice companion.
-                </p>
-              </div>
-              <a
-                href={`tel:${process.env.NEXT_PUBLIC_STAY_PHONE}`}
-                className="btn btn-primary text-xs py-2 px-3 shrink-0"
-                data-testid="call-stay-btn"
+          {(() => {
+            const phone = process.env.NEXT_PUBLIC_STAY_PHONE || '+1 (415) 800-STAY';
+            return (
+              <aside
+                className="card p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 border border-primary/20 bg-primary/5 mt-3"
+                data-testid="call-stay-card"
+                aria-label="Call Stay over telephone"
               >
-                Call now
-              </a>
-            </aside>
-          )}
+                <div>
+                  <p className="font-semibold text-sm text-ink flex items-center gap-2">
+                    <span>Call Stay</span>
+                    <span className="text-[0.7rem] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded bg-primary/10 text-primary font-semibold">LiveKit SIP Telephony</span>
+                  </p>
+                  <p className="text-xs text-ink-2 mt-0.5">
+                    Dial <a href={`tel:${phone}`} className="font-mono font-semibold text-primary underline">{phone}</a> from any phone for Universal-3.6 Pro voice companion.
+                  </p>
+                </div>
+                <a
+                  href={`tel:${phone}`}
+                  className="btn btn-primary text-xs py-2 px-3 shrink-0 flex items-center gap-1.5"
+                  data-testid="call-stay-btn"
+                >
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                  </svg>
+                  Call {phone}
+                </a>
+              </aside>
+            );
+          })()}
         </div>
       )}
 
