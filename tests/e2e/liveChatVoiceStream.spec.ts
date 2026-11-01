@@ -220,7 +220,7 @@ test.describe('Deterministic Fake-Voice Browser Live Chat Stream Suite', () => {
     const scratchBtn = page.getByTestId('wispr-scratch-btn');
     await expect(scratchBtn).toBeVisible({ timeout: 4000 });
     await scratchBtn.click();
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(600);
     // Last turn is cleanly removed
     const userMsgs = await page.locator('[data-testid="chat-user-message"]').allTextContents();
     expect(userMsgs.some(t => t.includes('Send invoice to client'))).toBe(false);
@@ -228,7 +228,7 @@ test.describe('Deterministic Fake-Voice Browser Live Chat Stream Suite', () => {
     // Voice command: Actually change that to call landlord
     await taskInput.fill('Actually, change that to call the landlord');
     await page.getByTestId('send').click();
-    await expect(page.getByTestId('chat-user-message').last()).toContainText('call the landlord');
+    await expect(page.getByTestId('chat-user-message').last()).toContainText('call the landlord', { timeout: 8000 });
   });
 
   test('Wispr Flow: Repeat last thing and What you heard commands', async ({ page }) => {

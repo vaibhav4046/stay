@@ -495,7 +495,7 @@ export function StayHome({
       submittingRef.current = true;
       setTimeout(() => {
         submittingRef.current = false;
-      }, 800);
+      }, 350);
       clearInput();
       setShrinkDepth(0);
       orb.feed(t, 'typed');

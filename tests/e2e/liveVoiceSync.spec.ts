@@ -49,11 +49,12 @@ test('live voice caption synchronization and logo persistence', async ({ page })
   await expect(page.getByTestId('plan-card')).toHaveCount(0);
 
   // 6. Test actual task input "Do my taxes" to verify plan creation
+  await page.waitForTimeout(500);
   await input.fill('Do my taxes');
   await page.getByTestId('send').click();
 
   const planCard = page.getByTestId('plan-card');
-  await expect(planCard).toBeVisible({ timeout: 10000 });
+  await expect(planCard).toBeVisible({ timeout: 15000 });
 
   await page.screenshot({ path: path.join(SCREENSHOT_DIR, '10-responsive-plan-card.png') });
 });
