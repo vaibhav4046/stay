@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-11-01T04:01:34.664Z",
+  "timestamp": "2026-11-01T04:46:28.988Z",
   "productionUrl": "https://stay-two-swart.vercel.app/app/today",
   "flowsTested": [
     {
@@ -9,7 +9,7 @@
     {
       "name": "submit_with_enter",
       "status": "PASS",
-      "firstStep": "Open the tax folder, pull out the first page, and place it on the desk."
+      "firstStep": "Open the tax software or paper form, and click the first tab."
     },
     {
       "name": "rapid_double_submit",
@@ -57,7 +57,7 @@
       "name": "responsive_viewports",
       "status": "PASS",
       "viewports": {
-        "enterSubmissionLatencyMs": 1932,
+        "enterSubmissionLatencyMs": 2478,
         "doubleSubmitHandledCleanly": false,
         "moreModalOpenCloseWorks": true,
         "timerPersistenceAcrossReload": true,
@@ -77,7 +77,7 @@
   "consoleErrors": [],
   "networkFailures": [],
   "metrics": {
-    "enterSubmissionLatencyMs": 1932,
+    "enterSubmissionLatencyMs": 2478,
     "doubleSubmitHandledCleanly": false,
     "moreModalOpenCloseWorks": true,
     "timerPersistenceAcrossReload": true,
