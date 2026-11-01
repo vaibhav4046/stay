@@ -1026,6 +1026,31 @@ export function StayHome({
             onOpenDump={() => setSheet('dump')}
             onMove={(id) => setToday(moveToday(id, 'today'))}
           />
+
+          {process.env.NEXT_PUBLIC_STAY_PHONE && (
+            <aside
+              className="card p-4 sm:p-5 flex items-center justify-between gap-3 border border-primary/20 bg-primary/5 mt-3"
+              data-testid="call-stay-card"
+              aria-label="Call Stay over telephone"
+            >
+              <div>
+                <p className="font-semibold text-sm text-ink flex items-center gap-2">
+                  <span>Call Stay</span>
+                  <span className="text-[0.7rem] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded bg-primary/10 text-primary">LiveKit Telephony</span>
+                </p>
+                <p className="text-xs text-ink-2 mt-0.5">
+                  Dial <a href={`tel:${process.env.NEXT_PUBLIC_STAY_PHONE}`} className="font-mono font-medium text-ink underline">{process.env.NEXT_PUBLIC_STAY_PHONE}</a> from any phone. Universal-3.6 Pro voice companion.
+                </p>
+              </div>
+              <a
+                href={`tel:${process.env.NEXT_PUBLIC_STAY_PHONE}`}
+                className="btn btn-primary text-xs py-2 px-3 shrink-0"
+                data-testid="call-stay-btn"
+              >
+                Call now
+              </a>
+            </aside>
+          )}
         </div>
       )}
 

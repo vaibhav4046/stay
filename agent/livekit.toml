@@ -1,0 +1,10 @@
+[project]
+name = "stay-phone-companion"
+subdomain = "stay"
+
+[agent]
+entrypoint = "agent.py"
+
+[env]
+ASSEMBLYAI_VOICE_ID = "49c443a4-8a1d-5f7e-b70b-98bdbd9823c3"
+LLM_MODEL = "gpt-4o-mini"

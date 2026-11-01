@@ -52,6 +52,27 @@ export function generateClinicianReportPdf(params: {
   const right = 194;
   const contentWidth = right - left;
 
+  const drawFooter = () => {
+    doc.setDrawColor(233, 230, 223);
+    doc.line(left, 280, right, 280);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(116, 122, 117);
+    doc.text(
+      'Generated locally by Stay. User-owned self-tracking summary for clinical discussion only — not diagnostic or medical advice.',
+      left,
+      285
+    );
+  };
+
+  const checkPageBreak = (neededMm: number) => {
+    if (y + neededMm > 275) {
+      drawFooter();
+      doc.addPage();
+      y = 16;
+    }
+  };
+
   // Header bar
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(15);
@@ -109,6 +130,7 @@ export function generateClinicianReportPdf(params: {
 
   // 1. Care Context
   if (config.includeCareContext) {
+    checkPageBreak(15);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10.5);
     doc.setTextColor(0, 106, 103);
@@ -124,6 +146,7 @@ export function generateClinicianReportPdf(params: {
 
   // 2. Task Initiation Summary
   if (config.includeInitiationMetrics) {
+    checkPageBreak(25);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10.5);
     doc.setTextColor(0, 106, 103);
@@ -155,6 +178,7 @@ export function generateClinicianReportPdf(params: {
 
   // 3. Strategy Breakdown
   if (config.includeStrategyTable) {
+    checkPageBreak(20);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10.5);
     doc.setTextColor(0, 106, 103);
@@ -166,6 +190,7 @@ export function generateClinicianReportPdf(params: {
     doc.setTextColor(33, 36, 34);
 
     for (const st of strategies) {
+      checkPageBreak(6);
       const rateStr =
         st.startRatePercent !== null
           ? `${st.startRatePercent}% (${st.denominatorLabel})`
@@ -179,6 +204,7 @@ export function generateClinicianReportPdf(params: {
 
   // 4. Common Barriers
   if (config.includeBarriers) {
+    checkPageBreak(20);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10.5);
     doc.setTextColor(0, 106, 103);
@@ -194,6 +220,7 @@ export function generateClinicianReportPdf(params: {
       y += 5;
     } else {
       for (const b of barriers.slice(0, 4)) {
+        checkPageBreak(6);
         doc.text(
           `• ${b.label}: ${b.count} session${b.count === 1 ? '' : 's'} (${b.sharePercent}%)`,
           left + 2,
@@ -207,6 +234,7 @@ export function generateClinicianReportPdf(params: {
 
   // 5. Treatment Adherence & Side Effects
   if (config.includeTreatmentAdherence) {
+    checkPageBreak(25);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10.5);
     doc.setTextColor(0, 106, 103);
@@ -246,6 +274,7 @@ export function generateClinicianReportPdf(params: {
           );
           y += 4.8;
           for (const item of adherence.sideEffectNotes.slice(0, 4)) {
+            checkPageBreak(10);
             const d = new Date(item.createdAt).toLocaleDateString('en-GB', {
               day: '2-digit',
               month: 'short',
@@ -262,6 +291,7 @@ export function generateClinicianReportPdf(params: {
 
   // 6. Patient Questions for Clinician
   if (config.includeQuestionsForClinician && config.questionsForClinician.trim()) {
+    checkPageBreak(15);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10.5);
     doc.setTextColor(0, 106, 103);
@@ -276,17 +306,8 @@ export function generateClinicianReportPdf(params: {
     y += wrapped.length * 4.5 + 4;
   }
 
-  // Footer
-  doc.setDrawColor(233, 230, 223);
-  doc.line(left, 280, right, 280);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.setTextColor(116, 122, 117);
-  doc.text(
-    'Generated locally by Stay. User-owned self-tracking summary for clinical discussion only — not diagnostic or medical advice.',
-    left,
-    285
-  );
+  // Footer on final page
+  drawFooter();
 
   return doc;
 }
