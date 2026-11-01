@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { VoiceVisualState } from '@/types/domain';
 import { SubtleOrb } from '@/components/voice/SubtleOrb';
+import { Wave } from '@/components/Wave';
 import { NUDGE_INSTRUCTIONS, WRAP_INSTRUCTION, formatClock, nextCallAction } from '@/lib/voice/callMode';
 import { CALL_STYLE_INSTRUCTION, startTone } from '@/lib/voice/ringtone';
 
@@ -124,7 +125,7 @@ export function CallStayOverlay({ voice, connected, name, paused = false, onEnd 
       data-testid="call-overlay"
       data-call-state={connected ? 'connected' : 'ringing'}
       className="fixed inset-0 z-40 flex flex-col items-center justify-between px-6 py-12"
-      style={{ background: 'var(--bg)', color: 'var(--ink)' }}
+      style={{ background: 'radial-gradient(900px 520px at 50% 22%, rgb(57 124 232 / 0.30), transparent 65%), radial-gradient(600px 400px at 100% 100%, rgb(255 255 255 / 0.05), transparent 60%), linear-gradient(180deg, #111214 0%, #08090B 60%, #040405 100%)', color: 'var(--ink)' }}
     >
       <div className="text-center">
         <p className="text-2xl font-semibold" data-testid="call-name">{name}</p>
@@ -135,6 +136,9 @@ export function CallStayOverlay({ voice, connected, name, paused = false, onEnd 
 
       <div className="flex flex-col items-center gap-5">
         <SubtleOrb state={!connected ? 'connecting' : voice.isHandsFreePaused ? 'paused' : voice.visualState} size={96} />
+        <div className="w-[min(22rem,80vw)] text-accent">
+          <Wave amplitude={connected && voice.visualState === 'speaking' ? 14 : 5} periods={5} slow={!(connected && voice.visualState === 'speaking')} />
+        </div>
         <p aria-live="polite" className="text-lg" data-testid="call-state">{label}</p>
         <p className="min-h-[3rem] max-w-md text-center text-base" style={{ color: 'var(--ink-2)' }}>
           {connected ? voice.partialUserTranscript : ''}
@@ -152,7 +156,7 @@ export function CallStayOverlay({ voice, connected, name, paused = false, onEnd 
             ref={endRef}
             type="button"
             className="btn px-5 py-3 text-white"
-            style={{ background: 'var(--danger)' }}
+            style={{ background: 'var(--danger-fill)' }}
             onClick={onEnd}
             data-testid="call-end"
           >

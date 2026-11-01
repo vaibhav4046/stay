@@ -10,7 +10,7 @@ export function UrgentHelpButton() {
       type="button"
       onClick={() => openCrisisPanel()}
       className="btn btn-secondary text-[0.85rem]"
-      style={{ minHeight: 44, padding: '0 0.7rem', color: '#B23A2E', borderColor: '#E3C3BE' }}
+      style={{ minHeight: 44, padding: '0 0.7rem', color: '#FF8A80', borderColor: 'rgba(255,138,128,0.35)' }}
       data-testid="crisis-help-trigger"
     >
       Urgent help

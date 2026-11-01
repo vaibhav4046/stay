@@ -107,7 +107,7 @@ export function ReportBuilder({
             <label key={t.key} className="flex items-center gap-3 cursor-pointer text-[0.95rem]">
               <input
                 type="checkbox"
-                className="h-5 w-5 accent-[#006A67]"
+                className="h-5 w-5 accent-[#85B6FF]"
                 checked={Boolean(config[t.key])}
                 onChange={(e) => set(t.key, e.target.checked as never)}
               />
@@ -135,7 +135,7 @@ export function ReportBuilder({
 
         {downloadedFilename && (
           <div
-            className="mt-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-800 dark:text-emerald-200 flex items-center gap-2"
+            className="mt-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-300 dark:text-emerald-200 flex items-center gap-2"
             role="status"
             data-testid="pdf-success-status"
           >
@@ -148,7 +148,7 @@ export function ReportBuilder({
 
         {downloadError && (
           <div
-            className="mt-3 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-800 dark:text-rose-200"
+            className="mt-3 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-300 dark:text-rose-200"
             role="alert"
             data-testid="pdf-error-status"
           >

@@ -111,7 +111,7 @@ export function TreatmentCheckinForm({
       <label className="mt-5 flex items-center gap-3 cursor-pointer">
         <input
           type="checkbox"
-          className="h-5 w-5 accent-[#006A67]"
+          className="h-5 w-5 accent-[#85B6FF]"
           checked={sideEffects}
           onChange={(e) => setSideEffects(e.target.checked)}
           data-testid="side-effects-toggle"
@@ -137,7 +137,7 @@ export function TreatmentCheckinForm({
           {initialCheckin ? "Update today's check-in" : 'Save check-in'}
         </button>
         {saved && (
-          <span className="meta" role="status" style={{ color: '#236B48' }} data-testid="checkin-saved-msg">
+          <span className="meta" role="status" style={{ color: '#5BD6A0' }} data-testid="checkin-saved-msg">
             {initialCheckin ? "Saved (updated today's check-in)." : 'Saved.'}
           </span>
         )}

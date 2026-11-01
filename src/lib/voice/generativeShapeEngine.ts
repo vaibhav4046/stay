@@ -935,7 +935,7 @@ export function buildProceduralBillionShape(seedInput: string | number, customLa
   ];
 
   const palettes = [
-    { primary: '#006A67', secondary: '#003634', glow: '#5EEAD4', accent: '#FDE047' },
+    { primary: '#6F9CFF', secondary: '#003634', glow: '#5EEAD4', accent: '#FDE047' },
     { primary: '#7C3AED', secondary: '#2E1065', glow: '#E879F9', accent: '#38BDF8' },
     { primary: '#EA580C', secondary: '#7C2D12', glow: '#FDA4AF', accent: '#FDE047' },
     { primary: '#0284C7', secondary: '#0C4A6E', glow: '#67E8F9', accent: '#F472B6' },

@@ -22,7 +22,7 @@ export function StrategyPatternSummary({ sessions }: { sessions: CoachSessionRec
             <span className="meta">{overall.overallDenominatorLabel}</span>
           </div>
           {overall.isPreliminary && (
-            <p className="meta mt-2" style={{ color: '#9A6318' }}>
+            <p className="meta mt-2" style={{ color: '#F0B35A' }}>
               Early days: fewer than 5 sessions, so treat this as a hint.
             </p>
           )}

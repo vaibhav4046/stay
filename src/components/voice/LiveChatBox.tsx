@@ -135,8 +135,8 @@ export function LiveChatBox({
         stateCode: 'INTERRUPTED',
         label: 'Interrupted',
         srAnnouncement: 'Interrupted — listening to your thought',
-        dotStyle: { backgroundColor: '#B45309' },
-        textStyle: { color: '#B45309' },
+        dotStyle: { backgroundColor: '#F0B35A' },
+        textStyle: { color: '#F0B35A' },
       };
     }
     if (visualState === 'transcribing' || isUserSpeaking) {
@@ -144,8 +144,8 @@ export function LiveChatBox({
         stateCode: 'TRANSCRIBING',
         label: 'Transcribing speech',
         srAnnouncement: 'Transcribing speech',
-        dotStyle: { backgroundColor: '#006A67' },
-        textStyle: { color: '#006A67' },
+        dotStyle: { backgroundColor: '#85B6FF' },
+        textStyle: { color: '#85B6FF' },
       };
     }
     if (isAgentSpeaking) {
@@ -153,8 +153,8 @@ export function LiveChatBox({
         stateCode: 'SPEAKING',
         label: 'Speaking',
         srAnnouncement: 'Speaking',
-        dotStyle: { backgroundColor: '#006A67' },
-        textStyle: { color: '#006A67' },
+        dotStyle: { backgroundColor: '#85B6FF' },
+        textStyle: { color: '#85B6FF' },
       };
     }
     if (isThinking) {
@@ -162,8 +162,8 @@ export function LiveChatBox({
         stateCode: 'THINKING',
         label: 'Thinking',
         srAnnouncement: 'Thinking',
-        dotStyle: { backgroundColor: '#B45309' },
-        textStyle: { color: '#B45309' },
+        dotStyle: { backgroundColor: '#F0B35A' },
+        textStyle: { color: '#F0B35A' },
       };
     }
     if (visualState === 'listening') {
@@ -171,8 +171,8 @@ export function LiveChatBox({
         stateCode: 'LISTENING',
         label: 'Listening',
         srAnnouncement: 'Listening',
-        dotStyle: { backgroundColor: '#006A67' },
-        textStyle: { color: '#006A67' },
+        dotStyle: { backgroundColor: '#85B6FF' },
+        textStyle: { color: '#85B6FF' },
       };
     }
     if (visualState === 'connecting') {
@@ -180,8 +180,8 @@ export function LiveChatBox({
         stateCode: 'CONNECTING',
         label: 'CONNECTING',
         srAnnouncement: 'CONNECTING',
-        dotStyle: { backgroundColor: '#006A67' },
-        textStyle: { color: '#006A67' },
+        dotStyle: { backgroundColor: '#85B6FF' },
+        textStyle: { color: '#85B6FF' },
       };
     }
     if (visualState === 'reconnecting') {
@@ -189,8 +189,8 @@ export function LiveChatBox({
         stateCode: 'RECONNECTING',
         label: 'RECONNECTING',
         srAnnouncement: 'RECONNECTING',
-        dotStyle: { backgroundColor: '#B45309' },
-        textStyle: { color: '#B45309' },
+        dotStyle: { backgroundColor: '#F0B35A' },
+        textStyle: { color: '#F0B35A' },
       };
     }
     if (visualState === 'paused') {
@@ -198,8 +198,8 @@ export function LiveChatBox({
         stateCode: 'PAUSED',
         label: 'PAUSED',
         srAnnouncement: 'PAUSED',
-        dotStyle: { backgroundColor: '#4A4F4B' },
-        textStyle: { color: '#4A4F4B' },
+        dotStyle: { backgroundColor: '#C9C9C9' },
+        textStyle: { color: '#C9C9C9' },
       };
     }
     if (visualState === 'text_only_fallback' || quietMode) {
@@ -207,8 +207,8 @@ export function LiveChatBox({
         stateCode: 'TEXT_ONLY',
         label: 'TEXT_ONLY',
         srAnnouncement: 'TEXT_ONLY',
-        dotStyle: { backgroundColor: '#4A4F4B' },
-        textStyle: { color: '#4A4F4B' },
+        dotStyle: { backgroundColor: '#C9C9C9' },
+        textStyle: { color: '#C9C9C9' },
       };
     }
     if (visualState === 'error') {
@@ -216,8 +216,8 @@ export function LiveChatBox({
         stateCode: 'ERROR',
         label: 'ERROR',
         srAnnouncement: 'ERROR',
-        dotStyle: { backgroundColor: '#B42318' },
-        textStyle: { color: '#B42318' },
+        dotStyle: { backgroundColor: '#FF8A80' },
+        textStyle: { color: '#FF8A80' },
       };
     }
     if (isConnected) {
@@ -225,16 +225,16 @@ export function LiveChatBox({
         stateCode: 'LISTENING',
         label: 'LISTENING',
         srAnnouncement: 'LISTENING',
-        dotStyle: { backgroundColor: '#006A67' },
-        textStyle: { color: '#006A67' },
+        dotStyle: { backgroundColor: '#85B6FF' },
+        textStyle: { color: '#85B6FF' },
       };
     }
     return {
       stateCode: 'IDLE',
       label: 'IDLE',
       srAnnouncement: '',
-      dotStyle: { backgroundColor: '#4A4F4B' },
-      textStyle: { color: '#4A4F4B' },
+      dotStyle: { backgroundColor: '#C9C9C9' },
+      textStyle: { color: '#C9C9C9' },
     };
   })();
 
@@ -268,8 +268,8 @@ export function LiveChatBox({
 
   return (
     <section
-      className={`card relative w-full overflow-hidden border border-[#E4DFD6] bg-[#FFFFFF] ${className}`}
-      style={{ color: '#212422', backgroundColor: '#FFFFFF' }}
+      className={`card relative w-full overflow-hidden border border-[#2E2F32] bg-[#222326] ${className}`}
+      style={{ color: '#F5F5F6', backgroundColor: '#222326' }}
       aria-label="Live conversation transcripts"
       data-testid="live-chat-box"
     >
@@ -280,8 +280,8 @@ export function LiveChatBox({
 
       {/* Header bar with Status, Language Badge, and Controls */}
       <div
-        className="flex flex-wrap items-center justify-between gap-1.5 px-3.5 py-2 border-b border-[#E4DFD6]"
-        style={{ backgroundColor: '#FAF8F5', color: '#212422' }}
+        className="flex flex-wrap items-center justify-between gap-1.5 px-3.5 py-2 border-b border-[#2E2F32]"
+        style={{ backgroundColor: '#08090B', color: '#F5F5F6' }}
       >
         <div className="flex items-center gap-2 min-w-0 flex-wrap">
           <div className="flex items-center gap-1.5" data-testid="chat-status-pill">
@@ -292,8 +292,8 @@ export function LiveChatBox({
           </div>
 
           <span
-            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.72rem] font-medium border border-[#006A67]/25"
-            style={{ backgroundColor: '#E4F0EF', color: '#005653' }}
+            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.72rem] font-medium border border-[#85B6FF]/25"
+            style={{ backgroundColor: '#1E2C45', color: '#A6CAFF' }}
             data-testid="chat-language-badge"
             title="Detected speech language"
           >
@@ -305,8 +305,8 @@ export function LiveChatBox({
 
           {transcripts.length > 0 && (
             <span
-              className="tnum rounded-full px-1.5 py-0.5 text-[0.72rem] font-medium border border-[#E4DFD6]"
-              style={{ backgroundColor: '#F4F1EC', color: '#4A4F4B' }}
+              className="tnum rounded-full px-1.5 py-0.5 text-[0.72rem] font-medium border border-[#2E2F32]"
+              style={{ backgroundColor: '#353537', color: '#C9C9C9' }}
             >
               {transcripts.length}
             </span>
@@ -321,8 +321,8 @@ export function LiveChatBox({
               className="text-[0.75rem] font-medium px-2.5 py-1 rounded border transition-colors"
               style={
                 quietMode
-                  ? { backgroundColor: '#E4F0EF', color: '#005653', borderColor: '#006A67' }
-                  : { backgroundColor: '#FFFFFF', color: '#4A4F4B', borderColor: '#E4DFD6' }
+                  ? { backgroundColor: '#1E2C45', color: '#A6CAFF', borderColor: '#85B6FF' }
+                  : { backgroundColor: '#222326', color: '#C9C9C9', borderColor: '#2E2F32' }
               }
               title={quietMode ? 'Switch to Duplex Voice' : 'Switch to Text-Only'}
               data-testid="chat-mode-toggle"
@@ -336,7 +336,7 @@ export function LiveChatBox({
               type="button"
               onClick={onClear}
               className="text-[0.75rem] font-medium hover:underline px-2 py-1 rounded"
-              style={{ color: '#4A4F4B' }}
+              style={{ color: '#C9C9C9' }}
               title="Clear transcript history"
               data-testid="chat-clear-btn"
             >
@@ -348,8 +348,8 @@ export function LiveChatBox({
             type="button"
             onClick={() => setIsOpen((prev) => !prev)}
             aria-expanded={isOpen}
-            className="p-1 rounded-md hover:bg-[#F4F1EC] cursor-pointer"
-            style={{ color: '#4A4F4B' }}
+            className="p-1 rounded-md hover:bg-[#353537] cursor-pointer"
+            style={{ color: '#C9C9C9' }}
             aria-label={isOpen ? 'Collapse live chat' : 'Expand live chat'}
             data-testid="chat-toggle-btn"
           >
@@ -375,8 +375,8 @@ export function LiveChatBox({
       {/* Undo toast for deterministic Wispr edits (§8.2, 4s fade only) */}
       {undoNotice && (
         <div
-          className="flex items-center justify-between gap-2 px-3.5 py-1.5 border-b border-[#E4DFD6] text-xs"
-          style={{ backgroundColor: '#F4F1EC', color: '#212422' }}
+          className="flex items-center justify-between gap-2 px-3.5 py-1.5 border-b border-[#2E2F32] text-xs"
+          style={{ backgroundColor: '#353537', color: '#F5F5F6' }}
           role="status"
           data-testid="wispr-undo-toast"
         >
@@ -385,7 +385,7 @@ export function LiveChatBox({
             type="button"
             onClick={undoNotice.onUndo}
             className="font-semibold underline px-2 py-0.5 rounded"
-            style={{ color: '#006A67' }}
+            style={{ color: '#85B6FF' }}
             data-testid="wispr-undo-btn"
           >
             Undo
@@ -401,13 +401,13 @@ export function LiveChatBox({
           aria-expanded={false}
           aria-label="Expand live chat to view conversation"
           data-testid="chat-collapsed-preview-btn"
-          className="w-full text-left px-3.5 py-2 text-xs border-t border-[#006A67]/20 flex items-center justify-between cursor-pointer"
-          style={{ backgroundColor: '#E4F0EF', color: '#212422' }}
+          className="w-full text-left px-3.5 py-2 text-xs border-t border-[#85B6FF]/20 flex items-center justify-between cursor-pointer"
+          style={{ backgroundColor: '#1E2C45', color: '#F5F5F6' }}
         >
           <span className="truncate">
             {isUserSpeaking ? `You: ${partialUserTranscript}` : `Stay: ${liveSpokenText}`}
           </span>
-          <span className="text-[0.72rem] font-semibold shrink-0 ml-2" style={{ color: '#006A67' }}>
+          <span className="text-[0.72rem] font-semibold shrink-0 ml-2" style={{ color: '#85B6FF' }}>
             Expand
           </span>
         </button>
@@ -427,12 +427,12 @@ export function LiveChatBox({
             <div
               className="py-5 px-2 text-center flex flex-col items-center gap-3"
               data-testid="chat-empty-state"
-              style={{ color: '#212422' }}
+              style={{ color: '#F5F5F6' }}
             >
-              <p className="font-display text-[1.25rem] font-semibold leading-snug" style={{ color: '#212422' }}>
+              <p className="font-display text-[1.25rem] font-semibold leading-snug" style={{ color: '#F5F5F6' }}>
                 What feels hard to start?
               </p>
-              <p className="text-[0.8125rem]" style={{ color: '#4A4F4B' }}>
+              <p className="text-[0.8125rem]" style={{ color: '#C9C9C9' }}>
                 Speak or type one messy thought. Stay turns it into one tiny step.
               </p>
               {onStarterSelect && (
@@ -443,7 +443,7 @@ export function LiveChatBox({
                       type="button"
                       onClick={() => onStarterSelect(prompt)}
                       className="chip text-[0.85rem] !min-h-[38px] !py-1.5 !px-3"
-                      style={{ backgroundColor: '#F4F1EC', color: '#212422', borderColor: '#E4DFD6' }}
+                      style={{ backgroundColor: '#353537', color: '#F5F5F6', borderColor: '#2E2F32' }}
                     >
                       {prompt}
                     </button>
@@ -471,22 +471,22 @@ export function LiveChatBox({
                     >
                       <div
                         className="flex items-center gap-1.5 mb-1 px-1 text-[0.8125rem]"
-                        style={{ color: '#4A4F4B' }}
+                        style={{ color: '#C9C9C9' }}
                       >
                         {!isUser && <StayLogo size={13} className="shrink-0" />}
-                        <span className="font-medium" style={{ color: '#212422' }}>
+                        <span className="font-medium" style={{ color: '#F5F5F6' }}>
                           {isUser ? 'You' : 'Stay'}
                         </span>
                         {entry.timestamp && <span className="tnum">· {formatTime(entry.timestamp)}</span>}
                         {entry.sourceLanguage && (
-                          <span className="uppercase text-[0.7rem] px-1 rounded bg-[#F4F1EC] border border-[#E4DFD6]">
+                          <span className="uppercase text-[0.7rem] px-1 rounded bg-[#353537] border border-[#2E2F32]">
                             {entry.sourceLanguage}
                           </span>
                         )}
                         {entry.interrupted && (
                           <span
-                            className="rounded-full px-2 py-0.5 text-[0.7rem] font-semibold border border-[#B45309]/30"
-                            style={{ backgroundColor: '#FEF3C7', color: '#92400E' }}
+                            className="rounded-full px-2 py-0.5 text-[0.7rem] font-semibold border border-[#F0B35A]/30"
+                            style={{ backgroundColor: 'rgba(240,179,90,0.14)', color: '#F0B35A' }}
                             data-testid="turn-interrupted-badge"
                           >
                             Interrupted
@@ -497,7 +497,7 @@ export function LiveChatBox({
                             type="button"
                             onClick={() => setShowVerbatimId(showVerbatimId === entry.id ? null : entry.id)}
                             className="text-[0.72rem] underline ml-1 cursor-pointer"
-                            style={{ color: '#006A67' }}
+                            style={{ color: '#85B6FF' }}
                           >
                             {showVerbatimId === entry.id ? 'Show clean' : 'Show what I heard'}
                           </button>
@@ -506,7 +506,7 @@ export function LiveChatBox({
                           <button
                             type="button"
                             onClick={() => onWisprAction('scratch')}
-                            className="text-[0.72rem] underline ml-2 cursor-pointer text-[#4A4F4B] hover:text-[#212422]"
+                            className="text-[0.72rem] underline ml-2 cursor-pointer text-[#C9C9C9] hover:text-[#F5F5F6]"
                             data-testid="wispr-scratch-btn"
                             title="Scratch this thought"
                           >
@@ -518,7 +518,7 @@ export function LiveChatBox({
                             <button
                               type="button"
                               onClick={() => onWisprAction('repeat')}
-                              className="text-[0.72rem] underline cursor-pointer text-[#006A67]"
+                              className="text-[0.72rem] underline cursor-pointer text-[#85B6FF]"
                               data-testid="wispr-repeat-btn"
                               title="Repeat Stay's last response"
                             >
@@ -527,7 +527,7 @@ export function LiveChatBox({
                             <button
                               type="button"
                               onClick={() => onWisprAction('heard')}
-                              className="text-[0.72rem] underline cursor-pointer text-[#4A4F4B]"
+                              className="text-[0.72rem] underline cursor-pointer text-[#C9C9C9]"
                               data-testid="wispr-heard-btn"
                               title="Show what Stay heard"
                             >
@@ -541,15 +541,15 @@ export function LiveChatBox({
                       style={
                         isUser
                           ? {
-                              backgroundColor: '#E4F0EF',
-                              color: '#212422',
-                              borderColor: 'rgba(0, 106, 103, 0.28)',
+                              backgroundColor: '#1E2C45',
+                              color: '#F5F5F6',
+                              borderColor: 'rgba(133, 182, 255, 0.28)',
                               overflowWrap: 'anywhere',
                             }
                           : {
-                              backgroundColor: '#F4F1EC',
-                              color: '#212422',
-                              borderColor: '#E4DFD6',
+                              backgroundColor: '#353537',
+                              color: '#F5F5F6',
+                              borderColor: '#2E2F32',
                               overflowWrap: 'anywhere',
                             }
                       }
@@ -565,7 +565,7 @@ export function LiveChatBox({
                                     type="button"
                                     onClick={() => onAddKeyterm?.(w.word.replace(/[^\p{L}\p{N}-]/gu, ''))}
                                     className="underline decoration-dotted underline-offset-4 cursor-pointer font-medium"
-                                    style={{ color: '#212422', textDecorationColor: '#B45309' }}
+                                    style={{ color: '#F5F5F6', textDecorationColor: '#F0B35A' }}
                                     title={`Low confidence (${Math.round((w.confidence ?? 0) * 100)}%) — click to add "${w.word}" to My words`}
                                     data-testid="low-confidence-word"
                                   >
@@ -587,13 +587,13 @@ export function LiveChatBox({
                           Only a real translation is shown; a failed attempt says so. */}
                       {tx?.status === 'ok' && (
                         <div
-                          className="mt-1.5 pt-1.5 border-t border-[#E4DFD6] text-[0.92rem] leading-snug flex items-start gap-1.5"
-                          style={{ color: '#4A4F4B' }}
+                          className="mt-1.5 pt-1.5 border-t border-[#2E2F32] text-[0.92rem] leading-snug flex items-start gap-1.5"
+                          style={{ color: '#C9C9C9' }}
                           data-testid="turn-translation-line"
                         >
                           <span
-                            className="uppercase text-[0.68rem] font-semibold px-1.5 py-0.5 rounded shrink-0 border border-[#E4DFD6]"
-                            style={{ backgroundColor: '#FFFFFF', color: '#4A4F4B' }}
+                            className="uppercase text-[0.68rem] font-semibold px-1.5 py-0.5 rounded shrink-0 border border-[#2E2F32]"
+                            style={{ backgroundColor: '#222326', color: '#C9C9C9' }}
                           >
                             {tx.targetLanguage}
                           </span>
@@ -602,13 +602,13 @@ export function LiveChatBox({
                       )}
                       {tx?.status === 'unavailable' && (
                         <div
-                          className="mt-1.5 pt-1.5 border-t border-[#E4DFD6] text-[0.82rem] leading-snug flex items-start gap-1.5"
-                          style={{ color: '#4A4F4B' }}
+                          className="mt-1.5 pt-1.5 border-t border-[#2E2F32] text-[0.82rem] leading-snug flex items-start gap-1.5"
+                          style={{ color: '#C9C9C9' }}
                           data-testid="turn-translation-unavailable"
                         >
                           <span
-                            className="uppercase text-[0.66rem] font-semibold px-1.5 py-0.5 rounded shrink-0 border border-[#E4DFD6]"
-                            style={{ backgroundColor: '#FFFFFF', color: '#4A4F4B' }}
+                            className="uppercase text-[0.66rem] font-semibold px-1.5 py-0.5 rounded shrink-0 border border-[#2E2F32]"
+                            style={{ backgroundColor: '#222326', color: '#C9C9C9' }}
                           >
                             {tx.targetLanguage}
                           </span>
@@ -617,8 +617,8 @@ export function LiveChatBox({
                       )}
                       {tx?.status === 'pending' && (
                         <div
-                          className="mt-1.5 pt-1.5 border-t border-[#E4DFD6] text-[0.78rem]"
-                          style={{ color: '#4A4F4B' }}
+                          className="mt-1.5 pt-1.5 border-t border-[#2E2F32] text-[0.78rem]"
+                          style={{ color: '#C9C9C9' }}
                           data-testid="turn-translation-pending"
                         >
                           translating…
@@ -635,14 +635,14 @@ export function LiveChatBox({
                 <div className="flex flex-col items-end max-w-full" data-testid="chat-live-user-partial">
                   <div
                     className="flex items-center gap-1.5 mb-1 px-1 text-[0.8125rem] font-medium"
-                    style={{ color: '#006A67' }}
+                    style={{ color: '#85B6FF' }}
                   >
-                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: '#006A67' }} />
+                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: '#85B6FF' }} />
                     <span>You (speaking)</span>
                   </div>
                   <div
-                    className="rounded-[12px] px-3.5 py-2.5 max-w-[68ch] text-[1.0625rem] leading-[1.55] break-words border border-[#006A67]/30"
-                    style={{ backgroundColor: '#FAF8F5', color: '#4A4F4B', overflowWrap: 'anywhere' }}
+                    className="rounded-[12px] px-3.5 py-2.5 max-w-[68ch] text-[1.0625rem] leading-[1.55] break-words border border-[#85B6FF]/30"
+                    style={{ backgroundColor: '#08090B', color: '#C9C9C9', overflowWrap: 'anywhere' }}
                   >
                     <span>{partialUserTranscript}</span>
                   </div>
@@ -651,7 +651,7 @@ export function LiveChatBox({
 
               {/* Pending indicator, shown only while speech is still coming in (§8.3) */}
               {isTranslating && isUserSpeaking && (
-                <div className="text-right text-[0.78rem]" style={{ color: '#4A4F4B' }} data-testid="chat-translating-indicator">
+                <div className="text-right text-[0.78rem]" style={{ color: '#C9C9C9' }} data-testid="chat-translating-indicator">
                   will translate when you finish
                 </div>
               )}
@@ -661,7 +661,7 @@ export function LiveChatBox({
                 <div className="flex flex-col items-start max-w-full" data-testid="chat-live-thinking">
                   <div
                     className="flex items-center gap-1.5 mb-1 px-1 text-[0.8125rem] font-medium"
-                    style={{ color: '#B45309' }}
+                    style={{ color: '#F0B35A' }}
                   >
                     <StayLogo size={13} className="shrink-0" />
                     <span>Stay · {thinkingStatusLine}</span>
@@ -674,14 +674,14 @@ export function LiveChatBox({
                 <div className="flex flex-col items-start max-w-full" data-testid="chat-live-agent-partial">
                   <div
                     className="flex items-center gap-1.5 mb-1 px-1 text-[0.8125rem] font-medium"
-                    style={{ color: '#006A67' }}
+                    style={{ color: '#85B6FF' }}
                   >
                     <StayLogo size={13} className="shrink-0" />
                     <span>Stay (speaking)</span>
                   </div>
                   <div
-                    className="rounded-[12px] px-3.5 py-2.5 max-w-[68ch] text-[1.0625rem] leading-[1.55] break-words border border-[#E4DFD6]"
-                    style={{ backgroundColor: '#F4F1EC', color: '#212422', overflowWrap: 'anywhere' }}
+                    className="rounded-[12px] px-3.5 py-2.5 max-w-[68ch] text-[1.0625rem] leading-[1.55] break-words border border-[#2E2F32]"
+                    style={{ backgroundColor: '#353537', color: '#F5F5F6', overflowWrap: 'anywhere' }}
                   >
                     <span>{liveSpokenText}</span>
                   </div>
@@ -692,10 +692,10 @@ export function LiveChatBox({
               {isInterrupted && (
                 <div className="py-1 text-center" data-testid="chat-live-interrupted-badge">
                   <span
-                    className="inline-flex items-center gap-1.5 rounded-full border border-[#B45309]/30 px-2.5 py-0.5 text-[0.75rem] font-medium"
-                    style={{ backgroundColor: '#FEF3C7', color: '#92400E' }}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-[#F0B35A]/30 px-2.5 py-0.5 text-[0.75rem] font-medium"
+                    style={{ backgroundColor: 'rgba(240,179,90,0.14)', color: '#F0B35A' }}
                   >
-                    <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: '#B45309' }} />
+                    <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: '#F0B35A' }} />
                     Interrupted — listening to your thought
                   </span>
                 </div>
@@ -717,7 +717,7 @@ export function LiveChatBox({
               }}
               data-testid="chat-jump-latest"
               className="sticky bottom-1 float-right flex items-center gap-1 rounded-full text-[0.75rem] font-medium px-3 py-1 shadow-sm cursor-pointer z-10"
-              style={{ backgroundColor: '#006A67', color: '#FFFFFF' }}
+              style={{ backgroundColor: '#85B6FF', color: '#08090B' }}
               aria-label="Jump to latest"
             >
               <span>Jump to latest</span>

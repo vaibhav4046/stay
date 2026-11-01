@@ -20,12 +20,12 @@ export interface SubtleOrbProps {
  * - Status light, not a character: <= 40 px in the dock (still 96 px in empty state).
  * - No emoji, "!", pictograms, text, or faces during voice conversation.
  * - States:
- *   IDLE: still, --line (#E4DFD6) ring
- *   LISTENING: scale 1.00 -> 1.06 from mic RMS in --accent (#006A67)
- *   THINKING: opacity 0.6 <-> 1.0 breathe over 1.6 s in --think (#B45309)
- *   SPEAKING: scale 1.00 -> 1.05 from rendered output RMS in --accent (#006A67)
+ *   IDLE: still, --line (#2E2F32) ring
+ *   LISTENING: scale 1.00 -> 1.06 from mic RMS in --accent (#85B6FF)
+ *   THINKING: opacity 0.6 <-> 1.0 breathe over 1.6 s in --think (#F0B35A)
+ *   SPEAKING: scale 1.00 -> 1.05 from rendered output RMS in --accent (#85B6FF)
  *   INTERRUPTED: snap to still within 1 frame
- *   ERROR: static --danger (#B42318) dot + label
+ *   ERROR: static --danger (#FF8A80) dot + label
  */
 export function SubtleOrb({
   state,
@@ -111,23 +111,23 @@ export function SubtleOrb({
   const isSpeaking = state === 'speaking';
   const isListening = state === 'listening';
 
-  let fillColor = '#006A67';
-  let strokeColor = '#E4DFD6';
+  let fillColor = '#85B6FF';
+  let strokeColor = '#2E2F32';
   let ringOpacity = 1;
 
   if (isThinking || isInterrupted) {
-    fillColor = '#B45309';
-    strokeColor = '#FDE68A';
+    fillColor = '#F0B35A';
+    strokeColor = 'rgba(240,179,90,0.30)';
   } else if (isError) {
-    fillColor = '#B42318';
-    strokeColor = '#FCA5A5';
+    fillColor = '#FF8A80';
+    strokeColor = '#FF8A80';
   } else if (isSpeaking || isListening) {
-    fillColor = '#006A67';
-    strokeColor = '#99F6E4';
+    fillColor = '#85B6FF';
+    strokeColor = '#D9EEFF';
   } else {
-    fillColor = '#FAF8F5';
-    strokeColor = '#E4DFD6';
-    ringOpacity = 0.8;
+    fillColor = '#2F5FB0';
+    strokeColor = 'rgba(133, 182, 255,0.55)';
+    ringOpacity = 1;
   }
 
   return (
@@ -136,7 +136,7 @@ export function SubtleOrb({
       onClick={onClick}
       aria-label={`Stay status orb: ${state}`}
       data-testid={testId}
-      className={`relative inline-flex items-center justify-center rounded-full cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#006A67] ${className}`}
+      className={`relative inline-flex items-center justify-center rounded-full cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#85B6FF] ${className}`}
       style={{
         width: size,
         height: size,
@@ -155,6 +155,7 @@ export function SubtleOrb({
         aria-hidden="true"
         style={{
           animation: isThinking ? 'stay-thinking-breathe 1.6s ease-in-out infinite' : 'none',
+          filter: isSpeaking || isListening ? 'drop-shadow(0 0 10px rgba(133, 182, 255,0.55))' : 'none',
         }}
       >
         <circle

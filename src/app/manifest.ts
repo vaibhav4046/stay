@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 
 // Colours mirror apps/shared/tokens.json (the one place the wrappers read their theme from).
-const CANVAS = '#FAF8F5';
+const CANVAS = '#08090B';
 const png = (name: string, size: number, purpose: 'any' | 'maskable' | 'monochrome') => ({
   src: `/icons/${name}.png`,
   sizes: `${size}x${size}`,

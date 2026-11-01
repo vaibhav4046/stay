@@ -122,8 +122,8 @@ export function GeminiLiveVoiceVisualizer({
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className={`inline-flex items-center gap-1 rounded-full border bg-white/90 px-2 py-1 backdrop-blur-md transition-all duration-500 dark:bg-stone-900/90 ${
-        isLive ? 'border-transparent shadow-[0_0_0_1.5px_rgba(111,126,255,0.55),0_6px_24px_-6px_rgba(111,126,255,0.55)]' : 'border-stone-200 shadow-sm hover:border-stone-300'
+      className={`inline-flex items-center gap-1 rounded-full border bg-surface/90 px-2 py-1 backdrop-blur-md transition-all duration-500 dark:bg-stone-900/90 ${
+        isLive ? 'border-transparent shadow-[0_0_0_1.5px_rgba(111,126,255,0.55),0_6px_24px_-6px_rgba(111,126,255,0.55)]' : 'border-line shadow-sm hover:border-line'
       } ${className}`}
     >
       <button
@@ -139,13 +139,13 @@ export function GeminiLiveVoiceVisualizer({
           <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} aria-hidden="true" data-testid="voice-wave-svg" className="shrink-0 overflow-visible transition-opacity duration-300">
             <defs>
               <linearGradient id="stay-wave-a" x1="0" x2="1" y1="0" y2="0">
-                <stop offset="0" stopColor="#4285F4" /><stop offset="0.5" stopColor="#9B72CB" /><stop offset="1" stopColor="#D96570" />
+                <stop offset="0" stopColor="#4285F4" /><stop offset="0.5" stopColor="#9B72CB" /><stop offset="1" stopColor="#FF8A80" />
               </linearGradient>
               <linearGradient id="stay-wave-b" x1="0" x2="1" y1="0" y2="0">
                 <stop offset="0" stopColor="#00D2FF" /><stop offset="1" stopColor="#8E75FF" />
               </linearGradient>
               <linearGradient id="stay-wave-c" x1="0" x2="1" y1="0" y2="0">
-                <stop offset="0" stopColor="#D96570" /><stop offset="1" stopColor="#4285F4" />
+                <stop offset="0" stopColor="#FF8A80" /><stop offset="1" stopColor="#4285F4" />
               </linearGradient>
             </defs>
             {RIBBONS.map((r, i) => (
@@ -162,7 +162,7 @@ export function GeminiLiveVoiceVisualizer({
             ))}
           </svg>
         )}
-        <span className="min-w-[4.5rem] text-left text-xs font-medium tracking-wide text-stone-700 dark:text-stone-200">{label}</span>
+        <span className="min-w-[4.5rem] text-left text-xs font-medium tracking-wide text-ink dark:text-stone-200">{label}</span>
       </button>
 
       {isConnected && onToggleHandsFreeMute && (
@@ -170,7 +170,7 @@ export function GeminiLiveVoiceVisualizer({
           type="button"
           onClick={onToggleHandsFreeMute}
           aria-label={isHandsFreePaused ? 'Resume auto microphone' : 'Pause auto microphone'}
-          className="flex h-8 w-8 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-900"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink"
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             {isHandsFreePaused ? <polygon points="6 3 20 12 6 21" /> : (<><rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" /></>)}

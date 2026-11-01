@@ -41,7 +41,7 @@
   position: absolute;
   inset: -8%;
   z-index: -1;
-  background-image: radial-gradient(circle, rgb(33 36 34 / 0.13) 1px, transparent 1.6px);
+  background-image: radial-gradient(circle, rgb(0 0 0 / 0.13) 1px, transparent 1.6px);
   background-size: 20px 20px;
   -webkit-mask-image: radial-gradient(circle, #000 28%, transparent 70%);
   mask-image: radial-gradient(circle, #000 28%, transparent 70%);
@@ -59,11 +59,11 @@
   position: relative;
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  background: #070d0c;
+  background: #08090B;
   outline: none;
 }
 @media (min-width: 640px) { .lp-player { border-radius: var(--radius-stage); box-shadow: var(--shadow-stage); } }
-.lp-video { display: block; width: 100%; height: 100%; object-fit: contain; background: #070d0c; }
+.lp-video { display: block; width: 100%; height: 100%; object-fit: contain; background: #08090B; }
 .lp-player[data-enhanced='true']::after {
   content: '';
   position: absolute;
@@ -170,7 +170,7 @@
   .lp-steps > li[data-active='false'] { opacity: 0.42; }
 }
 .lp-step-n { position: absolute; left: -3rem; top: 1.65rem; display: grid; place-items: center; width: 2.1rem; height: 2.1rem; border-radius: 99px; background: var(--color-canvas); border: 1.5px solid var(--color-line-strong); font-family: var(--font-display); font-weight: 600; font-size: 0.9rem; color: var(--color-ink-2); transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease; z-index: 1; }
-.lp-steps > li[data-active='true'] .lp-step-n { background: var(--color-accent); border-color: var(--color-accent); color: #fff; }
+.lp-steps > li[data-active='true'] .lp-step-n { background: var(--color-accent); border-color: var(--color-accent); color: #08090B; }
 .lp-steps p { max-width: 44ch; margin-top: 0.5rem; }
 .lp-inline { margin-top: 1rem; }
 @media (min-width: 1024px) { .lp-inline { display: none; } }
@@ -241,23 +241,23 @@
 @keyframes lp-persona-glyph-transform {
   0% {
     transform: scale(1) rotate(0deg) translateY(0);
-    filter: drop-shadow(0 0 0 rgba(0, 106, 103, 0));
+    filter: drop-shadow(0 0 0 rgba(133, 182, 255, 0));
   }
   32% {
     transform: scale(1.34) rotate(-9deg) translateY(-4px);
-    filter: drop-shadow(0 8px 18px rgba(0, 106, 103, 0.42));
+    filter: drop-shadow(0 8px 18px rgba(133, 182, 255, 0.42));
   }
   62% {
     transform: scale(1.20) rotate(-3deg) translateY(-1.5px);
-    filter: drop-shadow(0 4px 10px rgba(0, 106, 103, 0.28));
+    filter: drop-shadow(0 4px 10px rgba(133, 182, 255, 0.28));
   }
   84% {
     transform: scale(1.28) rotate(-7deg) translateY(-3.5px);
-    filter: drop-shadow(0 10px 20px rgba(0, 106, 103, 0.46));
+    filter: drop-shadow(0 10px 20px rgba(133, 182, 255, 0.46));
   }
   100% {
     transform: scale(1.25) rotate(-5.5deg) translateY(-2.8px);
-    filter: drop-shadow(0 7px 16px rgba(0, 106, 103, 0.38));
+    filter: drop-shadow(0 7px 16px rgba(133, 182, 255, 0.38));
   }
 }
 .lp-persona:hover .lp-glyph {
@@ -324,7 +324,7 @@
 .lp-stack { display: flex; flex-direction: column; border-radius: 5px 5px 0 0; overflow: hidden; min-height: 0; }
 .lp-stack > span { flex-basis: 0; flex-shrink: 0; min-height: 0; }
 .lp-seg-started { background: var(--color-accent); }
-.lp-seg-partly { background: #7DB9B4; }
+.lp-seg-partly { background: #A6CAFF; }
 .lp-seg-other { background: var(--color-line-strong); }
 .lp-col-label { position: absolute; top: 100%; inset-inline: 0; margin-top: 0.3rem; text-align: center; font-size: 0.7rem; line-height: 1; color: var(--color-muted); }
 
@@ -371,7 +371,7 @@
 .lp-rsteps i { display: block; height: 6px; border-radius: 99px; background: var(--color-recessed); transition: background-color 0.3s ease; }
 .lp-rsteps li[data-state='done'] i { background: var(--color-accent); }
 .lp-rsteps li[data-state='skipped'] i { background: var(--color-line-strong); }
-.lp-rsteps li[data-state='now'] i { background: #7DB9B4; }
+.lp-rsteps li[data-state='now'] i { background: #A6CAFF; }
 .lp-rnow { display: grid; gap: 0.35rem; align-content: center; min-height: 7rem; padding: 1rem 1.1rem; border-radius: var(--radius-control); background: var(--color-recessed); }
 .lp-notif { display: flex; gap: 0.75rem; padding: 0.85rem 1rem; border-radius: 16px; border: 1px solid var(--color-line); background: var(--color-recessed); opacity: 0.72; transition: opacity 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease; }
 .lp-notif[data-on='true'] { opacity: 1; background: var(--color-surface); box-shadow: var(--shadow-lift); }
@@ -382,7 +382,7 @@
 .lp-toggles { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; border: 0; padding: 0; margin: 0; }
 .lp-check { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 36px; font-size: 0.9rem; cursor: pointer; }
 .lp-check input { width: 1.1rem; height: 1.1rem; accent-color: var(--color-accent); }
-.lp-paper { padding: 1.25rem 1.3rem 1.5rem; max-height: 30rem; overflow: auto; background: #fff; border: 1px solid var(--color-line-strong); box-shadow: 0 1px 2px rgb(33 36 34 / 0.08), 0 14px 30px -18px rgb(33 36 34 / 0.35); font-family: Arial, 'Helvetica Neue', sans-serif; font-size: 0.78rem; line-height: 1.5; color: var(--color-ink); }
+.lp-paper { padding: 1.25rem 1.3rem 1.5rem; max-height: 30rem; overflow: auto; background: #fff; border: 1px solid var(--color-line-strong); box-shadow: 0 1px 2px rgb(0 0 0 / 0.08), 0 14px 30px -18px rgb(0 0 0 / 0.35); font-family: Arial, 'Helvetica Neue', sans-serif; font-size: 0.78rem; line-height: 1.5; color: var(--color-ink); }
 .lp-paper p { margin: 0 0 0.3rem; }
 .lp-paper ul { margin: 0 0 0.3rem 1rem; padding: 0; list-style: disc; }
 .lp-paper-title { font-size: 0.98rem; font-weight: 700; }
@@ -405,7 +405,7 @@
 .lp-legend li { display: inline-flex; align-items: center; gap: 0.5rem; }
 i[data-who] { display: inline-block; width: 10px; height: 10px; border-radius: 99px; flex: none; }
 [data-who='stay'] { --who: var(--color-night-accent); }
-[data-who='chatgpt'] { --who: #D9C9A3; }
+[data-who='chatgpt'] { --who: #C9C9C9; }
 [data-who='gemini'] { --who: #A9B4E8; }
 i[data-who] { background: var(--who); }
 .lp-rgrid { display: grid; gap: 1.1rem; margin-top: 2rem; }

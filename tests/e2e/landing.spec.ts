@@ -68,7 +68,7 @@ test.describe('Landing: demo player', () => {
       expect(Math.abs(box.width / box.height - 16 / 9)).toBeLessThan(0.02);
       expect(box.width).toBeLessThanOrEqual(width);
       const radius = await page.locator('.lp-player').evaluate((el) => getComputedStyle(el).borderTopLeftRadius);
-      expect(radius).toBe(width < 640 ? '0px' : '28px'); // edge to edge on a phone, --radius-stage otherwise
+      expect(radius).toBe(width < 640 ? '0px' : '32px'); // edge to edge on a phone, --radius-stage otherwise
     }
   });
 

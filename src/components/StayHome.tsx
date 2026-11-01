@@ -49,6 +49,7 @@ import { loadActiveSession, saveActiveSession } from '@/lib/coach/activeSession'
 import { RoutineSheet } from '@/components/RoutineSheet';
 import { ReminderSheet } from '@/components/ReminderSheet';
 import { takeDue } from '@/lib/reminders';
+import { WaveProgress } from '@/components/Wave';
 import { CallStayCard } from '@/components/voice/CallStayCard';
 import { CallStayOverlay } from '@/components/voice/CallStayOverlay';
 import { RING_MS } from '@/lib/voice/ringtone';
@@ -927,7 +928,7 @@ export function StayHome({
             onClick={voice.isConnected || callIntent ? endCall : startCall}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium transition-colors shrink-0 cursor-pointer ${
               voice.isConnected
-                ? 'border-rose-500/30 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20'
+                ? 'border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20'
                 : 'border-primary/30 bg-primary/10 text-primary hover:bg-primary/20'
             }`}
             data-testid="header-call-stay-btn"
@@ -1121,7 +1122,7 @@ export function StayHome({
 
       {step === 'timer' && plan && (
         <section className="card w-full p-5 text-center" aria-label="Focus block" data-testid="timer-card">
-          <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-700 dark:text-amber-300" data-testid="active-timer-tab-warning">
+          <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-300 dark:text-amber-300" data-testid="active-timer-tab-warning">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75"></span>
               <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500"></span>
@@ -1132,9 +1133,7 @@ export function StayHome({
           <p className="tnum my-2 font-display text-5xl font-semibold" data-testid="clock">
             {clock(remaining)}
           </p>
-          <div className="bar-track">
-            <div className="bar-fill" style={{ width: `${Math.round(progress * 100)}%` }} />
-          </div>
+          <WaveProgress value={progress} label="Focus block progress" />
           <div className="mt-4 flex justify-center gap-2">
             <button
               type="button"
@@ -1443,7 +1442,7 @@ export function StayHome({
         <Sheet title="Voice and language" onClose={() => setSheet(null)}>
           <VoicePicker selected={voice.selectedVoice} onSelect={(id) => { const p = voice.setSelectedVoice(id); if (p) setReceipt(`${p.name} armed — ready to speak`); }} fastVoice={voice.fastVoice} />
           <label className="mt-5 flex cursor-pointer items-start gap-3" data-testid="fast-voice-row">
-            <input type="checkbox" className="mt-1 h-5 w-5 accent-[#006A67]" checked={voice.fastVoice} onChange={(e) => voice.setFastVoice(e.target.checked)} data-testid="fast-voice-toggle" />
+            <input type="checkbox" className="mt-1 h-5 w-5 accent-[#85B6FF]" checked={voice.fastVoice} onChange={(e) => voice.setFastVoice(e.target.checked)} data-testid="fast-voice-toggle" />
             <span>
               <span className="label block">Fast voice</span>
               <span className="meta block">On by default. Faster replies, and it waits through your pauses and stops when you talk. The thinking part uses your own key if you added one. Speaks English, Spanish, French, German, Italian and Portuguese; other languages use the standard voice.</span>

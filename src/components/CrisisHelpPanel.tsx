@@ -32,7 +32,7 @@ export function CrisisHelpProvider({ children }: { children: React.ReactNode }) 
         type="button"
         onClick={() => openCrisisPanel()}
         className="fixed bottom-4 right-4 z-40 btn btn-secondary text-[0.85rem]"
-        style={{ minHeight: 40, color: '#B23A2E', borderColor: '#E3C3BE' }}
+        style={{ minHeight: 40, color: '#FF8A80', borderColor: 'rgba(255,138,128,0.35)' }}
         data-testid="crisis-help-trigger"
       >
         Urgent help
@@ -68,7 +68,7 @@ function CrisisHelpPanel({ reason, onClose }: { reason?: string; onClose: () => 
           If you might be in danger, talk to a person now
         </h2>
         {reason && (
-          <p className="mt-3 text-[0.95rem]" style={{ color: '#B23A2E' }}>
+          <p className="mt-3 text-[0.95rem]" style={{ color: '#FF8A80' }}>
             {reason}
           </p>
         )}

@@ -319,13 +319,13 @@ export function OrbCognitiveGames({
 
   return (
     <div
-      className="mt-4 w-full max-w-xl rounded-[26px] bg-white/95 backdrop-blur-2xl p-5 border border-black/[0.08] shadow-[0_20px_60px_rgba(0,0,0,0.09)] transition-all"
+      className="mt-4 w-full max-w-xl rounded-[26px] bg-surface/95 backdrop-blur-2xl p-5 border border-line shadow-[0_20px_60px_rgba(0,0,0,0.09)] transition-all"
       data-testid="orb-cognitive-games-arena"
     >
       {/* Header + Difficulty Selector */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-black/[0.06] pb-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-3">
         <div>
-          <span className="text-[0.68rem] font-bold uppercase tracking-widest text-[#006A67] block">
+          <span className="text-[0.68rem] font-bold uppercase tracking-widest text-[#85B6FF] block">
             A quick game with Stay
           </span>
           <h3 className="text-sm font-bold text-ink">
@@ -335,7 +335,7 @@ export function OrbCognitiveGames({
 
         <div className="flex items-center gap-1.5">
           <div
-            className="inline-flex items-center rounded-full bg-black/[0.05] p-0.5 border border-black/[0.06]"
+            className="inline-flex items-center rounded-full bg-black/[0.05] p-0.5 border border-line"
             role="group"
             aria-label="Game difficulty"
             data-testid="game-difficulty-selector"
@@ -349,7 +349,7 @@ export function OrbCognitiveGames({
                 aria-pressed={diff === d}
                 className={`rounded-full px-2.5 py-0.5 text-[0.7rem] font-semibold capitalize transition-all ${
                   diff === d
-                    ? 'bg-[#006A67] text-white shadow-2xs'
+                    ? 'bg-[#85B6FF] text-white shadow-2xs'
                     : 'text-ink-2 hover:text-ink'
                 }`}
               >
@@ -379,7 +379,7 @@ export function OrbCognitiveGames({
           aria-pressed={game === 'simon'}
           className={`rounded-full px-3 py-1 text-xs font-semibold transition-all ${
             game === 'simon'
-              ? 'bg-[#006A67]/12 text-[#006A67] border border-[#006A67]/30'
+              ? 'bg-[#85B6FF]/12 text-[#85B6FF] border border-[#85B6FF]/30'
               : 'bg-black/[0.04] text-ink-2 hover:text-ink'
           }`}
         >
@@ -392,7 +392,7 @@ export function OrbCognitiveGames({
           aria-pressed={game === 'gonogo'}
           className={`rounded-full px-3 py-1 text-xs font-semibold transition-all ${
             game === 'gonogo'
-              ? 'bg-[#006A67]/12 text-[#006A67] border border-[#006A67]/30'
+              ? 'bg-[#85B6FF]/12 text-[#85B6FF] border border-[#85B6FF]/30'
               : 'bg-black/[0.04] text-ink-2 hover:text-ink'
           }`}
         >
@@ -405,7 +405,7 @@ export function OrbCognitiveGames({
           aria-pressed={game === 'wordrally'}
           className={`rounded-full px-3 py-1 text-xs font-semibold transition-all ${
             game === 'wordrally'
-              ? 'bg-[#006A67]/12 text-[#006A67] border border-[#006A67]/30'
+              ? 'bg-[#85B6FF]/12 text-[#85B6FF] border border-[#85B6FF]/30'
               : 'bg-black/[0.04] text-ink-2 hover:text-ink'
           }`}
         >
@@ -420,7 +420,7 @@ export function OrbCognitiveGames({
             <span className="text-ink-2">
               A memory warm-up: <strong>repeat the pattern</strong>
             </span>
-            <span className="font-mono font-bold text-[#006A67]" data-testid="simon-score">
+            <span className="font-mono font-bold text-[#85B6FF]" data-testid="simon-score">
               Score: {simonScore} · Span: {bestSpan}
             </span>
           </div>
@@ -436,10 +436,10 @@ export function OrbCognitiveGames({
                   data-testid={`simon-pad-${pad.id}`}
                   className="rounded-2xl p-3.5 text-left transition-all duration-150 border flex items-center justify-between cursor-pointer select-none"
                   style={{
-                    backgroundColor: isLit ? pad.color : '#F7F6F2',
+                    backgroundColor: isLit ? pad.color : '#222326',
                     borderColor: isLit ? pad.color : 'rgba(0,0,0,0.08)',
                     boxShadow: isLit ? `0 0 24px ${pad.glow}` : 'none',
-                    color: isLit ? '#FFFFFF' : '#141413',
+                    color: isLit ? '#08090B' : '#F5F5F6',
                     transform: isLit ? 'scale(1.03)' : 'scale(1)',
                   }}
                 >
@@ -482,7 +482,7 @@ export function OrbCognitiveGames({
             <span className="text-ink-2">
               A focus warm-up: <strong>tap on go, hold on stop</strong>
             </span>
-            <span className="font-mono font-bold text-[#006A67]" data-testid="gonogo-metrics">
+            <span className="font-mono font-bold text-[#85B6FF]" data-testid="gonogo-metrics">
               RT: {lastReactionMs ?? '--'}ms · Accuracy: {inhibitionAccuracy}%
             </span>
           </div>
@@ -497,7 +497,7 @@ export function OrbCognitiveGames({
                   ? 'bg-emerald-600 text-white border-emerald-500 shadow-[0_8px_28px_rgba(16,185,129,0.35)]'
                   : goTarget === 'nogo'
                   ? 'bg-rose-600 text-white border-rose-500 shadow-[0_8px_28px_rgba(225,29,72,0.35)]'
-                  : 'bg-[#F5F5F7] text-ink border-black/[0.08]'
+                  : 'bg-surface-2 text-ink border-line'
               }`}
             >
               {goTarget === 'go' ? (
@@ -533,19 +533,19 @@ export function OrbCognitiveGames({
             <span className="text-ink-2">
               A word warm-up: <strong>start each word with the last letter</strong>
             </span>
-            <span className="font-mono font-bold text-[#006A67]" data-testid="wordrally-streak">
+            <span className="font-mono font-bold text-[#85B6FF]" data-testid="wordrally-streak">
               Words in a row: {rallyStreak}
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5 rounded-2xl bg-[#F5F5F7] p-3 border border-black/[0.06]">
+          <div className="flex flex-wrap items-center gap-1.5 rounded-2xl bg-surface-2 p-3 border border-line">
             {rallyHistory.map((item, idx) => (
               <span
                 key={`${item.word}-${idx}`}
                 className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
                   item.speaker === 'stay'
-                    ? 'bg-[#006A67] text-white'
-                    : 'bg-white text-ink border border-black/[0.08]'
+                    ? 'bg-[#85B6FF] text-white'
+                    : 'bg-surface text-ink border border-line'
                 }`}
               >
                 {item.speaker === 'stay' ? 'Stay: ' : 'You: '}
@@ -567,7 +567,7 @@ export function OrbCognitiveGames({
               }}
               data-testid="wordrally-input"
               placeholder={`Say or type a word starting with "${rallyHistory[rallyHistory.length - 1]?.word.slice(-1).toUpperCase() || 'S'}"...`}
-              className="flex-1 rounded-full bg-[#F5F5F7] px-3.5 py-1.5 text-xs text-ink border border-black/[0.08] focus:outline-none focus:border-[#006A67]"
+              className="flex-1 rounded-full bg-surface-2 px-3.5 py-1.5 text-xs text-ink border border-line focus:outline-none focus:border-[#85B6FF]"
             />
             <button
               type="button"

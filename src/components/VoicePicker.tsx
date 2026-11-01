@@ -90,7 +90,7 @@ function VoiceCard({
       <div>
         <div className="flex items-start gap-2.5">
           {/* Logo container with 3D hover transform animation */}
-          <div className="relative w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-2xl bg-surface-2/90 border border-line/80 p-1.5 transition-all duration-300 ease-out group-hover:scale-110 group-hover:-rotate-2 group-hover:bg-primary/[0.08] group-hover:border-primary/40 group-hover:shadow-[0_8px_20px_-4px_rgba(0,106,103,0.3)]">
+          <div className="relative w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-2xl bg-surface-2/90 border border-line/80 p-1.5 transition-all duration-300 ease-out group-hover:scale-110 group-hover:-rotate-2 group-hover:bg-primary/[0.08] group-hover:border-primary/40 group-hover:shadow-[0_8px_20px_-4px_rgba(133, 182, 255,0.3)]">
             <svg
               viewBox="0 0 100 100"
               className={`voice-card-glyph ${
@@ -142,7 +142,7 @@ function VoiceCard({
                 data-testid={`voice-radio-${p.id}`}
                 className={`flex-shrink-0 mt-0.5 w-5 h-5 rounded-full border flex items-center justify-center transition-all duration-200 ${
                   selected
-                    ? 'bg-primary border-primary text-white scale-100 shadow-xs'
+                    ? 'bg-primary border-primary text-[#08090B] scale-100 shadow-xs'
                     : 'border-line-strong bg-surface group-hover:border-primary/60'
                 }`}
               >
@@ -158,12 +158,12 @@ function VoiceCard({
 
             <div className="mt-1 flex items-center gap-1.5 flex-wrap">
               {usable ? (
-                <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-emerald-500/10 px-2 py-0.5 text-[0.68rem] font-medium text-emerald-700 dark:text-emerald-300">
+                <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-emerald-500/10 px-2 py-0.5 text-[0.68rem] font-medium text-emerald-300 dark:text-emerald-300">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   Ready
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-amber-500/10 px-2 py-0.5 text-[0.68rem] font-medium text-amber-800 dark:text-amber-300">
+                <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-amber-500/10 px-2 py-0.5 text-[0.68rem] font-medium text-amber-300 dark:text-amber-300">
                   Needs Setup
                 </span>
               )}
@@ -196,7 +196,7 @@ function VoiceCard({
             type="button"
             className={`inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-medium transition-all duration-200 cursor-pointer ${
               playing
-                ? 'bg-primary text-white shadow-sm scale-105'
+                ? 'bg-primary text-[#08090B] shadow-sm scale-105'
                 : usable
                   ? 'bg-surface-2 text-ink hover:bg-primary/10 hover:text-primary hover:scale-105 active:scale-95 hover:shadow-xs'
                   : 'bg-surface-2 text-ink-3 opacity-50 cursor-not-allowed'
@@ -209,7 +209,7 @@ function VoiceCard({
             aria-label={`${playing ? 'Stop' : 'Play'} a 20 second preview of ${p.name}`}
             data-testid={`preview-${p.id}`}
           >
-            <span className={`w-4 h-4 rounded-full flex items-center justify-center ${playing ? 'bg-white/20' : 'bg-surface'}`}>
+            <span className={`w-4 h-4 rounded-full flex items-center justify-center ${playing ? 'bg-surface/20' : 'bg-surface'}`}>
               {playing ? (
                 <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   <rect x="4" y="4" width="16" height="16" rx="2" />
@@ -226,16 +226,16 @@ function VoiceCard({
               data-testid={`voice-wave-indicator-${p.id}`}
               aria-hidden="true"
             >
-              <span className={`w-0.5 rounded-full ${playing ? 'bg-white animate-soundwave-1' : 'h-1.5 bg-ink-3/35 group-hover:bg-primary/50 transition-all'}`} />
-              <span className={`w-0.5 rounded-full ${playing ? 'bg-white animate-soundwave-2' : 'h-2.5 bg-ink-3/35 group-hover:bg-primary/50 transition-all'}`} />
-              <span className={`w-0.5 rounded-full ${playing ? 'bg-white animate-soundwave-3' : 'h-1.5 bg-ink-3/35 group-hover:bg-primary/50 transition-all'}`} />
-              <span className={`w-0.5 rounded-full ${playing ? 'bg-white animate-soundwave-4' : 'h-3 bg-ink-3/35 group-hover:bg-primary/50 transition-all'}`} />
-              <span className={`w-0.5 rounded-full ${playing ? 'bg-white animate-soundwave-5' : 'h-1 bg-ink-3/35 group-hover:bg-primary/50 transition-all'}`} />
+              <span className={`w-0.5 rounded-full ${playing ? 'bg-surface animate-soundwave-1' : 'h-1.5 bg-ink-3/35 group-hover:bg-primary/50 transition-all'}`} />
+              <span className={`w-0.5 rounded-full ${playing ? 'bg-surface animate-soundwave-2' : 'h-2.5 bg-ink-3/35 group-hover:bg-primary/50 transition-all'}`} />
+              <span className={`w-0.5 rounded-full ${playing ? 'bg-surface animate-soundwave-3' : 'h-1.5 bg-ink-3/35 group-hover:bg-primary/50 transition-all'}`} />
+              <span className={`w-0.5 rounded-full ${playing ? 'bg-surface animate-soundwave-4' : 'h-3 bg-ink-3/35 group-hover:bg-primary/50 transition-all'}`} />
+              <span className={`w-0.5 rounded-full ${playing ? 'bg-surface animate-soundwave-5' : 'h-1 bg-ink-3/35 group-hover:bg-primary/50 transition-all'}`} />
             </span>
           </button>
 
           {!usable && (
-            <span className="meta text-xs text-amber-700 dark:text-amber-300">
+            <span className="meta text-xs text-amber-300 dark:text-amber-300">
               {needText}
             </span>
           )}
@@ -360,7 +360,7 @@ export function VoicePicker({ selected, onSelect, fastVoice }: Props) {
             type="button"
             onClick={() => setFilter('all')}
             className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all ${
-              filter === 'all' ? 'bg-primary text-white shadow-sm' : 'bg-surface-2 text-ink-2 hover:text-ink'
+              filter === 'all' ? 'bg-primary text-[#08090B] shadow-sm' : 'bg-surface-2 text-ink-2 hover:text-ink'
             }`}
           >
             All ({PERSONAS.length})
@@ -369,7 +369,7 @@ export function VoicePicker({ selected, onSelect, fastVoice }: Props) {
             type="button"
             onClick={() => setFilter('ready')}
             className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all flex items-center gap-1 ${
-              filter === 'ready' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+              filter === 'ready' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/10'
             }`}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
@@ -379,7 +379,7 @@ export function VoicePicker({ selected, onSelect, fastVoice }: Props) {
             type="button"
             onClick={() => setFilter('british')}
             className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all ${
-              filter === 'british' ? 'bg-primary text-white shadow-sm' : 'bg-surface-2 text-ink-2 hover:text-ink'
+              filter === 'british' ? 'bg-primary text-[#08090B] shadow-sm' : 'bg-surface-2 text-ink-2 hover:text-ink'
             }`}
           >
             British ({britishCount})
@@ -388,7 +388,7 @@ export function VoicePicker({ selected, onSelect, fastVoice }: Props) {
             type="button"
             onClick={() => setFilter('american')}
             className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all ${
-              filter === 'american' ? 'bg-primary text-white shadow-sm' : 'bg-surface-2 text-ink-2 hover:text-ink'
+              filter === 'american' ? 'bg-primary text-[#08090B] shadow-sm' : 'bg-surface-2 text-ink-2 hover:text-ink'
             }`}
           >
             American ({americanCount})
@@ -397,7 +397,7 @@ export function VoicePicker({ selected, onSelect, fastVoice }: Props) {
             type="button"
             onClick={() => setFilter('native')}
             className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all ${
-              filter === 'native' ? 'bg-primary text-white shadow-sm' : 'bg-surface-2 text-ink-2 hover:text-ink'
+              filter === 'native' ? 'bg-primary text-[#08090B] shadow-sm' : 'bg-surface-2 text-ink-2 hover:text-ink'
             }`}
           >
             Native ({nativeCount})

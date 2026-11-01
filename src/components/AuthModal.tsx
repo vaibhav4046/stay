@@ -107,7 +107,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <span className="text-xs font-semibold text-ink block truncate">{user.email}</span>
-                <span className="text-[0.72rem] text-emerald-600 dark:text-emerald-400 font-medium">
+                <span className="text-[0.72rem] text-emerald-300 dark:text-emerald-400 font-medium">
                   ✓ Cloud Sync Active (Multi-Device)
                 </span>
               </div>
@@ -151,7 +151,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
               type="button"
               onClick={handleGoogleSignIn}
               disabled={submitting}
-              className="w-full flex items-center justify-center gap-3 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700/60 font-medium py-2.5 px-4 rounded-xl shadow-xs transition-colors text-sm"
+              className="w-full flex items-center justify-center gap-3 bg-surface dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700/60 font-medium py-2.5 px-4 rounded-xl shadow-xs transition-colors text-sm"
               data-testid="google-signin-btn"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -234,7 +234,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   {testStatus && (
                     <p
                       className={`text-[0.72rem] font-medium ${
-                        testStatus.startsWith('✓') ? 'text-emerald-600' : 'text-amber-600'
+                        testStatus.startsWith('✓') ? 'text-emerald-300' : 'text-amber-300'
                       }`}
                     >
                       {testStatus}

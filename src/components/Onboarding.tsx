@@ -102,7 +102,7 @@ export function Onboarding({ onDone }: { onDone: (patch: Partial<UserProfile>) =
           </button>
         </div>
         <label className="mt-4 flex items-center gap-3 cursor-pointer">
-          <input type="checkbox" className="h-5 w-5 accent-[#006A67]" checked={proactive} onChange={(e) => setProactive(e.target.checked)} />
+          <input type="checkbox" className="h-5 w-5 accent-[#85B6FF]" checked={proactive} onChange={(e) => setProactive(e.target.checked)} />
           <span className="text-[0.95rem]">Check in with me when a focus block ends</span>
         </label>
       </fieldset>
@@ -114,7 +114,7 @@ export function Onboarding({ onDone }: { onDone: (patch: Partial<UserProfile>) =
       >
         <input
           type="checkbox"
-          className="mt-0.5 h-5 w-5 shrink-0 accent-[#006A67]"
+          className="mt-0.5 h-5 w-5 shrink-0 accent-[#85B6FF]"
           checked={ack}
           onChange={(e) => {
             setAck(e.target.checked);

@@ -34,7 +34,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   href={n.href}
                   aria-current={active ? 'page' : undefined}
                   className="whitespace-nowrap rounded-lg px-3 py-2 text-[0.92rem]"
-                  style={{ color: active ? '#212422' : '#626B66', fontWeight: active ? 600 : 500, background: active ? '#F1EFE9' : 'transparent' }}
+                  style={{ color: active ? '#D9EEFF' : '#B0B1B3', fontWeight: active ? 600 : 500, background: active ? 'rgba(133, 182, 255,0.16)' : 'transparent' }}
                 >
                   {n.label}
                 </Link>
@@ -65,7 +65,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   href={n.href}
                   aria-current={active ? 'page' : undefined}
                   className="flex h-16 flex-col items-center justify-center gap-1 text-[0.7rem]"
-                  style={{ color: active ? '#006A67' : '#626B66', fontWeight: active ? 600 : 500 }}
+                  style={{ color: active ? '#85B6FF' : '#B0B1B3', fontWeight: active ? 600 : 500 }}
                 >
                   <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" {...ICON}>{n.icon}</svg>
                   {n.label}
