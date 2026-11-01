@@ -433,7 +433,7 @@ describe('FastSocket with a non-AssemblyAI voice', () => {
     synth.spoken[0].onstart?.();
     synth.spoken[0].onend?.();
     s.send(JSON.stringify({ type: 'input.audio', audio: mic }));
-    expect(stt.sent.length).toBe(1); // done speaking: the mic is open again
+    expect(stt.sent.filter((d) => d instanceof Uint8Array).length).toBe(1); // done speaking: the mic is open again
   });
 });
 
