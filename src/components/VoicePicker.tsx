@@ -418,7 +418,7 @@ export function VoicePicker({ selected, onSelect, fastVoice }: Props) {
       <details className="mt-5" data-testid="voice-more">
         <summary className="label cursor-pointer select-none py-1">More voices ({others.length})</summary>
         <p className="meta mt-1">
-          Every name matches its voice: British and American voices are British and American, and only the native voices speak Spanish, French, German, Italian or Portuguese. Lantern Iris and Compass Reid are English voices whose accent the provider does not document.
+          Every name matches its voice: British and American voices are British and American, and only the native voices speak Spanish, French, German, Italian or Portuguese. Some English voices are labelled "accent not documented" because the provider does not say.
         </p>
         <div className="mt-3 grid gap-2.5 sm:grid-cols-2">{others.map(card)}</div>
       </details>
@@ -426,7 +426,7 @@ export function VoicePicker({ selected, onSelect, fastVoice }: Props) {
       <details className="mt-5" data-testid="voice-engines">
         <summary className="label cursor-pointer select-none py-1">Accent voices: Indian English and Mexican Spanish</summary>
         <p className="meta mt-2">
-          AssemblyAI has British, American and five native-language voices, and no Indian English or Mexican Spanish. Those two accents come from other engines, shown on each voice:
+          Stay's AssemblyAI voices are British, American and five native-language voices. AssemblyAI's library also has Indian English (male) and Mexican Spanish voices that Stay does not use yet, so these two accents come from other engines, shown on each voice:
         </p>
         <ul className="meta mt-2 list-disc pl-5 space-y-1">
           <li><strong>{ENGINES.browser.label}.</strong> {ENGINES.browser.note} On this device: {caps.browserVoices.filter((v) => /^(en[-_]IN|es[-_]MX)/i.test(v.lang)).map((v) => `${v.name} (${v.lang})`).join(', ') || 'no Indian English or Mexican Spanish voice found'}.</li>
