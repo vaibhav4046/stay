@@ -10,7 +10,7 @@ Built on **AssemblyAI Universal-3.6 Pro Streaming STT**, **AssemblyAI-TTS-1 Stre
 
 ## What It Does
 
-1. **Talk, Dictate, Translate, Reflect, Quiet, or Text-only.** Switch modes in the top bar at any time. Typing never silently turns on the microphone, and the first microphone click shows an in-app consent sheet before `getUserMedia` is called.
+1. **Talk, call, or type.** Talk by voice, press Call Stay for a phone-style call in the browser (it rings, then connects; Stay checks in at most twice if you go quiet; 10 minutes at most), or use Quiet mode (type only) from the menu. Typing never silently turns on the microphone, and the first microphone click shows an in-app consent sheet before `getUserMedia` is called.
 2. **Real AssemblyAI Voice Pipeline (`FastSocket`).**
    - **STT:** Browser-direct 16 kHz mono PCM (`public/pcm-processor.js` with a 7.2 kHz Butterworth low-pass anti-aliasing filter) streamed to `wss://streaming.assemblyai.com/v3/ws` (`speech_model=universal-3-6-pro`, `min_turn_silence=128`, `max_turn_silence=1280`, `vad_threshold=0.2`, `language_detection=true`, `keyterms_prompt`, and post-turn `UpdateConfiguration.agent_context`).
    - **TTS:** Browser-direct streaming synthesis over `wss://tts.us.assemblyai.com/v1/ws` using product-scoped tokens (`GET https://token.us.assemblyai.com/v1/token?product=tts`) and verified `voice_id=` identifiers across 13 regional accents and 6 languages, with 30 s `KeepAlive` heartbeats and `WordBoundaries.word` caption synchronization.

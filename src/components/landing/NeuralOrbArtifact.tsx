@@ -7,14 +7,16 @@ import { useReveal } from './useReveal';
 type Mode = 'figure' | 'neural' | 'sphere';
 
 export function NeuralOrbArtifact() {
+  const [{ dotCount, allFinite }] = useState(() => {
+    const pts = buildHumanFigure(5200).pts;
+    return { dotCount: Math.floor(pts.length / 3), allFinite: pts.every((v: number) => Number.isFinite(v)) };
+  });
   const { ref: revealRef, state } = useReveal<HTMLDivElement>(0.12);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [mode, setMode] = useState<Mode>('figure');
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [rotationSpeed, setRotationSpeed] = useState(1);
   const [fps, setFps] = useState(60);
-  const [showInspector, setShowInspector] = useState(false);
-  const [verifiedDots, setVerifiedDots] = useState<number | null>(5200);
 
   // Store angle and animation frame
   const stateRef = useRef({
@@ -207,7 +209,7 @@ export function NeuralOrbArtifact() {
             The 5,200-dot procedural therapist figure
           </h2>
           <p className="mt-3 max-w-[60ch] text-ink-2">
-            Built entirely as mathematical point clouds without textures or meshes. Every dot belongs to an organic rig driven in real-time by WebGL, audio visemes, and natural breathing cues.
+            Built as a point cloud, with no textures or meshes, and drawn on a 2D canvas. The mouth and breathing movement here is a simulation for this demo, not driven by live audio.
           </p>
         </div>
 
@@ -258,10 +260,9 @@ export function NeuralOrbArtifact() {
         {/* Floating Telemetry & Controls Overlay */}
         <div className="absolute top-4 left-4 p-3 rounded-xl bg-surface-2/80 backdrop-blur-md border border-edge text-xs font-mono space-y-1 select-none pointer-events-none">
           <div className="text-emerald-400 font-bold flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            5,200 Active SDF Dots
+            {dotCount.toLocaleString()} dots
           </div>
-          <div className="text-ink-3">FPS: {fps} · Math Rig: Procedural</div>
+          <div className="text-ink-3">FPS: {fps}</div>
           <div className="text-ink-3">Mode: {mode.toUpperCase()}</div>
         </div>
 
@@ -277,7 +278,7 @@ export function NeuralOrbArtifact() {
             }`}
           >
             <span className={`w-2 h-2 rounded-full ${isSpeaking ? 'bg-white animate-ping' : 'bg-accent'}`} />
-            {isSpeaking ? 'Speaking (Simulating Lip-Sync)' : 'Simulate Spoken Visemes'}
+            {isSpeaking ? 'Speaking (simulated)' : 'Simulate speaking'}
           </button>
 
           <button
@@ -291,68 +292,10 @@ export function NeuralOrbArtifact() {
       </div>
 
 
-      {/* Interactive Dot Count Inspector */}
-      <div className="mt-4 rounded-xl border border-edge bg-surface p-4 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="font-display font-semibold text-sm text-ink">Exact Dot Count Verification</span>
-            <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-mono font-medium text-emerald-700 dark:text-emerald-300">
-              5,200 / 5,200 Verified
-            </span>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setShowInspector(!showInspector)}
-            className="text-xs font-medium text-primary hover:underline cursor-pointer flex items-center gap-1"
-          >
-            {showInspector ? 'Hide Mathematical Breakdown' : 'Inspect All 5,200 Dots & Layers'}
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={`transition-transform ${showInspector ? 'rotate-180' : ''}`}>
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
-        </div>
-
-        {showInspector && (
-          <div className="mt-4 pt-4 border-t border-edge/60 space-y-3 text-xs">
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center font-mono">
-              <div className="p-2.5 rounded-lg bg-surface-2">
-                <p className="text-ink-3 text-[10px] uppercase">Face Skin</p>
-                <p className="text-sm font-bold text-ink mt-0.5">1,070</p>
-                <p className="text-[10px] text-ink-3">20.6%</p>
-              </div>
-              <div className="p-2.5 rounded-lg bg-surface-2">
-                <p className="text-ink-3 text-[10px] uppercase">Hair Volume</p>
-                <p className="text-sm font-bold text-ink mt-0.5">1,355</p>
-                <p className="text-[10px] text-ink-3">26.1%</p>
-              </div>
-              <div className="p-2.5 rounded-lg bg-surface-2">
-                <p className="text-ink-3 text-[10px] uppercase">Torso & Shoulders</p>
-                <p className="text-sm font-bold text-ink mt-0.5">1,747</p>
-                <p className="text-[10px] text-ink-3">33.6%</p>
-              </div>
-              <div className="p-2.5 rounded-lg bg-surface-2">
-                <p className="text-ink-3 text-[10px] uppercase">Eyes & Brows</p>
-                <p className="text-sm font-bold text-ink mt-0.5">420</p>
-                <p className="text-[10px] text-ink-3">8.1%</p>
-              </div>
-              <div className="p-2.5 rounded-lg bg-surface-2">
-                <p className="text-ink-3 text-[10px] uppercase">Lips & Visemes</p>
-                <p className="text-sm font-bold text-ink mt-0.5">608</p>
-                <p className="text-[10px] text-ink-3">11.7%</p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-lg bg-emerald-500/5 border border-emerald-500/20 text-emerald-800 dark:text-emerald-300 font-mono text-[11px]">
-              <span>Memory Buffer: 15,600 Float32 elements (5,200 x 3D [X, Y, Z])</span>
-              <span>Integrity: 100% Finite, 0 NaN, [-0.48, +0.48] Bound</span>
-              <span>Rig Deformation: 20,800 Rig Attributes (4 per dot)</span>
-            </div>
-          </div>
-        )}
-      </div>
-
+      {/* Computed, not asserted: counted from the buffer that is drawn */}
+      <p className="mt-4 text-xs font-mono text-ink-3" data-testid="dot-count">
+        Dots in the point buffer: {dotCount.toLocaleString()}. All coordinates finite: {allFinite ? 'yes' : 'no'}. Counted in your browser.
+      </p>
       <div className="mt-4 flex flex-col sm:flex-row items-center justify-between text-xs text-ink-3">
         <span>Click and drag canvas to rotate across 3 dimensions. Responsive across desktop and mobile.</span>
         <span className="font-mono mt-1 sm:mt-0">Source: <code>src/lib/orb/human.ts</code></span>

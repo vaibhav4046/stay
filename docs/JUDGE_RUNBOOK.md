@@ -9,7 +9,7 @@
 ## 90-Second Live Evaluation Flow
 
 1. **Open `/app/today` (0–10s):**
-   - Observe the top bar (mode switcher, language pills, honest transport badge, Settings, Urgent help), the centred transcript column, and the bottom voice dock — all visible above the fold without scrolling.
+   - Observe the top bar (language select, honest transport badge with the AssemblyAI logo, Call, Settings, Urgent help), the centred transcript column, and the bottom voice dock — all visible above the fold without scrolling.
 2. **Start Voice with Consent (10–35s):**
    - Click the mic button → review the in-app consent sheet explaining what goes to AssemblyAI and what stays in local storage → click **Start talking**.
    - Speak an avoided task: *"I'm avoiding my dissertation and I can't start."*

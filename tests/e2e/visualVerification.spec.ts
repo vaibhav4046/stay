@@ -108,10 +108,9 @@ test('Capture complete browser visual verification suite', async ({ page }) => {
   const section = page.getByText('The 5,200-dot procedural therapist figure');
   await section.scrollIntoViewIfNeeded();
 
-  const dotInspectorBtn = page.getByRole('button', { name: /Inspect All 5,200 Dots/i });
-  await expect(dotInspectorBtn).toBeVisible();
-  await dotInspectorBtn.click();
-  await page.waitForTimeout(500);
+  // the count is computed from the drawn buffer, not asserted
+  await expect(page.getByTestId('dot-count')).toContainText('Dots in the point buffer: 5,200');
+  await expect(page.getByTestId('dot-count')).toContainText('All coordinates finite: yes');
 
   // Screenshot 7: Mathematical 5,200 dot count audit and verifier
   const shot7 = '07-landing-5200-dot-count-verifier.png';

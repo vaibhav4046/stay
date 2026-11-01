@@ -213,7 +213,7 @@ export function Personas({ personas, glyphs }: { personas: VoicePersona[]; glyph
         })}
       </ul>
       <p className="meta mt-4 max-w-[64ch]">
-        Sixteen real voices from the speech provider. Click any card to preview their real voice. The dot picture is the orb shape that voice takes on.
+        {personas.filter((p) => p.voices[0].engine === 'assemblyai').length} voices from AssemblyAI text-to-speech, plus {personas.filter((p) => p.voices[0].engine !== 'assemblyai').length} accent voices that use Azure or your device. Click any card to preview their real voice. The dot picture is the orb shape that voice takes on.
       </p>
     </div>
   );

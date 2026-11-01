@@ -41,7 +41,6 @@ import { runAgenticAction } from '@/lib/voice/agenticActions';
 import { TodayCard } from '@/components/TodayCard';
 import { GeminiLiveVoiceVisualizer } from '@/components/voice/GeminiLiveVoiceVisualizer';
 import { LiveChatBox } from '@/components/voice/LiveChatBox';
-import { translateText, type TranslationEntry } from '@/lib/voice/translateClient';
 import { TransportBadge } from '@/components/voice/TransportBadge';
 import { SubtleOrb } from '@/components/voice/SubtleOrb';
 import { MicConsentSheet } from '@/components/voice/MicConsentSheet';
@@ -62,9 +61,6 @@ import { emitHost, onHostCommand } from '@/lib/host';
 import { usePersistentDraft } from '@/lib/storage/usePersistentDraft';
 
 type Step = 'idle' | 'plan' | 'timer' | 'outcome' | 'done';
-
-/** Translate mode targets this language. Multilingual switching is a later phase. */
-const TRANSLATION_TARGET = 'es';
 
 const OUTCOMES: Array<{ key: SessionOutcome; label: string }> = [
   { key: 'started', label: 'I started' },
@@ -112,10 +108,6 @@ export function StayHome({
   const orb = useOrbShape();
 
   const [step, setStep] = useState<Step>('idle');
-  type AppMode = 'talk' | 'dictate' | 'translate' | 'reflect' | 'quiet';
-  const [mode, setMode] = useState<AppMode>(() => (quietMode ? 'quiet' : 'talk'));
-  const [translations, setTranslations] = useState<Record<string, TranslationEntry>>({});
-  const requestedTranslations = useRef<Set<string>>(new Set());
   const [showMicConsent, setShowMicConsent] = useState(false);
   const [isHoldingSpace, setIsHoldingSpace] = useState(false);
   const spaceHeldRef = useRef(false);
@@ -568,7 +560,6 @@ export function StayHome({
   const handleStartVoice = useCallback(() => {
     if (quietMode) {
       onQuietModeChange(false);
-      setMode('talk');
     }
     if (voice.isConnected) {
       voice.disconnectVoiceSession();
@@ -622,41 +613,6 @@ export function StayHome({
     const id = window.setTimeout(() => setCallIntent(false), 25_000); // never connected (error)
     return () => window.clearTimeout(id);
   }, [callIntent, voice.isConnected, showMicConsent]);
-  const handleModeChange = useCallback((newMode: AppMode) => {
-    setMode(newMode);
-    if (newMode === 'quiet') {
-      if (!quietMode) {
-        if (voiceRef.current.isConnected) voiceRef.current.disconnectVoiceSession();
-        onQuietModeChange(true);
-      }
-    } else {
-      if (quietMode) {
-        onQuietModeChange(false);
-      }
-    }
-  }, [quietMode, onQuietModeChange]);
-
-  // Translate mode issues one real request per finished user turn. A provider failure
-  // is surfaced as "not translated"; nothing is echoed back as if it were Spanish.
-  useEffect(() => {
-    if (mode !== 'translate') return;
-    const fresh = voice.transcripts.filter(
-      (t) => t.role === 'user' && t.text.trim().length > 0 && !requestedTranslations.current.has(t.id)
-    );
-    if (fresh.length === 0) return;
-    for (const turn of fresh) {
-      requestedTranslations.current.add(turn.id);
-      setTranslations((prev) => ({ ...prev, [turn.id]: { status: 'pending' } }));
-      void translateText(turn.text, TRANSLATION_TARGET).then((result) => {
-        setTranslations((prev) => ({ ...prev, [turn.id]: result }));
-      });
-    }
-  }, [mode, voice.transcripts]);
-
-  const translationPending = useMemo(
-    () => Object.values(translations).some((t) => t.status === 'pending'),
-    [translations]
-  );
 
   // Spacebar hold-to-talk listener (§7.3)
   useEffect(() => {
@@ -1089,9 +1045,6 @@ export function StayHome({
         visualState={visual}
         isConnected={voice.isConnected}
         detectedLanguage={voice.detectedLanguageCode}
-        targetTranslationLang={mode === 'translate' ? TRANSLATION_TARGET : undefined}
-        isTranslating={mode === 'translate' && translationPending}
-        translations={translations}
         quietMode={quietMode}
         onToggleQuietMode={() => {
           if (!quietMode) voice.disconnectVoiceSession();
@@ -1349,7 +1302,7 @@ export function StayHome({
                 }
               }
             }}
-            placeholder={mode === 'dictate' ? 'Dictate (speak/type)' : isHoldingSpace ? 'Listening...' : 'Type or hold Space'}
+            placeholder={isHoldingSpace ? 'Listening...' : 'Type or hold Space'}
             aria-label="Tell Stay what you're avoiding"
             maxLength={280}
             data-testid="task-input"
@@ -1419,7 +1372,6 @@ export function StayHome({
           setShowMicConsent(false);
           setCallIntent(false);
           onQuietModeChange(true);
-          setMode('quiet');
         }}
         onClose={() => (setShowMicConsent(false), setCallIntent(false))}
       />

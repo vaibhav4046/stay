@@ -12,7 +12,7 @@
 Opening `/app/today` immediately presents a clean, calm, transcript-first interface with zero visual clutter. The giant 420 px morphing orb that previously pushed the input box below the fold has been eliminated:
 - Primary workspace is an elevated `LiveChatBox` above the fold.
 - The voice dock features a discrete, tranquil 40 px status orb (`SubtleOrb`) embedded next to the microphone visualizer.
-- Mode switcher (`Talk · Dictate · Translate · Reflect · Quiet`) is directly reachable.
+- The mode tabs were removed as confusing; Quiet (type only) is in the menu.
 - Honest `TransportBadge` clearly announces "AssemblyAI voice" with diagnostics modal on click.
 
 ---

@@ -138,7 +138,7 @@ export function Results() {
       <div className="lp-rhead">
         <h3 className="sub-title" data-testid="vs-products">Next to ChatGPT voice and Gemini Live, same day, same script</h3>
         <p className="lp-night-copy">
-          We fed the same synthesized speaker, through the same fake-microphone path in the same browser, into ChatGPT voice (Free plan) and Gemini 3.8 Live (Google AI Studio), and timed each reply inside the page. Small samples, one laptop. Stay was not the fastest.
+          On 18 and 19 October 2026 we fed the same synthesized speaker, through the same fake-microphone path in the same browser, into ChatGPT voice (Free plan) and Gemini 3.8 Live (Google AI Studio), and timed each reply inside the page. Small samples, one laptop. Stay was not the fastest.
         </p>
         <Legend />
       </div>
@@ -159,7 +159,7 @@ export function Results() {
       </div>
 
       <p className="lp-limits" data-testid="result-limits">
-        Not a microphone test: this laptop&apos;s microphone reads silence, so the speaker was injected as the microphone stream. Free tiers and a playground, not paid products. Medians move by a few tenths of a second between runs. Method, raw reports and every limit: <code>docs/BENCHMARK_REAL_PRODUCTS_2026-10-19.md</code>.
+        Not a microphone test: this laptop&apos;s microphone reads silence, so the speaker was injected as the microphone stream. Free tiers and a playground, not paid products. Medians move by a few tenths of a second between runs. These runs used that week&apos;s build. Stay&apos;s voice pipeline has changed since (new speech and voice models, new turn handling) and these numbers have not been re-run, so treat them as history, not as today&apos;s performance. Method, raw reports and every limit: <code>docs/BENCHMARK_REAL_PRODUCTS_2026-10-19.md</code>.
       </p>
 
       <details className="lp-details">

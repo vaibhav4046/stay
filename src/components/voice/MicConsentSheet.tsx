@@ -40,7 +40,7 @@ export function MicConsentSheet({ isOpen, onConsent, onTextOnly, onClose }: MicC
             <p className="font-semibold" style={{ color: '#212422' }}>How this works:</p>
             <p>1. Clicking &ldquo;Start talking&rdquo; requests browser microphone access.</p>
             <p>2. Your browser captures 16 kHz audio with an acoustic low-pass filter and streams it over WebSocket to AssemblyAI.</p>
-            <p>3. You can interrupt Stay at any moment by speaking, or click &ldquo;Stop&rdquo; to cut off speech instantly.</p>
+            <p>3. You can interrupt Stay at any moment by speaking, or click &ldquo;Stop&rdquo; to stop Stay speaking.</p>
             <p>4. You can revoke microphone permission anytime in Settings.</p>
           </div>
         )}
