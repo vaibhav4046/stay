@@ -1,4 +1,4 @@
-Regression run, 2026-11-02, local production build (next build + next start on :3120), after the layout fixes
+Regression run, 2026-11-02, local production build (next build + next start on :3120), HEAD e853e67 plus ledger
 Labels: all voice services faked in these specs (mocked-model / synthetic mic); nothing here is real-mic.
 
 == tsc ==
@@ -6,12 +6,8 @@ tsc exit 0
 == claims-lint ==
 claims-lint: clean
 == vitest ==
-
  Test Files  84 passed | 1 skipped (85)
-      Tests  1261 passed | 1 skipped (1262)
-   Start at  12:43:15
-   Duration  22.13s (transform 3.00s, setup 0ms, collect 9.68s, tests 35.78s, environment 19ms, prepare 14.22s)
-
+      Tests  1274 passed | 1 skipped (1275)
 == playwright (chromium, full suite) ==
   2 skipped
-  178 passed (7.6m)
+  178 passed (6.8m)
