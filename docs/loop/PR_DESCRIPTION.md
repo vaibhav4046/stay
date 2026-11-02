@@ -26,7 +26,7 @@ See [`docs/loop/LEDGER.md`](LEDGER.md) for every gate, the number, its label, it
 - [x] `npx vitest run`
 - [x] `node scripts/claims-lint.mjs`
 - [x] `npm run build`
-- [x] `npx playwright test` (178 passed, 2 skipped; vitest 1261 passed, 1 skipped; see `docs/evidence/loop/regression-2026-11-02.txt`)
+- [x] `npx playwright test` (178 passed, 2 skipped; vitest 1274 passed, 1 skipped; see `docs/evidence/loop/regression-2026-11-02.txt`)
 - [ ] Re-run the live eval against the preview: `STAY_EVAL_URL=<preview> npx vitest run tests/unit/groundingLive.test.ts`
 - [ ] Open `/lab/latency` on a laptop with headphones and do 20 turns
 - [ ] Open `/lab/voices` with five listeners
