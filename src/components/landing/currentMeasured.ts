@@ -30,6 +30,7 @@ export const CURRENT = {
   namesPlain: pct(mean(plain.map((r) => r.wer as number))),
   namesBoosted: pct(mean(boosted.map((r) => r.wer as number))),
   namesN: plain.length,
+  byGroup: Object.entries(measure.werByCategory as Record<string, { n: number; meanWer: number | null }>).map(([k, v]) => ({ key: k, n: v.n, wer: v.meanWer })),
   limits: measure.limits as string[],
   notMeasured: measure.notMeasured as string[],
 };

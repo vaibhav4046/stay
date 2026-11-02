@@ -4,19 +4,20 @@ import { PERSONAS } from '@/lib/voice/personas';
 import { Hero } from '@/components/landing/Hero';
 import { SmoothScroll } from '@/components/landing/SmoothScroll';
 import { ProofStrip } from '@/components/landing/ProofStrip';
+import { PipelineMotion } from '@/components/landing/PipelineMotion';
+import { FeatureBento } from '@/components/landing/FeatureBento';
+import { BenchmarkBoard } from '@/components/landing/BenchmarkBoard';
 import { DemoPlayer } from '@/components/landing/DemoPlayer';
 import { Story } from '@/components/landing/Story';
 import { WeekExplorer } from '@/components/landing/WeekExplorer';
 import { Results } from '@/components/landing/Results';
-import { AssemblyAiArchitecture } from '@/components/landing/AssemblyAiArchitecture';
-import { AdhdScienceHistory } from '@/components/landing/AdhdScienceHistory';
-import { NeuralOrbArtifact } from '@/components/landing/NeuralOrbArtifact';
 import { Artifacts } from '@/components/landing/Artifacts';
 import { Personas } from '@/components/landing/Personas';
 import { dotGlyph } from '@/components/landing/personaDots';
-import { Compare, Days, NotFor, Platforms, Promises, Receipts } from '@/components/landing/Sections';
+import { Compare, NotFor, Platforms, Promises } from '@/components/landing/Sections';
 import { TRANSCRIPT } from '@/components/landing/transcript';
 import './landing.css';
+import './facets.css';
 
 export default function Home() {
   const glyphs = Object.fromEntries(PERSONAS.map((p) => [p.shape, dotGlyph(p.shape, 130)]));
@@ -57,6 +58,10 @@ export default function Home() {
           </div>
         </section>
 
+        <PipelineMotion />
+
+        <FeatureBento />
+
         <section id="flow" className="lp-section lp-wrap" aria-labelledby="how">
           <p className="eyebrow">How a session flows</p>
           <h2 id="how" className="section-title max-w-[22ch]">
@@ -66,14 +71,6 @@ export default function Home() {
           <p className="meta mt-10 max-w-[62ch]">
             Speak in your own language. We tested live voice with synthesized speech: 23 languages were heard correctly and 8 were not; AssemblyAI documents six (English, Spanish, French, German, Italian, Portuguese), and the fast voice speaks those six. Others use the standard voice or your browser&apos;s speech recognition.
           </p>
-        </section>
-
-        <section id="days" className="lp-section lp-wrap" aria-labelledby="days-title" data-testid="days">
-          <p className="eyebrow">What it does</p>
-          <h2 id="days-title" className="section-title max-w-[26ch]">
-            Made for how ADHD days actually go
-          </h2>
-          <Days />
         </section>
 
         <section id="artifacts" className="lp-section lp-tint" aria-labelledby="art-title">
@@ -94,9 +91,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Interactive 3D Therapist & Neural Model Artifact */}
-        <NeuralOrbArtifact />
-
         <section id="week" className="lp-section lp-wrap" aria-labelledby="week-title">
           <p className="eyebrow">Your week</p>
           <h2 id="week-title" className="section-title max-w-[24ch]">
@@ -109,6 +103,8 @@ export default function Home() {
             <WeekExplorer />
           </div>
         </section>
+
+        <BenchmarkBoard />
 
         <section id="measured" className="lp-night lp-band" aria-labelledby="measured-title" data-testid="measured">
           <div className="lp-wrap">
@@ -126,20 +122,6 @@ export default function Home() {
             </div>
           </div>
         </section>
-
-        {/* AssemblyAI Real-Time Voice Pipeline Architecture */}
-        <AssemblyAiArchitecture />
-
-        <section id="receipts" className="lp-section lp-wrap" aria-labelledby="receipts-title">
-          <p className="eyebrow">What measuring found wrong</p>
-          <h2 id="receipts-title" className="section-title max-w-[26ch]">
-            The receipts, including the embarrassing ones
-          </h2>
-          <Receipts />
-        </section>
-
-        {/* 120 Years of ADHD Clinical Science & Neurobiology */}
-        <AdhdScienceHistory />
 
         <section className="lp-section lp-wrap" aria-labelledby="compare" data-testid="compare">
           <p className="eyebrow">Alternatives</p>

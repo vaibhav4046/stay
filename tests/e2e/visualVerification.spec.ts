@@ -100,20 +100,4 @@ test('Capture complete browser visual verification suite', async ({ page }) => {
   const shot6 = '06-voice-armed-today-receipt.png';
   await page.screenshot({ path: path.join('test-results', shot6) });
   copyToArtifacts(shot6);
-
-  // 4. LANDING PAGE - MATHEMATICAL 5,200 DOT COUNT AUDIT
-  await page.goto('/');
-  await page.waitForTimeout(500);
-
-  const section = page.getByText('The 5,200-dot procedural therapist figure');
-  await section.scrollIntoViewIfNeeded();
-
-  // the count is computed from the drawn buffer, not asserted
-  await expect(page.getByTestId('dot-count')).toContainText('Dots in the point buffer: 5,200');
-  await expect(page.getByTestId('dot-count')).toContainText('All coordinates finite: yes');
-
-  // Screenshot 7: Mathematical 5,200 dot count audit and verifier
-  const shot7 = '07-landing-5200-dot-count-verifier.png';
-  await page.screenshot({ path: path.join('test-results', shot7) });
-  copyToArtifacts(shot7);
 });
