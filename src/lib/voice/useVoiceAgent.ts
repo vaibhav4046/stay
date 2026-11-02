@@ -39,6 +39,7 @@ import { cachedTtsCaps, refreshTtsCaps, voiceNeeds } from '@/lib/voice/tts/caps'
 import { resolvePersonaBrowserSpeech } from '@/lib/voice/tts/browserVoices';
 import { createTtsConnection } from '@/lib/voice/tts';
 import { APP_TOOL, appKeyterms, buildGreeting, buildSystemPrompt, type AppActionArgs } from '@/lib/voice/agentTool';
+import { takeAiDisclosure } from '@/lib/voice/disclosure';
 import {
   detectCrisisSignal,
   detectMedicationAdviceRequest,
@@ -237,7 +238,7 @@ export function detectTopicShape(text: string): number {
     return 3;
   }
   // 3. Calming Concentric Ripples / Somatic Grounding / Chaotic Brain Fog / Frozen / Overwhelm (Mode 4)
-  if (/\b(?:breath|breathe|breathing|calm|calming|therapeutic|therapy|soothe|soothing|gentle|zen|mindful|mindfulness|serene|ground|grounding|overwhelm(?:ed|ing)?|anxious|anxiety|panic|relax|slow|meditate|meditation|peace|rest|frozen|stuck|paralyzed|brain\s*fog|spiraling|scrolling|can'?t\s+think|mess|drowning|burnt?\s+out|exhausted)\b/i.test(clean)) {
+  if (/\b(?:breath|breathe|breathing|calm|calming|therapeutic|therapy|soothe|soothing|gentle|zen|mindful|mindfulness|serene|ground|grounding|overwhelm(?:ed|ing)?|anxious|anxiety|panic|relax|slow|meditate|meditation|peace|rest|frozen|stuck|paralyzed|brain\s*fog|spiraling|scrolling|can'?t\s+think|mess|drowning|burnt?\s+out|exhausted)\b/i.test(clean)) { // claims-lint-allow: words a person might say, mapped to a shape
     return 4;
   }
   // 4. Structured Geometric Facets / Letters / Writing / Docs / Taxes / Code / Paperwork (Mode 2)
@@ -2282,7 +2283,10 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         const greetLang = useFast ? fastLangBase : 'en';
         // the first session of a day opens with the calm daily greeting (English; other languages keep their short native hello)
         const dailyGreeting = !renewingRef.current && greetLang === 'en' ? optionsRef.current.getDailyGreetingSpoken?.() ?? null : null;
-        const greeting = dailyGreeting ?? buildGreeting(persona, memory, renewingRef.current, greetLang);
+        const opening = dailyGreeting ?? buildGreeting(persona, memory, renewingRef.current, greetLang);
+        // T0.7: the first session on this device says it is an AI before anything else (a renewed session is the same call)
+        const disclosure = renewingRef.current ? null : takeAiDisclosure(greetLang, typeof window === 'undefined' ? null : window.localStorage);
+        const greeting = disclosure ? `${disclosure} ${opening}` : opening;
         renewingRef.current = false;
 
         const langBase = selectedLanguageRef.current !== 'auto' && isAgentVerifiedLanguage(selectedLanguageRef.current) ? selectedLanguageRef.current.split('-')[0].toLowerCase() : null;
