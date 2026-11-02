@@ -9,6 +9,7 @@
  */
 import { toSpeech } from '@/lib/voice/speechText';
 import { isImageDataUrl, looksVisual } from '@/lib/vision/image';
+import { honestFailureMessage } from '@/lib/conversation/response';
 import { byokHeaders } from '@/lib/byok/config';
 import type { TtsConnection } from '@/lib/voice/tts/types';
 
@@ -1225,14 +1226,24 @@ export class FastSocket {
         signal: ctl.signal,
       });
     } catch {
-      if (gen === this.genId) this.finishSilently();
+      // the request never got an answer (offline, or the function timed out): the person is told, not left in silence
+      if (gen === this.genId) this.speakOnly(honestFailureMessage('timeout'));
       return;
     }
     if (gen !== this.genId) return;
     this.mark('hdr');
     this.mark(`srv ${res.headers.get('server-timing') ?? ''}`);
     if (!res.ok || !res.body || (res.headers.get('content-type') || '').includes('application/json')) {
-      // a safety gate answered instead of the model (the hook already shows the right screen), or the model was unavailable
+      // a safety gate answered instead of the model (the hook already shows the right screen), or the model failed:
+      // when the server sent a plain-words message, say it; never leave the person in silence
+      let message = '';
+      try {
+        const j = (await res.clone().json()) as { message?: unknown };
+        if (typeof j.message === 'string') message = j.message.slice(0, 300);
+      } catch {
+        // not JSON: nothing to say
+      }
+      if (message && gen === this.genId) return this.speakOnly(message);
       return this.finishSilently();
     }
 

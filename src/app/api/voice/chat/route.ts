@@ -7,6 +7,9 @@ import { openLlmStream } from '@/lib/llm/stream';
 import { resolveDeterministicVoice, createDeterministicSseResponse } from '@/lib/voice/deterministicVoiceFallback';
 import { attachGuardHeaders, guardPaidRoute, readBoundedJson } from '@/lib/security/apiGuard';
 import { answerAboutStay } from '@/lib/voice/aboutStay';
+import { classifyIntent } from '@/lib/conversation/intent';
+import { NOTHING_SHOWN, honestFailureMessage, failureKindFromError } from '@/lib/conversation/response';
+import { readSseText, visionReplyIsSafe } from '@/lib/conversation/visionGate';
 import { MAX_IMAGE_CHARS, VISION_SYSTEM, isImageDataUrl, withImage } from '@/lib/vision/image';
 
 const MAX_HISTORY_TURNS = 20;
@@ -55,7 +58,9 @@ function createResilientStream(incoming: ReadableStream<Uint8Array>, lastUser: s
           const { done, value } = await reader.read();
           if (done) {
             if (!emittedMeaningfulChunk) {
-              const fallback = resolveDeterministicVoice(lastUser);
+              // the stream ended with no answer: say so, never invent one
+              console.warn('[stay] empty_model_stream');
+              const fallback = { text: honestFailureMessage('unavailable') };
               if (fallback.text) {
                 controller.enqueue(
                   encoder.encode(
@@ -81,7 +86,9 @@ function createResilientStream(incoming: ReadableStream<Uint8Array>, lastUser: s
             buffered.includes('"type":"invalid_request_error"')
           ) {
             if (!emittedMeaningfulChunk) {
-              const fallback = resolveDeterministicVoice(lastUser);
+              // the stream ended with no answer: say so, never invent one
+              console.warn('[stay] empty_model_stream');
+              const fallback = { text: honestFailureMessage('unavailable') };
               if (fallback.text) {
                 controller.enqueue(
                   encoder.encode(
@@ -111,7 +118,8 @@ function createResilientStream(incoming: ReadableStream<Uint8Array>, lastUser: s
         }
       } catch {
         if (!emittedMeaningfulChunk) {
-          const fallback = resolveDeterministicVoice(lastUser);
+          console.warn('[stay] model_stream_error');
+          const fallback = { text: honestFailureMessage('timeout') };
           if (fallback.text) {
             controller.enqueue(
               encoder.encode(
@@ -183,6 +191,10 @@ export async function POST(req: NextRequest) {
   const about = image ? null : answerAboutStay(lastUser);
   if (about) return createDeterministicSseResponse({ text: about });
 
+  // a question about the screen with nothing shared: say so, never guess what might be on it
+  const intent = classifyIntent(lastUser, { hasVisualSource: Boolean(image), hasHistory: clientMessages.length > 1 });
+  if (intent === 'screen_question' && !image) return createDeterministicSseResponse({ text: NOTHING_SHOWN });
+
   const serverSystemPrompt = buildServerVoiceSystemPrompt(context);
   // a turn with a picture: the vision model looks at it, no app tools, and the picture goes nowhere else
   const outboundMessages = [
@@ -219,20 +231,22 @@ ${VISION_SYSTEM}` : serverSystemPrompt },
     error: r.error,
     userKeyError: r.userKeyError,
   });
-  if (!r.res && image) {
-    return attachGuardHeaders(NextResponse.json({ error: 'vision_unavailable' }, { status: 503, headers: hdr }), guard);
-  }
   if (!r.res) {
-    const isExplicitConfigError =
-      r.userKeyError === 'invalid_key' || r.userKeyError === 'bad_endpoint';
-    if (!isExplicitConfigError) {
-      const fallbackResult = resolveDeterministicVoice(lastUser);
-      return createDeterministicSseResponse(fallbackResult);
+    // The model failed. Say so. The only thing that still works without a model is a tool the person plainly asked for
+    // (a timer, a parked thought); everything else gets the honest message, never an invented reply.
+    console.warn('[stay] model_failed', { intent, vision: Boolean(image), source: r.source, error: r.error ?? null });
+    if (!image) {
+      const tool = resolveDeterministicVoice(lastUser).tool;
+      if (tool) return createDeterministicSseResponse({ tool });
     }
-    return attachGuardHeaders(
-      NextResponse.json({ error: r.error || 'unavailable' }, { status: 502, headers: hdr }),
-      guard
-    );
+    const message = honestFailureMessage(failureKindFromError(r.error, Boolean(image)));
+    return attachGuardHeaders(NextResponse.json({ error: r.error || 'unavailable', message }, { status: 503, headers: hdr }), guard);
+  }
+  // a reply that came from looking at a picture is read in full and checked before anyone sees or hears it
+  if (image) {
+    const text = await readSseText(r.res);
+    if (!visionReplyIsSafe(text)) return attachGuardHeaders(NextResponse.json({ safety: 'crisis' }), guard);
+    return createDeterministicSseResponse({ text });
   }
   const stream = createResilientStream(r.res.body as ReadableStream<Uint8Array>, lastUser);
   return new Response(stream, {

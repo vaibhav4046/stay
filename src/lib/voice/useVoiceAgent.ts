@@ -5,6 +5,7 @@ import { ContinuousPcmPlayer } from '@/lib/voice/playback/continuousPlayback';
 import { replyLanguageInstruction } from '@/lib/voice/replyLanguage';
 import { GLANCE_PROMPT, isQuietReply } from '@/lib/vision/image';
 import { answerAboutStay } from '@/lib/voice/aboutStay';
+import { honestFailureMessage } from '@/lib/conversation/response';
 import { FastSocket, FAST_TTS_LANGUAGE, toAssemblyVoiceId } from '@/lib/voice/fastSocket';
 import {
   computeProgressiveCaption,
@@ -1463,7 +1464,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         headers: { 'Content-Type': 'application/json', ...byokHeaders(), 'x-stay-image': '1' },
         body: JSON.stringify({ messages, withTools: false, image, context: selectedLanguageRef.current === 'auto' ? undefined : { language: selectedLanguageRef.current } }),
       });
-      if (!res.ok || !res.body) throw new Error(String(res.status));
+      if (!res.ok || !res.body) {
+        // the server says why in plain words (see conversation/response.ts); show that, never an invented reply
+        const msg = await res.json().then((j: { message?: unknown }) => (typeof j.message === 'string' ? j.message : '')).catch(() => '');
+        throw new Error(msg || String(res.status));
+      }
       const reader = res.body.getReader();
       const dec = new TextDecoder();
       let buf = '';
@@ -1486,8 +1491,9 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       reply = reply.trim();
       if (opts.glance && (!reply || isQuietReply(reply))) return; // nothing to say: stay quiet
       add(reply || 'I could not make that out. Can you show me again?');
-    } catch {
-      if (!opts.glance) add('I could not look just now. Try again in a moment.');
+    } catch (e) {
+      const said = (e as Error).message;
+      if (!opts.glance) add(said && !/^\d+$/.test(said) ? said : honestFailureMessage('vision'));
     } finally {
       if (!opts.glance) setVisualState(wsRef.current ? 'listening' : 'idle');
     }
