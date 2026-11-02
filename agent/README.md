@@ -8,6 +8,8 @@ Microphone/SIP -> LiveKit Room -> AssemblyAI Universal-3.6 Pro STT
 LiveKit Room/SIP ← AssemblyAI TTS-1 ← Stay 3-Beat Coach LLM
 ```
 
+> **Updated 2 Nov 2026.** `agent.py` now runs on livekit-agents 1.8 (`AgentSession`); the old `VoicePipelineAgent` code could not run on the version it pinned. The model is Groq (`GROQ_API_KEY`), not OpenAI. Every caller turn goes through the web app's own crisis and medication checks (`POST $STAY_URL/api/safety/check`) before the model is asked, with a local keyword list as the fallback. Tests: `uv run --no-project --with-requirements agent/requirements.txt --with pytest pytest agent/test_agent.py -q`. Not done: deploying it, and a phone number (both need the owner's yes).
+
 ## Features
 
 - **LiveKit Agents Pipeline**: Real-time bidirectional WebRTC & SIP audio routing.

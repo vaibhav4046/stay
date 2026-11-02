@@ -40,6 +40,11 @@ class StayPcmPlaybackProcessor extends AudioWorkletProcessor {
     this.markedEnd = false;
     this.muted = false;
     this.ducked = false;
+    // T2.3 hold: the person started talking over Stay. Fade out over 30 ms and stop reading the buffer (nothing is lost); on release,
+    // fade back in from the same sample. Used instead of ducking so Stay goes quiet the way a person does, and can carry on if it was
+    // only "mm-hm" or a cough.
+    this.held = false;
+    this.releasing = false;
 
     // Adaptive prebuffer: starts at 200 ms (phones on mobile networks need it), bounded [140, 500] ms, decays 10 ms per clean second
     this.prebufferMs = 200;
@@ -49,6 +54,7 @@ class StayPcmPlaybackProcessor extends AudioWorkletProcessor {
 
     // 5 ms fade window for underflow/resume; <= 10 ms ramp for cancel
     this.fadeLength = Math.max(16, Math.floor(0.005 * rate));
+    this.holdFadeLength = Math.max(64, Math.floor(0.03 * rate));
     this.currentGain = 1.0;
     this.targetGain = 1.0;
 
@@ -68,7 +74,7 @@ class StayPcmPlaybackProcessor extends AudioWorkletProcessor {
   }
 
   effectiveTargetGain() {
-    if (this.muted) return 0.0;
+    if (this.muted || this.held) return 0.0;
     // -18 dB ducking gain = 10^(-18/20) ≈ 0.1258925
     return this.ducked ? 0.1258925 : 1.0;
   }
@@ -147,6 +153,17 @@ class StayPcmPlaybackProcessor extends AudioWorkletProcessor {
         break;
       }
 
+      case 'hold': {
+        const held = Boolean(msg.held);
+        if (held === this.held) break;
+        this.held = held;
+        this.releasing = !held;
+        if (this.state === 'PLAYING' || this.state === 'DRAINING') {
+          this.targetGain = this.effectiveTargetGain();
+        }
+        break;
+      }
+
       case 'duck': {
         this.ducked = Boolean(msg.ducked);
         if (this.state === 'PLAYING' || this.state === 'DRAINING') {
@@ -164,6 +181,8 @@ class StayPcmPlaybackProcessor extends AudioWorkletProcessor {
         this.clearRing();
         this.markedEnd = false;
         this.ducked = false;
+        this.held = false;
+        this.releasing = false;
         this.state = 'STOPPED';
         this.targetGain = 0.0;
         this.currentGain = 0.0;
@@ -311,6 +330,12 @@ class StayPcmPlaybackProcessor extends AudioWorkletProcessor {
     for (let i = 0; i < quantumLength; i++) {
       let sample = 0;
 
+      // held and already faded out: silence, and the buffer is left exactly where it was
+      if (this.held && this.currentGain === 0) {
+        channel[i] = 0;
+        continue;
+      }
+
       if (this.bufferedCount > 0) {
         sample = this.ring[this.readIndex];
         this.readIndex = (this.readIndex + 1) % this.bufferSize;
@@ -341,7 +366,7 @@ class StayPcmPlaybackProcessor extends AudioWorkletProcessor {
       }
 
       if (this.currentGain !== this.targetGain) {
-        const step = 1.0 / this.fadeLength;
+        const step = 1.0 / (this.held || this.releasing ? this.holdFadeLength : this.fadeLength);
         if (this.currentGain < this.targetGain) {
           this.currentGain = Math.min(this.targetGain, this.currentGain + step);
         } else {
@@ -349,6 +374,7 @@ class StayPcmPlaybackProcessor extends AudioWorkletProcessor {
         }
       }
 
+      if (this.releasing && this.currentGain === this.targetGain) this.releasing = false;
       const outSample = sample * this.currentGain;
       channel[i] = outSample;
 

@@ -7,4 +7,6 @@ entrypoint = "agent.py"
 
 [env]
 ASSEMBLYAI_VOICE_ID = "49c443a4-8a1d-5f7e-b70b-98bdbd9823c3"
-LLM_MODEL = "gpt-4o-mini"
+GROQ_VOICE_MODEL = "openai/gpt-oss-120b"
+STAY_URL = "https://stay-two-swart.vercel.app"
+# secrets (set in LiveKit Cloud, never here): ASSEMBLYAI_API_KEY, GROQ_API_KEY

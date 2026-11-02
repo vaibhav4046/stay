@@ -232,6 +232,18 @@ export class ContinuousPcmPlayer {
   /**
    * §6.3.1 — Duck playback to -18 dB within one audio render quantum when SpeechStarted arrives.
    */
+  /**
+   * T2.3: pause in place when the person talks over Stay (fade out, keep every sample), and carry on from the same sample when released.
+   * The fallback player (no worklet) can only go silent, so it fades the gain instead.
+   */
+  setHeld(held: boolean): void {
+    if (!this.fallbackMode && this.workletNode) {
+      this.workletNode.port.postMessage({ type: 'hold', held });
+    } else if (this.gainNode && this.ctx) {
+      this.gainNode.gain.setTargetAtTime(held ? 0 : 1, this.ctx.currentTime, 0.01);
+    }
+  }
+
   setDucked(ducked: boolean): void {
     const targetLinear = ducked ? 0.1258925 : 1.0;
     if (!this.fallbackMode && this.workletNode) {

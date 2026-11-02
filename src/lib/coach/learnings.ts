@@ -346,3 +346,34 @@ export function learningsPromptLine(state: LearningsState, now = new Date()): st
     .slice(0, 2);
   return top.length ? `Learned: ${top.map((i) => i.text.slice(0, 80)).join(' ')}` : '';
 }
+
+const LENGTH_OFFER: Record<string, string> = {
+  xs: 'Short blocks have worked for you before. Want me to start a five-minute timer and stay with you?',
+  s: 'Fifteen-minute blocks have worked for you before. Want me to start a fifteen-minute timer and stay with you?',
+  m: 'Twenty-five-minute blocks have worked for you before. Want me to start a twenty-five-minute timer and stay with you?',
+};
+const STRATEGY_OFFER: Partial<Record<StrategyKey, string>> = {
+  timeboxing: 'A short timebox has worked for you before. Want me to start a ten-minute timer and stay with you?',
+  task_shrinking: 'Making it smaller has worked for you before. Want an even smaller first step?',
+  implementation_intention: 'Picking the moment has worked for you before. Want to choose when you will start?',
+  reframing: 'Looking at it differently has helped you before. Want a different way to see it?',
+};
+
+/**
+ * The check-in Stay ends a "task I'm avoiding" reply with, when the person's own blocks show what gets them started: the strongest
+ * strategy or block-length learning, as one sentence that says it worked before and offers it. Deterministic from logged evidence; the
+ * model is not trusted to remember to use it (2 Nov 2026: given the learning as a hint, it ignored it in 5 of 6 replies). Empty when
+ * learning is off or there is no such learning.
+ */
+export function learnedOffer(state: LearningsState, now = new Date()): string {
+  if (!state.enabled) return '';
+  const candidates = state.items
+    .filter((i) => !i.stale && (i.kind === 'start_strategy' || i.kind === 'block_length') && currentStrength(i, now) >= 0.3)
+    .sort((a, b) => Number(b.pinned) - Number(a.pinned) || currentStrength(b, now) - currentStrength(a, now));
+  for (const l of candidates) {
+    const key = l.id.split(':')[1] ?? '';
+    const offer = l.kind === 'block_length' ? LENGTH_OFFER[key] : STRATEGY_OFFER[key as StrategyKey];
+    if (offer) return offer;
+  }
+  return '';
+}

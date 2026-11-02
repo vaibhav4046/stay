@@ -1,0 +1,16 @@
+T2.4 experiment, 2 Nov 2026: STT_EXTRA min_turn_silence=64 (app default 128). synthetic-mic + live-model, local build. Not adopted: end of turn median 614 ms vs about 550-600 ms at 128, first audio noisier; patience held 6 of 6.
+        first audio 1798.75 ms after the human stopped; Stay: "That renewal note is hanging. Open your email draft and type"
+        first audio 1459.541748046875 ms after the human stopped; Stay: "You’re feeling stuck on what to say to your landlord. Try wr"
+        first audio 1006.208251953125 ms after the human stopped; Stay: "“Hi [Landlord’s name], I’m interested in renewing my lease a"
+stt.eot    1140.75 613.541748046875 487.208251953125  | median 613.541748046875
+aud1       1727.75 1391.541748046875 938.208251953125  | median 1391.541748046875
+SUMMARY engine=fast lang=en: ordinary-turn first audio median 1459.541748046875 ms (n=3; 1006.208251953125, 1459.541748046875, 1798.75)
+pause run 1/6: 1800 ms pause, Stay waited; reply to the finished thought 1367.416748046875 ms
+pause run 2/6: 2300 ms pause, Stay waited; reply to the finished thought 926.416748046875 ms
+pause run 3/6: 2500 ms pause, Stay waited; reply to the finished thought 994.416748046875 ms
+pause run 4/6: 1800 ms pause, Stay waited; reply to the finished thought 721.416748046875 ms
+pause run 5/6: 2300 ms pause, Stay waited; reply to the finished thought 1296.416748046875 ms
+pause run 6/6: 2500 ms pause, Stay waited; reply to the finished thought 1298.416748046875 ms
+PAUSE SUMMARY: 6 runs, pauses of 1800 / 2300 / 2500 ms; Stay talked into the pause 0 times; a reply to the finished thought came 6 times (median 1296.416748046875 ms)
+
+[exited with code 0]

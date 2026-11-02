@@ -74,13 +74,13 @@ const tick = (n = 6) => new Promise((r) => { let i = 0; const f = () => (++i >= 
 let events: Array<Record<string, unknown>>;
 let openedSockets: FastSocket[] = []; // closed after each test so a late timer of one test never writes into the next
 let fetchMock: ReturnType<typeof vi.fn>;
-async function open(opts: { tools?: boolean; greeting?: string; holdMs?: number; autoLanguage?: boolean } = {}) {
+async function open(opts: { tools?: boolean; greeting?: string; holdMs?: number; autoLanguage?: boolean; personal?: string } = {}) {
   const s = new FastSocket({ sttToken: 'stt', ttsToken: 'tts', holdMs: opts.holdMs ?? 60, interruptHoldMs: opts.holdMs ?? 60, warmUp: false, autoLanguage: opts.autoLanguage });
   events = [];
   openedSockets.push(s);
   s.onmessage = (e) => events.push(JSON.parse(e.data));
   await tick(2);
-  s.send(JSON.stringify({ type: 'session.update', session: { system_prompt: 'You are Stay.', greeting: opts.greeting ?? '', output: { voice: 'anna' }, tools: opts.tools ? [{}] : [], tts_language: 'english' } }));
+  s.send(JSON.stringify({ type: 'session.update', session: { system_prompt: 'You are Stay.', greeting: opts.greeting ?? '', output: { voice: 'anna' }, tools: opts.tools ? [{}] : [], tts_language: 'english', ...(opts.personal ? { personal: opts.personal } : {}) } }));
   await tick(6);
   const stt = FakeWS.instances.find((w) => !w.isTts)!;
   const tts = FakeWS.instances.find((w) => w.isTts)!;
@@ -336,6 +336,15 @@ describe('FastSocket', () => {
     await tick(20);
     expect(events.filter((e) => e.type === 'transcript.user')).toHaveLength(1);
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('what Stay learned about the person goes with every turn (it never did before 2 Nov 2026)', async () => {
+    fetchMock.mockResolvedValue(sse(text('Okay.')));
+    const { stt } = await open({ personal: 'Learned: 10-minute blocks got 3 of 3 started.' });
+    stt.push({ type: 'Turn', transcript: 'I keep avoiding my taxes.', end_of_turn: true, turn_order: 0 });
+    await tick(20);
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    expect(body.context.personal).toBe('Learned: 10-minute blocks got 3 of 3 started.');
   });
 
   it('a simple command is confirmed at once, without a second model call', async () => {

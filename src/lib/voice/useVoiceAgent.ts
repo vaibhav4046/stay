@@ -21,7 +21,7 @@ import { runAgenticAction, AGENTIC_ACTIONS, factFromUtterance } from '@/lib/voic
 import { verifySpoken, type ToolOutcome } from '@/lib/voice/toolSelfCheck';
 import { useDumpCapture } from '@/lib/voice/useDumpCapture';
 import { loadInstructions, styleBlock } from '@/lib/coach/customInstructions';
-import { loadLearnings, learningsPromptLine } from '@/lib/coach/learnings';
+import { learnedOffer, loadLearnings, learningsPromptLine } from '@/lib/coach/learnings';
 import { loadActiveSession, saveActiveSession } from '@/lib/coach/activeSession';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
@@ -38,7 +38,7 @@ import { agentVoiceFor, personaAfterLanguageChange, planSpeech } from '@/lib/voi
 import { cachedTtsCaps, refreshTtsCaps, voiceNeeds } from '@/lib/voice/tts/caps';
 import { resolvePersonaBrowserSpeech } from '@/lib/voice/tts/browserVoices';
 import { createTtsConnection } from '@/lib/voice/tts';
-import { APP_TOOL, appKeyterms, buildGreeting, buildSystemPrompt, type AppActionArgs } from '@/lib/voice/agentTool';
+import { APP_TOOL, appKeyterms, buildGreeting, buildSystemPrompt, memoryLine, type AppActionArgs } from '@/lib/voice/agentTool';
 import { markAiDisclosed, peekAiDisclosure } from '@/lib/voice/disclosure';
 import { LocalBargeIn } from '@/lib/voice/localBargeIn';
 import {
@@ -748,9 +748,24 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const workletNodeRef = useRef<AudioWorkletNode | null>(null);
   const pcmPlayerRef = useRef<ContinuousPcmPlayer | null>(null);
   const localBargeInRef = useRef(new LocalBargeIn());
-  /** quiet or restore Stay's voice; with the test flag on, remember when it was quieted (epoch ms) so a run can report how fast */
+  /**
+   * The person started talking over Stay: Stay pauses where it is (it used to only get quieter and keep talking under them), and carries
+   * on from the same word if it was only "mm-hm", a cough or its own echo. A real turn cancels the reply as before. The captions'
+   * clock is moved on by the time spent paused, so the words stay in step. With the test flag on, the moment of pausing is recorded.
+   */
+  const heldSinceRef = useRef(0);
   const duckPlayback = useCallback((on: boolean) => {
-    pcmPlayerRef.current?.setDucked(on);
+    const player = pcmPlayerRef.current;
+    if (!player) return;
+    if (on && heldSinceRef.current === 0) {
+      heldSinceRef.current = performance.now();
+      player.setHeld(true);
+    } else if (!on && heldSinceRef.current > 0) {
+      const pausedMs = performance.now() - heldSinceRef.current;
+      heldSinceRef.current = 0;
+      if (speechAudioStartTimeRef.current > 0) speechAudioStartTimeRef.current += pausedMs;
+      player.setHeld(false);
+    }
     const w = window as unknown as { __stayFastDebug?: boolean; __stayDucks?: number[] };
     if (on && w.__stayFastDebug) (w.__stayDucks ??= []).push(Date.now());
   }, []);
@@ -2337,6 +2352,9 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
             type: 'session.update',
             session: {
               system_prompt: warmHumanPrompt,
+              // the fast path builds its prompt on the server: it gets what Stay learned (evidence-based, editable in Memory) and the memory line as data
+              personal: [learningsPromptLine(loadLearnings()), memoryLine(memory)].filter(Boolean).join(' '),
+              offer: learnedOffer(loadLearnings()),
               greeting,
               // No turn_detection block: sending any turn_detection object overrides the provider's tuned defaults and
               // measurably doubled reply lag (about 1.4 s to 3.5 s). Voice agent sessions use the defaults.
@@ -2661,6 +2679,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           }
           setLiveSpokenText('');
           liveSpokenTextRef.current = '';
+          heldSinceRef.current = 0; // a new reply starts unpaused (a pause on the old one ended with its cancel)
           if (!medicationSuppressionRef.current && !dumpApiRef.current.isAgentMuted()) {
             setVisualState('speaking');
             dispatchVoiceEvent({ type: 'assistant_started' });

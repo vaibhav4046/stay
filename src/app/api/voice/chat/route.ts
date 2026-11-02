@@ -39,6 +39,10 @@ const ContextSchema = z
   .object({
     language: z.string().max(32).optional(),
     notes: z.array(z.string().max(300)).max(4).optional(),
+    /** what Stay learned about this person and their memory line, from their device (data, clipped again when used) */
+    personal: z.string().max(600).optional(),
+    /** one sentence built on the device from the person's own logged blocks; used as the check-in of a task reply */
+    offer: z.string().max(200).optional(),
   })
   .optional();
 
