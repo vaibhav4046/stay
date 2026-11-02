@@ -25,6 +25,8 @@ export interface ChatTranscriptEntry {
   heardText?: string;
   unheardText?: string;
   words?: ChatWordTiming[];
+  /** a picture shown with this message (kept in memory only) */
+  imageUrl?: string;
 }
 
 export interface LiveChatBoxProps {
@@ -530,7 +532,7 @@ export function LiveChatBox({
                             data-testid="wispr-scratch-btn"
                             title="Scratch this thought"
                           >
-                            Scratch that
+                            Undo
                           </button>
                         )}
                         {isLastAgent && onWisprAction && (
@@ -542,7 +544,7 @@ export function LiveChatBox({
                               data-testid="wispr-repeat-btn"
                               title="Repeat Stay's last response"
                             >
-                              Repeat
+                              Say again
                             </button>
                             <button
                               type="button"
@@ -551,7 +553,7 @@ export function LiveChatBox({
                               data-testid="wispr-heard-btn"
                               title="Show what Stay heard"
                             >
-                              What you heard
+                              What I heard
                             </button>
                           </div>
                         )}
@@ -564,6 +566,10 @@ export function LiveChatBox({
                             }
                       }
                     >
+                      {entry.imageUrl && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={entry.imageUrl} alt="What you showed Stay" className="mb-2 max-h-48 w-full rounded-xl object-cover" data-testid="chat-picture" />
+                      )}
                       {entry.words && entry.words.some((w) => typeof w.confidence === 'number' && w.confidence < 0.6) ? (
                         <span>
                           {entry.words.map((w, idx) => {

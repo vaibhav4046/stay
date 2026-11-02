@@ -601,6 +601,48 @@ describe('FastSocket: auto language follows what the person speaks', () => {
     expect(ttsSockets().length).toBe(1);
   });
 });
+describe('FastSocket: pictures', () => {
+  const PIC = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBD';
+  const bodyOf = (i: number) => JSON.parse(fetchMock.mock.calls[i][1].body as string);
+
+  it('a typed message with a picture is a real turn, goes to the model with the picture and no tools, and the picture is used once', async () => {
+    fetchMock.mockImplementation(async () => sse(text('I see an unfinished email.')));
+    const { s } = await open({ tools: true });
+    s.send(JSON.stringify({ type: 'conversation.message', role: 'user', content: 'what is wrong with this?', image: PIC }));
+    s.send(JSON.stringify({ type: 'reply.create' }));
+    await tick(30);
+    expect(bodyOf(0).image).toBe(PIC);
+    expect(bodyOf(0).withTools).toBe(false);
+    expect(bodyOf(0).messages.at(-1)).toEqual({ role: 'user', content: 'what is wrong with this?' });
+    s.send(JSON.stringify({ type: 'conversation.message', role: 'user', content: 'ok thanks' }));
+    s.send(JSON.stringify({ type: 'reply.create' }));
+    await tick(30);
+    expect(bodyOf(1).image).toBeUndefined();
+  });
+
+  it('a shared frame is attached only to turns that point at it', async () => {
+    fetchMock.mockImplementation(async () => sse(text('Looks like a form.')));
+    const { s, stt } = await open();
+    s.send(JSON.stringify({ type: 'input.image', image: PIC }));
+    stt.push({ type: 'Turn', turn_order: 0, transcript: 'What do you see on my screen right now?', end_of_turn: true });
+    await tick(40);
+    expect(bodyOf(0).image).toBe(PIC);
+    stt.push({ type: 'Turn', turn_order: 1, transcript: 'I keep avoiding my taxes.', end_of_turn: true });
+    await tick(40);
+    expect(fetchMock.mock.calls.length).toBeGreaterThan(1);
+    expect(bodyOf(fetchMock.mock.calls.length - 1).image).toBeUndefined();
+  });
+
+  it('ignores a picture that is not a small image data URL', async () => {
+    fetchMock.mockImplementation(async () => sse(text('Okay.')));
+    const { s } = await open();
+    s.send(JSON.stringify({ type: 'conversation.message', role: 'user', content: 'look at this', image: 'https://evil.example/a.png' }));
+    s.send(JSON.stringify({ type: 'reply.create' }));
+    await tick(30);
+    expect(bodyOf(0).image).toBeUndefined();
+  });
+});
+
 describe('FastSocket: a lone greeting waits for the rest of the sentence', () => {
   it('isOpenerOnly: one greeting or filler word, never a real answer or a two-word greeting', () => {
     for (const t of ['Hola.', 'Hi,', 'Hello!', 'Um.', 'Okay.']) expect(isOpenerOnly(t), t).toBe(true);

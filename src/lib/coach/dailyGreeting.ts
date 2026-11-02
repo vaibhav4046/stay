@@ -46,7 +46,7 @@ const OPENERS: Record<PartOfDay, ((n: string) => string)[]> = {
   morning: [(n) => `Good morning${n}.`, (n) => `Morning${n}. Glad you are here.`, (n) => `Hello${n}. A fresh morning.`],
   afternoon: [(n) => `Good afternoon${n}.`, (n) => `Hello${n}. Nice to see you.`, (n) => `Hi${n}. Glad you came by.`],
   evening: [(n) => `Good evening${n}.`, (n) => `Hi${n}. Settling in for the evening?`, (n) => `Hello${n}. Nice to see you.`],
-  night: [(n) => `Hi${n}. It is late, so nothing big is needed.`, (n) => `Hello${n}. Quiet hour. No pressure at all.`, (n) => `Hi${n}. Glad you are here, even at this hour.`],
+  night: [(n) => `Hi${n}. It's late. I'm here.`, (n) => `Hello${n}. Quiet hour. No pressure.`, (n) => `Hi${n}. Glad you're here, even at this hour.`],
 };
 
 const WINS: Array<(w: number) => string> = [
@@ -61,6 +61,7 @@ const OPEN_LINES: Array<(t: string) => string> = [
   (t) => `"${t}" is waiting, gently.`,
 ];
 
+const SPOKEN_ASKS = ["What's on your mind?", 'What would help right now?', 'Where do you want to start?'];
 const ASKS = ['What would help today?', 'What would feel kind to start with?', 'What would help most right now?'];
 
 function chooseOptions(part: PartOfDay, openItem: string | undefined): GreetingOption[] {
@@ -94,7 +95,8 @@ export function buildDailyGreeting(input: GreetingInput): DailyGreeting {
   const options = chooseOptions(part, open);
   const ask = pick(ASKS, seed, 3);
   const text = `${lines.join(' ')} ${ask}`;
-  const spoken = quiet ? '' : `${lines.slice(0, 2).join(' ')} ${ask} ${options.map((o) => o.label.toLowerCase()).join(', or ')}?`;
+  // spoken: short, like a friend picking up: one line and one question, never a menu read out loud
+  const spoken = quiet ? '' : `${lines[0]} ${pick(SPOKEN_ASKS, seed, 4)}`;
   return { text, spoken, options };
 }
 

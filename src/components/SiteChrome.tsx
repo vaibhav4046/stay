@@ -4,9 +4,9 @@ import { UrgentHelpButton } from '@/components/UrgentHelpButton';
 
 const ANCHORS = [
   { href: '#watch', label: 'Watch' },
-  { href: '#week', label: 'Your week' },
+  { href: '#how', label: 'How it works' },
   { href: '#measured', label: 'Measured' },
-  { href: '#platforms', label: 'Platforms' },
+  { href: '#trust', label: 'Trust' },
 ];
 
 /** `anchors` adds in-page links on the landing page; privacy and terms keep the plain header. */

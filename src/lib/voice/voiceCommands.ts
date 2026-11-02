@@ -4,10 +4,11 @@
  * toggle quiet mode, change voices, and inspect memory / history completely hands-free.
  */
 import { resolvePersona } from '@/lib/voice/personas';
+import { wantsToShow } from '@/lib/vision/image';
 
 
 /** The panels the conversation can open inline on the home screen. */
-export type PanelId = 'dump' | 'routines' | 'today' | 'parking' | 'reminders' | 'call';
+export type PanelId = 'dump' | 'routines' | 'today' | 'parking' | 'reminders' | 'call' | 'vision';
 
 const PANEL_PATTERNS: Array<[PanelId, RegExp]> = [
   ['dump', /\b(?:(?:open|start|show|do|begin)\s+(?:me\s+)?(?:a\s+|the\s+|my\s+)?brain[\s-]?dump|(?:let'?s|let\s+me|i\s+(?:want|need)\s+to)\s+(?:do\s+(?:a\s+)?)?brain[\s-]?dump)\b/i],
@@ -21,6 +22,7 @@ const PANEL_PATTERNS: Array<[PanelId, RegExp]> = [
 /** Which inline panel a spoken or typed request asks for, if any. */
 export function detectPanel(text: string): PanelId | null {
   const clean = text.toLowerCase().trim();
+  if (wantsToShow(clean)) return 'vision'; // "share my screen", "what do you see"
   return PANEL_PATTERNS.find(([, re]) => re.test(clean))?.[0] ?? null;
 }
 

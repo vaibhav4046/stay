@@ -9,6 +9,24 @@ async function open(page: Page) {
   await page.waitForSelector('[data-testid="hero-orb"] canvas');
 }
 
+test.describe('Landing: five sections', () => {
+  test('the page is exactly five sections, in order, and short enough to read', async ({ page }) => {
+    await open(page);
+    const ids = await page.locator('main [data-landing-section]').evaluateAll((els) => els.map((e) => e.getAttribute('data-landing-section')));
+    expect(ids).toEqual(['1', '2', '3', '4', '5']);
+    for (const id of ['#watch', '#how', '#measured', '#trust']) await expect(page.locator(`main ${id}`), id).toHaveCount(1);
+    const height = await page.evaluate(() => document.documentElement.scrollHeight);
+    expect(height).toBeLessThan(11000); // it was 19,800 px
+  });
+
+  test('the header links jump to the sections', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await open(page);
+    const hrefs = await page.getByTestId('header-anchor').evaluateAll((els) => els.map((e) => e.getAttribute('href')));
+    expect(hrefs).toEqual(['#watch', '#how', '#measured', '#trust']);
+  });
+});
+
 test.describe('Landing: hero', () => {
   test('chips reshape the same dots, and one of them becomes the face, still dots only', async ({ page }) => {
     await open(page);
@@ -81,56 +99,6 @@ test.describe('Landing: demo player', () => {
   });
 });
 
-test.describe('Landing: week explorer (sample data)', () => {
-  test('is labelled as a sample, links to the real History, and every denominator is shown', async ({ page }) => {
-    await open(page);
-    const ex = page.getByTestId('week-explorer');
-    await ex.scrollIntoViewIfNeeded();
-    await expect(ex.getByTestId('sample-badge')).toContainText('Sample');
-    await expect(ex.getByTestId('week-real-link')).toHaveAttribute('href', '/app/history');
-    await expect(ex.getByTestId('explorer-denominator')).toContainText(/\d+ of \d+ logged sessions started/);
-    const dens = await ex.getByTestId('strategy-denominator').allTextContents();
-    expect(dens).toHaveLength(4);
-    for (const d of dens) expect(d).toMatch(/\d+ of \d+ started|No sessions logged yet/);
-  });
-
-  test('range and strategy filters change the numbers; the heatmap and bars open the blocks behind them', async ({ page }) => {
-    await open(page);
-    const ex = page.getByTestId('week-explorer');
-    await ex.scrollIntoViewIfNeeded();
-    const label = () => ex.getByTestId('explorer-denominator').textContent();
-    await ex.getByTestId('range-28').click();
-    const all28 = await label();
-    await ex.getByTestId('range-7').click();
-    const all7 = await label();
-    expect(all7).not.toBe(all28);
-    await ex.getByTestId('range-28').click();
-    await ex.getByTestId('filter-reframing').click();
-    expect(await label()).not.toBe(all28);
-    await expect(ex.getByTestId('filter-reframing')).toHaveAttribute('aria-pressed', 'true');
-    await ex.getByTestId('filter-reframing').click();
-    expect(await label()).toBe(all28);
-
-    await ex.getByRole('gridcell').filter({ hasText: /^[1-9]/ }).first().click();
-    await expect(ex.getByTestId('explorer-inspector')).toContainText(/of \d+ block/);
-
-    // keyboard: one tab stop, arrows move between days
-    const bars = ex.getByTestId('day-bar');
-    await bars.nth(10).focus();
-    await page.keyboard.press('ArrowRight');
-    await expect(bars.nth(11)).toBeFocused();
-    await expect(bars.nth(11)).toHaveAttribute('aria-pressed', 'true');
-    expect(await bars.evaluateAll((els) => els.filter((e) => e.getAttribute('tabindex') === '0').length)).toBe(1);
-  });
-
-  test('says there are no streaks, and a quiet day costs nothing', async ({ page }) => {
-    await open(page);
-    const ex = page.getByTestId('week-explorer');
-    await expect(ex).toContainText(/no counter to protect/i);
-    await expect(page.getByText(/streak (broken|lost)|day streak/i)).toHaveCount(0);
-  });
-});
-
 test.describe('Landing: measured results', () => {
   test('shows Stay slower, ChatGPT voice talking over a pause, and the limits without opening anything', async ({ page }) => {
     await open(page);
@@ -162,68 +130,6 @@ test.describe('Landing: measured results', () => {
     await rm.getByTestId('measured').scrollIntoViewIfNeeded();
     expect(await rm.locator('[data-reveal="armed"]').count()).toBe(0); // nothing is ever collapsed
     await ctx.close();
-  });
-});
-
-test.describe('Landing: scroll story and artifacts', () => {
-  test('the story follows the scroll: the step in the middle is the active one', async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await open(page);
-    const story = page.getByTestId('story');
-    await story.evaluate((el) => el.scrollIntoView({ block: 'start' })); // the top of a section taller than the screen
-    await expect(story.locator('li[aria-current="step"]')).toContainText('You say it, badly');
-    await story.locator('li[data-step="3"]').scrollIntoViewIfNeeded();
-    await page.evaluate(() => window.scrollBy(0, 100));
-    await expect(story.locator('li[aria-current="step"]')).toContainText(/You start, with company|You log what happened|It shrinks the task/);
-    await story.locator('li[data-step="2"]').evaluate((el) => el.scrollIntoView({ block: 'center' }));
-    await expect(story.locator('li[aria-current="step"]')).toContainText('It shrinks the task');
-    await expect(story.locator('.lp-stage-pane[data-on="true"]')).toContainText('Your first step');
-  });
-
-  test('brain dump: move a later item to today', async ({ page }) => {
-    await open(page);
-    const card = page.getByTestId('art-dump');
-    await card.scrollIntoViewIfNeeded();
-    await expect(card).toContainText('Start with this');
-    await card.getByRole('button', { name: 'Move to today: Call mum someday' }).click();
-    await expect(card.getByRole('region', { name: 'Today' })).toContainText('Call mum someday');
-    await expect(card.getByRole('region', { name: 'Later, no pressure' })).not.toContainText('Call mum someday');
-  });
-
-  test('summary preview: sections toggle, sample banner stays, numbers come from the sample records', async ({ page }) => {
-    await open(page);
-    const card = page.getByTestId('art-report');
-    await card.scrollIntoViewIfNeeded();
-    await expect(card).toContainText(/SAMPLE DATA PREVIEW/);
-    await expect(card).toContainText(/Start rate: \d+% \(\d+ of \d+ logged sessions started/);
-    await card.getByLabel('Strategy table').uncheck();
-    await expect(card).not.toContainText('Strategies (observational self-log)');
-    await card.getByLabel('Care context').uncheck();
-    await expect(card.locator('.lp-paper-h').first()).toContainText('1. Task-initiation overview'); // numbering follows what is included
-  });
-
-  test('routine and check-in cards respond', async ({ page }) => {
-    await open(page);
-    const r = page.getByTestId('art-routine');
-    await r.scrollIntoViewIfNeeded();
-    await expect(r.getByTestId('routine-step')).toContainText('Keys, phone, wallet');
-    await r.getByTestId('routine-next').click();
-    await expect(r.getByTestId('routine-step')).toContainText('Bag packed');
-    const c = page.getByTestId('art-reminder');
-    await c.getByRole('button', { name: '10 min' }).click();
-    await c.getByTestId('reminder-set').click();
-    await expect(c.getByTestId('reminder-set')).toHaveAttribute('aria-pressed', 'true');
-    await expect(c).toContainText('in 10 min');
-  });
-
-  test('the voices filter to the native accents', async ({ page }) => {
-    await open(page);
-    const p = page.getByTestId('personas');
-    await p.scrollIntoViewIfNeeded();
-    await expect(p.getByTestId('persona')).toHaveCount(22);
-    await p.getByRole('button', { name: /Native accent/ }).click();
-    await expect(p.getByTestId('persona')).toHaveCount(7);
-    await expect(p).toContainText('Italian accent');
   });
 });
 
@@ -291,7 +197,7 @@ test.describe('Landing: accessibility and policy', () => {
     expect(errors.filter((e) => !/media|video|codec|mp4|DEMUXER|NotSupported/i.test(e))).toEqual([]);
   });
 
-  test('the keyboard can reach and operate the hero chips, the player and the week explorer', async ({ page }) => {
+  test('the keyboard can reach and operate the hero chips and the player', async ({ page }) => {
     await open(page);
     await page.getByTestId('hero-input').focus();
     await page.keyboard.press('Tab'); // the submit link

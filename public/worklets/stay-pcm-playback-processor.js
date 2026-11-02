@@ -39,8 +39,8 @@ class StayPcmPlaybackProcessor extends AudioWorkletProcessor {
     this.muted = false;
     this.ducked = false;
 
-    // Adaptive prebuffer: starts at 100 ms, bounded [80, 400] ms, decays 10 ms per clean second
-    this.prebufferMs = 100;
+    // Adaptive prebuffer: starts at 200 ms (phones on mobile networks need it), bounded [140, 500] ms, decays 10 ms per clean second
+    this.prebufferMs = 200;
     this.prebufferSamples = Math.floor((this.prebufferMs / 1000) * rate);
     this.bufferingWaitSamples = 0;
     this.cleanRenderedSamples = 0;
@@ -324,8 +324,8 @@ class StayPcmPlaybackProcessor extends AudioWorkletProcessor {
           this.underflows++;
           this.fadeCount++;
           this.cleanRenderedSamples = 0;
-          // Adapt prebuffer upward within [80, 400] ms
-          this.prebufferMs = Math.min(400, Math.max(80, Math.round(this.prebufferMs * 1.4)));
+          // Adapt prebuffer upward within [140, 500] ms
+          this.prebufferMs = Math.min(500, Math.max(140, Math.round(this.prebufferMs * 1.4)));
           this.prebufferSamples = Math.floor((this.prebufferMs / 1000) * this.sampleRateVal);
           this.state = 'BUFFERING';
           this.bufferingWaitSamples = 0;
@@ -364,11 +364,11 @@ class StayPcmPlaybackProcessor extends AudioWorkletProcessor {
     this.renderedSamples += renderedThisQuantum;
     if (renderedThisQuantum === quantumLength && this.state === 'PLAYING') {
       this.cleanRenderedSamples += renderedThisQuantum;
-      // Decay prebuffer back by 10 ms per clean rendered second down to 80 ms minimum (§6.5)
+      // Decay prebuffer back by 10 ms per clean rendered second down to 140 ms minimum (§6.5)
       if (this.cleanRenderedSamples >= this.sampleRateVal) {
         this.cleanRenderedSamples -= this.sampleRateVal;
-        if (this.prebufferMs > 80) {
-          this.prebufferMs = Math.max(80, this.prebufferMs - 10);
+        if (this.prebufferMs > 140) {
+          this.prebufferMs = Math.max(140, this.prebufferMs - 10);
           this.prebufferSamples = Math.floor((this.prebufferMs / 1000) * this.sampleRateVal);
         }
       }

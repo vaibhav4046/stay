@@ -1,0 +1,33 @@
+{
+  "gitSha": "24086cf",
+  "base": "http://localhost:3120",
+  "steps": [
+    {
+      "step": "picture",
+      "replyMs": 408,
+      "reply": "I see a draft email to your landlord about lease renewal. Click the text box and type \"the new lease terms.\""
+    },
+    {
+      "step": "screen",
+      "replyMs": 491,
+      "reply": "I see a draft email to your landlord about lease renewal. Click the text box and type \"the new lease terms.\""
+    },
+    {
+      "step": "about-stay",
+      "replyMs": 160,
+      "reply": "Use whatever helps. What I do differently is stay small: I wait for you to finish thinking, give you one step instead of an essay, and keep your timer, list and history together. I don't claim to beat the big assistants at everything."
+    }
+  ],
+  "failures": [],
+  "noPixelsInStorage": true,
+  "chatStatuses": [
+    200,
+    200
+  ],
+  "status": "PASS",
+  "limits": [
+    "One machine, Chromium",
+    "The shared window is a drawn stand-in for the browser screen picker",
+    "A drawn email, not a real person's screen"
+  ]
+}

@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
-import { PERSONAS } from '@/lib/voice/personas';
 import { Hero } from '@/components/landing/Hero';
 import { SmoothScroll } from '@/components/landing/SmoothScroll';
 import { ProofStrip } from '@/components/landing/ProofStrip';
@@ -8,29 +7,25 @@ import { PipelineMotion } from '@/components/landing/PipelineMotion';
 import { FeatureBento } from '@/components/landing/FeatureBento';
 import { BenchmarkBoard } from '@/components/landing/BenchmarkBoard';
 import { DemoPlayer } from '@/components/landing/DemoPlayer';
-import { Story } from '@/components/landing/Story';
-import { WeekExplorer } from '@/components/landing/WeekExplorer';
 import { Results } from '@/components/landing/Results';
-import { Artifacts } from '@/components/landing/Artifacts';
-import { Personas } from '@/components/landing/Personas';
-import { dotGlyph } from '@/components/landing/personaDots';
 import { Compare, NotFor, Platforms, Promises } from '@/components/landing/Sections';
 import { TRANSCRIPT } from '@/components/landing/transcript';
 import './landing.css';
 import './facets.css';
 
 export default function Home() {
-  const glyphs = Object.fromEntries(PERSONAS.map((p) => [p.shape, dotGlyph(p.shape, 130)]));
-
   return (
     <>
       <SmoothScroll />
       <SiteHeader anchors />
       <main>
-        <Hero />
-        <ProofStrip />
+        {/* The page is five sections: 1 hero, 2 the real call, 3 how it works, 4 the proof, 5 trust and start. */}
+        <div data-landing-section="1">
+          <Hero />
+          <ProofStrip />
+        </div>
 
-        <section id="watch" className="lp-night lp-band" aria-labelledby="watch-title" data-testid="demo-video">
+        <section id="watch" data-landing-section="2" className="lp-night lp-band" aria-labelledby="watch-title" data-testid="demo-video">
           <div className="lp-wrap">
             <p className="eyebrow lp-eyebrow-night">The demo</p>
             <h2 id="watch-title" className="section-title lp-night-title max-w-[26ch]">Watch a real call.</h2>
@@ -58,92 +53,60 @@ export default function Home() {
           </div>
         </section>
 
-        <PipelineMotion />
-
-        <FeatureBento />
-
-        <section id="flow" className="lp-section lp-wrap" aria-labelledby="how">
-          <p className="eyebrow">How a session flows</p>
-          <h2 id="how" className="section-title max-w-[22ch]">
-            Five moves, about two minutes to start
-          </h2>
-          <Story />
-          <p className="meta mt-10 max-w-[62ch]">
-            Speak in your own language. We tested live voice with synthesized speech: 23 languages were heard correctly and 8 were not; AssemblyAI documents six (English, Spanish, French, German, Italian, Portuguese), and the fast voice speaks those six. Others use the standard voice or your browser&apos;s speech recognition.
-          </p>
+        <section id="how" data-landing-section="3" className="lp-section lp-wrap" aria-labelledby="pipe-title">
+          <PipelineMotion />
+          <FeatureBento />
         </section>
 
-        <section id="artifacts" className="lp-section lp-tint" aria-labelledby="art-title">
+        <section id="measured" data-landing-section="4" className="lp-night lp-band" aria-labelledby="bench-title" data-testid="measured">
           <div className="lp-wrap">
-            <p className="eyebrow">What you get</p>
-            <h2 id="art-title" className="section-title max-w-[26ch]">
-              Small things you can hold, not a dashboard to maintain
-            </h2>
-            <p className="mt-3 max-w-[62ch] text-ink-2">
-              These four are interactive, built from the same data shapes the app uses and filled with invented examples. Nothing here is a real person&apos;s record.
-            </p>
-            <Artifacts />
-            <h3 className="sub-title mt-16">Twenty-two voices, each with a face made of dots</h3>
-            <p className="mt-2 max-w-[62ch] text-ink-2">While you are talking to Stay, ask for a voice by name, or say &ldquo;surprise me&rdquo;. Each takes on its own orb shape.</p>
-            <div className="mt-6">
-              <Personas personas={PERSONAS} glyphs={glyphs} />
-            </div>
-          </div>
-        </section>
+            <BenchmarkBoard />
 
-        <section id="week" className="lp-section lp-wrap" aria-labelledby="week-title">
-          <p className="eyebrow">Your week</p>
-          <h2 id="week-title" className="section-title max-w-[24ch]">
-            See what actually helps you start
-          </h2>
-          <p className="mt-3 max-w-[62ch] text-ink-2">
-            Stay logs every block with the exact count behind it, so you can see your own patterns and decide for yourself. No streaks, no score. Explore a sample below.
-          </p>
-          <div className="mt-8">
-            <WeekExplorer />
-          </div>
-        </section>
-
-        <BenchmarkBoard />
-
-        <section id="measured" className="lp-night lp-band" aria-labelledby="measured-title" data-testid="measured">
-          <div className="lp-wrap">
-            <p className="eyebrow lp-eyebrow-night">Measured, with the limits</p>
-            <h2 id="measured-title" className="section-title lp-night-title max-w-[24ch]">
-              What we tested
-            </h2>
+            <div className="mt-20">
+              <p className="eyebrow lp-eyebrow-night">Measured, with the limits</p>
+              <h3 id="measured-title" className="section-title lp-night-title max-w-[24ch]">What we tested</h3>
             <ul className="lp-night-copy mt-6 max-w-[66ch] space-y-3">
               <li><strong className="lp-night-strong">Safety first.</strong> Unit and browser suites (recorded in <code>docs/evidence/phase0-vitest.txt</code> and <code>docs/evidence/phase0-playwright.txt</code>) verify crisis wording in more than 30 languages against real phrasings and ordinary sentences that must not trigger, spacing-evasion protection, the medication boundary, and the rule that voice never deletes your data.</li>
               <li><strong className="lp-night-strong">Patience.</strong> A simulated speaker trailed off mid-sentence for 2.3 seconds, in several accents with room noise. Stay waited in every run. The managed voice it replaced talked over the pause (<code>docs/BENCHMARK_REAL_PRODUCTS_2026-10-19.md</code>).</li>
               <li><strong className="lp-night-strong">Honesty.</strong> Every number below comes from a script in the repository (<code>docs/evidence/</code>), and the tests that found our own mistakes are in it too.</li>
             </ul>
-            <div className="mt-12">
-              <Results />
+              <div className="mt-10">
+                <Results />
+              </div>
+            </div>
+
+            <div className="mt-20" data-testid="compare">
+              <p className="eyebrow lp-eyebrow-night">Alternatives</p>
+              <h3 id="compare" className="section-title lp-night-title max-w-[24ch]">Why not just use something else?</h3>
+              <div className="mt-6">
+                <Compare />
+              </div>
             </div>
           </div>
         </section>
 
-        <section className="lp-section lp-wrap" aria-labelledby="compare" data-testid="compare">
-          <p className="eyebrow">Alternatives</p>
-          <h2 id="compare" className="section-title max-w-[24ch]">
-            Why not just use something else?
-          </h2>
-          <Compare />
-        </section>
-
-        <section className="lp-section lp-wrap" aria-labelledby="trust">
+        <section id="trust" data-landing-section="5" className="lp-section lp-wrap" aria-labelledby="trust-title">
           <p className="eyebrow">Trust</p>
-          <h2 id="trust" className="section-title max-w-[22ch]">
-            Built to be trusted with a hard day
-          </h2>
+          <h2 id="trust-title" className="section-title max-w-[22ch]">Built to be trusted with a hard day</h2>
           <Promises />
-        </section>
 
-        <section className="lp-section lp-wrap" aria-labelledby="evidence" data-testid="evidence">
-          <p className="eyebrow">Evidence</p>
-          <h2 id="evidence" className="section-title max-w-[26ch]">
-            What the research says, and what it does not
-          </h2>
+          <div className="mt-16 grid gap-10 lg:grid-cols-2">
+            <div id="platforms-block">
+              <h3 id="platforms-title" className="sub-title">What exists today, and what does not</h3>
+              <p className="mt-3 max-w-[62ch] text-ink-2">A tick here means it is in the repository and works. Anything else says so plainly.</p>
+              <Platforms />
+            </div>
+            <div data-testid="not-for-block">
+              <h3 id="notfor" className="sub-title">Who Stay is not for</h3>
+              <div className="mt-4">
+                <NotFor />
+              </div>
+            </div>
+          </div>
+
+          <details className="lp-details mt-14" data-testid="evidence">
+            <summary>What the research says, and what it does not</summary>
+            <div className="lp-details-body">
           <div className="mt-6 max-w-[66ch] space-y-4 text-ink-2">
             <p>
               Skills programmes for adult ADHD that teach task breakdown, planning and time management have randomised trials behind them:{' '}
@@ -158,28 +121,10 @@ export default function Home() {
               Stay itself has not been trialled. We think it is plausible, we have not shown it works, and it is built so you can see your own start rate, with exact counts, and decide for yourself.
             </p>
           </div>
-        </section>
+            </div>
+          </details>
 
-        <section id="platforms" className="lp-section lp-tint" aria-labelledby="platforms-title">
-          <div className="lp-wrap">
-            <p className="eyebrow">Where it runs</p>
-            <h2 id="platforms-title" className="section-title max-w-[26ch]">
-              What exists today, and what does not
-            </h2>
-            <p className="mt-3 max-w-[62ch] text-ink-2">A tick here means it is in the repository and works. Anything else says so plainly.</p>
-            <Platforms />
-          </div>
-        </section>
-
-        <section className="lp-section lp-wrap" aria-labelledby="notfor" data-testid="not-for">
-          <p className="eyebrow">Honest edges</p>
-          <h2 id="notfor" className="section-title max-w-[22ch]">
-            Who Stay is not for
-          </h2>
-          <NotFor />
-        </section>
-
-        <section className="lp-wrap lp-cta-wrap">
+          <div className="lp-cta-wrap mt-14">
           <div className="lp-cta lp-night">
             <div>
               <h2 className="font-display text-2xl font-semibold leading-tight sm:text-3xl">Ready when you are.</h2>
@@ -189,6 +134,8 @@ export default function Home() {
               Open Stay
             </Link>
           </div>
+          </div>
+
         </section>
       </main>
       <SiteFooter />

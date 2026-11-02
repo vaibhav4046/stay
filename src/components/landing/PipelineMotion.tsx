@@ -4,7 +4,7 @@ const css = (v: Record<string, string | number>) => v as React.CSSProperties;
 
 export function PipelineMotion() {
   return (
-    <section id="how-it-works" className="lp-section lp-wrap" aria-labelledby="pipe-title" data-testid="pipeline">
+    <div id="how-it-works" data-testid="pipeline">
       <p className="eyebrow">How a turn works</p>
       <h2 id="pipe-title" className="section-title max-w-[26ch]">You talk. Stay waits. Stay answers. You can cut in at any time.</h2>
       <p className="mt-3 max-w-[62ch] text-ink-2">Everything below runs in your browser tab, with AssemblyAI doing the listening and the speaking.</p>
@@ -60,6 +60,6 @@ export function PipelineMotion() {
           <p className="pipe-copy">Talk over it and it stops and listens.</p>
         </li>
       </ol>
-    </section>
+    </div>
   );
 }

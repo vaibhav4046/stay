@@ -53,9 +53,9 @@ export function FeatureBento() {
     },
   ];
   return (
-    <section id="features" className="lp-section lp-wrap" aria-labelledby="bento-title" data-testid="features">
+    <div id="features" className="mt-20" data-testid="features">
       <p className="eyebrow">What it does</p>
-      <h2 id="bento-title" className="section-title max-w-[24ch]">A friend on the line, not a form to fill in</h2>
+      <h3 id="bento-title" className="section-title max-w-[24ch]">A friend on the line, not a form to fill in</h3>
       <ul className="bento mt-9">
         {cards.map((c) => (
           <li key={c.id} className={`facet bento-card${c.wide ? ' bento-wide' : ''}`} data-testid={`feature-${c.id}`}>
@@ -95,11 +95,11 @@ export function FeatureBento() {
                 </svg>
               )}
             </div>
-            <h3 className="bento-title">{c.title}</h3>
+            <h4 className="bento-title">{c.title}</h4>
             <p className="bento-body">{c.body}</p>
           </li>
         ))}
       </ul>
-    </section>
+    </div>
   );
 }

@@ -23,8 +23,8 @@ export function BenchmarkBoard() {
   const langP = lang[1] ? lang[0] / lang[1] : 0;
 
   return (
-    <section id="benchmarks" className="lp-night lp-band" aria-labelledby="bench-title" data-testid="benchmarks">
-      <div className="lp-wrap">
+    <div id="benchmarks" data-testid="benchmarks">
+      <div>
         <p className="eyebrow lp-eyebrow-night">Benchmarks</p>
         <h2 id="bench-title" className="section-title lp-night-title max-w-[28ch]">Measured, not claimed</h2>
         <p className="lp-night-copy mt-3 max-w-[64ch]">
@@ -108,6 +108,6 @@ export function BenchmarkBoard() {
           </article>
         </div>
       </div>
-    </section>
+    </div>
   );
 }

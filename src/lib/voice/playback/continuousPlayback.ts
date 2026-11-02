@@ -48,7 +48,7 @@ export class ContinuousPcmPlayer {
   private telemetry: PlaybackTelemetry = {
     state: 'STOPPED',
     bufferedMs: 0,
-    prebufferMs: 100,
+    prebufferMs: 200,
     backpressure: false,
     renderedSamples: 0,
     underflows: 0,
@@ -104,7 +104,7 @@ export class ContinuousPcmPlayer {
             this.telemetry = {
               state: msg.state,
               bufferedMs: msg.bufferedMs,
-              prebufferMs: msg.prebufferMs ?? 100,
+              prebufferMs: msg.prebufferMs ?? 200,
               backpressure: Boolean(msg.backpressure || msg.bufferedMs > 20000),
               renderedSamples: msg.renderedSamples,
               underflows: msg.underflows ?? msg.underflowCount ?? 0,

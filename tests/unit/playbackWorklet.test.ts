@@ -160,11 +160,11 @@ describe('Gate 2 — StayPcmPlaybackProcessor worklet & heard/unheard split', ()
           sessionEpoch: 1,
           replyEpoch: 1,
           seq: 0,
-          samples: new Float32Array(chunkSamples100ms * 2).fill(0.3),
+          samples: new Float32Array(chunkSamples100ms * 3).fill(0.3), // 300 ms: past the 200 ms prebuffer
         },
       });
       // Drain until underflow
-      for (let q = 0; q < 50; q++) {
+      for (let q = 0; q < 80; q++) {
         proc.process([], [[new Float32Array(quantumSamples)]], {});
       }
       expect(proc.underflowCount).toBeGreaterThanOrEqual(1);

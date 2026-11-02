@@ -6,9 +6,13 @@ import { llmHeaders } from '@/lib/llm/provider';
 import { openLlmStream } from '@/lib/llm/stream';
 import { resolveDeterministicVoice, createDeterministicSseResponse } from '@/lib/voice/deterministicVoiceFallback';
 import { attachGuardHeaders, guardPaidRoute, readBoundedJson } from '@/lib/security/apiGuard';
+import { answerAboutStay } from '@/lib/voice/aboutStay';
+import { MAX_IMAGE_CHARS, VISION_SYSTEM, isImageDataUrl, withImage } from '@/lib/vision/image';
 
 const MAX_HISTORY_TURNS = 20;
 const MAX_HISTORY_BYTES = 8_192;
+/** A request may carry one shrunk picture; the history itself stays small. */
+const MAX_BODY_BYTES = MAX_IMAGE_CHARS + 40_000;
 
 const ClientMessageSchema = z.object({
   role: z.enum(['user', 'assistant', 'tool']),
@@ -28,6 +32,8 @@ const BodySchema = z.object({
   messages: z.array(ClientMessageSchema).min(1).max(MAX_HISTORY_TURNS),
   withTools: z.boolean().optional(),
   context: ContextSchema,
+  /** One picture to look at this turn (a screen or camera frame, or a file): a small JPEG/PNG/WebP data URL. Never stored. */
+  image: z.string().max(MAX_IMAGE_CHARS).optional(),
 });
 
 /** Warm-up: the voice session calls this when it starts so the first real turn does not pay for a cold function. */
@@ -132,7 +138,8 @@ export async function POST(req: NextRequest) {
   const guard = guardPaidRoute(req, 'chat');
   if (!guard.ok && guard.response) return guard.response;
 
-  const bodyRes = await readBoundedJson(req, 32_768);
+  // text turns stay under 32 KB; only a request that says it carries a picture may be larger
+  const bodyRes = await readBoundedJson(req, req.headers.get('x-stay-image') === '1' ? MAX_BODY_BYTES : 32_768);
   if (!bodyRes.ok) return bodyRes.response;
 
   const parsed = BodySchema.safeParse(bodyRes.data);
@@ -145,7 +152,10 @@ export async function POST(req: NextRequest) {
       guard
     );
   }
-  const { messages: clientMessages, withTools, context } = parsed.data;
+  const { messages: clientMessages, withTools, context, image } = parsed.data;
+  if (image !== undefined && !isImageDataUrl(image)) {
+    return attachGuardHeaders(NextResponse.json({ error: 'Bad picture: send a small JPEG, PNG or WebP data URL.' }, { status: 400 }), guard);
+  }
 
   const totalHistoryBytes = Buffer.byteLength(
     clientMessages.map((m) => m.content || '').join('\n'),
@@ -169,14 +179,20 @@ export async function POST(req: NextRequest) {
     return attachGuardHeaders(NextResponse.json({ safety: 'medication' }), guard);
   }
 
+  // a question about Stay itself gets its straight answer at once (no model, no delay, nothing invented)
+  const about = image ? null : answerAboutStay(lastUser);
+  if (about) return createDeterministicSseResponse({ text: about });
+
   const serverSystemPrompt = buildServerVoiceSystemPrompt(context);
+  // a turn with a picture: the vision model looks at it, no app tools, and the picture goes nowhere else
   const outboundMessages = [
-    { role: 'system' as const, content: serverSystemPrompt },
-    ...clientMessages,
+    { role: 'system' as const, content: image ? `${serverSystemPrompt}
+${VISION_SYSTEM}` : serverSystemPrompt },
+    ...(image ? withImage(clientMessages, image) : clientMessages),
   ];
 
   const tools =
-    withTools === false
+    withTools === false || image
       ? undefined
       : [
           {
@@ -191,10 +207,10 @@ export async function POST(req: NextRequest) {
   const r = await openLlmStream(req, {
     messages: outboundMessages,
     tools,
-    maxTokens: 110, // room for 2 to 4 spoken sentences; the first sentence still streams to the voice at once
-    temperature: 0.85, // varied wording, so replies do not sound templated
-    serverModel: process.env.GROQ_VOICE_MODEL || 'openai/gpt-oss-120b',
-    timeoutMs: 6000,
+    maxTokens: image ? 140 : 110, // room for 2 to 4 spoken sentences; the first sentence still streams to the voice at once
+    temperature: image ? 0.6 : 0.85, // varied wording, so replies do not sound templated
+    serverModel: image ? process.env.GROQ_VISION_MODEL || 'qwen/qwen3.8-27b' : process.env.GROQ_VOICE_MODEL || 'openai/gpt-oss-120b',
+    timeoutMs: image ? 12_000 : 6000,
   });
   const hdr = llmHeaders({
     ok: Boolean(r.res),
@@ -203,6 +219,9 @@ export async function POST(req: NextRequest) {
     error: r.error,
     userKeyError: r.userKeyError,
   });
+  if (!r.res && image) {
+    return attachGuardHeaders(NextResponse.json({ error: 'vision_unavailable' }, { status: 503, headers: hdr }), guard);
+  }
   if (!r.res) {
     const isExplicitConfigError =
       r.userKeyError === 'invalid_key' || r.userKeyError === 'bad_endpoint';

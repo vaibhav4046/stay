@@ -110,6 +110,53 @@ page.on('console', (m) => m.type() === 'error' && consoleErrors.push(m.text().sl
 
 const connectWarnings = []; // the app retries a connection that fails before it is ready; what it said when it did
 page.on('console', (m) => m.type() === 'warning' && /connection failed/.test(m.text()) && connectWarnings.push(m.text().slice(0, 200)));
+const DEMO = Boolean(process.env.DEMO); // DEMO=1: also record Stay's audio and add the picture and screen steps for the demo video
+if (DEMO) {
+  await page.addInitScript(() => {
+    // every AudioContext that plays to the speakers also feeds a recorder, so the demo has Stay's real voice
+    window.__aud = { list: [] };
+    const orig = AudioNode.prototype.connect;
+    const recs = new WeakMap();
+    AudioNode.prototype.connect = function (dest, ...rest) {
+      const r = orig.call(this, dest, ...rest);
+      try {
+        if (dest && dest === this.context.destination) {
+          let md = recs.get(this.context);
+          if (!md) {
+            md = this.context.createMediaStreamDestination();
+            recs.set(this.context, md);
+            const rec = new MediaRecorder(md.stream, { mimeType: 'audio/webm;codecs=opus' });
+            const entry = { chunks: [], startedAt: Date.now(), rec };
+            rec.ondataavailable = (e) => e.data.size && entry.chunks.push(e.data);
+            rec.start(500);
+            window.__aud.list.push(entry);
+          }
+          orig.call(this, md);
+        }
+      } catch { /* recording only */ }
+      return r;
+    };
+    // the shared window: a drawn unfinished email, since the browser's screen picker cannot be driven
+    navigator.mediaDevices.getDisplayMedia = async () => {
+      const c = document.createElement('canvas');
+      c.width = 1280; c.height = 720;
+      const g = c.getContext('2d');
+      const draw = () => {
+        g.fillStyle = '#fff'; g.fillRect(0, 0, 1280, 720);
+        g.fillStyle = '#111'; g.font = '40px Arial';
+        g.fillText('To: landlord@example.com', 60, 120);
+        g.fillText('Subject: Lease renewal (DRAFT)', 60, 200);
+        g.fillStyle = '#444'; g.font = '34px Arial'; g.fillText('Hi, I wanted to ask about', 60, 300);
+        g.fillStyle = '#2563eb'; g.fillRect(60, 500, 240, 64);
+        g.fillStyle = '#fff'; g.font = '30px Arial'; g.fillText('Send', 120, 545);
+      };
+      draw();
+      setInterval(draw, 200);
+      return c.captureStream(5);
+    };
+  });
+}
+const clipLog = [];
 const fastLog = [];
 page.on('console', (m) => {
   const txt = m.text();
@@ -171,7 +218,10 @@ async function waitFor(pred, timeoutMs, label) {
     await sleep(40);
   }
 }
-const say = (name) => page.evaluate((b) => window.__say(b), clips[name].b64);
+const say = (name) => {
+  clipLog.push({ name, at: Date.now() });
+  return page.evaluate((b) => window.__say(b), clips[name].b64);
+};
 const results = { gitSha: sha, tier: 'real provider + real browser; synthetic speaker injected as the microphone', base: BASE, steps: [], failures: [] };
 const log = (msg) => console.log(msg);
 
@@ -277,7 +327,46 @@ try {
       await page.keyboard.press('Enter');
       await page.waitForTimeout(2200);
     }
-    writeFileSync(`${OUT}/captions.json`, JSON.stringify({ recStart, callEndAt, caps: await page.evaluate(() => window.__stayCaps) }, null, 2));
+    let happyAt = null;
+    if (DEMO) {
+      // show Stay the screen, ask about it, then ask why anyone would use it
+      const typeAndSend = async (text, settle) => {
+        await page.waitForTimeout(1500);
+        await page.getByTestId('task-input').pressSequentially(text, { delay: 50 });
+        await page.keyboard.press('Enter');
+        await page.waitForTimeout(settle);
+      };
+      await typeAndSend('share my screen', 2000);
+      await page.getByTestId('share-screen').click();
+      await page.getByTestId('share-bar').waitFor();
+      await page.waitForFunction(() => document.querySelector('[data-testid="share-preview"]')?.readyState >= 2);
+      await typeAndSend('Can you see my screen? What is half finished?', 3500);
+      await typeAndSend('Why should I use you and not ChatGPT?', 3500);
+      await page.getByTestId('stop-share').click();
+      happyAt = Date.now();
+      await page.waitForTimeout(2500);
+    }
+    writeFileSync(`${OUT}/captions.json`, JSON.stringify({ recStart, callEndAt, happyAt, caps: await page.evaluate(() => window.__stayCaps) }, null, 2));
+    if (DEMO) {
+      mkdirSync(`${OUT}/demo`, { recursive: true });
+      const audio = await page.evaluate(async () => {
+        const out = [];
+        for (const e of window.__aud.list) {
+          if (e.rec.state !== 'inactive') e.rec.stop();
+          await new Promise((r) => setTimeout(r, 500));
+          const buf = await new Blob(e.chunks, { type: 'audio/webm' }).arrayBuffer();
+          let bin = '';
+          const u8 = new Uint8Array(buf);
+          for (let i = 0; i < u8.length; i += 0x8000) bin += String.fromCharCode(...u8.subarray(i, i + 0x8000));
+          out.push({ startedAt: e.startedAt, b64: btoa(bin) });
+        }
+        return out;
+      });
+      const files = [];
+      audio.forEach((a, i) => { const f = `demo/page-audio-${i}.webm`; writeFileSync(`${OUT}/${f}`, Buffer.from(a.b64, 'base64')); files.push({ file: f, startedAt: a.startedAt }); });
+      const speaker = clipLog.map((c) => { const f = `demo/speaker-${c.name}.wav`; writeFileSync(`${OUT}/${f}`, Buffer.from(clips[c.name].b64, 'base64')); return { file: f, at: c.at }; });
+      writeFileSync(`${OUT}/demo/audio-meta.json`, JSON.stringify({ recStart, pageAudio: files, speaker }, null, 2));
+    }
   }
 } catch (e) {
   results.failures.push(String(e.message || e));

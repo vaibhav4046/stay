@@ -14,29 +14,6 @@ export function DotIcon({ shape, size = 44 }: { shape: string; size?: number }) 
   );
 }
 
-const DAYS = [
-  { shape: 'wave', title: 'It waits through your pauses', body: 'You trail off. You say um. You restart. Stay holds the thought for a couple of seconds instead of answering half a sentence, and stops talking the moment you do.' },
-  { shape: 'list', title: 'Brain dump', body: 'Say everything at once, in any order. Stay picks the one thing to start, a few for today, and puts the rest away. Nothing is ever overdue.' },
-  { shape: 'stairs', title: 'Routines, one step at a time', body: 'Morning, leaving the house, winding down, or your own. One big step on screen, its own small timer, skip any of it.' },
-  { shape: 'clock', title: 'Check-ins that find you', body: '"Check in with me in 20 minutes." A soft chime and a line from Stay, even if the tab is in the background.' },
-  { shape: 'target', title: 'Short blocks first', body: 'Ten minutes by default, longer when you are in flow. All-day mode keeps Stay beside you for hours, not minutes.' },
-  { shape: 'bulb', title: 'Park it', body: '"Park it: call the dentist." The thought is saved, out of your head, and you are back on the task.' },
-];
-
-export function Days() {
-  return (
-    <ul className="lp-days-grid">
-      {DAYS.map((d) => (
-        <li key={d.title} className="card lp-feature">
-          <DotIcon shape={d.shape} />
-          <h3 className="card-title">{d.title}</h3>
-          <p className="text-ink-2">{d.body}</p>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 const COMPARE = [
   { who: 'Goblin Tools', is: 'A free, typed task breaker.', stay: 'Spoken, with a timer and someone beside you while you do it.' },
   { who: 'Tiimo and planners', is: 'A visual day you have to set up and keep up.', stay: 'No setup. You say what is in the way and it gives you the next step.' },
@@ -124,48 +101,6 @@ export function NotFor() {
         Free to use today. Running it costs real money per hour of talking (speech-to-text, speech and a language model), which is why you can bring your own keys. The next step is a small pilot with a university disability service or ADHD coaches, to measure what matters: whether people actually start.
       </p>
     </>
-  );
-}
-
-const RECEIPTS = [
-  {
-    date: '18 Oct 2026',
-    title: 'A verification pass found nine things wrong',
-    body: 'The crisis detector missed 25 of 27 genuine phrasings and every non-English one. Six of eight offered voices did not exist. New users were shown made-up memories. All rewritten or removed, with tests that include ordinary sentences that must not trigger.',
-  },
-  {
-    date: '18 Oct 2026',
-    title: 'Voice lag, found and cut',
-    body: 'Sending a partial turn-detection setting raised reply lag from about 1.4 s to about 3.5 s, so it was removed. The greeting went from 11 s of speech to about 2.2 s, and 18 tools became one. That day no latency figure was claimed, because the provider’s response time was too uneven to quote.',
-  },
-  {
-    date: '19 Oct 2026',
-    title: 'The face',
-    body: 'While Stay speaks, the dots can gather into a calm, dot-drawn person whose mouth follows the real reply audio. Headless Chromium held 60 fps in every phase. Design and limits: docs/THERAPIST_ORB.md.',
-  },
-  {
-    date: '19 Oct 2026',
-    title: 'Side by side with ChatGPT voice and Gemini Live',
-    body: 'Stay came out slowest on typical reply time and best at waiting through a pause. The run also caught the memory feature saving facts nobody said; that is fixed.',
-  },
-  {
-    date: '01 Nov 2026',
-    title: 'Protocol and dark-mode audit',
-    body: 'A live browser audit caught a retired TTS query parameter (voice= instead of voice_id=, error 3006) causing silent fallback to the managed agent, and white-on-white chat bubbles in dark OS mode (1.05:1 contrast). Both are fixed and locked by contract and contrast tests (docs/evidence/phase0-browser-audit.json).',
-  },
-];
-
-export function Receipts() {
-  return (
-    <ol className="lp-timeline" data-testid="receipts">
-      {RECEIPTS.map((r) => (
-        <li key={r.title}>
-          <time className="eyebrow tnum">{r.date}</time>
-          <h3 className="card-title">{r.title}</h3>
-          <p className="text-ink-2">{r.body}</p>
-        </li>
-      ))}
-    </ol>
   );
 }
 

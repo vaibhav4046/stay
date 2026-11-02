@@ -39,6 +39,11 @@ import { refreshLearnings } from '@/lib/coach/learnings';
 import { loadInstructions, styleLine } from '@/lib/coach/customInstructions';
 import { TodayCard } from '@/components/TodayCard';
 import { TalkButton } from '@/components/voice/TalkButton';
+import { ShareBar } from '@/components/vision/ShareBar';
+import { ShowStayPanel } from '@/components/vision/ShowStayPanel';
+import { frameFromVideo, imageFromFile, startShare, type ShareMode } from '@/lib/vision/capture';
+import { looksVisual, wantsToShow } from '@/lib/vision/image';
+import { answerAboutStay } from '@/lib/voice/aboutStay';
 import { CallLaterPanel, IncomingCallAlert, useIncomingCall } from '@/components/voice/CallLater';
 import { LiveChatBox } from '@/components/voice/LiveChatBox';
 import { TransportBadge } from '@/components/voice/TransportBadge';
@@ -134,7 +139,7 @@ export function StayHome({
   const [lastOutcome, setLastOutcome] = useState<SessionOutcome | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<string | null>(null);
-  const [sheet, setSheet] = useState<null | 'menu' | 'memory' | 'voice' | 'parking' | 'dump' | 'routine' | 'remind' | 'today' | 'history' | 'call'>(null);
+  const [sheet, setSheet] = useState<null | 'menu' | 'memory' | 'voice' | 'parking' | 'dump' | 'routine' | 'remind' | 'today' | 'history' | 'call' | 'vision'>(null);
   const [routineId, setRoutineId] = useState<string | null>(null);
   const routineByVoice = useRef(false);
   /** a finished routine or a saved brain dump has changed the list: show it in the chat when that panel closes */
@@ -227,8 +232,19 @@ export function StayHome({
     [plan, isLoggingOutcome, onLogSession, usedVoice, careContext, minutes, elapsed, say],
   );
 
+  // ---- vision: show Stay a screen, the camera or a picture ----
+  const [share, setShare] = useState<{ mode: ShareMode; stream: MediaStream } | null>(null);
+  const [glance, setGlance] = useState(false);
+  const [pendingPicture, setPendingPicture] = useState<string | null>(null);
+  const shareVideoRef = useRef<HTMLVideoElement | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const lookNowRef = useRef<(text?: string) => void>(() => undefined);
+  const shareRef = useRef(share);
+  shareRef.current = share;
+
   /** The conversation asks for a panel (by voice or typing): it appears in the chat, not over it. */
   const openPanel = useCallback((p: PanelId) => {
+    if (p === 'vision' && shareRef.current) return lookNowRef.current(); // already sharing: "what do you see" means look now
     if (p === 'parking') setParked(loadParked());
     if (p === 'today') setToday(loadToday());
     if (p === 'routines') {
@@ -311,6 +327,83 @@ export function StayHome({
   });
   const voiceRef = useRef(voice);
   voiceRef.current = voice;
+
+  // ---- vision handlers (the voice hook is needed for these, so they sit after it) ----
+  const stopSharing = useCallback(() => {
+    shareRef.current?.stream.getTracks().forEach((t) => t.stop());
+    setShare(null);
+    setGlance(false);
+    voiceRef.current?.setVisionFrame(null);
+  }, []);
+
+  const startSharing = useCallback(
+    async (mode: ShareMode) => {
+      try {
+        const stream = await startShare(mode); // a tap opened this: the browser shows its own picker or permission prompt
+        shareRef.current?.stream.getTracks().forEach((t) => t.stop());
+        stream.getVideoTracks()[0]?.addEventListener('ended', () => stopSharing()); // the browser's own "Stop sharing" button
+        setShare({ mode, stream });
+        setSheet(null);
+        say(mode === 'screen' ? 'Sharing your screen. Ask me anything about it.' : 'Camera is on. Show me.');
+      } catch {
+        say('Nothing is shared. You can try again any time.'); // refused or cancelled: that is a fine answer
+      }
+    },
+    [say, stopSharing],
+  );
+
+  const sendPicture = useCallback((text: string, image: string) => {
+    setPendingPicture(null);
+    voiceRef.current.sendUserTextMessage(text, { image, skipLocalPlan: true });
+  }, []);
+
+  const lookNow = useCallback(
+    (text = 'Look at my screen. What is the next small step?') => {
+      const frame = frameFromVideo(shareVideoRef.current);
+      if (!frame) return say('I cannot see a picture yet. Give it a second.');
+      sendPicture(text, frame);
+    },
+    [say, sendPicture],
+  );
+  lookNowRef.current = lookNow;
+
+  const onPictureChosen = useCallback(
+    async (file: File | undefined) => {
+      if (!file) return;
+      try {
+        setPendingPicture(await imageFromFile(file));
+        setSheet(null);
+        inputRef.current?.focus();
+      } catch (e) {
+        say((e as Error).message === 'not_an_image' ? 'That is not a picture.' : (e as Error).message === 'too_big' ? 'That picture is too big. Try a smaller one.' : 'I could not read that picture.');
+      }
+    },
+    [say],
+  );
+
+  // while something is shared and the voice is live, keep the voice's newest frame fresh so "what do you see" has something to look at
+  useEffect(() => {
+    if (!share || !voice.isConnected) return;
+    const send = () => voiceRef.current.setVisionFrame(frameFromVideo(shareVideoRef.current));
+    send();
+    const id = window.setInterval(send, 3000);
+    return () => {
+      window.clearInterval(id);
+      voiceRef.current.setVisionFrame(null);
+    };
+  }, [share, voice.isConnected]);
+
+  // opt-in glance: every two minutes Stay looks once and says something only if it helps
+  useEffect(() => {
+    if (!share || !glance) return;
+    const id = window.setInterval(() => {
+      const frame = frameFromVideo(shareVideoRef.current);
+      if (frame) void voiceRef.current.askAboutPicture('', frame, { glance: true });
+    }, 120_000);
+    return () => window.clearInterval(id);
+  }, [share, glance]);
+
+  useEffect(() => () => shareRef.current?.stream.getTracks().forEach((t) => t.stop()), []);
   // saved values may be a bare 'en' while the list holds 'en-GB': match on the base language so the select never shows blank
   const langValue =
     SUPPORTED_LANGUAGES.find((l) => l.code === voice.selectedLanguage)?.code ??
@@ -498,7 +591,15 @@ export function StayHome({
       clearInput();
       setShrinkDepth(0);
       orb.feed(t, 'typed');
-      if (isSmallTalk(t)) {
+      // a picture with the message (chosen, or the shared screen when the words point at it): Stay looks, no plan card
+      const frame = pendingPicture ?? (share && looksVisual(t) ? frameFromVideo(shareVideoRef.current) : null);
+      if (frame) return sendPicture(t, frame);
+      if (wantsToShow(t)) {
+        if (share) return lookNow(t);
+        setSheet('vision');
+        return say('Choose what to show Stay');
+      }
+      if (isSmallTalk(t) || answerAboutStay(t)) {
         voiceRef.current.sendUserTextMessage(t);
         return;
       }
@@ -511,7 +612,7 @@ export function StayHome({
       voiceRef.current.sendUserTextMessage(t, { skipLocalPlan: true });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [requestPlan, clearInput],
+    [requestPlan, clearInput, pendingPicture, share, sendPicture, lookNow, say],
   );
 
   // A task typed on the landing page arrives here through URL query, sessionStorage, or localStorage
@@ -834,7 +935,7 @@ export function StayHome({
     !!note ||
     incoming.ringing ||
     (sheet !== null && sheet !== 'menu' && sheet !== 'voice');
-  const showVoiceControls = !input.trim() || voice.isConnected;
+  const showVoiceControls = (!input.trim() && !pendingPicture) || voice.isConnected;
   const stagePx = isDebug ? 240 : 176;
 
   return (
@@ -1144,6 +1245,7 @@ export function StayHome({
             )}
             {sheet === 'history' && <HistoryPanel sessions={sessions} onClose={() => setSheet(null)} onOpenFull={() => router.push('/app/history')} />}
             {sheet === 'call' && <CallLaterPanel onClose={() => setSheet(null)} />}
+            {sheet === 'vision' && <ShowStayPanel onShare={(m) => void startSharing(m)} onPicture={() => fileRef.current?.click()} onClose={() => setSheet(null)} />}
           {sheet === 'routine' && (
             <RoutineSheet
               initialId={routineId}
@@ -1218,6 +1320,18 @@ export function StayHome({
 
       {/* The composer: type, talk, or call. Nothing else. */}
       <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 pb-1 sm:bottom-3" data-testid="composer">
+        {share && <ShareBar mode={share.mode} stream={share.stream} videoRef={shareVideoRef} glance={glance} onGlance={setGlance} onLook={() => lookNow()} onStop={stopSharing} />}
+        {pendingPicture && (
+          <div className="glass mx-auto mb-2 flex w-fit items-center gap-3 rounded-2xl p-2 pr-3" data-testid="pending-picture">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={pendingPicture} alt="The picture you are about to send" className="h-14 w-20 rounded-lg object-cover" />
+            <p className="text-sm text-ink-2">Ready to send. Add a question, or just press Send.</p>
+            <button type="button" className="btn btn-ghost h-9 !px-2 text-sm" onClick={() => setPendingPicture(null)} aria-label="Remove the picture">
+              Remove
+            </button>
+          </div>
+        )}
+        <input ref={fileRef} type="file" accept="image/*" className="sr-only" tabIndex={-1} aria-hidden="true" data-testid="picture-input" onChange={(e) => { void onPictureChosen(e.target.files?.[0]); e.target.value = ''; }} />
         {receipt && (
           <p className="mx-auto mb-2 w-fit rounded-full bg-accent-soft px-3 py-1 text-[0.82rem] font-medium text-accent" role="status">
             {receipt}
@@ -1230,8 +1344,21 @@ export function StayHome({
             e.preventDefault();
             e.stopPropagation();
             if (input.trim()) submit(input);
+            else if (pendingPicture) submit('Take a look at this and tell me the next small step.');
           }}
         >
+          <button
+            type="button"
+            className={`btn btn-ghost h-11 w-11 shrink-0 !px-0 ${sheet === 'vision' || share ? 'text-accent' : ''}`}
+            onClick={() => setSheet(sheet === 'vision' ? null : 'vision')}
+            aria-label="Show Stay something"
+            aria-expanded={sheet === 'vision'}
+            data-testid="attach-button"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+          </button>
           <input
             ref={inputRef}
             className="field h-11 min-w-0 flex-1 !border-0 !bg-transparent focus:!outline-none"
@@ -1250,7 +1377,7 @@ export function StayHome({
             data-testid="task-input"
           />
 
-          {input.trim() && (
+          {(input.trim() || pendingPicture) && (
             <button type="submit" className="btn btn-primary h-11 shrink-0 px-4" data-testid="send">
               Send
             </button>
@@ -1374,6 +1501,9 @@ export function StayHome({
                 </button>
                 <button type="button" className="btn btn-secondary justify-start text-sm py-2" onClick={() => setSheet('memory')}>
                   What Stay remembers
+                </button>
+                <button type="button" className="btn btn-secondary justify-start text-sm py-2" onClick={() => openPanel('vision')} data-testid="menu-vision">
+                  Show Stay something
                 </button>
                 <button type="button" className="btn btn-secondary justify-start text-sm py-2" onClick={() => openPanel('call')} data-testid="menu-call-later">
                   Have Stay call me

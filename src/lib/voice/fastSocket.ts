@@ -8,6 +8,7 @@
  * 0.3 s + first synthesized audio 0.2 s add up to about 1.4 s. This class is how that sum is realised and checked.
  */
 import { toSpeech } from '@/lib/voice/speechText';
+import { isImageDataUrl, looksVisual } from '@/lib/vision/image';
 import { byokHeaders } from '@/lib/byok/config';
 import type { TtsConnection } from '@/lib/voice/tts/types';
 
@@ -373,6 +374,10 @@ export class FastSocket {
   private ttsTermResolve: (() => void) | null = null;
   private ttsAudioStartedAt = 0;
   private unduckTimer: ReturnType<typeof setTimeout> | undefined;
+  /** the newest frame of a shared screen or camera (the app keeps it fresh); used only for turns that point at it */
+  private latestImage: { data: string; at: number } | null = null;
+  /** a picture sent with one typed message: used for the next reply, then dropped */
+  private nextImage: string | null = null;
   private cancelFallbackTimer: ReturnType<typeof setTimeout> | undefined;
   private replyWatchdog: ReturnType<typeof setTimeout> | undefined;
 
@@ -459,8 +464,17 @@ export class FastSocket {
       case 'input.audio':
         if (this.stt?.readyState === WebSocket.OPEN && typeof m.audio === 'string' && !(this.tts as TtsConnection | null)?.muteMic) this.stt.send(b64ToBytes(m.audio)); // muteMic: a browser voice cannot be heard around, so the mic is closed while it talks
         break;
+      case 'input.image':
+        this.latestImage = isImageDataUrl(m.image) ? { data: m.image, at: Date.now() } : null;
+        break;
       case 'conversation.message':
-        if (typeof m.content === 'string') this.notes = [...this.notes.slice(-4), m.content.slice(0, 300)];
+        if (typeof m.content === 'string') {
+          if (m.role === 'user') {
+            // a typed message is a real turn, not a side note
+            this.history = [...this.history, { role: 'user' as const, content: m.content.slice(0, 1000) }].slice(-MAX_HISTORY);
+            if (isImageDataUrl(m.image)) this.nextImage = m.image;
+          } else this.notes = [...this.notes.slice(-4), m.content.slice(0, 300)];
+        }
         break;
       case 'capture.mode':
         this.captureOnly = m.on === true;
@@ -1186,15 +1200,23 @@ export class FastSocket {
     const s = this.session as FastSession;
     const messages: ChatMessage[] = [...this.history];
 
+    // a picture for this turn: one sent with the typed message, or the latest shared frame when the person points at it
+    const lastUser = [...messages].reverse().find((x) => x.role === 'user');
+    const asked = typeof lastUser?.content === 'string' ? lastUser.content : '';
+    const fresh = this.latestImage && Date.now() - this.latestImage.at < 20_000 ? this.latestImage.data : null;
+    const image = toolFollowUp ? null : this.nextImage ?? (fresh && looksVisual(asked) ? fresh : null);
+    if (!toolFollowUp) this.nextImage = null;
+
     let res: Response;
     this.mark('req');
     try {
       res = await fetch('/api/voice/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...byokHeaders() },
+        headers: { 'Content-Type': 'application/json', ...byokHeaders(), ...(image ? { 'x-stay-image': '1' } : {}) },
         body: JSON.stringify({
           messages,
-          withTools: s.tools && !toolFollowUp,
+          withTools: s.tools && !toolFollowUp && !image,
+          ...(image ? { image } : {}),
           context: {
             language: s.ttsLanguage,
             notes: this.notes.slice(-4),

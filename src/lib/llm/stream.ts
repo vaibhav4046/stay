@@ -28,6 +28,7 @@ async function openStream(t: LlmTarget, call: LlmStreamCall, timings?: string[])
   const t0 = performance.now();
   const note = (status: number | string) => timings?.push(`llm${timings.length};dur=${Math.round(performance.now() - t0)};desc="${t.model.split('/').pop()} ${status}"`);
   const isGroqGptOss = t.baseUrl.startsWith(GROQ_BASE) && /gpt-oss/i.test(t.model);
+  const isGroqQwen = t.baseUrl.startsWith(GROQ_BASE) && /qwen/i.test(t.model); // the vision model: answer, do not think aloud
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), call.timeoutMs);
   try {
@@ -43,6 +44,7 @@ async function openStream(t: LlmTarget, call: LlmStreamCall, timings?: string[])
         max_tokens: call.maxTokens,
         ...(call.tools?.length ? { tools: call.tools, tool_choice: 'auto' } : {}),
         ...(isGroqGptOss ? { reasoning_effort: 'low', include_reasoning: false } : {}),
+        ...(isGroqQwen ? { reasoning_effort: 'none' } : {}),
       }),
       signal: ctl.signal,
     });

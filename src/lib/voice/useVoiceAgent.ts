@@ -3,6 +3,8 @@
 import { byokHeaders } from '@/lib/byok/config';
 import { ContinuousPcmPlayer } from '@/lib/voice/playback/continuousPlayback';
 import { replyLanguageInstruction } from '@/lib/voice/replyLanguage';
+import { GLANCE_PROMPT, isQuietReply } from '@/lib/vision/image';
+import { answerAboutStay } from '@/lib/voice/aboutStay';
 import { FastSocket, FAST_TTS_LANGUAGE, toAssemblyVoiceId } from '@/lib/voice/fastSocket';
 import {
   computeProgressiveCaption,
@@ -112,6 +114,8 @@ export interface VoiceTranscriptEntry {
   role: 'user' | 'agent' | 'system';
   text: string;
   timestamp: string;
+  /** a picture the person showed with this message: kept in memory for the thumbnail, never saved */
+  imageUrl?: string;
 }
 
 export interface UseVoiceAgentOptions {
@@ -475,8 +479,12 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   // Save active conversation turns to local active session
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    saveActiveSession({ transcripts });
+    saveActiveSession({ transcripts: transcripts.map(({ imageUrl: _picture, ...rest }) => rest) }); // pictures are never saved
   }, [transcripts]);
+  const transcriptsRef = useRef(transcripts);
+  transcriptsRef.current = transcripts;
+  const visionFrameRef = useRef<string | null>(null);
+  const askAboutPictureRef = useRef<((text: string, image: string, o?: { glance?: boolean }) => Promise<void>) | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [streamingAnalysis, setStreamingAnalysis] = useState<RealtimeStreamingAnalysis | null>(null);
   const [isHandsFreePaused, setIsHandsFreePaused] = useState(false);
@@ -1433,8 +1441,61 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     [runAppAction]
   );
 
+  /** The newest frame of a shared screen or camera, passed to the live voice so a spoken "what do you see" can use it. */
+  const setVisionFrame = useCallback((frame: string | null) => {
+    visionFrameRef.current = frame;
+    const ws = wsRef.current;
+    if (ws && ws.readyState === WebSocket.OPEN && sessionReadyRef.current) ws.send(JSON.stringify({ type: 'input.image', image: frame }));
+  }, []);
+
+  /** A message with a picture while voice is not live (or a quiet glance): the vision model looks, the answer lands in the chat. */
+  const askAboutPicture = useCallback(async (text: string, image: string, opts: { glance?: boolean } = {}) => {
+    const add = (t: string) => setTranscripts((prev) => [...prev, { id: `agent-${Date.now()}`, role: 'agent', text: t, timestamp: new Date().toISOString() }]);
+    const turns = transcriptsRef.current
+      .filter((e) => e.role !== 'system')
+      .slice(-6)
+      .map((e) => ({ role: e.role === 'user' ? 'user' : 'assistant', content: e.text.slice(0, 400) }));
+    const messages = opts.glance ? [...turns, { role: 'user', content: GLANCE_PROMPT }] : turns.at(-1)?.role === 'user' ? turns : [...turns, { role: 'user', content: text }];
+    if (!opts.glance) setVisualState('thinking');
+    try {
+      const res = await fetch('/api/voice/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...byokHeaders(), 'x-stay-image': '1' },
+        body: JSON.stringify({ messages, withTools: false, image, context: selectedLanguageRef.current === 'auto' ? undefined : { language: selectedLanguageRef.current } }),
+      });
+      if (!res.ok || !res.body) throw new Error(String(res.status));
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let buf = '';
+      let reply = '';
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        const lines = buf.split('\n');
+        buf = lines.pop() || '';
+        for (const line of lines) {
+          if (!line.startsWith('data: ') || line.includes('[DONE]')) continue;
+          try {
+            reply += JSON.parse(line.slice(6)).choices?.[0]?.delta?.content || '';
+          } catch {
+            // a partial line: the next read completes it
+          }
+        }
+      }
+      reply = reply.trim();
+      if (opts.glance && (!reply || isQuietReply(reply))) return; // nothing to say: stay quiet
+      add(reply || 'I could not make that out. Can you show me again?');
+    } catch {
+      if (!opts.glance) add('I could not look just now. Try again in a moment.');
+    } finally {
+      if (!opts.glance) setVisualState(wsRef.current ? 'listening' : 'idle');
+    }
+  }, []);
+  askAboutPictureRef.current = askAboutPicture;
+
   const sendUserTextMessage = useCallback(
-    (text: string, opts?: { skipLocalPlan?: boolean }) => {
+    (text: string, opts?: { skipLocalPlan?: boolean; image?: string }) => {
       const clean = text.trim();
       if (!clean) return false;
 
@@ -1478,7 +1539,8 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       }
 
       // 4. Multi-Intent Human Conversational Parser (executes simultaneous commands + task context)
-      const multi = parseMultiIntentUtterance(clean);
+      // a message that already carries a picture is a question about it: never read it as a command ("look at my screen" would reopen the panel)
+      const multi = opts?.image ? { commands: [], conversationalContext: null, isMultiContext: false } : parseMultiIntentUtterance(clean);
       const liveNow = !!wsRef.current && wsRef.current.readyState === WebSocket.OPEN && sessionReadyRef.current;
       if (multi.commands.length > 0 && (!liveNow || multi.commands.some((c) => c.type === 'pause_listening' || c.type === 'resume_listening'))) {
         const isCorrection = multi.commands.some((c) => c.type === 'scratch_that' || c.type === 'change_that_to');
@@ -1750,6 +1812,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           role: 'user',
           text: clean,
           timestamp: new Date().toISOString(),
+          ...(opts?.image ? { imageUrl: opts.image } : {}),
         },
       ]);
 
@@ -1780,10 +1843,26 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
       if (dumpApiRef.current.handleUtterance(clean)) return true; // typed while a dump is open: it joins the dump
 
+      // a question about Stay itself, typed without a live voice: the straight answer now (a live voice gets it from the chat route)
+      if (!opts?.image && !(wsRef.current && wsRef.current.readyState === WebSocket.OPEN && sessionReadyRef.current)) {
+        const about = answerAboutStay(clean);
+        if (about) {
+          setTranscripts((prev) => [...prev, { id: `about-${Date.now()}`, role: 'agent', text: about, timestamp: new Date().toISOString() }]);
+          speakDeterministicBoundary(about, effectiveLang);
+          return true;
+        }
+      }
+
       const ws = wsRef.current;
       if (ws && ws.readyState === WebSocket.OPEN && sessionReadyRef.current) {
-        ws.send(JSON.stringify({ type: 'conversation.message', role: 'user', content: clean }));
+        ws.send(JSON.stringify({ type: 'conversation.message', role: 'user', content: clean, ...(opts?.image ? { image: opts.image } : {}) }));
         ws.send(JSON.stringify({ type: 'reply.create' }));
+        return true;
+      }
+
+      // no live voice, but a picture came with the message: look at it and answer in the chat
+      if (opts?.image) {
+        void askAboutPictureRef.current?.(clean, opts.image);
         return true;
       }
 
@@ -2241,6 +2320,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           setIsConnected(true);
           setVisualState('listening');
           connectRetriesRef.current = 0;
+          if (visionFrameRef.current) socket.send(JSON.stringify({ type: 'input.image', image: visionFrameRef.current }));
           dispatchVoiceEvent({ type: 'session_ready' });
 
           // Start streaming microphone audio now that session.ready has fired
@@ -2972,6 +3052,8 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     speakProactively,
     injectContext,
     sendUserTextMessage,
+    setVisionFrame,
+    askAboutPicture,
     liveSpokenText,
     clearTranscripts: () => {
       setTranscripts([]);
