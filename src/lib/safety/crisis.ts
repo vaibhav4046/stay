@@ -145,6 +145,19 @@ export function detectCrisisSignal(input: string): CrisisCheckResult {
   return { triggered: false, message: '' };
 }
 
+// What Stay must never say back: an instruction about someone's medication, as an order or as "you should". Third-person
+// description ("the note tells the reader to stop their medication") is not matched, so Stay can still say what a picture says.
+const DOSE_VERB = '(?:stop|quit|skip|double|triple|increase|decrease|reduce|lower|raise|halve|cut|change|switch|come off|take (?:more|less|extra|double))';
+const MEDICATION_DIRECTIVE = new RegExp(
+  `(?:^|[.!?:]\\s+)${DOSE_VERB}\\b[^.?!]{0,40}\\b${MED_TERM}\\b|\\b(?:you\\s+(?:should|must|need\\s+to|can|could|may|ought\\s+to|have\\s+to)|please|just|go\\s+ahead\\s+and|it(?:'s|\\s+is)\\s+(?:safe|fine|ok|okay)\\s+to)\\s+${DOSE_VERB}\\b[^.?!]{0,40}\\b${MED_TERM}\\b`,
+  'i'
+);
+
+/** True when text (for example a vision model's reply) tells the reader what to do with their medication or dose. */
+export function detectMedicationDirective(input: string): boolean {
+  return MEDICATION_DIRECTIVE.test(normalizeSafetyText(input));
+}
+
 export function detectMedicationAdviceRequest(input: string): MedicalBoundaryCheckResult {
   const normalized = normalizeSafetyText(input);
   if (!normalized) {

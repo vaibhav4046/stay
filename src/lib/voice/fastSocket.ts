@@ -10,6 +10,7 @@
 import { toSpeech } from '@/lib/voice/speechText';
 import { isImageDataUrl, looksVisual } from '@/lib/vision/image';
 import { honestFailureMessage } from '@/lib/conversation/response';
+import { MEDICAL_BOUNDARY_FIXED_MESSAGE } from '@/lib/safety/crisis';
 import { byokHeaders } from '@/lib/byok/config';
 import type { TtsConnection } from '@/lib/voice/tts/types';
 
@@ -1098,7 +1099,7 @@ export class FastSocket {
       return;
     }
     if (!text || gen !== this.genId || this.tts?.readyState !== WebSocket.OPEN) return;
-    const voiced = toSpeech(text); // what the voice is given: no markdown, emoji, quote marks or line breaks
+    const voiced = toSpeech(text, this.session?.ttsLanguage); // what the voice is given: no markdown, emoji, quote marks or line breaks; English also gets numbers and units written out
     if (!voiced) return;
     if (this.spoken === '') this.emit({ type: 'reply.started' });
     this.emit({ type: 'reply.text', text });
@@ -1237,11 +1238,20 @@ export class FastSocket {
       // a safety gate answered instead of the model (the hook already shows the right screen), or the model failed:
       // when the server sent a plain-words message, say it; never leave the person in silence
       let message = '';
+      let safety = '';
       try {
-        const j = (await res.clone().json()) as { message?: unknown };
+        const j = (await res.clone().json()) as { message?: unknown; safety?: unknown };
         if (typeof j.message === 'string') message = j.message.slice(0, 300);
+        if (typeof j.safety === 'string') safety = j.safety;
       } catch {
         // not JSON: nothing to say
+      }
+      // The person's own words are checked by the app before they get here. What can arrive here is the picture path: the server
+      // read the model's reply to a picture and stopped it (crisis wording in the picture, or an instruction about medication).
+      if (image && safety === 'medication' && gen === this.genId) return this.speakOnly(MEDICAL_BOUNDARY_FIXED_MESSAGE);
+      if (image && safety === 'crisis' && gen === this.genId) {
+        this.emit({ type: 'safety.blocked', safety });
+        return this.finishSilently();
       }
       if (message && gen === this.genId) return this.speakOnly(message);
       return this.finishSilently();

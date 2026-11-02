@@ -643,6 +643,39 @@ describe('FastSocket: pictures', () => {
   });
 });
 
+describe('FastSocket: the server stops a reply to a picture', () => {
+  const PIC = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBD';
+  const json = (o: object) => new Response(JSON.stringify(o), { headers: { 'content-type': 'application/json' } });
+
+  it('crisis wording read from a picture: the app is told so it can show help, and nothing is spoken', async () => {
+    fetchMock.mockResolvedValue(json({ safety: 'crisis' }));
+    const { s } = await open();
+    s.send(JSON.stringify({ type: 'conversation.message', role: 'user', content: 'what does this say?', image: PIC }));
+    s.send(JSON.stringify({ type: 'reply.create' }));
+    await tick(30);
+    expect(types()).toContain('safety.blocked');
+    expect(types()).not.toContain('reply.audio');
+  });
+
+  it('an instruction about medication in a picture reply: the fixed boundary is what gets spoken', async () => {
+    fetchMock.mockResolvedValue(json({ safety: 'medication' }));
+    const { s } = await open();
+    s.send(JSON.stringify({ type: 'conversation.message', role: 'user', content: 'what does this say?', image: PIC }));
+    s.send(JSON.stringify({ type: 'reply.create' }));
+    await tick(30);
+    expect(events.find((e) => e.type === 'transcript.agent')?.text).toMatch(/cannot advise on medication/);
+  });
+
+  it('without a picture the same answer is left to the app, which already checked the persons own words (no double speech)', async () => {
+    fetchMock.mockResolvedValue(json({ safety: 'medication' }));
+    const { s } = await open();
+    s.send(JSON.stringify({ type: 'conversation.message', role: 'user', content: 'ok', }));
+    s.send(JSON.stringify({ type: 'reply.create' }));
+    await tick(30);
+    expect(events.find((e) => e.type === 'transcript.agent')).toBeUndefined();
+  });
+});
+
 describe('FastSocket: a lone greeting waits for the rest of the sentence', () => {
   it('isOpenerOnly: one greeting or filler word, never a real answer or a two-word greeting', () => {
     for (const t of ['Hola.', 'Hi,', 'Hello!', 'Um.', 'Okay.']) expect(isOpenerOnly(t), t).toBe(true);

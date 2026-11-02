@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { detectCrisisSignal, detectMedicationAdviceRequest } from '@/lib/safety/crisis';
 import { APP_TOOL, buildServerVoiceSystemPrompt } from '@/lib/voice/agentTool';
 import { carriesAnswer } from '@/lib/conversation/sse';
+import { isOverloaded } from '@/lib/conversation/overload';
 import { llmHeaders } from '@/lib/llm/provider';
 import { openLlmStream } from '@/lib/llm/stream';
 import { resolveDeterministicVoice, createDeterministicSseResponse } from '@/lib/voice/deterministicVoiceFallback';
@@ -10,7 +11,7 @@ import { attachGuardHeaders, guardPaidRoute, readBoundedJson } from '@/lib/secur
 import { answerAboutStay } from '@/lib/voice/aboutStay';
 import { classifyIntent } from '@/lib/conversation/intent';
 import { NOTHING_SHOWN, honestFailureMessage, failureKindFromError } from '@/lib/conversation/response';
-import { readSseText, visionReplyIsSafe } from '@/lib/conversation/visionGate';
+import { readSseText, visionReplyVerdict } from '@/lib/conversation/visionGate';
 import { MAX_IMAGE_CHARS, VISION_SYSTEM, isImageDataUrl, withImage } from '@/lib/vision/image';
 
 const MAX_HISTORY_TURNS = 20;
@@ -196,7 +197,7 @@ export async function POST(req: NextRequest) {
   const intent = classifyIntent(lastUser, { hasVisualSource: Boolean(image), hasHistory: clientMessages.length > 1 });
   if (intent === 'screen_question' && !image) return createDeterministicSseResponse({ text: NOTHING_SHOWN });
 
-  const serverSystemPrompt = buildServerVoiceSystemPrompt(context, intent);
+  const serverSystemPrompt = buildServerVoiceSystemPrompt(context, intent, { overloaded: isOverloaded(lastUser) });
   // a turn with a picture: the vision model looks at it, no app tools, and the picture goes nowhere else
   const outboundMessages = [
     { role: 'system' as const, content: image ? `${serverSystemPrompt}
@@ -246,7 +247,8 @@ ${VISION_SYSTEM}` : serverSystemPrompt },
   // a reply that came from looking at a picture is read in full and checked before anyone sees or hears it
   if (image) {
     const text = await readSseText(r.res);
-    if (!visionReplyIsSafe(text)) return attachGuardHeaders(NextResponse.json({ safety: 'crisis' }), guard);
+    const verdict = visionReplyVerdict(text);
+    if (verdict !== 'ok') return attachGuardHeaders(NextResponse.json({ safety: verdict }), guard);
     return createDeterministicSseResponse({ text });
   }
   const stream = createResilientStream(r.res.body as ReadableStream<Uint8Array>, lastUser);

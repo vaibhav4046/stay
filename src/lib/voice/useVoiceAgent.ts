@@ -41,6 +41,8 @@ import { createTtsConnection } from '@/lib/voice/tts';
 import { APP_TOOL, appKeyterms, buildGreeting, buildSystemPrompt, type AppActionArgs } from '@/lib/voice/agentTool';
 import { takeAiDisclosure } from '@/lib/voice/disclosure';
 import {
+  MEDICAL_BOUNDARY_FIXED_MESSAGE,
+  crisisMessage,
   detectCrisisSignal,
   detectMedicationAdviceRequest,
 } from '@/lib/safety/crisis';
@@ -1470,6 +1472,14 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         const msg = await res.json().then((j: { message?: unknown }) => (typeof j.message === 'string' ? j.message : '')).catch(() => '');
         throw new Error(msg || String(res.status));
       }
+      // a safety gate answered instead of the model (crisis wording read from the picture, or an instruction about medication)
+      if ((res.headers.get('content-type') || '').includes('application/json')) {
+        const j = (await res.json().catch(() => ({}))) as { safety?: string };
+        if (j.safety === 'crisis') return void optionsRef.current.onCrisisDetected?.(crisisMessage());
+        if (j.safety === 'medication') return add(MEDICAL_BOUNDARY_FIXED_MESSAGE);
+        if (!opts.glance) add(honestFailureMessage('vision'));
+        return;
+      }
       const reader = res.body.getReader();
       const dec = new TextDecoder();
       let buf = '';
@@ -2717,6 +2727,13 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           if (callId && name) {
             handleClientToolCall(callId, name, args);
           }
+          return;
+        }
+
+        if (type === 'safety.blocked') {
+          // the server stopped a reply to a picture because of crisis wording in it: same screen as when the person's own words trigger it
+          disconnectVoiceSession();
+          optionsRef.current.onCrisisDetected?.(crisisMessage());
           return;
         }
 

@@ -2,7 +2,7 @@
  * The safety gate for what a vision model says. The person's own words are checked before any model runs; this checks the
  * other side: text the model read out of a picture or wrote about it, before Stay shows or speaks it.
  */
-import { detectCrisisSignal } from '@/lib/safety/crisis';
+import { detectCrisisSignal, detectMedicationDirective } from '@/lib/safety/crisis';
 
 /** Collects the words of a streamed (server-sent events) chat reply. */
 export async function readSseText(res: Response): Promise<string> {
@@ -29,7 +29,19 @@ export async function readSseText(res: Response): Promise<string> {
   return out.trim();
 }
 
-/** True when the reply is safe to show. A crisis signal in text read from a picture goes to the crisis screen instead. */
+export type VisionVerdict = 'ok' | 'crisis' | 'medication';
+
+/**
+ * What to do with a reply that came from looking at a picture. A crisis signal in text read from the picture goes to the
+ * crisis screen; an instruction about medication (which a planted line in a picture may have talked the model into) is never shown.
+ */
+export function visionReplyVerdict(text: string): VisionVerdict {
+  if (detectCrisisSignal(text).triggered) return 'crisis';
+  if (detectMedicationDirective(text)) return 'medication';
+  return 'ok';
+}
+
+/** True when the reply is safe to show. */
 export function visionReplyIsSafe(text: string): boolean {
-  return !detectCrisisSignal(text).triggered;
+  return visionReplyVerdict(text) === 'ok';
 }
