@@ -3,7 +3,6 @@
 import { useStayData } from '@/lib/storage/useStayData';
 import { Onboarding } from '@/components/Onboarding';
 import { StayHome } from '@/components/StayHome';
-import { StrategyPatternSummary } from '@/components/StrategyPatternSummary';
 import { PageSkeleton } from '@/components/PageSkeleton';
 
 export default function TodayPage() {
@@ -22,7 +21,6 @@ export default function TodayPage() {
         onQuietModeChange={(q) => updateProfile({ interactionMode: q ? 'quiet_text_only' : 'voice_and_text' })}
         onLogSession={addSession}
       />
-      <StrategyPatternSummary sessions={sessions} />
     </div>
   );
 }

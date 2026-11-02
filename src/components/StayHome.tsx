@@ -17,7 +17,7 @@ import {
 } from '@/lib/safety/crisis';
 import { SUPPORTED_LANGUAGES, isAgentVerifiedLanguage, useVoiceAgent } from '@/lib/voice/useVoiceAgent';
 import { useAssistantHardware } from '@/lib/voice/useAssistantHardware';
-import { parseMultiIntentUtterance } from '@/lib/voice/voiceCommands';
+import { parseMultiIntentUtterance, type PanelId } from '@/lib/voice/voiceCommands';
 import { isSmallTalk } from '@/lib/voice/smallTalk';
 import { loadUserCalibration, recordSessionLearning } from '@/lib/coach/selfImprovement';
 import { buildMemorySystemPrompt, loadUserMemory, recordSessionMemory } from '@/lib/coach/userMemory';
@@ -27,31 +27,27 @@ import { useCrisisPanel } from '@/components/CrisisHelpPanel';
 import { GroundingPanel } from '@/components/GroundingPanel';
 import { OrbCognitiveGames } from '@/components/OrbCognitiveGames';
 import { Signal, hasWebGL } from '@/components/Signal';
-import { Sheet } from '@/components/Sheet';
+import { InlineSheetContext, Sheet } from '@/components/Sheet';
+import { HistoryPanel } from '@/components/HistoryPanel';
 import { VoicePicker } from '@/components/VoicePicker';
 import { resolvePersona } from '@/lib/voice/personas';
 import { voiceNeeds } from '@/lib/voice/tts/caps';
 import { BrainDumpSheet } from '@/components/BrainDumpSheet';
 import { MemorySheet } from '@/components/MemorySheet';
-import { DailyGreetingCard } from '@/components/DailyGreetingCard';
-import { buildDailyGreeting, countWinsYesterday, greetingCardDue, greetingSpokenDue, markGreetingDismissed, markGreetingSpoken, openFromBefore, type DailyGreeting, type OptionId } from '@/lib/coach/dailyGreeting';
+import { buildDailyGreeting, countWinsYesterday, greetingCardDue, greetingSpokenDue, markGreetingSpoken, openFromBefore, type DailyGreeting } from '@/lib/coach/dailyGreeting';
 import { refreshLearnings } from '@/lib/coach/learnings';
 import { loadInstructions, styleLine } from '@/lib/coach/customInstructions';
-import { runAgenticAction } from '@/lib/voice/agenticActions';
 import { TodayCard } from '@/components/TodayCard';
-import { GeminiLiveVoiceVisualizer } from '@/components/voice/GeminiLiveVoiceVisualizer';
+import { TalkButton } from '@/components/voice/TalkButton';
+import { CallLaterPanel, IncomingCallAlert, useIncomingCall } from '@/components/voice/CallLater';
 import { LiveChatBox } from '@/components/voice/LiveChatBox';
 import { TransportBadge } from '@/components/voice/TransportBadge';
-import { SubtleOrb } from '@/components/voice/SubtleOrb';
 import { MicConsentSheet } from '@/components/voice/MicConsentSheet';
-import { StayLogo } from '@/components/StayLogo';
 import { loadActiveSession, saveActiveSession } from '@/lib/coach/activeSession';
 import { RoutineSheet } from '@/components/RoutineSheet';
 import { ReminderSheet } from '@/components/ReminderSheet';
 import { takeDue } from '@/lib/reminders';
 import { WaveProgress } from '@/components/Wave';
-import { SignalWave } from '@/components/signal/SignalWave';
-import { CallStayCard } from '@/components/voice/CallStayCard';
 import { CallStayOverlay } from '@/components/voice/CallStayOverlay';
 import { RING_MS } from '@/lib/voice/ringtone';
 import { personaById } from '@/lib/voice/personas';
@@ -138,9 +134,15 @@ export function StayHome({
   const [lastOutcome, setLastOutcome] = useState<SessionOutcome | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<string | null>(null);
-  const [sheet, setSheet] = useState<null | 'menu' | 'memory' | 'voice' | 'parking' | 'dump' | 'routine' | 'remind'>(null);
+  const [sheet, setSheet] = useState<null | 'menu' | 'memory' | 'voice' | 'parking' | 'dump' | 'routine' | 'remind' | 'today' | 'history' | 'call'>(null);
   const [routineId, setRoutineId] = useState<string | null>(null);
   const routineByVoice = useRef(false);
+  /** a finished routine or a saved brain dump has changed the list: show it in the chat when that panel closes */
+  const showTodayNext = useRef(false);
+  const closePanel = () => {
+    setSheet(showTodayNext.current ? 'today' : null);
+    showTodayNext.current = false;
+  };
   const [today, setToday] = useState<TodayItem[]>([]);
   useEffect(() => setToday(loadToday()), []);
   const [parked, setParked] = useState<ParkedItem[]>([]);
@@ -225,6 +227,17 @@ export function StayHome({
     [plan, isLoggingOutcome, onLogSession, usedVoice, careContext, minutes, elapsed, say],
   );
 
+  /** The conversation asks for a panel (by voice or typing): it appears in the chat, not over it. */
+  const openPanel = useCallback((p: PanelId) => {
+    if (p === 'parking') setParked(loadParked());
+    if (p === 'today') setToday(loadToday());
+    if (p === 'routines') {
+      routineByVoice.current = false;
+      setRoutineId(null);
+    }
+    setSheet(p === 'routines' ? 'routine' : p === 'reminders' ? 'remind' : p);
+  }, []);
+
   const voice = useVoiceAgent({
     onPlanProposed: (p) => {
       setPlan(p);
@@ -246,12 +259,16 @@ export function StayHome({
     onRoutineRequested: (id) => (routineByVoice.current = true, setRoutineId(id), setSheet('routine')),
     onRemindersChanged: () => say('Check-in set'),
     onTodayChanged: () => setToday(loadToday()),
-    onShowHistoryRequested: () => router.push('/app/history'),
+    onShowHistoryRequested: () => setSheet('history'),
+    onShowPanelRequested: openPanel,
     onCloseModalsRequested: () => {
       setSheet(null);
       setGrounding(false);
     },
     onNavigateRequested: (path, label) => {
+      // Today and History are panels in this conversation; every other screen is a page
+      if (path === '/app/history') return setSheet('history');
+      if (path === '/app/today') return setSheet('today');
       say(`Opening ${label}`);
       router.push(path);
     },
@@ -423,49 +440,6 @@ export function StayHome({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [running, minutes, proactiveCheckins, plan]);
 
-  /** The agentic tools without a voice session: the same code the voice agent calls. */
-  const runLocal = useCallback(
-    (action: 'plan_day' | 'resume' | 'wrap_up') =>
-      runAgenticAction({ action }, {
-        now: () => new Date(),
-        lastUserSaid: () => '',
-        sessions: () => sessionsRef.current,
-        startTimer: (m) => startTimer(m),
-        proposePlan: (p) => {
-          setPlan(p);
-          setMinutes(p.timerMinutes || loadUserCalibration().preferredMinutes || 10);
-          setStep('plan');
-        },
-        todayChanged: () => setToday(loadToday()),
-        remindersChanged: () => say('Check-in set'),
-        note: () => undefined,
-      }),
-    [startTimer, say],
-  );
-
-  const pickGreetingOption = (id: OptionId) => {
-    markGreetingDismissed();
-    setDaily(null);
-    if (id === 'start_small') {
-      inputRef.current?.focus();
-      say('Type or say one small thing');
-    } else if (id === 'dump') {
-      setSheet('dump');
-      if (voiceRef.current.isConnected) voiceRef.current.startDump();
-    } else if (id === 'plan_day') {
-      if (voiceRef.current.isConnected) void voiceRef.current.sendUserTextMessage('Plan my day', { skipLocalPlan: true });
-      else setNote(String(runLocal('plan_day')?.say ?? ''));
-    } else if (id === 'resume') {
-      const r = runLocal('resume');
-      if (r && r.ok === false) setNote(String(r.say));
-    } else if (id === 'wrap') {
-      setNote(String(runLocal('wrap_up')?.say ?? ''));
-    } else if (id === 'sit_with_me') {
-      voiceRef.current.setCompanionMode(true);
-      if (!voiceRef.current.isConnected && !quietMode) void voiceRef.current.startVoiceSession();
-    }
-  };
-
   const requestPlan = useCallback(
     async (text: string, preferredStrategy?: CoachPlanProposal['strategyKey']) => {
       const t = text.trim();
@@ -616,6 +590,13 @@ export function StayHome({
     return () => window.clearTimeout(id);
   }, [callIntent, voice.isConnected, showMicConsent]);
 
+  // a booked call comes due: an alert in the conversation, answered into the same call screen
+  const incoming = useIncomingCall();
+  const answerIncoming = () => {
+    incoming.dismiss();
+    startCall();
+  };
+
   // Spacebar hold-to-talk listener (§7.3)
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -764,6 +745,24 @@ export function StayHome({
     return () => window.removeEventListener('storage', onStorage);
   }, [step]);
 
+  // the page scrolls like a chat: follow new words while the person is at the bottom, never yank them up from reading
+  const endRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const stickRef = useRef(true);
+  useEffect(() => {
+    const onScroll = () => {
+      stickRef.current = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 220;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+  useEffect(() => {
+    if (stickRef.current) endRef.current?.scrollIntoView({ block: 'end' });
+  }, [voice.transcripts, voice.partialUserTranscript, voice.liveSpokenText, step, planLoading, note]);
+  useEffect(() => {
+    if (sheet && sheet !== 'menu' && sheet !== 'voice') panelRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }, [sheet]);
+
   // arriving from onboarding or another screen: always start at the top, never mid-scroll
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -791,7 +790,6 @@ export function StayHome({
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const lastAgent = [...voice.transcripts].reverse().find((e) => e.role === 'agent');
   const visual: VoiceVisualState = quietMode
     ? 'text_only_fallback'
     : planLoading
@@ -826,83 +824,33 @@ export function StayHome({
             ? 'Focus block running'
             : quietMode
               ? 'Type below'
-              : 'Tap the orb to talk';
-  const isAgentSpeaking = visual === 'speaking';
-  const caption =
-    voice.partialUserTranscript ||
-    (isAgentSpeaking
-      ? (voice.liveSpokenText || '...')
-      : visual === 'thinking' || planLoading
-        ? ''
-        : step === 'idle'
-          ? (voice.liveSpokenText || lastAgent?.text)
-          : '') ||
-    (step === 'idle' ? 'What are you putting off?' : '');
+              : '';
   const progress = step === 'timer' ? 1 - remaining / (minutes * 60) : 0;
 
-  // AGI Proactive Voice Actions: Voice dynamically synthesizes contextual action buttons
-  const proactiveActions = useMemo(() => {
-    const text = (lastAgent?.text || '').toLowerCase();
-    
-    // If agent recommended or mentioned a focus step/timer
-    if (text.includes('minute') || text.includes('start') || text.includes('step') || text.includes('timer')) {
-      return [
-        { label: 'Start 2-min block', primary: true, onClick: () => startTimer(2) },
-        { label: 'Make it even smaller', onClick: () => submit('Make it even smaller and simpler') },
-        { label: 'Park this thought', onClick: () => submit('Park this thought for later') },
-        { label: 'Brain dump', testId: 'chip-dump', onClick: () => setSheet('dump') },
-      ];
-    }
-    
-    // If agent addressed overwhelm or feeling stuck
-    if (text.includes('overwhelm') || text.includes('hard') || text.includes('breathe') || text.includes('stuck')) {
-      return [
-        { label: 'Just the first 2 minutes', primary: true, onClick: () => startTimer(2) },
-        { label: 'Brain dump thoughts', testId: 'chip-dump', onClick: () => setSheet('dump') },
-        { label: "I can't focus today", onClick: () => submit("I can't focus today") },
-        { label: 'Routines', testId: 'chip-routines', onClick: () => { routineByVoice.current = false; setRoutineId(null); setSheet('routine'); } },
-      ];
-    }
-    
-    // If agent asked an opening question or voice is active
-    if (voice.isConnected || voice.transcripts.length > 0) {
-      return [
-        { label: 'I feel stuck on something', primary: true, onClick: () => submit("I'm stuck on a task") },
-        { label: 'Give me a 2-min step', onClick: () => submit("Give me one tiny 2-minute step to start") },
-        { label: 'Brain dump', testId: 'chip-dump', onClick: () => setSheet('dump') },
-        { label: 'Routines', testId: 'chip-routines', onClick: () => { routineByVoice.current = false; setRoutineId(null); setSheet('routine'); } },
-      ];
-    }
-
-    // Initial idle state before interaction: clean adaptive starters
-    return [
-      { label: 'I feel overwhelmed', onClick: () => submit('I feel overwhelmed') },
-      { label: "I'm stuck", onClick: () => submit("I'm stuck") },
-      { label: 'Brain dump', testId: 'chip-dump', onClick: () => setSheet('dump') },
-      { label: 'Routines', testId: 'chip-routines', onClick: () => { routineByVoice.current = false; setRoutineId(null); setSheet('routine'); } },
-    ];
-  }, [lastAgent?.text, voice.isConnected, voice.transcripts.length, startTimer, submit]);
+  const chatActive =
+    voice.transcripts.length > 0 ||
+    !!voice.partialUserTranscript ||
+    step !== 'idle' ||
+    !!note ||
+    incoming.ringing ||
+    (sheet !== null && sheet !== 'menu' && sheet !== 'voice');
+  const showVoiceControls = !input.trim() || voice.isConnected;
+  const stagePx = isDebug ? 240 : 176;
 
   return (
-    <div className="mx-auto flex min-h-[calc(100dvh-11rem)] w-full max-w-xl flex-col items-center justify-between gap-3 pb-2 sm:min-h-[calc(100dvh-9rem)] max-w-full overflow-x-hidden">
+    <div className="mx-auto flex min-h-[calc(100dvh-10rem)] w-full max-w-3xl flex-col sm:min-h-[calc(100dvh-8.5rem)]">
       <h1 className="sr-only">Stay</h1>
 
-      {/* Thin focus progress bar at very top during active timer (§8.5) */}
+      {/* Thin focus progress bar at very top during active timer */}
       {running && step === 'timer' && (
-        <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-surface-2" role="progressbar" aria-valuenow={Math.round(progress * 100)} aria-valuemin={0} aria-valuemax={100}>
+        <div className="fixed left-0 right-0 top-0 z-50 h-1 bg-surface-2" role="progressbar" aria-valuenow={Math.round(progress * 100)} aria-valuemin={0} aria-valuemax={100}>
           <div className="h-full bg-accent transition-all duration-500" style={{ width: `${Math.round(progress * 100)}%` }} />
         </div>
       )}
 
-      {/* Top Bar with Wordmark, Mode Switcher, Language Pills & Transport Badge (§7.4) */}
-      <div className="flex w-full flex-wrap items-center justify-between gap-2 border-b border-line pb-2.5 pt-1 px-1 max-w-full overflow-hidden">
-        <div className="flex items-center gap-2 shrink-0">
-          <StayLogo size={22} />
-          <span className="font-display font-semibold tracking-tight text-ink text-sm sm:text-base">Stay</span>
-          
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0">
+      {/* Quiet controls: language, how the voice is connected, and everything else behind More */}
+      <div className="flex items-center justify-between gap-2 pb-1" data-testid="home-controls">
+        <div className="flex min-w-0 items-center gap-2">
           <label className="sr-only" htmlFor="stay-language">Language</label>
           <select
             id="stay-language"
@@ -917,115 +865,53 @@ export function StayHome({
             {SUPPORTED_LANGUAGES.map((l) => (
               <option key={l.code} value={l.code}>{l.label}</option>
             ))}
-          </select>          <TransportBadge
-            transport={voice.transportInfo}
-            isConnected={voice.isConnected}
-            replyTimes={voice.replyTimes}
-          />
-          <button
-            type="button"
-            onClick={voice.isConnected || callIntent ? endCall : startCall}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium transition-colors shrink-0 cursor-pointer ${
-              voice.isConnected
-                ? 'border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20'
-                : 'border-primary/30 bg-primary/10 text-primary hover:bg-primary/20'
-            }`}
-            data-testid="header-call-stay-btn"
-            title={voice.isConnected ? 'In Call — click to hang up' : 'Direct Call to Stay (Browser voice)'}
-            aria-label={voice.isConnected ? 'Hang up call with Stay' : 'Direct Call to Stay'}
-          >
-            {voice.isConnected ? (
-              <>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" aria-hidden="true" />
-                <span className="hidden xs:inline">In Call · End</span>
-                <span className="xs:hidden">End</span>
-              </>
-            ) : (
-              <>
-                <svg className="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                </svg>
-                <span className="hidden xs:inline">Direct Call</span>
-                <span className="xs:hidden">Call</span>
-              </>
-            )}
-          </button>
+          </select>
+          <TransportBadge transport={voice.transportInfo} isConnected={voice.isConnected} replyTimes={voice.replyTimes} />
         </div>
+        <button type="button" className="btn btn-ghost h-10 shrink-0 !px-3" onClick={() => setSheet('menu')} aria-label="More" data-testid="menu-button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <circle cx="5" cy="12" r="1.7" /><circle cx="12" cy="12" r="1.7" /><circle cx="19" cy="12" r="1.7" />
+          </svg>
+          <span className="sr-only">More</span>
+        </button>
       </div>
 
-      {/* Main Body: Calm empty state OR elevated Transcript-first feed */}
-      {voice.transcripts.length === 0 && !voice.partialUserTranscript && step === 'idle' && (
-        <div className="my-auto flex w-full flex-col items-center gap-3 py-2">
-          <button
-            type="button"
-            onClick={toggleVoice}
-            aria-label={voice.isConnected ? 'Stop listening' : 'Talk to Stay'}
-            aria-pressed={voice.isConnected}
-            data-testid="orb-button"
-            className={`relative aspect-square rounded-full outline-none focus-visible:ring-4 focus-visible:ring-accent/30 overflow-hidden ${
-              isDebug ? 'w-[240px] h-[240px]' : 'w-24 h-24 sm:w-28 sm:h-28'
-            }`}
-          >
-            <Signal
-              state={visual}
-              energy={voice.audioEnergy}
-              bands={voice.audioBands}
-              shape={presence.target}
-              thinking={orb.thinking}
-              colorTheme={voice.orbColorTheme}
-              size={isDebug ? 240 : 96}
-              hideLabel
-              className="h-full w-full"
-            />
-          </button>
-
-          <p className="meta" role="status" aria-live="polite">
-            {status}
-          </p>
-          {caption && (
-            <p className="min-h-[2.5rem] max-w-[28ch] text-center font-display text-lg sm:text-xl font-medium leading-tight tracking-tight text-ink" data-testid="caption">
-              {caption}
-            </p>
-          )}
-          {receipt && (
-            <p className="rounded-full bg-accent-soft px-3 py-1 text-[0.82rem] font-medium text-accent" role="status">
-              {receipt}
-            </p>
-          )}
-
-          <div className="flex w-full flex-wrap justify-center gap-2 mt-1" data-testid="state-chips" role="group" aria-label="Proactive voice action buttons">
-            {proactiveActions.map((action) => (
-              <button
-                key={action.label}
-                type="button"
-                className={`chip transition-all duration-300 hover:scale-105 ${action.primary ? '!border-accent !bg-accent/10 !text-accent font-medium shadow-sm' : ''}`}
-                onClick={action.onClick}
-                data-testid={action.testId}
-              >
-                {action.label}
-              </button>
-            ))}
-          </div>
-
-          {daily && (
-            <DailyGreetingCard greeting={daily} onPick={pickGreetingOption} onDismiss={() => (markGreetingDismissed(), setDaily(null))} />
-          )}
-
-          <TodayCard
-            items={today}
-            onToggle={(id) => {
-              setToday(toggleToday(id));
-              say('Nice. That is a win.');
-              orb.feed('proud achievement', 'typed');
-            }}
-            onStart={(i) => void requestPlan(i.firstStep ? `${i.text}. First step: ${i.firstStep}` : i.text)}
-            onOpenDump={() => setSheet('dump')}
-            onMove={(id) => setToday(moveToday(id, 'today'))}
+      {/* The orb: speak straight to it. Large when the screen is empty, a small one above the conversation once it starts. */}
+      <div
+        className={
+          chatActive
+            ? 'flex items-center justify-center gap-3 py-2'
+            : 'flex flex-1 flex-col items-center justify-center gap-4 py-8'
+        }
+        data-testid="orb-stage"
+        data-compact={chatActive ? 'true' : 'false'}
+      >
+        <button
+          type="button"
+          onClick={toggleVoice}
+          aria-label={voice.isConnected ? 'Stop listening' : 'Talk to Stay'}
+          aria-pressed={voice.isConnected}
+          data-testid="orb-button"
+          className={`relative aspect-square shrink-0 overflow-hidden rounded-full outline-none focus-visible:ring-4 focus-visible:ring-accent/30 ${
+            chatActive ? 'h-14 w-14' : isDebug ? 'h-60 w-60' : 'h-44 w-44 sm:h-56 sm:w-56'
+          }`}
+        >
+          <Signal
+            state={visual}
+            energy={voice.audioEnergy}
+            bands={voice.audioBands}
+            shape={presence.target}
+            thinking={orb.thinking}
+            colorTheme={voice.orbColorTheme}
+            size={chatActive ? 56 : stagePx}
+            hideLabel
+            className="h-full w-full"
           />
-
-          <CallStayCard inCall={callIntent} onCall={startCall} phone={process.env.NEXT_PUBLIC_STAY_PHONE || undefined} />
-        </div>
-      )}
+        </button>
+        <p className="meta min-h-[1.25rem]" role="status" aria-live="polite" data-testid="orb-status">
+          {status}
+        </p>
+      </div>
 
       {callIntent && (
         <CallStayOverlay
@@ -1037,251 +923,343 @@ export function StayHome({
         />
       )}
 
-      {/* Fluid Gemini Live Chat Stream (Elevated primary above-the-fold content) */}
-      <LiveChatBox
-        transcripts={voice.transcripts}
-        partialUserTranscript={voice.partialUserTranscript}
-        liveSpokenText={voice.liveSpokenText}
-        visualState={visual}
-        isConnected={voice.isConnected}
-        detectedLanguage={voice.detectedLanguageCode}
-        quietMode={quietMode}
-        onToggleQuietMode={() => {
-          if (!quietMode) voice.disconnectVoiceSession();
-          onQuietModeChange(!quietMode);
-        }}
-        onWisprAction={(action) => {
-          if (action === 'scratch') voice.sendUserTextMessage('scratch that');
-          else if (action === 'repeat') voice.sendUserTextMessage('repeat that');
-          else if (action === 'heard') voice.sendUserTextMessage('show me what you heard');
-        }}
-        onClear={voice.clearTranscripts}
-        className="w-full flex-1 my-1.5"
-      />
+      {/* The conversation, top to bottom. Cards and panels join it only when the talk asks for them. */}
+      {chatActive && (
+        <div className="flex flex-1 flex-col gap-4 pb-4 pt-1" data-testid="chat-stream">
+          <LiveChatBox
+            bare
+            transcripts={voice.transcripts}
+            partialUserTranscript={voice.partialUserTranscript}
+            liveSpokenText={voice.liveSpokenText}
+            visualState={visual}
+            isConnected={voice.isConnected}
+            detectedLanguage={voice.detectedLanguageCode}
+            quietMode={quietMode}
+            onToggleQuietMode={() => {
+              if (!quietMode) voice.disconnectVoiceSession();
+              onQuietModeChange(!quietMode);
+            }}
+            onWisprAction={(action) => {
+              if (action === 'scratch') voice.sendUserTextMessage('scratch that');
+              else if (action === 'repeat') voice.sendUserTextMessage('repeat that');
+              else if (action === 'heard') voice.sendUserTextMessage('show me what you heard');
+            }}
+            onClear={() => {
+              // a new chat starts clean: the old plan and any open panel go too, but a running focus block keeps going
+              voice.clearTranscripts();
+              setSheet(null);
+              if (step === 'timer') orb.rest();
+              else reset();
+            }}
+            className="w-full"
+          />
 
-      {note && (
-        <div className="notice w-full" role="status" data-testid="note">
-          {note}
-        </div>
-      )}
+          {note && (
+            <div className="notice w-full" role="status" data-testid="note">
+              {note}
+            </div>
+          )}
 
-      {step === 'plan' && plan && (
-        <section className="card w-full p-5" aria-label="Your first step" data-testid="plan-card">
-          <p className="meta">Your first step</p>
-          <p className="mt-1 font-display text-xl font-semibold leading-snug" data-testid="first-step">
-            {plan.firstStep}
-          </p>
-          {plan.whyThisFits && <p className="mt-2 text-ink-2">{plan.whyThisFits}</p>}
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <button type="button" className="btn btn-primary" onClick={() => startTimer(minutes)} data-testid="start-timer">
-              Start {minutes} min
-            </button>
-            {shrinkDepth >= 4 ? (
-              <span className="text-xs px-3 py-2 rounded-xl bg-surface-2 text-ink-3 border border-edge flex items-center gap-1.5" data-testid="shrink-floor">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                Smallest step floor reached
+          {incoming.ringing && <IncomingCallAlert onAnswer={answerIncoming} onDismiss={incoming.dismiss} />}
+        {step === 'plan' && plan && (
+          <section className="card w-full p-5" aria-label="Your first step" data-testid="plan-card">
+            <p className="meta">Your first step</p>
+            <p className="mt-1 font-display text-xl font-semibold leading-snug" data-testid="first-step">
+              {plan.firstStep}
+            </p>
+            {plan.whyThisFits && <p className="mt-2 text-ink-2">{plan.whyThisFits}</p>}
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <button type="button" className="btn btn-primary" onClick={() => startTimer(minutes)} data-testid="start-timer">
+                Start {minutes} min
+              </button>
+              {shrinkDepth >= 4 ? (
+                <span className="text-xs px-3 py-2 rounded-xl bg-surface-2 text-ink-3 border border-edge flex items-center gap-1.5" data-testid="shrink-floor">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  Smallest step floor reached
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    const nextDepth = shrinkDepth + 1;
+                    setShrinkDepth(nextDepth);
+                    if (nextDepth >= 4) {
+                      setPlan((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              firstStep: 'Smallest possible floor: take one slow breath with the orb for 10 seconds, then just touch the first item. Zero pressure to finish.',
+                              whyThisFits: 'When tasks feel this heavy, the nervous system is overwhelmed. Breathing resets the freeze response before doing anything else.',
+                              timerMinutes: 2,
+                            }
+                          : null
+                      );
+                      setMinutes(2);
+                    } else {
+                      void requestPlan(plan.taskText, 'task_shrinking');
+                    }
+                  }}
+                  data-testid="make-smaller"
+                >
+                  Make it smaller {shrinkDepth > 0 ? `(${shrinkDepth}/3)` : ''}
+                </button>
+              )}
+              {[5, 10, 25, 45, 90].map((m) => (
+                <button key={m} type="button" className="chip" aria-pressed={minutes === m} onClick={() => setMinutes(m)} aria-label={`${m} minute block`}>
+                  {m}
+                </button>
+              ))}
+            </div>
+            <p className="meta mt-2">Short blocks start easier. Pick a longer one when you are in flow, and Stay sits with you through it.</p>
+          </section>
+        )}
+
+        {step === 'timer' && plan && (
+          <section className="card w-full p-5 text-center" aria-label="Focus block" data-testid="timer-card">
+            <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-300 dark:text-amber-300" data-testid="active-timer-tab-warning">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500"></span>
               </span>
-            ) : (
+              Active focus session running · Synced across browser tabs
+            </div>
+            <p className="meta">{plan.firstStep}</p>
+            <p className="tnum my-2 font-display text-5xl font-semibold" data-testid="clock">
+              {clock(remaining)}
+            </p>
+            <WaveProgress value={progress} label="Focus block progress" />
+            <div className="mt-4 flex justify-center gap-2">
               <button
                 type="button"
                 className="btn btn-secondary"
                 onClick={() => {
-                  const nextDepth = shrinkDepth + 1;
-                  setShrinkDepth(nextDepth);
-                  if (nextDepth >= 4) {
-                    setPlan((prev) =>
-                      prev
-                        ? {
-                            ...prev,
-                            firstStep: 'Smallest possible floor: take one slow breath with the orb for 10 seconds, then just touch the first item. Zero pressure to finish.',
-                            whyThisFits: 'When tasks feel this heavy, the nervous system is overwhelmed. Breathing resets the freeze response before doing anything else.',
-                            timerMinutes: 2,
-                          }
-                        : null
-                    );
-                    setMinutes(2);
-                  } else {
-                    void requestPlan(plan.taskText, 'task_shrinking');
-                  }
+                  setRunning(false);
+                  try {
+                    window.localStorage.removeItem('stay_active_block');
+                  } catch {}
+                  setStep('outcome');
                 }}
-                data-testid="make-smaller"
+                data-testid="stop-timer"
               >
-                Make it smaller {shrinkDepth > 0 ? `(${shrinkDepth}/3)` : ''}
+                Stop
               </button>
-            )}
-            {[5, 10, 25, 45, 90].map((m) => (
-              <button key={m} type="button" className="chip" aria-pressed={minutes === m} onClick={() => setMinutes(m)} aria-label={`${m} minute block`}>
-                {m}
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  deadline.current += 5 * 60_000;
+                  const newMinutes = minutes + 5;
+                  setMinutes(newMinutes);
+                  const newLeft = Math.max(0, Math.round((deadline.current - Date.now()) / 1000));
+                  setRemaining(newLeft);
+                  try {
+                    if (plan) {
+                      window.localStorage.setItem('stay_active_block', JSON.stringify({ plan, minutes: newMinutes, endsAt: deadline.current }));
+                    }
+                  } catch {}
+                  say('Five more minutes');
+                }}
+                data-testid="plus-five"
+              >
+                +5 min
               </button>
-            ))}
-          </div>
-          <p className="meta mt-2">Short blocks start easier. Pick a longer one when you are in flow, and Stay sits with you through it.</p>
-        </section>
-      )}
-
-      {step === 'timer' && plan && (
-        <section className="card w-full p-5 text-center" aria-label="Focus block" data-testid="timer-card">
-          <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-300 dark:text-amber-300" data-testid="active-timer-tab-warning">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75"></span>
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500"></span>
-            </span>
-            Active focus session running · Synced across browser tabs
-          </div>
-          <p className="meta">{plan.firstStep}</p>
-          <p className="tnum my-2 font-display text-5xl font-semibold" data-testid="clock">
-            {clock(remaining)}
-          </p>
-          <WaveProgress value={progress} label="Focus block progress" />
-          <div className="mt-4 flex justify-center gap-2">
+            </div>
             <button
               type="button"
-              className="btn btn-secondary"
+              className="btn btn-ghost mt-3"
               onClick={() => {
                 setRunning(false);
-                try {
-                  window.localStorage.removeItem('stay_active_block');
-                } catch {}
-                setStep('outcome');
+                const nextDepth = shrinkDepth + 1;
+                setShrinkDepth(nextDepth);
+                if (nextDepth >= 4) {
+                  setPlan((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          firstStep: 'Smallest possible floor: take one slow breath with the orb for 10 seconds, then just touch the first item. Zero pressure to finish.',
+                          whyThisFits: 'When tasks feel this heavy, the nervous system is overwhelmed. Breathing resets the freeze response before doing anything else.',
+                          timerMinutes: 2,
+                        }
+                      : null
+                  );
+                  setMinutes(2);
+                  setStep('plan');
+                } else {
+                  void requestPlan(plan.taskText, 'task_shrinking');
+                }
               }}
-              data-testid="stop-timer"
+              data-testid="too-big"
             >
-              Stop
+              Too big? Make it smaller
             </button>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => {
-                deadline.current += 5 * 60_000;
-                const newMinutes = minutes + 5;
-                setMinutes(newMinutes);
-                const newLeft = Math.max(0, Math.round((deadline.current - Date.now()) / 1000));
-                setRemaining(newLeft);
-                try {
-                  if (plan) {
-                    window.localStorage.setItem('stay_active_block', JSON.stringify({ plan, minutes: newMinutes, endsAt: deadline.current }));
-                  }
-                } catch {}
-                say('Five more minutes');
-              }}
-              data-testid="plus-five"
-            >
-              +5 min
-            </button>
-          </div>
-          <button
-            type="button"
-            className="btn btn-ghost mt-3"
-            onClick={() => {
-              setRunning(false);
-              const nextDepth = shrinkDepth + 1;
-              setShrinkDepth(nextDepth);
-              if (nextDepth >= 4) {
-                setPlan((prev) =>
-                  prev
-                    ? {
-                        ...prev,
-                        firstStep: 'Smallest possible floor: take one slow breath with the orb for 10 seconds, then just touch the first item. Zero pressure to finish.',
-                        whyThisFits: 'When tasks feel this heavy, the nervous system is overwhelmed. Breathing resets the freeze response before doing anything else.',
-                        timerMinutes: 2,
-                      }
-                    : null
-                );
-                setMinutes(2);
-                setStep('plan');
-              } else {
-                void requestPlan(plan.taskText, 'task_shrinking');
-              }
-            }}
-            data-testid="too-big"
-          >
-            Too big? Make it smaller
-          </button>
-        </section>
-      )}
+          </section>
+        )}
 
-      {step === 'outcome' && plan && (
-        <section className="card w-full p-5" aria-label="How did it go?" data-testid="outcome-card">
-          <p className="font-display text-lg font-semibold">How did it go?</p>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            {OUTCOMES.map((o) => (
-              <button key={o.key} type="button" className="btn btn-secondary" onClick={() => void logOutcome(o.key)} data-testid={`outcome-${o.key}`}>
-                {o.label}
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
+        {step === 'outcome' && plan && (
+          <section className="card w-full p-5" aria-label="How did it go?" data-testid="outcome-card">
+            <p className="font-display text-lg font-semibold">How did it go?</p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {OUTCOMES.map((o) => (
+                <button key={o.key} type="button" className="btn btn-secondary" onClick={() => void logOutcome(o.key)} data-testid={`outcome-${o.key}`}>
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
 
-      {step === 'done' && (
-        <section className="card w-full p-5 text-center" aria-label="Logged" data-testid="done-card">
-          <p className="font-display text-lg font-semibold">Logged{lastOutcome ? `: ${OUTCOMES.find((o) => o.key === lastOutcome)?.label.toLowerCase()}` : ''}</p>
-          <p className="mt-1 text-ink-2">It is saved in this browser. Nothing is judged here.</p>
-          <div className="mt-3 flex flex-wrap justify-center gap-2">
-            {plan && (
-              <button type="button" className="btn btn-primary" onClick={() => startTimer(lastOutcome === 'not_started' ? 5 : Math.min(minutes, 10))} data-testid="another-block">
-                {lastOutcome === 'not_started' ? 'Try just 5 min' : `Another ${Math.min(minutes, 10)} min`}
+        {step === 'done' && (
+          <section className="card w-full p-5 text-center" aria-label="Logged" data-testid="done-card">
+            <p className="font-display text-lg font-semibold">Logged{lastOutcome ? `: ${OUTCOMES.find((o) => o.key === lastOutcome)?.label.toLowerCase()}` : ''}</p>
+            <p className="mt-1 text-ink-2">It is saved in this browser. Nothing is judged here.</p>
+            <div className="mt-3 flex flex-wrap justify-center gap-2">
+              {plan && (
+                <button type="button" className="btn btn-primary" onClick={() => startTimer(lastOutcome === 'not_started' ? 5 : Math.min(minutes, 10))} data-testid="another-block">
+                  {lastOutcome === 'not_started' ? 'Try just 5 min' : `Another ${Math.min(minutes, 10)} min`}
+                </button>
+              )}
+              <button type="button" className={plan ? 'btn btn-secondary' : 'btn btn-primary'} onClick={reset} data-testid="start-another">
+                Start something else
               </button>
+            </div>
+          </section>
+        )}
+
+          <div ref={panelRef} className="scroll-mt-20 empty:hidden" data-testid="panel-slot">
+          <InlineSheetContext.Provider value={true}>
+            {sheet === 'today' && (
+              <TodayCard
+                items={today}
+                onClose={() => setSheet(null)}
+                onToggle={(id) => {
+                  setToday(toggleToday(id));
+                  say('Nice. That is a win.');
+                  orb.feed('proud achievement', 'typed');
+                }}
+                onStart={(i) => void requestPlan(i.firstStep ? `${i.text}. First step: ${i.firstStep}` : i.text)}
+                onOpenDump={() => setSheet('dump')}
+                onMove={(id) => setToday(moveToday(id, 'today'))}
+              />
             )}
-            <button type="button" className={plan ? 'btn btn-secondary' : 'btn btn-primary'} onClick={reset} data-testid="start-another">
-              Start something else
-            </button>
+            {sheet === 'history' && <HistoryPanel sessions={sessions} onClose={() => setSheet(null)} onOpenFull={() => router.push('/app/history')} />}
+            {sheet === 'call' && <CallLaterPanel onClose={() => setSheet(null)} />}
+          {sheet === 'routine' && (
+            <RoutineSheet
+              initialId={routineId}
+              onClose={() => (closePanel(), setRoutineId(null))}
+              onSpeak={(line) => {
+                // when the voice agent started the routine it is already announcing the first step
+                if (routineByVoice.current) {
+                  routineByVoice.current = false;
+                  return;
+                }
+                if (voiceRef.current.isConnected) voiceRef.current.speakProactively(`Read this step aloud in one short sentence: ${line}`);
+              }}
+              onComplete={(r) => {
+                const l = addToday([{ text: r.name, bucket: 'today' }]);
+                setToday(toggleToday(l[0].id));
+                showTodayNext.current = true;
+                say('Routine finished. That is a win.');
+                orb.feed('proud achievement', 'typed');
+              }}
+            />
+          )}
+
+          {sheet === 'remind' && <ReminderSheet onClose={() => setSheet(null)} onChanged={() => say('Check-in set')} />}
+
+          {sheet === 'dump' && (
+            <BrainDumpSheet
+              onClose={() => (closePanel(), voice.dismissDump())}
+              onCrisis={(m) => (setSheet(null), triggerCrisis(m || CRISIS_FIXED_MESSAGE))}
+              onSaved={() => (setToday(loadToday()), (showTodayNext.current = true))}
+              live={voice.dump}
+              voiceOn={voice.isConnected}
+              onTalk={() => voice.startDump()}
+              onFinishLive={voice.finishDump}
+              onCancelLive={voice.cancelDump}
+              onStart={(i) => {
+                setSheet(null);
+                voice.dismissDump();
+                void requestPlan(i.firstStep ? `${i.text}. First step: ${i.firstStep}` : i.text);
+              }}
+            />
+          )}
+
+          {sheet === 'parking' && (
+            <Sheet title="Parked thoughts" onClose={() => setSheet(null)}>
+              <p className="meta">Things that came up while you were starting something else. Say &ldquo;park it: call the dentist&rdquo; any time. Stored on this device.</p>
+              <ul className="mt-3 space-y-2" data-testid="parking-list">
+                {parked.map((p) => (
+                  <li key={p.id} className="flex items-center justify-between gap-2 rounded-lg bg-recessed p-3">
+                    <span>{p.text}</span>
+                    <span className="flex shrink-0 gap-1">
+                      <button type="button" className="btn btn-ghost !px-2 !py-1" onClick={() => (setSheet(null), submit(p.text), setParked(unparkThought(p.id)))}>
+                        Start this
+                      </button>
+                      <button type="button" className="btn btn-ghost !px-2 !py-1" onClick={() => setParked(unparkThought(p.id))} aria-label={`Remove ${p.text}`}>
+                        Remove
+                      </button>
+                    </span>
+                  </li>
+                ))}
+                {parked.length === 0 && <li className="text-ink-2">Nothing parked. Good.</li>}
+              </ul>
+            </Sheet>
+          )}
+
+          {sheet === 'memory' && <MemorySheet memory={voice.userMemory} onChanged={voice.refreshUserMemory} onClose={() => setSheet(null)} />}
+          </InlineSheetContext.Provider>
           </div>
-        </section>
+
+          <div ref={endRef} className="scroll-mb-40" aria-hidden="true" />
+        </div>
       )}
 
-      {/* When chat is active and idle, provide today items */}
-      {(step === 'idle' || step === 'done') && voice.transcripts.length > 0 && (
-        <TodayCard
-          items={today}
-          onToggle={(id) => {
-            setToday(toggleToday(id));
-            say('Nice. That is a win.');
-            orb.feed('proud achievement', 'typed');
-          }}
-          onStart={(i) => void requestPlan(i.firstStep ? `${i.text}. First step: ${i.firstStep}` : i.text)}
-          onOpenDump={() => setSheet('dump')}
-          onMove={(id) => setToday(moveToday(id, 'today'))}
-        />
-      )}
-
-      {/* Fixed Voice Dock at Bottom (§7.3) */}
-      <div className="sticky bottom-0 z-20 w-full border-t border-line bg-surface/95 backdrop-blur-md pt-2.5 pb-1 sm:pt-3 max-w-full overflow-hidden">
+      {/* The composer: type, talk, or call. Nothing else. */}
+      <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 pb-1 sm:bottom-3" data-testid="composer">
+        {receipt && (
+          <p className="mx-auto mb-2 w-fit rounded-full bg-accent-soft px-3 py-1 text-[0.82rem] font-medium text-accent" role="status">
+            {receipt}
+          </p>
+        )}
         <form
-          className="flex w-full items-center gap-1.5 sm:gap-2 max-w-full overflow-hidden"
+          className="flex w-full items-center gap-1.5 rounded-2xl border border-line bg-surface/95 p-1.5 shadow-[0_10px_40px_-12px_rgba(0,0,0,0.75)] backdrop-blur-md focus-within:border-accent"
           action="javascript:void(0);"
           onSubmit={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            if (input.trim()) {
-              submit(input);
-            }
+            if (input.trim()) submit(input);
           }}
         >
-          {/* Subtle status indicator orb (<= 40 px) in dock - hidden on mobile when mic button visualizer is present to prevent overflow */}
-          <SubtleOrb
-            state={visual}
-            energy={voice.audioEnergy}
-            size={36}
-            shape={presence.target}
-            onClick={toggleVoice}
-            testId={voice.transcripts.length > 0 ? 'orb-button' : 'dock-status-orb'}
-            className={`${!quietMode ? 'hidden sm:inline-flex' : ''} shrink-0`}
+          <input
+            ref={inputRef}
+            className="field h-11 min-w-0 flex-1 !border-0 !bg-transparent focus:!outline-none"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (input.trim()) submit(input);
+              }
+            }}
+            placeholder={isHoldingSpace ? 'Listening...' : 'Message Stay'}
+            aria-label="Message Stay"
+            maxLength={280}
+            data-testid="task-input"
           />
 
-          <p className="meta text-xs shrink-0" role="status" aria-live="polite" data-testid="orb-status">
-            {status}
-          </p>
+          {input.trim() && (
+            <button type="submit" className="btn btn-primary h-11 shrink-0 px-4" data-testid="send">
+              Send
+            </button>
+          )}
 
-          {/* compact Signal: the real microphone level while listening, the audible assistant level while speaking */}
-          {!quietMode && <SignalWave state={visual} height={28} className="hidden sm:block w-24 shrink-0" />}
-
-          {!quietMode && (
-            <GeminiLiveVoiceVisualizer
+          {showVoiceControls && !quietMode && (
+            <TalkButton
               visualState={visual}
               isConnected={voice.isConnected}
-              audioEnergy={voice.audioEnergy}
-              audioBands={voice.audioBands}
               isHandsFreePaused={voice.isHandsFreePaused}
               onToggleVoice={toggleVoice}
               onToggleHandsFreeMute={voice.toggleHandsFreeMute}
@@ -1289,64 +1267,28 @@ export function StayHome({
             />
           )}
 
-          <input
-            ref={inputRef}
-            className="field h-12 flex-1 min-w-0"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                e.stopPropagation();
-                if (input.trim()) {
-                  submit(input);
-                }
-              }
-            }}
-            placeholder={isHoldingSpace ? 'Listening...' : 'Type or hold Space'}
-            aria-label="Tell Stay what you're avoiding"
-            maxLength={280}
-            data-testid="task-input"
-          />
-
-          <button type="submit" className="btn btn-primary h-12 shrink-0 px-3" disabled={!input.trim()} data-testid="send">
-            Send
-          </button>
-
-          {voice.isConnected && (
+          {showVoiceControls && (
             <button
               type="button"
-              className="btn btn-secondary h-12 font-medium shrink-0 px-3"
-              onClick={() => voice.disconnectVoiceSession()}
-              data-testid="stop-voice-btn"
+              onClick={startCall}
+              disabled={callIntent}
+              className="btn btn-secondary h-11 shrink-0 gap-1.5 !px-3"
+              data-testid="call-direct-stay-btn"
+              aria-label="Call Stay"
             >
-              Stop
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+              </svg>
+              <span className="hidden sm:inline">Call</span>
             </button>
           )}
-
-          <button type="button" className="btn btn-ghost h-12 !px-2 shrink-0" onClick={() => setSheet('menu')} aria-label="More" data-testid="menu-button">
-            More
-          </button>
         </form>
 
         {/* Hidden face-toggle preserved for therapistOrb.spec.ts */}
         <button
           type="button"
           className="sr-only"
-          style={{
-            position: 'fixed',
-            bottom: 4,
-            right: 4,
-            zIndex: 9999,
-            width: 1,
-            height: 1,
-            padding: 0,
-            margin: 0,
-            clip: 'auto',
-            clipPath: 'none',
-            opacity: 0.01,
-            pointerEvents: 'auto',
-          }}
+          style={{ position: 'fixed', bottom: 4, right: 4, zIndex: 9999, width: 1, height: 1, padding: 0, margin: 0, clip: 'auto', clipPath: 'none', opacity: 0.01, pointerEvents: 'auto' }}
           aria-pressed={presence.pinned}
           aria-label="Show Stay's face"
           onClick={presence.togglePin}
@@ -1386,10 +1328,16 @@ export function StayHome({
                 <button type="button" className="btn btn-secondary justify-start text-sm py-2" onClick={() => (setSheet(null), setGrounding(true))}>
                   Ground me (breathing)
                 </button>
-                <button type="button" className="btn btn-secondary justify-start text-sm py-2" onClick={() => (routineByVoice.current = false, setRoutineId(null), setSheet('routine'))}>
+                <button type="button" className="btn btn-secondary justify-start text-sm py-2" onClick={() => openPanel('routines')} data-testid="menu-routines">
                   Routines
                 </button>
-                <button type="button" className="btn btn-secondary justify-start text-sm py-2 sm:col-span-2" onClick={() => (setParked(loadParked()), setSheet('parking'))} data-testid="parking-open">
+                <button type="button" className="btn btn-secondary justify-start text-sm py-2" onClick={() => openPanel('dump')} data-testid="menu-dump">
+                  Brain dump
+                </button>
+                <button type="button" className="btn btn-secondary justify-start text-sm py-2" onClick={() => openPanel('today')} data-testid="menu-today">
+                  Today&apos;s list
+                </button>
+                <button type="button" className="btn btn-secondary justify-start text-sm py-2 sm:col-span-2" onClick={() => openPanel('parking')} data-testid="parking-open">
                   Parked thoughts
                 </button>
               </div>
@@ -1427,7 +1375,10 @@ export function StayHome({
                 <button type="button" className="btn btn-secondary justify-start text-sm py-2" onClick={() => setSheet('memory')}>
                   What Stay remembers
                 </button>
-                <button type="button" className="btn btn-secondary justify-start text-sm py-2" onClick={() => router.push('/app/history')}>
+                <button type="button" className="btn btn-secondary justify-start text-sm py-2" onClick={() => openPanel('call')} data-testid="menu-call-later">
+                  Have Stay call me
+                </button>
+                <button type="button" className="btn btn-secondary justify-start text-sm py-2" onClick={() => setSheet('history')} data-testid="menu-history">
                   History
                 </button>
                 <button type="button" className="btn btn-secondary justify-start text-sm py-2" onClick={() => router.push('/app/settings')}>
@@ -1436,7 +1387,7 @@ export function StayHome({
               </div>
             </div>
           </div>
-          <p className="meta mt-4">Hands-free: Say &ldquo;ground me&rdquo;, &ldquo;switch voice&rdquo;, or &ldquo;show memory&rdquo; anytime.</p>
+          <p className="meta mt-4">Just ask, by voice or typing: &ldquo;show my history&rdquo;, &ldquo;open brain dump&rdquo;, &ldquo;what do you remember&rdquo;, &ldquo;ground me&rdquo;.</p>
         </Sheet>
       )}
 
@@ -1468,71 +1419,6 @@ export function StayHome({
           </div>
         </Sheet>
       )}
-
-      {sheet === 'routine' && (
-        <RoutineSheet
-          initialId={routineId}
-          onClose={() => (setSheet(null), setRoutineId(null))}
-          onSpeak={(line) => {
-            // when the voice agent started the routine it is already announcing the first step
-            if (routineByVoice.current) {
-              routineByVoice.current = false;
-              return;
-            }
-            if (voiceRef.current.isConnected) voiceRef.current.speakProactively(`Read this step aloud in one short sentence: ${line}`);
-          }}
-          onComplete={(r) => {
-            const l = addToday([{ text: r.name, bucket: 'today' }]);
-            setToday(toggleToday(l[0].id));
-            say('Routine finished. That is a win.');
-            orb.feed('proud achievement', 'typed');
-          }}
-        />
-      )}
-
-      {sheet === 'remind' && <ReminderSheet onClose={() => setSheet(null)} onChanged={() => say('Check-in set')} />}
-
-      {sheet === 'dump' && (
-        <BrainDumpSheet
-          onClose={() => (setSheet(null), voice.dismissDump())}
-          onCrisis={(m) => (setSheet(null), triggerCrisis(m || CRISIS_FIXED_MESSAGE))}
-          onSaved={() => setToday(loadToday())}
-          live={voice.dump}
-          voiceOn={voice.isConnected}
-          onTalk={() => voice.startDump()}
-          onFinishLive={voice.finishDump}
-          onCancelLive={voice.cancelDump}
-          onStart={(i) => {
-            setSheet(null);
-            voice.dismissDump();
-            void requestPlan(i.firstStep ? `${i.text}. First step: ${i.firstStep}` : i.text);
-          }}
-        />
-      )}
-
-      {sheet === 'parking' && (
-        <Sheet title="Parked thoughts" onClose={() => setSheet(null)}>
-          <p className="meta">Things that came up while you were starting something else. Say &ldquo;park it: call the dentist&rdquo; any time. Stored on this device.</p>
-          <ul className="mt-3 space-y-2" data-testid="parking-list">
-            {parked.map((p) => (
-              <li key={p.id} className="flex items-center justify-between gap-2 rounded-lg bg-recessed p-3">
-                <span>{p.text}</span>
-                <span className="flex shrink-0 gap-1">
-                  <button type="button" className="btn btn-ghost !px-2 !py-1" onClick={() => (setSheet(null), submit(p.text), setParked(unparkThought(p.id)))}>
-                    Start this
-                  </button>
-                  <button type="button" className="btn btn-ghost !px-2 !py-1" onClick={() => setParked(unparkThought(p.id))} aria-label={`Remove ${p.text}`}>
-                    Remove
-                  </button>
-                </span>
-              </li>
-            ))}
-            {parked.length === 0 && <li className="text-ink-2">Nothing parked. Good.</li>}
-          </ul>
-        </Sheet>
-      )}
-
-      {sheet === 'memory' && <MemorySheet memory={voice.userMemory} onChanged={voice.refreshUserMemory} onClose={() => setSheet(null)} />}
 
       {voice.topicShape === 5 && (
         <Sheet title="Game" onClose={() => voice.setTopicShape(0)}>

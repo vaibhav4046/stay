@@ -67,8 +67,10 @@ import {
   type UserMemoryProfile,
 } from '@/lib/coach/userMemory';
 import {
+  detectPanel,
   detectVoiceCommand,
   parseMultiIntentUtterance,
+  type PanelId,
   type VoiceCommandAction,
 } from '@/lib/voice/voiceCommands';
 import {
@@ -122,6 +124,8 @@ export interface UseVoiceAgentOptions {
   onShowMemoryRequested?: () => void;
   onShowParkingRequested?: () => void;
   onShowDumpRequested?: () => void;
+  /** Open one of the inline panels (brain dump, routines, today, parked thoughts, reminders). */
+  onShowPanelRequested?: (panel: PanelId) => void;
   onRoutineRequested?: (routineId: string) => void;
   onRemindersChanged?: () => void;
   onTodayChanged?: () => void;
@@ -1187,6 +1191,8 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
             'check-in': ['/app/treatment', 'Check-in'], settings: ['/app/settings', 'Settings'], privacy: ['/privacy', 'Privacy'],
           };
           if (lower === 'memory') { o.onShowMemoryRequested?.(); return { ok: true, opened: 'memory' }; }
+          const panel = detectPanel(`open ${lower}`);
+          if (panel) { o.onShowPanelRequested?.(panel); return { ok: true, opened: panel }; }
           if (lower === 'voice' || lower === 'voices') { o.onChangeVoiceRequested?.(); return { ok: true, opened: 'voices' }; }
           const hit = Object.entries(screens).find(([k]) => lower.includes(k));
           if (!hit) return { ok: false, error: 'unknown screen' };
@@ -1533,6 +1539,10 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
             return true;
           } else if (cmd.type === 'show_history') {
             optionsRef.current.onShowHistoryRequested?.();
+            playEarcon('chime');
+            return true;
+          } else if (cmd.type === 'show_panel') {
+            optionsRef.current.onShowPanelRequested?.(cmd.panel);
             playEarcon('chime');
             return true;
           } else if (cmd.type === 'open_training') {

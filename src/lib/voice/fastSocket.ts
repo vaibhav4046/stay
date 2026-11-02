@@ -271,6 +271,8 @@ const TTS_URL = process.env.NEXT_PUBLIC_ASSEMBLYAI_TTS_URL || 'wss://tts.us.asse
 const MAX_HISTORY = 14;
 /** Characters of a reply held back before speech starts, so the voice begins as one continuous synthesis (about two sentences). */
 const FIRST_BLOCK_CHARS = 90;
+/** The reply is fully written but the voice has sent no sound and no "done" for this long: end it here, never stay on "Speaking". */
+const REPLY_STALL_MS = 8000;
 
 /** Splits streamed text into speakable chunks: a sentence end followed by space, once there is enough to say. */
 export function takeSpeakable(buffer: string, first = false): { chunk: string; rest: string } | null {
@@ -363,6 +365,7 @@ export class FastSocket {
   private ttsAudioStartedAt = 0;
   private unduckTimer: ReturnType<typeof setTimeout> | undefined;
   private cancelFallbackTimer: ReturnType<typeof setTimeout> | undefined;
+  private replyWatchdog: ReturnType<typeof setTimeout> | undefined;
 
   constructor(cfg: FastSocketConfig) {
     this.cfg = { sampleRate: 16000, holdMs: 2200, interruptHoldMs: 900, warmUp: true, autoLanguage: false, ...cfg };
@@ -734,6 +737,12 @@ export class FastSocket {
         if (m.type === 'Begin') {
           begun = true;
           clearTimeout(beginTimer);
+          // a fresh session cannot send audio of a reply cancelled on the one it replaces; counting those acks would mute every later reply
+          this.staleCancels = 0;
+          if (this.cancelFallbackTimer) {
+            clearTimeout(this.cancelFallbackTimer);
+            this.cancelFallbackTimer = undefined;
+          }
           const cfg = m.configuration as { unknown_params?: unknown[] } | undefined;
           if (cfg && Array.isArray(cfg.unknown_params) && cfg.unknown_params.length > 0) {
             this.emit({ type: 'tts.warning', unknown_params: cfg.unknown_params });
@@ -1016,6 +1025,7 @@ export class FastSocket {
     this.lastWordEndMs = 0;
     this.agentSpeaking = false;
     this.toolWaiters.clear();
+    clearTimeout(this.replyWatchdog);
     try {
       if (this.tts?.readyState === WebSocket.OPEN) {
         this.tts.send(JSON.stringify({ type: 'Cancel' }));
@@ -1023,7 +1033,7 @@ export class FastSocket {
         if (this.cancelFallbackTimer) clearTimeout(this.cancelFallbackTimer);
         this.cancelFallbackTimer = setTimeout(() => {
           this.cancelFallbackTimer = undefined;
-          this.staleCancels = Math.max(0, this.staleCancels - 1);
+          this.staleCancels = 0; // one timer covers every cancel sent in the last 800 ms: if no ack came, none will
           this.emit({ type: 'barge_in.ready_listening', source: 'timeout_800ms' });
         }, 800);
       }
@@ -1040,6 +1050,7 @@ export class FastSocket {
       this.mark('aud1');
     }
     this.agentSpeaking = true;
+    if (this.llmDone && this.spoken !== '') this.armReplyWatchdog();
     this.playEndAt = Math.max(this.playEndAt, Date.now()) + (String(m.audio).length * 0.75) / 48; // 24 kHz 16-bit mono = 48 bytes per ms
     this.emit({ type: 'reply.audio', data: m.audio });
   }
@@ -1071,6 +1082,7 @@ export class FastSocket {
       this.sentFlushes++;
       this.unflushed = false;
       this.tts.send(JSON.stringify({ type: 'Flush' }));
+      if (this.llmDone) this.armReplyWatchdog();
     } else {
       this.unflushed = true;
     }
@@ -1087,12 +1099,30 @@ export class FastSocket {
     this.unflushed = false;
     this.sentFlushes++;
     this.tts.send(JSON.stringify({ type: 'Flush' }));
+    if (this.llmDone) this.armReplyWatchdog();
   }
 
   private maybeFinish(): void {
     if (!this.llmDone || this.spoken === '') return;
     const allDone = this.replyBaseId === null ? this.lastDoneId >= 0 : this.lastDoneId >= this.replyBaseId + this.sentFlushes - 1;
-    if (!allDone) return;
+    if (!allDone) return this.armReplyWatchdog();
+    this.finishReply();
+  }
+
+  private armReplyWatchdog(): void {
+    clearTimeout(this.replyWatchdog);
+    if (this.closed) return;
+    this.replyWatchdog = setTimeout(() => {
+      this.replyWatchdog = undefined;
+      if (this.closed || !this.llmDone || this.spoken === '') return;
+      this.mark('stall');
+      this.finishReply();
+    }, REPLY_STALL_MS);
+  }
+
+  private finishReply(): void {
+    clearTimeout(this.replyWatchdog);
+    this.replyWatchdog = undefined;
     const text = this.spoken;
     this.spoken = '';
     this.sentFlushes = 0;

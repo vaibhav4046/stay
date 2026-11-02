@@ -1,14 +1,37 @@
 'use client';
 
-import { useEffect } from 'react';
+import { createContext, useContext, useEffect } from 'react';
 
-/** A bottom sheet on phones, a centred dialog on larger screens. Escape or a tap outside closes it. */
+/**
+ * Inside this provider a Sheet renders as a card in the conversation instead of a modal over it. The chat-first home
+ * screen wraps its panels in it, so Memory, Brain dump, Routines and the rest appear in the flow when the talk asks for
+ * them, and the same components still work as sheets anywhere else.
+ */
+export const InlineSheetContext = createContext(false);
+
+/** A bottom sheet on phones, a centred dialog on larger screens (or an inline card). Escape or a tap outside closes it. */
 export function Sheet({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+  const inline = useContext(InlineSheetContext);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
+
+  if (inline) {
+    return (
+      <section role="region" aria-label={title} className="card stay-panel w-full p-5" data-testid="inline-panel" data-panel={title}>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="font-display text-lg font-semibold">{title}</h2>
+          <button type="button" className="btn btn-ghost" onClick={onClose} aria-label="Close">
+            Close
+          </button>
+        </div>
+        {children}
+      </section>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/30 sm:items-center" onClick={onClose}>
       <div

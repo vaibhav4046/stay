@@ -10,6 +10,12 @@ async function onboard(page: Page) {
   await expect(page.getByTestId('task-input')).toBeVisible();
 }
 
+/** Panels (brain dump, routines, today list) are not on the home screen: they come from the menu, or from asking. */
+async function openFromMenu(page: Page, testId: string) {
+  await page.getByTestId('menu-button').click();
+  await page.getByTestId(testId).click();
+}
+
 async function runLoop(page: Page, task: string, outcomeKey = 'started') {
   await page.getByTestId('task-input').fill(task);
   await page.getByTestId('send').click();
@@ -296,7 +302,7 @@ test('the landing page has the demo video with a captions track, custom controls
 test.describe('Brain dump and today list', () => {
   test('dump everything, get one thing to start, tick a win, and it persists', async ({ page }) => {
     await onboard(page);
-    await page.getByTestId('chip-dump').click();
+    await openFromMenu(page, 'menu-dump');
     await page.getByTestId('dump-input').fill('email the landlord, pay the council tax, call mum someday, the bins');
     await page.getByTestId('dump-sort').click();
     await expect(page.getByTestId('dump-result')).toBeVisible({ timeout: 25000 });
@@ -308,24 +314,26 @@ test.describe('Brain dump and today list', () => {
     await page.getByTestId('today-check').first().click();
     await expect(page.getByTestId('wins-count')).toContainText('1 win today');
     await page.reload();
+    await openFromMenu(page, 'menu-today');
     await expect(page.getByTestId('wins-count')).toContainText('1 win today');
   });
 
   test('a crisis in a brain dump goes to help, never into a list', async ({ page }) => {
     await onboard(page);
-    await page.getByTestId('chip-dump').click();
+    await openFromMenu(page, 'menu-dump');
     await page.getByTestId('dump-input').fill('taxes, and I want to take my own life');
     await page.getByTestId('dump-sort').click();
     await expect(page.getByText('116 123').first()).toBeVisible({ timeout: 10000 });
     expect(await page.evaluate(() => localStorage.getItem('stay_today_list_v1'))).toBeNull();
   });
 
-  test('feeling chips start a plan, and the mobile bottom nav and urgent help are reachable', async ({ page }) => {
+  test('typing a feeling starts a plan, and the mobile bottom nav and urgent help are reachable', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await onboard(page);
     await expect(page.getByTestId('bottom-nav')).toBeVisible();
     await expect(page.getByTestId('crisis-help-trigger')).toBeVisible();
-    await page.getByRole('button', { name: 'I feel overwhelmed' }).click();
+    await page.getByTestId('task-input').fill('I feel overwhelmed');
+    await page.getByTestId('send').click();
     await expect(page.getByTestId('plan-card')).toBeVisible({ timeout: 20000 });
   });
 });
@@ -333,7 +341,7 @@ test.describe('Brain dump and today list', () => {
 test.describe('Routines, check-ins and the offline shell', () => {
   test('run the morning routine step by step and finish with a win', async ({ page }) => {
     await onboard(page);
-    await page.getByTestId('chip-routines').click();
+    await openFromMenu(page, 'menu-routines');
     await page.getByTestId('routine-start-morning').click();
     await expect(page.getByTestId('routine-step')).toContainText(/water/i);
     for (let i = 0; i < 4; i++) await page.getByTestId('routine-next').click();
@@ -344,7 +352,7 @@ test.describe('Routines, check-ins and the offline shell', () => {
 
   test('a custom routine can be written and run', async ({ page }) => {
     await onboard(page);
-    await page.getByTestId('chip-routines').click();
+    await openFromMenu(page, 'menu-routines');
     await page.getByTestId('routine-new').click();
     await page.getByTestId('routine-name').fill('Study session');
     await page.getByTestId('routine-steps').fill(['water and snack - 3', 'phone in another room', 'open the notes - 2'].join('\n'));
@@ -435,6 +443,7 @@ test.describe('Judge feedback: blocks, trust copy, check-in, urgent help', () =>
       { id: 'b', text: 'call mum someday', bucket: 'later', done: false, createdAt: new Date().toISOString() },
     ])));
     await page.reload();
+    await openFromMenu(page, 'menu-today');
     await page.getByTestId('later-toggle').click();
     await expect(page.getByTestId('later-list')).toContainText('call mum someday');
     await page.getByRole('button', { name: 'Move to today: call mum someday' }).click();

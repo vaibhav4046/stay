@@ -16,6 +16,7 @@ class FakeWS {
   static instances: FakeWS[] = [];
   static auto = true;
   static coalesce = false; // the server reports two flushes as one FlushDone
+  static dropCancelAck = false; // a Cancel sent just before the socket is replaced never gets its ack
   readyState = 0;
   sent: Array<string | Uint8Array> = [];
   onmessage: ((e: { data: string }) => void) | null = null;
@@ -54,7 +55,7 @@ class FakeWS {
         const id = this.flushes++;
         queueMicrotask(() => { this.push({ type: 'Audio', audio: 'AAAA', flush_id: id }); if (!(FakeWS.coalesce && id % 2 === 0)) this.push({ type: 'FlushDone', flush_id: id }); });
       }
-      if (m.type === 'Cancel') {
+      if (m.type === 'Cancel' && !FakeWS.dropCancelAck) {
         queueMicrotask(() => this.push({ type: 'Cancelled', audio_duration_seconds: 0 }));
       }
     }
@@ -85,6 +86,7 @@ beforeEach(() => {
   FakeWS.instances = [];
   FakeWS.auto = true;
   FakeWS.coalesce = false;
+  FakeWS.dropCancelAck = false;
   (globalThis as unknown as { WebSocket: unknown }).WebSocket = FakeWS;
   fetchMock = vi.fn();
   (globalThis as unknown as { fetch: unknown }).fetch = fetchMock;
@@ -588,6 +590,40 @@ describe('FastSocket: auto language follows what the person speaks', () => {
     expect(ttsSockets().length).toBe(1);
   });
 });
+describe('FastSocket: a reply is never left on "Speaking"', () => {
+  it('cancels whose acks were lost with the old voice session do not mute the next reply on the new one', async () => {
+    FakeWS.dropCancelAck = true;
+    fetchMock.mockResolvedValue(sse(text('Claro, empecemos con un paso pequeño.')));
+    const { s, stt } = await open({ autoLanguage: true });
+    // two early replies dropped in one turn: two Cancels, and the socket is replaced before either is acknowledged
+    const internals = s as unknown as { cancel(): void };
+    internals.cancel();
+    internals.cancel();
+    stt.push({ type: 'Turn', turn_order: 0, transcript: 'Hola, necesito empezar mi tarea hoy.', end_of_turn: true, language_code: 'es', language_confidence: 0.95 });
+    await tick(30);
+    expect(types()).toContain('reply.audio');
+    expect(types()).toContain('reply.done');
+  });
+
+  it('a voice that goes silent after the reply is written still ends the reply', async () => {
+    fetchMock.mockResolvedValue(sse(text('Open the tax folder.')));
+    const { stt } = await open();
+    FakeWS.instances.filter((w) => w.isTts).forEach((w) => ((FakeWS.auto = false), w));
+    vi.useFakeTimers();
+    try {
+      stt.push({ type: 'Turn', turn_order: 0, transcript: 'I keep avoiding my taxes.', end_of_turn: true });
+      await vi.advanceTimersByTimeAsync(500);
+      expect(types()).toContain('reply.started');
+      expect(types()).not.toContain('reply.done'); // no audio, no FlushDone: the reply is waiting
+      await vi.advanceTimersByTimeAsync(8100);
+      expect(types()).toContain('reply.done');
+      expect(events.find((e) => e.type === 'transcript.agent')?.text).toBe('Open the tax folder.');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
 describe('regional AssemblyAI voices', () => {
   it('Indian English and Mexican Spanish personas resolve to their real AssemblyAI voices', () => {
     expect(fastVoiceFor('chaiwala', 'en')).toBe('d9e70892-1ace-5638-b749-dd6a0ba44686'); // Andrew

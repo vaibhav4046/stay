@@ -6,6 +6,24 @@
 import { resolvePersona } from '@/lib/voice/personas';
 
 
+/** The panels the conversation can open inline on the home screen. */
+export type PanelId = 'dump' | 'routines' | 'today' | 'parking' | 'reminders' | 'call';
+
+const PANEL_PATTERNS: Array<[PanelId, RegExp]> = [
+  ['dump', /\b(?:(?:open|start|show|do|begin)\s+(?:me\s+)?(?:a\s+|the\s+|my\s+)?brain[\s-]?dump|(?:let'?s|let\s+me|i\s+(?:want|need)\s+to)\s+(?:do\s+(?:a\s+)?)?brain[\s-]?dump)\b/i],
+  ['routines', /\b(?:open|show|view)\s+(?:me\s+)?(?:the\s+|my\s+)?routines?\b/i],
+  ['parking', /\b(?:open|show|view)\s+(?:me\s+)?(?:the\s+|my\s+)?(?:parked|parking)(?:\s+(?:thoughts?|lot|items?))?\b/i],
+  ['reminders', /\b(?:open|show|view)\s+(?:me\s+)?(?:the\s+|my\s+)?(?:check-?in\s+)?reminders?\b/i],
+  ['call', /\b(?:have\s+(?:stay|you)\s+call\s+me|call\s+me\s+(?:back\s+)?(?:later|in\s+(?:\d+\s*min|a\s+(?:bit|few))|in\s+a\s+while)|schedule\s+a\s+call)\b/i],
+  ['today', /\b(?:(?:open|show|view)\s+(?:me\s+)?(?:the\s+|my\s+)?(?:today(?:'s)?\s+(?:list|tasks?|plan|items?)|to-?do(?:\s+list)?|task\s+list)|what(?:'s| is)\s+on\s+(?:my\s+)?(?:list|plate)(?:\s+today)?)\b/i],
+];
+
+/** Which inline panel a spoken or typed request asks for, if any. */
+export function detectPanel(text: string): PanelId | null {
+  const clean = text.toLowerCase().trim();
+  return PANEL_PATTERNS.find(([, re]) => re.test(clean))?.[0] ?? null;
+}
+
 export type VoiceCommandAction =
   | { type: 'pause_listening' }
   | { type: 'resume_listening' }
@@ -15,6 +33,7 @@ export type VoiceCommandAction =
   | { type: 'stop_timer' }
   | { type: 'show_memory' }
   | { type: 'show_history' }
+  | { type: 'show_panel'; panel: PanelId }
   | { type: 'open_grounding' }
   | { type: 'open_training' }
   | { type: 'close_modals' }
@@ -89,6 +108,10 @@ export function detectVoiceCommand(text: string): VoiceCommandAction {
   ) {
     return { type: 'show_history' };
   }
+
+  // 4b. Inline panels ("open brain dump", "show my routines", "show parked thoughts", "show my reminders", "show my to-do list")
+  const panel = detectPanel(clean);
+  if (panel) return { type: 'show_panel', panel };
 
   // 5. Grounding / Somatic ("stay ground me", "open grounding", "help me breathe", "box breathing", "calm down")
   if (
@@ -482,6 +505,10 @@ function detectShapeCommandFromText(
   if (/\b(?:change\s+that\s+to|scratch\s+that|erase\s+that|repeat\s+that)\b/i.test(clean)) {
     return null;
   }
+  // "show my routines" / "show history" ask for a panel, not a shape called "my"
+  if (detectPanel(clean) || /\b(?:show|open|view)\s+(?:me\s+)?(?:the\s+|my\s+)?(?:chat\s+|session\s+)?(?:history|memory|memories)\b/i.test(clean)) {
+    return null;
+  }
 
   // 1. Core 8 shapes
   const coreShapeMatch = clean.match(
@@ -620,6 +647,8 @@ export function parseMultiIntentUtterance(text: string): MultiIntentParseResult 
   if (/\b(?:show|open|view)\s+(?:me\s+)?(?:the\s+)?(?:chat\s+)?history\b/i.test(lower)) {
     commands.push({ type: 'show_history' });
   }
+  const panelCmd = detectPanel(lower);
+  if (panelCmd) commands.push({ type: 'show_panel', panel: panelCmd });
 
   // 7. Check Grounding
   if (/\b(?:ground\s+me|help\s+me\s+breathe|breathing\s+exercise)\b/i.test(lower)) {

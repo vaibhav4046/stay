@@ -44,7 +44,7 @@ resampling is added: the two sources already existed for lip-sync and the captur
 | Place | Component | State source |
 |---|---|---|
 | Call Stay (ringing, connected, muted) | `CallStayOverlay`: the same particle orb as the landing page (it reacts to the audio level; no wave line) | `connecting` while ringing, `paused` when muted, otherwise the voice state |
-| Voice dock on /app/today | `SignalWave` (28 px) | `visual` state |
+| Talk button in the composer on /app/today | `SignalWave` (24 px), shown only while a voice session is live | `visual` state |
 | Landing hero | the particle orb only (no wave line) | shape and thinking state |
 | Focus timer | `WaveProgress` | the real timer progress (not audio) |
 | Landing demo video seek bar | CSS | real video; glowing handle, blue progress, neutral track |
@@ -65,7 +65,7 @@ muted 7.3:1, accent 7.6:1, danger 6.9:1. Motion: press 120 ms at scale 0.97, sma
 - Added `src/lib/signal/signalBus.ts`, `src/lib/signal/signalModel.ts`, `src/components/signal/SignalWave.tsx`.
 - `useVoiceAgent.ts`: writes the real microphone level to `signalBus`; resets it when capture stops.
 - `CallStayOverlay.tsx`: rebuilt on `SignalWave`; captions toggle; transport diagnostics; safe-area insets.
-- `StayHome.tsx`: compact wave in the voice dock. Call screen uses the landing particle orb (`Signal`).
+- `StayHome.tsx`: the wave sits inside the Talk button (`TalkButton`) while a session is live; the call screen uses the landing particle orb (`Signal`).
 - `landing.css`: demo seek handle restyled. Theme tokens remapped to the supplied palette.
 - Tests: `tests/unit/signalModel.test.ts` (14), `tests/e2e/signal.spec.ts` (5).
 

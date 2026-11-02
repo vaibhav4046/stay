@@ -46,8 +46,12 @@ test.describe('Call Stay (browser call mode)', () => {
     await expect(overlay).toBeHidden();
   });
 
-  test('"call me in 5 min" books a call and can be cancelled; nothing is booked without storage', async ({ page }) => {
+  test('asking "call me later" opens the booking panel in the chat; a call can be booked and cancelled', async ({ page }) => {
     await openToday(page);
+    await expect(page.getByTestId('call-me-5')).toHaveCount(0); // not on the empty home screen
+    await page.getByTestId('task-input').fill('call me in 5 min');
+    await page.getByTestId('send').click();
+    await expect(page.getByTestId('inline-panel')).toHaveAttribute('data-panel', 'Call me later');
     await page.getByTestId('call-me-5').click();
     await expect(page.getByTestId('call-booked')).toContainText('Stay will call you at');
     await page.getByRole('button', { name: 'Cancel' }).click();

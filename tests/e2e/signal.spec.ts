@@ -23,7 +23,7 @@ async function openToday(page: Page, reply = 'Start with the stack of bills on y
     await page.getByTestId('onboarding-ack').click();
     await page.getByTestId('onboarding-done').click();
   }
-  await expect(page.getByTestId('dock-status-orb').or(page.getByTestId('orb-button')).first()).toBeVisible();
+  await expect(page.getByTestId('orb-button')).toBeVisible();
   return fake;
 }
 
@@ -34,12 +34,12 @@ const waveState = (page: Page) => wave(page).getAttribute('data-signal-state');
 test.describe('STAY Signal: the wave is driven by real audio and tells the truth', () => {
   test('flat when nothing is happening, follows rendered assistant audio while speaking, and lets go when interrupted', async ({ page }) => {
     const fake = await openToday(page);
-    // resting: nothing is capturing or playing, so the wave is flat (only the slow breath, which is not audio)
-    await expect(wave(page)).toHaveAttribute('data-signal-state', 'idle');
-    expect(await drive(page)).toBeLessThan(0.02);
+    // resting: nothing is capturing or playing, so there is no wave at all
+    await expect(page.getByTestId('signal-wave')).toHaveCount(0);
 
-    await page.getByTestId('dock-status-orb').or(page.getByTestId('orb-button')).first().click();
+    await page.getByTestId('orb-button').click();
     await expect(page.getByTestId('orb-status')).toHaveText('Listening', { timeout: 10000 });
+    await expect(wave(page)).toHaveAttribute('data-signal-state', 'listening');
     expect(fake.managedAgentSocketOpened()).toBe(false);
 
     fake.pushSttFinal('Organize office.', 0);

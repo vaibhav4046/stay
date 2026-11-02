@@ -78,7 +78,8 @@ test.describe('Scorecard regressions (each asserts the real behaviour, not a toa
 
   test('saving an empty routine explains why instead of failing silently', async ({ page }) => {
     await onboard(page);
-    await page.getByTestId('chip-routines').click();
+    await page.getByTestId('menu-button').click();
+    await page.getByTestId('menu-routines').click();
     await page.getByTestId('routine-new').click();
     await page.getByTestId('routine-save').click();
     await expect(page.getByTestId('routine-error')).toBeVisible();

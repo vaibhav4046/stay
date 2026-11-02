@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseVoiceCommand, parseMultiIntentUtterance } from '@/lib/voice/voiceCommands';
+import { detectPanel, parseVoiceCommand, parseMultiIntentUtterance } from '@/lib/voice/voiceCommands';
 
 describe('Hands-Free Voice Command Parser', () => {
   it('detects pause listening commands', () => {
@@ -45,6 +45,32 @@ describe('Hands-Free Voice Command Parser', () => {
     expect(parseVoiceCommand('show me chat history')).toEqual({ type: 'show_history' });
     expect(parseVoiceCommand('open chat history')).toEqual({ type: 'show_history' });
     expect(parseVoiceCommand('chat history')).toEqual({ type: 'show_history' });
+  });
+
+  it('opens inline panels by name, in a sentence', () => {
+    const panel = (t: string) => parseMultiIntentUtterance(t).commands.filter((c) => c.type === 'show_panel');
+    expect(panel('open brain dump')).toEqual([{ type: 'show_panel', panel: 'dump' }]);
+    expect(panel("let's do a brain dump")).toEqual([{ type: 'show_panel', panel: 'dump' }]);
+    expect(panel('show my routines')).toEqual([{ type: 'show_panel', panel: 'routines' }]);
+    expect(panel('show parked thoughts')).toEqual([{ type: 'show_panel', panel: 'parking' }]);
+    expect(panel('show my reminders')).toEqual([{ type: 'show_panel', panel: 'reminders' }]);
+    expect(panel('show my to-do list')).toEqual([{ type: 'show_panel', panel: 'today' }]);
+    expect(panel("what's on my list today")).toEqual([{ type: 'show_panel', panel: 'today' }]);
+    expect(panel('call me in 5 min')).toEqual([{ type: 'show_panel', panel: 'call' }]);
+    expect(panel('have Stay call me later')).toEqual([{ type: 'show_panel', panel: 'call' }]);
+  });
+
+  it('"show my ..." asks for a panel, never for an orb shape called "my"', () => {
+    for (const t of ['show my history', 'show my routines', 'show parked thoughts', 'show my to-do list', 'open brain dump']) {
+      expect(parseMultiIntentUtterance(t).commands.some((c) => c.type === 'synthesize_billion_shape'), t).toBe(false);
+    }
+    expect(parseMultiIntentUtterance('show my history').commands).toEqual([{ type: 'show_history' }]);
+  });
+
+  it('does not take other phrases for panels', () => {
+    for (const t of ['call me Sam', 'I need to call mum later', 'I want to start my routine tomorrow', 'show me a rocket']) {
+      expect(detectPanel(t), t).toBeNull();
+    }
   });
 
   it('detects navigation, modal close, training, and view switching commands', () => {

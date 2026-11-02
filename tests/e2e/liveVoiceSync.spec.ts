@@ -19,19 +19,23 @@ test('live voice caption synchronization and logo persistence', async ({ page })
   fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
   await onboard(page);
 
-  // 1. Verify StayLogo is visibly present in mic-button capsule when idle
+  // 1. The Talk control is in the composer: a mic icon and one word
   const micButton = page.getByTestId('mic-button');
   await expect(micButton).toBeVisible();
-  const stayLogo = micButton.locator('img');
-  await expect(stayLogo).toBeVisible();
+  await expect(micButton).toContainText('Talk');
+  await expect(micButton.locator('svg').first()).toBeVisible();
 
   // 2. Face toggle button is sr-only (no visible face button on screen)
   const faceToggle = page.getByTestId('face-toggle');
   await expect(faceToggle).toHaveClass(/sr-only/);
 
-  // 3. Initial idle caption is "What are you putting off?"
-  const caption = page.getByTestId('caption');
-  await expect(caption).toHaveText('What are you putting off?');
+  // 3. The empty home screen is the orb and the composer: no caption, no chips, no cards
+  await expect(page.getByTestId('orb-stage')).toHaveAttribute('data-compact', 'false');
+  await expect(page.getByTestId('orb-status')).toHaveText('');
+  for (const gone of ['caption', 'state-chips', 'today-card', 'daily-greeting', 'call-stay-card', 'header-call-stay-btn']) {
+    await expect(page.getByTestId(gone)).toHaveCount(0);
+  }
+  await expect(page.getByTestId('call-direct-stay-btn')).toBeVisible();
 
   // 4. Capture screenshot of idle state with logo
   await page.screenshot({ path: path.join(SCREENSHOT_DIR, '08-live-voice-idle-with-logo.png') });

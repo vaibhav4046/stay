@@ -46,6 +46,8 @@ export interface LiveChatBoxProps {
   onAddKeyterm?: (word: string) => void;
   quietMode?: boolean;
   onToggleQuietMode?: () => void;
+  /** Chat-first mode: no card, no header, no inner scroll. The page scrolls; the empty state is the caller's. */
+  bare?: boolean;
   className?: string;
 }
 
@@ -73,6 +75,7 @@ export function LiveChatBox({
   onAddKeyterm,
   quietMode = false,
   onToggleQuietMode,
+  bare = false,
   className = '',
 }: LiveChatBoxProps) {
   const [isOpen, setIsOpen] = useState(true);
@@ -112,7 +115,7 @@ export function LiveChatBox({
   };
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || bare) return;
     const el = scrollRef.current;
     if (!el) return;
 
@@ -126,7 +129,7 @@ export function LiveChatBox({
     } else {
       setShowJumpToBottom(true);
     }
-  }, [transcripts, partialUserTranscript, liveSpokenText, isThinking, isInterrupted, isOpen]);
+  }, [transcripts, partialUserTranscript, liveSpokenText, isThinking, isInterrupted, isOpen, bare]);
 
   // Exact 12-state labels & high-contrast tokens (§6.1, §7.2)
   const statusConfig = (() => {
@@ -268,8 +271,8 @@ export function LiveChatBox({
 
   return (
     <section
-      className={`card relative w-full overflow-hidden border border-[#1E2B3D] bg-[#0F1620] ${className}`}
-      style={{ color: '#EEF6FF', backgroundColor: '#0F1620' }}
+      className={bare ? `relative w-full ${className}` : `card relative w-full overflow-hidden border border-[#1E2B3D] bg-[#0F1620] ${className}`}
+      style={bare ? { color: '#EEF6FF' } : { color: '#EEF6FF', backgroundColor: '#0F1620' }}
       aria-label="Live conversation transcripts"
       data-testid="live-chat-box"
     >
@@ -278,7 +281,24 @@ export function LiveChatBox({
         {politeAnnouncement}
       </div>
 
+      {bare && (
+        <div className="mb-2 flex items-center justify-between gap-2 text-xs">
+          <div className="flex items-center gap-1.5" data-testid="chat-status-pill">
+            <span className="h-2 w-2 rounded-full" style={statusConfig.dotStyle} aria-hidden="true" />
+            <span className="font-semibold tracking-tight" style={statusConfig.textStyle}>
+              {statusConfig.label === 'IDLE' ? 'Ready' : statusConfig.label === 'TEXT_ONLY' ? 'Text only' : statusConfig.label.charAt(0) + statusConfig.label.slice(1).toLowerCase()}
+            </span>
+          </div>
+          {transcripts.length > 0 && onClear && (
+            <button type="button" onClick={onClear} className="rounded px-2 py-1 font-medium hover:underline" style={{ color: '#C5D6E6' }} title="Start a new conversation" data-testid="chat-clear-btn">
+              New chat
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Header bar with Status, Language Badge, and Controls */}
+      {!bare && (
       <div
         className="flex flex-wrap items-center justify-between gap-1.5 px-3.5 py-2 border-b border-[#1E2B3D]"
         style={{ backgroundColor: '#05080C', color: '#EEF6FF' }}
@@ -370,7 +390,7 @@ export function LiveChatBox({
           </button>
         </div>
       </div>
-
+      )}
 
       {/* Undo toast for deterministic Wispr edits (§8.2, 4s fade only) */}
       {undoNotice && (
@@ -418,13 +438,13 @@ export function LiveChatBox({
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          className="max-h-[42dvh] sm:max-h-[48dvh] overflow-y-auto p-3.5 space-y-3 overscroll-contain"
+          className={bare ? 'space-y-4' : 'max-h-[42dvh] sm:max-h-[48dvh] overflow-y-auto p-3.5 space-y-3 overscroll-contain'}
           data-testid="chat-message-list"
           role="log"
           aria-live="off"
         >
           {transcripts.length === 0 && !isUserSpeaking && !isAgentSpeaking && !isThinking ? (
-            <div
+            bare ? null : <div
               className="py-5 px-2 text-center flex flex-col items-center gap-3"
               data-testid="chat-empty-state"
               style={{ color: '#EEF6FF' }}
@@ -704,7 +724,7 @@ export function LiveChatBox({
           )}
 
           {/* Jump to latest control pill (§7.3) */}
-          {showJumpToBottom && (
+          {showJumpToBottom && !bare && (
             <button
               type="button"
               onClick={() => {

@@ -100,6 +100,20 @@ page.on('console', (m) => {
 });
 await page.addInitScript(() => {
   window.__stayFastDebug = true; // the app's own timing marks and event log (src/lib/voice/fastSocket.ts mark())
+  // when does each microphone frame actually leave the browser for AssemblyAI, and how loud is it?
+  window.__sttFrames = [];
+  const origSend = WebSocket.prototype.send;
+  WebSocket.prototype.send = function (d) {
+    try {
+      if (this.url.includes('streaming.assemblyai.com') && d && typeof d !== 'string') {
+        const s = new Int16Array(d.buffer ? d.buffer.slice(d.byteOffset, d.byteOffset + d.byteLength) : d);
+        let peak = 0;
+        for (let i = 0; i < s.length; i += 8) peak = Math.max(peak, Math.abs(s[i]));
+        window.__sttFrames.push([performance.now(), peak, s.length]);
+      }
+    } catch { /* measurement only */ }
+    return origSend.call(this, d);
+  };
   const md = navigator.mediaDevices;
   const orig = md.getUserMedia.bind(md);
   md.getUserMedia = async (c) => {
@@ -172,10 +186,24 @@ try {
   const sp1 = await waitFor((s) => s.s === 'Speaking', 30000, 'Stay to start replying');
   const reply1Ms = Math.round(sp1.now - speechEnd1);
   const drive1 = await waitFor((s) => s.drive > 0.05, 8000, 'audible output').catch(() => null);
+  // mic-to-socket lag: when the last loud frame left the browser, against when the clip's last loud sample played
+  const frames = await page.evaluate(() => window.__sttFrames);
+  const loud = frames.filter(([t, peak]) => t >= t1.startedAt && peak > 600);
+  const lastLoudSentAt = loud.length ? loud[loud.length - 1][0] : null;
+  const gaps = frames.slice(1).map((f, i) => f[0] - frames[i][0]).filter((g) => g < 5000).sort((a, b) => a - b);
+  const micLag = {
+    lastLoudFrameSentMsAfterEndOfSpeech: lastLoudSentAt === null ? null : Math.round(lastLoudSentAt - speechEnd1),
+    frameIntervalMs: { p50: Math.round(gaps[Math.floor(gaps.length * 0.5)] || 0), p95: Math.round(gaps[Math.floor(gaps.length * 0.95)] || 0), max: Math.round(gaps[gaps.length - 1] || 0) },
+    framesSent: frames.length,
+  };
   const wallEnd1 = Date.now() - (sp1.now - speechEnd1); // wall-clock time of the end of speech
   const marks1 = await page.evaluate(() => (window.__stayFastMarks || []).map(([n, t]) => [n, t]));
   const afterEnd = marks1.filter(([, t]) => t >= wallEnd1 - 50).map(([n, t]) => `${n.split(' ')[0]}@+${Math.round(t - wallEnd1)}ms`);
-  results.steps.push({ step: 'task', spoken: clips.task.text, speaker: clips.task.who, endOfSpeechToStaySpeakingMs: reply1Ms, audibleOutputDetected: Boolean(drive1), appMarksAfterEndOfSpeech: afterEnd });
+  results.steps.push({ step: 'task', spoken: clips.task.text, speaker: clips.task.who, endOfSpeechToStaySpeakingMs: reply1Ms, audibleOutputDetected: Boolean(drive1), appMarksAfterEndOfSpeech: afterEnd, micToSocket: micLag });
+  if (process.env.ONLY_TASK) {
+    console.log(JSON.stringify({ endOfSpeechToStaySpeakingMs: reply1Ms, appMarksAfterEndOfSpeech: afterEnd, micToSocket: micLag }, null, 2));
+    throw new Error('ONLY_TASK: stopped after the first turn on purpose');
+  }
   await page.screenshot({ path: `${OUT}/04-stay-speaking.png` });
   await page.waitForTimeout(300);
 
@@ -194,17 +222,26 @@ try {
   log('person switches to Spanish');
   const t3 = await say('spanish');
   const speechEnd3 = t3.startedAt + clips.spanish.speechSeconds * 1000;
-  const sp3 = await waitFor((s) => s.s === 'Speaking', 40000, 'Stay to reply in Spanish');
+  // The first word ("Hola,") can be answered before the rest is said, so wait for the whole sentence to play, then for the reply to it.
+  await waitFor((s) => s.now > speechEnd3 + 1000, 25000, 'the whole Spanish sentence to play');
+  const at3 = await state();
+  const wallEnd3 = Date.now() - (at3.now - speechEnd3);
+  await waitFor((s) => s.s === 'Speaking', 40000, 'Stay to reply in Spanish').catch(() => undefined);
+  await page.waitForTimeout(700); // the first sound of the reply is marked a moment after the state flips
   const marks3 = await page.evaluate(() => (window.__stayFastMarks || []).map(([n, t]) => [n, t]));
-  const wallEnd3 = Date.now() - (sp3.now - speechEnd3);
   const after3 = marks3.filter(([, t]) => t >= wallEnd3 - 50).map(([n, t]) => n.split(' ')[0] + '@+' + Math.round(t - wallEnd3) + 'ms');
-  results.steps.push({ step: 'spanish', spoken: clips.spanish.text, speaker: clips.spanish.who, endOfSpeechToStaySpeakingMs: Math.round(sp3.now - speechEnd3), appMarksAfterEndOfSpeech: after3 });
+  const firstAudio3 = marks3.find(([n, t]) => n.startsWith('aud1') && t >= wallEnd3 - 50);
+  results.steps.push({ step: 'spanish', spoken: clips.spanish.text, speaker: clips.spanish.who, endOfSpeechToFirstAudioMs: firstAudio3 ? Math.round(firstAudio3[1] - wallEnd3) : null, appMarksAfterEndOfSpeech: after3 });
   await page.screenshot({ path: `${OUT}/06-spanish.png` });
   await waitFor((s) => s.s === 'Listening', 90000, 'Spanish reply to finish');
   await page.waitForTimeout(800);
 
   const lines = await page.evaluate(() => [...document.querySelectorAll('[data-testid="chat-user-message"],[data-testid="chat-agent-message"]')].map((e) => ({ who: e.getAttribute('data-testid') === 'chat-user-message' ? 'person' : 'stay', text: (e.textContent || '').trim().slice(0, 400) })));
   results.transcript = lines;
+  const heardAll = lines.some((l) => l.who === 'person' && /impuestos/i.test(l.text));
+  results.steps[results.steps.length - 1].heardWholeSentence = heardAll;
+  if (!heardAll) results.failures.push('the Spanish sentence was not heard whole: only part of it reached the transcript');
+  results.fastEventLogTail = fastLog.slice(-60);
   results.websockets = [...new Set(sockets)];
   results.managedAgentSocketOpened = sockets.some((u) => u.includes('agents.assemblyai.com'));
   results.ttsLanguages = [...new Set(sockets.filter((u) => u.includes('tts.us.assemblyai.com')).map((u) => (u.match(/language=(\w+)/) || [])[1]))];

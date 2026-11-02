@@ -4,18 +4,23 @@ import { useState } from 'react';
 import { openToday, winsToday, type TodayItem } from '@/lib/coach/todayList';
 
 /** The short list for today: open items first (the one to start on top), tick to finish, and a quiet count of wins. */
-export function TodayCard({ items, onToggle, onStart, onOpenDump, onMove }: { items: TodayItem[]; onToggle: (id: string) => void; onStart: (item: TodayItem) => void; onOpenDump: () => void; onMove: (id: string) => void }) {
+export function TodayCard({ items, onToggle, onStart, onOpenDump, onMove, onClose }: { items: TodayItem[]; onToggle: (id: string) => void; onStart: (item: TodayItem) => void; onOpenDump: () => void; onMove: (id: string) => void; onClose?: () => void }) {
   const [showLater, setShowLater] = useState(false);
   const open = openToday(items);
   const wins = winsToday(items);
   const laterItems = items.filter((i) => !i.done && i.bucket === 'later');
   const later = laterItems.length;
-  if (open.length === 0 && wins === 0 && later === 0) return null;
+  if (open.length === 0 && wins === 0 && later === 0 && !onClose) return null; // asked for by name: show it even when empty
   return (
     <section className="card w-full p-5" aria-labelledby="today-card-title" data-testid="today-card">
       <div className="flex items-baseline justify-between gap-3">
         <h2 id="today-card-title" className="card-title">Today</h2>
         <span className="meta tnum" data-testid="wins-count">{wins === 0 ? 'No wins yet, that is fine' : wins === 1 ? '1 win today' : `${wins} wins today`}</span>
+        {onClose && (
+          <button type="button" className="btn btn-ghost" onClick={onClose} aria-label="Close">
+            Close
+          </button>
+        )}
       </div>
       {open.length > 0 ? (
         <ul className="mt-3 space-y-1">

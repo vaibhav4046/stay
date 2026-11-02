@@ -150,30 +150,6 @@ test.describe('Deterministic FastSocket Browser Live Chat Stream Suite (C1)', ()
     });
   });
 
-  test('Collapse while streaming, accessible preview button, and reopening after collapse', async ({ page }) => {
-    const fakeVoice = await setupOnboardedPage(page);
-
-    await startVoice(page);
-    expect(fakeVoice.ready()).toBe(true);
-
-    // Collapse live chat
-    await page.getByTestId('chat-toggle-btn').click();
-    await expect(page.getByTestId('chat-message-list')).not.toBeVisible();
-
-    // Stream user speech while collapsed
-    fakeVoice.pushSttPartial('Testing collapsed streaming', 0);
-
-    // Collapsed preview button is visible and accessible
-    const previewBtn = page.getByTestId('chat-collapsed-preview-btn');
-    await expect(previewBtn).toBeVisible();
-    await expect(previewBtn).toContainText('Testing collapsed streaming');
-
-    // Reopen by clicking the preview button
-    await previewBtn.click();
-    await expect(page.getByTestId('chat-message-list')).toBeVisible();
-    await expect(page.getByTestId('chat-live-user-partial')).toContainText('Testing collapsed streaming');
-  });
-
   test('Clear transcripts during active session leaves input usable', async ({ page }) => {
     const fakeVoice = await setupOnboardedPage(page);
 
@@ -188,8 +164,8 @@ test.describe('Deterministic FastSocket Browser Live Chat Stream Suite (C1)', ()
     await expect(clearBtn).toBeVisible();
     await clearBtn.click();
 
-    // Empty state returns
-    await expect(page.getByTestId('chat-empty-state')).toBeVisible();
+    // The empty home returns
+    await expect(page.getByTestId('orb-stage')).toHaveAttribute('data-compact', 'false');
 
     // Task text input remains 100% usable
     const taskInput = page.getByTestId('task-input');
@@ -270,6 +246,8 @@ test.describe('Deterministic FastSocket Browser Live Chat Stream Suite (C1)', ()
   test('Mobile 375px responsive layout has no overflow and live chat is fully contained', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 700 });
     await setupOnboardedPage(page);
+    await page.getByTestId('task-input').fill('Organize my desk papers');
+    await page.getByTestId('send').click();
 
     const liveChatBox = page.getByTestId('live-chat-box');
     await expect(liveChatBox).toBeVisible();
