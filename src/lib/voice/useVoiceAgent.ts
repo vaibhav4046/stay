@@ -1260,8 +1260,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           return { ok: true, language: l.label };
         }
         case 'voice': {
-          const p = setSelectedVoice(value);
-          return p ? { ok: true, voice: p.name, note: p.voiceLabel } : { ok: false, error: 'no such voice', options: PERSONAS.map((x) => x.name) };
+          const p = value ? setSelectedVoice(value) : null;
+          if (p) return { ok: true, voice: p.name, note: p.voiceLabel };
+          // no name, or a name Stay does not have ("default", "friendly"): show the voices and say so, never fail silently
+          o.onChangeVoiceRequested?.();
+          return { ok: true, opened: 'voices', say: 'Here are the voices. Tap one to hear it.' };
         }
         case 'memory_add': {
           if (!value) return { ok: false };

@@ -81,7 +81,7 @@ console.log('clips ready; waiting a minute so the 5-voice-sessions-per-minute al
 await sleep(65000);
 
 // ---- 2. the real app in a real browser, with the clips as the microphone ----------------------------------------------
-const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] });
+const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required', '--mute-audio'] });
   // NO_VIDEO=1 skips the screen recording, which loads the machine and can delay the audio thread
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, ...(process.env.NO_VIDEO ? {} : { recordVideo: { dir: OUT, size: { width: 1280, height: 720 } } }) });
 const page = await ctx.newPage();

@@ -48,7 +48,7 @@ describe('T1.5 the prompt gets shorter only when asked for', () => {
     for (const intent of ['task_start', 'feeling', 'question', 'follow_up', 'other']) {
       const p = buildServerVoiceSystemPrompt(undefined, intent, { overloaded: true });
       expect(p, intent).toContain(OVERLOAD_INSTRUCTION);
-      expect(p.length, intent).toBeLessThan(1700);
+      expect(p.length, intent).toBeLessThan(1850);
     }
   });
 

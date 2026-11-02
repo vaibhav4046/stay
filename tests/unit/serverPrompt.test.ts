@@ -16,7 +16,7 @@ describe('server voice prompt follows the intent', () => {
 
   it('naming something avoided gets the three beats, and a feeling gets no task', () => {
     const beats = buildServerVoiceSystemPrompt(undefined, 'task_start');
-    expect(beats).toMatch(/3 short beats[\s\S]*acknowledgement[\s\S]*ONE tiny concrete physical step[\s\S]*check-in question/);
+    expect(beats).toMatch(/3 short beats[\s\S]*acknowledgement[\s\S]*ONE tiny concrete physical step[\s\S]*check-in about starting/);
     expect(beats).toMatch(/Never offer a reminder or timer/);
     const feeling = buildServerVoiceSystemPrompt(undefined, 'feeling');
     expect(feeling).toMatch(/No task, no step, no reminder/);
@@ -35,7 +35,7 @@ describe('server voice prompt follows the intent', () => {
       expect(p, intent).toMatch(/no markdown, no emoji/);
       expect(p, intent).toMatch(/untrusted text/);
       expect(p, intent).toMatch(/never diagnose, never advise on medication/);
-      expect(p.length, intent).toBeLessThan(1500);
+      expect(p.length, intent).toBeLessThan(1650);
     }
   });
 

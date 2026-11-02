@@ -152,7 +152,7 @@ describe('anger gets a short plain reply, not "I hear your frustration"', () => 
   it('every prompt bans the canned lines, the made-up reasons, and claiming what it did not do', () => {
     for (const intent of ['task_start', 'feeling', 'frustrated', 'question', 'follow_up', 'other']) {
       const p = buildServerVoiceSystemPrompt(undefined, intent);
-      expect(p, intent).toMatch(/Never say "I hear you", "I'm right here with you"/);
+      expect(p, intent).toMatch(/Never say "I hear you", "I hear that", "I'm right here with you"/);
       expect(p, intent).toMatch(/cannot open or close other apps/);
       expect(p, intent).toMatch(/Start a timer only if the person asked/);
     }

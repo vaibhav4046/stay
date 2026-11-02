@@ -18,6 +18,7 @@ const browser = await chromium.launch({
     '--use-fake-device-for-media-stream',
     `--use-file-for-fake-audio-capture=${wav}%noloop`,
     '--autoplay-policy=no-user-gesture-required',
+    '--mute-audio',
     // headless defaults to a software GPU; the orb then starves the main thread that relays mic audio. GL=hw uses the real GPU.
     ...(process.env.GL === 'hw' ? ['--use-angle=d3d11', '--ignore-gpu-blocklist', '--enable-gpu-rasterization'] : []),
   ],

@@ -525,12 +525,16 @@ export function StayHome({
           voice.speakProactively(
             `The user's ${minutes}-minute focus timer just ended. Speak first: in under 20 words, warmly ask whether they got started on "${plan.firstStep}". When they answer, call record_session_outcome.`,
           );
+        } else {
+          // Stay says "when the time is up I'll tell you" for any timer, so it does, plan or no plan (field test: a timer nobody told about)
+          setNote(`Time is up: your ${minutes} minutes are done.`);
+          if (!quietMode) voice.speakProactively(`The user's ${minutes}-minute timer just ended. Say in under 10 words that their time is up. Ask nothing.`);
         }
       }
     }, 500);
     return () => window.clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [running, minutes, proactiveCheckins, plan]);
+  }, [running, minutes, proactiveCheckins, plan, quietMode]);
 
   const requestPlan = useCallback(
     async (text: string, preferredStrategy?: CoachPlanProposal['strategyKey']) => {

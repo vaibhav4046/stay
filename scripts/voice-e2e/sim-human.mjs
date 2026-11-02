@@ -76,7 +76,7 @@ async function humanSays(history) {
 
 // ---- browser with an injected microphone --------------------------------------------------------------------------------
 let browser;
-for (let i = 0; ; i++) { try { browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'], timeout: 60000 }); break; } catch (e) { if (i >= 3) throw e; console.log('browser launch timed out, retrying'); } }
+for (let i = 0; ; i++) { try { browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required', '--mute-audio'], timeout: 60000 }); break; } catch (e) { if (i >= 3) throw e; console.log('browser launch timed out, retrying'); } }
 const ctx = await browser.newContext({ viewport: { width: 1200, height: 900 }, locale: LANG_SETUP[LANG]?.locale || 'en-GB' });
 const page = await ctx.newPage();
 await page.addInitScript(({ debug, sttExtra }) => {
@@ -96,7 +96,9 @@ await page.addInitScript(({ debug, sttExtra }) => {
   window.__say = (b64) => { ac.resume(); const buf = toBuf(b64), src = ac.createBufferSource(); src.buffer = buf; src.connect(dest); const at = Math.max(ac.currentTime + 0.05, window.__micEnd); src.start(at); window.__micEnd = at + buf.duration; return { startsIn: at - ac.currentTime, dur: buf.duration }; };
   // overlay: Stay's own voice leaking back into the mic, quieter, right now
   window.__leak = (b64, gain) => { const src = ac.createBufferSource(); src.buffer = toBuf(b64); const g = ac.createGain(); g.gain.value = gain; src.connect(g); g.connect(dest); src.start(ac.currentTime + 0.02); };
-  navigator.mediaDevices.getUserMedia = async () => { await ac.resume(); return dest.stream; };
+  // a fresh stream every call, as a real microphone gives: the app stops its tracks when a connection attempt fails and retries, and
+  // handing back the same stopped stream made every retried session deaf (found 2 Nov 2026; it was the rig, not the app)
+  navigator.mediaDevices.getUserMedia = async () => { await ac.resume(); return dest.stream.clone(); };
   // T2.1: the app (with __stayFastDebug on) records the epoch time at which each reply's first sample was actually output by its
   // AudioContext. Stay now plays through an AudioWorklet, so the old hook on AudioBufferSourceNode.start no longer sees its voice.
   window.__stayPlays = [];
