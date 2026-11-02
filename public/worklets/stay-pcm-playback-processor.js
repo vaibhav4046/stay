@@ -35,6 +35,8 @@ class StayPcmPlaybackProcessor extends AudioWorkletProcessor {
 
     // States: 'BUFFERING' | 'PLAYING' | 'DRAINING' | 'STOPPED'
     this.state = 'STOPPED';
+    // T2.1: tell the page the moment the first non-silent sample of a reply is rendered, not when its packet arrived
+    this.announcePlayStart = false;
     this.markedEnd = false;
     this.muted = false;
     this.ducked = false;
@@ -243,6 +245,7 @@ class StayPcmPlaybackProcessor extends AudioWorkletProcessor {
     }
 
     if (this.state === 'STOPPED') {
+      this.announcePlayStart = true;
       this.state = 'BUFFERING';
       this.bufferingWaitSamples = 0;
       this.currentGain = 0.0;
@@ -351,6 +354,11 @@ class StayPcmPlaybackProcessor extends AudioWorkletProcessor {
 
       const absSample = Math.abs(outSample);
       if (absSample > peak) peak = absSample;
+      if (absSample > 1e-5 && this.announcePlayStart) {
+        this.announcePlayStart = false;
+        // currentTime is when this render block starts; the sample's own time adds its position inside the block
+        this.port.postMessage({ type: 'playStart', contextTime: (typeof currentTime === 'number' ? currentTime : 0) + i / this.sampleRateVal });
+      }
       if (absSample > 1e-5) {
         this.lastNonZeroAt = Math.round(((this.totalQuanta * quantumLength + i) / this.sampleRateVal) * 1000);
       }

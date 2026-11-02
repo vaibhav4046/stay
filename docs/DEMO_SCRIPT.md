@@ -3,7 +3,7 @@
 Two ways to make the video. Pick one.
 
 - **A. You record it (recommended for the submission).** Follow the shot list below on a laptop with headphones, screen recording on, microphone on. Stay's replies are real and will differ a little each time, so the script gives your lines and what to look for, not Stay's words. Use the live site: https://stay-two-swart.vercel.app/app/today
-- **B. The composed video.** `public/demo/stay-demo.mp4` (landing page player) and `docs/submission/stay-submission.mp4` (captions burned in) are built by `scripts/demo-video/compose.mjs` from a recorded real call. The speaker in that one is a **simulated voice**, and the video says so at the bottom. Do not present it as a person using Stay. If you submit B, say "simulated speaker" in the post.
+- **B. The composed video.** `public/demo/stay-demo.mp4` (landing page player) and `docs/submission/stay-submission.mp4` (captions burned in) are built by `scripts/demo-video/compose.mjs` from a recorded real call. The speaker in that one is a **simulated voice**, and the video says so at the bottom. Do not present it as a person using Stay. If you submit B, say "simulated speaker" in the post. To rebuild it for the current build (needs ffmpeg and your AssemblyAI key; each step is a few minutes, the first opens real voice sessions, so wait a minute between attempts): `DEMO=1 node scripts/real-voice-e2e.mjs http://localhost:3120`, then `node scripts/build-demo-assets.mjs`, then `node scripts/demo-video/compose.mjs`. The landing page reads the chapters and captions this produces, so run the landing e2e specs after.
 
 Rules for either version:
 - Say what you saw, nothing more. No overall "better than" claims, no "AGI", no "replaces" anything.
