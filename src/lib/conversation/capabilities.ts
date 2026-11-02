@@ -60,6 +60,16 @@ export function mayStartTimer(text: string, recent: string[] = []): boolean {
   return false;
 }
 
+const LOOK_WORD = /\b(?:orb|shapes?|colou?rs?|theme|palette|aurora|sunset|ocean|cyber|emerald|morph|turn (?:it |you )?into|change (?:it |you |your )?(?:in)?to|look like|become)\b/i;
+
+/**
+ * Whether the words ask to change how the orb looks. The shape and colour actions are offered to the model only then: in a persona
+ * run "show me exactly how you'd log a sprint" made it set the orb's shape to "exactly" and the app said "Done" to a question.
+ */
+export function mayChangeLook(text: string): boolean {
+  return LOOK_WORD.test(text);
+}
+
 /** The opening words of Stay's recent replies, so the next one does not begin the same way (the "I'm right here with you" loop). */
 export function recentOpeners(assistantReplies: string[], words = 5, count = 3): string[] {
   return assistantReplies

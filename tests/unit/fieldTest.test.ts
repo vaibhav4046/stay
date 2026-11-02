@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
-import { mayStartTimer, minutesIn, recentOpeners, unsupportedActionAnswer } from '@/lib/conversation/capabilities';
+import { mayChangeLook, mayStartTimer, minutesIn, recentOpeners, unsupportedActionAnswer } from '@/lib/conversation/capabilities';
 import { classifyIntent } from '@/lib/conversation/intent';
 import { answerAboutStay } from '@/lib/voice/aboutStay';
 import { buildServerVoiceSystemPrompt } from '@/lib/voice/agentTool';
@@ -106,6 +106,31 @@ describe('a timer starts only when asked for', () => {
     await post([{ role: 'user', content: 'Set a five minute timer.' }]);
     const withTimer = (streamMock.openLlmStream.mock.calls[0][1] as { tools: Array<{ function: { parameters: { properties: { action: { enum: string[] } } } } }> }).tools[0].function.parameters.properties.action.enum;
     expect(withTimer).toContain('timer_start');
+  });
+});
+
+describe('the orb changes look only when asked for', () => {
+  it.each(['Make the orb a heart.', 'change the colour to sunset', 'turn it into a star', 'show me the ocean theme', 'can you change your shape'])('yes: %s', (q) => {
+    expect(mayChangeLook(q), q).toBe(true);
+  });
+
+  it.each(["Show me exactly how you'd log a seven minute sprint.", "What's your main differentiator?", 'I keep avoiding my taxes.', 'Give me a concrete scenario', 'Hi'])('no: %s', (q) => {
+    expect(mayChangeLook(q), q).toBe(false);
+  });
+
+  it('the model is not offered shape or colour for a question (persona run: "show me exactly how" set the orb shape to "exactly" and said Done)', async () => {
+    type Call = { tools: Array<{ function: { parameters: { properties: { action: { enum: string[] } } } } }> };
+    await post([{ role: 'user', content: "Show me exactly how you'd log a seven minute sprint." }]);
+    const plain = (streamMock.openLlmStream.mock.calls[0][1] as Call).tools[0].function.parameters.properties.action.enum;
+    expect(plain).not.toContain('shape');
+    expect(plain).not.toContain('color');
+    expect(plain).toContain('park');
+
+    streamMock.openLlmStream.mockClear();
+    await post([{ role: 'user', content: 'Make the orb a heart.' }]);
+    const asked = (streamMock.openLlmStream.mock.calls[0][1] as Call).tools[0].function.parameters.properties.action.enum;
+    expect(asked).toContain('shape');
+    expect(asked).toContain('color');
   });
 });
 

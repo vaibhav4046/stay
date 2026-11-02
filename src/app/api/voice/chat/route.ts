@@ -4,7 +4,7 @@ import { detectCrisisSignal, detectMedicationAdviceRequest } from '@/lib/safety/
 import { APP_TOOL, buildServerVoiceSystemPrompt } from '@/lib/voice/agentTool';
 import { carriesAnswer } from '@/lib/conversation/sse';
 import { isOverloaded } from '@/lib/conversation/overload';
-import { mayStartTimer, recentOpeners, unsupportedActionAnswer } from '@/lib/conversation/capabilities';
+import { mayChangeLook, mayStartTimer, recentOpeners, unsupportedActionAnswer } from '@/lib/conversation/capabilities';
 import { llmHeaders } from '@/lib/llm/provider';
 import { openLlmStream } from '@/lib/llm/stream';
 import { resolveDeterministicVoice, createDeterministicSseResponse } from '@/lib/voice/deterministicVoiceFallback';
@@ -15,11 +15,11 @@ import { NOTHING_SHOWN, honestFailureMessage, failureKindFromError } from '@/lib
 import { readSseText, visionReplyVerdict } from '@/lib/conversation/visionGate';
 import { MAX_IMAGE_CHARS, VISION_SYSTEM, isImageDataUrl, withImage } from '@/lib/vision/image';
 
-/** The app tool's parameters with the timer action taken out of its list of actions. */
-function withoutTimer(parameters: typeof APP_TOOL.parameters) {
+/** The app tool's parameters with some actions taken out of its list of actions. */
+function withoutActions(parameters: typeof APP_TOOL.parameters, removed: readonly string[]) {
   return {
     ...parameters,
-    properties: { ...parameters.properties, action: { ...parameters.properties.action, enum: parameters.properties.action.enum.filter((a) => a !== 'timer_start') } },
+    properties: { ...parameters.properties, action: { ...parameters.properties.action, enum: parameters.properties.action.enum.filter((a) => !removed.includes(a)) } },
   };
 }
 
@@ -230,8 +230,9 @@ ${VISION_SYSTEM}` : serverSystemPrompt },
             function: {
               name: APP_TOOL.name,
               description: APP_TOOL.description,
-              // a timer is offered to the model only when the person asked for one or said yes to Stay's offer of one
-              parameters: mayStartTimer(lastUser, recent) ? APP_TOOL.parameters : withoutTimer(APP_TOOL.parameters),
+              // a timer is offered to the model only when the person asked for one or said yes to Stay's offer of one; the orb's shape
+              // and colour only when the words ask for a different look
+              parameters: withoutActions(APP_TOOL.parameters, [...(mayStartTimer(lastUser, recent) ? [] : ['timer_start']), ...(mayChangeLook(lastUser) ? [] : ['shape', 'color'])]),
             },
           },
         ];

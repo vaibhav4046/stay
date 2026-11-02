@@ -79,7 +79,7 @@ export function score(turns) {
     if (CANNED.test(t.text)) fails.push(`canned_line: "${t.text.slice(0, 50)}"`);
     if (t.tools.some((c) => /timer_start/.test(c)) && !TIMER_ASKED.test(said)) fails.push(`timer_not_asked: after "${said.slice(0, 40)}"`);
     if (CLAIMS_DONE.test(t.text)) fails.push(`claims_to_have_opened_or_closed: "${t.text.slice(0, 50)}"`);
-    if (!t.text && t.tools.length === 0) fails.push('no_reply');
+    if (!t.text && t.tools.length === 0 && !t.rateLimited) fails.push('no_reply'); // a turn the model service refused (its per-minute token cap) is counted apart, not as Stay's failure
     if (t.text.split(/\s+/).filter(Boolean).length > 70) fails.push(`too_long_to_speak: ${t.text.split(/\s+/).length} words`);
   });
   return fails;
@@ -93,20 +93,21 @@ for (const p of personas) {
     turns.push({ who: 'human', text: said, tools: [] });
     const history = turns.map((t) => ({ role: t.who === 'human' ? 'user' : 'assistant', content: t.text || '(no reply)' }));
     const r = await stayReplies(history);
-    turns.push({ who: 'stay', text: r.text, tools: r.tools });
+    turns.push({ who: 'stay', text: r.text, tools: r.tools, rateLimited: Boolean(r.failed) });
     console.log(`[${p.id}] YOU:  ${said}\n[${p.id}] STAY: ${r.text || '(none)'}${r.tools.length ? `  TOOL ${r.tools.join(' ')}` : ''}`);
-    await sleep(3000);
+    await sleep(6000); // spaced out: the model key allows about 8,000 tokens a minute for the persona and Stay together
     said = await humanSays(p, turns);
     if (!said) break;
-    await sleep(2000);
+    await sleep(4000);
   }
   const failures = score(turns);
   console.log(`[${p.id}] ${failures.length ? 'FAIL ' + failures.join(' | ') : 'ok'}\n`);
   out.push({ persona: p.id, turns, failures });
 }
 const total = out.reduce((n, c) => n + c.failures.length, 0);
+const rateLimited = out.reduce((n, c) => n + c.turns.filter((t) => t.rateLimited).length, 0);
 const file = `docs/evidence/loop/agent-vs-agent-${new Date().toISOString().slice(0, 10)}.json`;
 mkdirSync('docs/evidence/loop', { recursive: true });
-writeFileSync(file, JSON.stringify({ labels: ['live-model', 'typed-text', 'persona-model'], base: BASE, at: new Date().toISOString(), turnsPerConversation: TURNS, conversations: out.length, failures: total, results: out }, null, 2));
-console.log(`agent-vs-agent: ${out.length} conversations, ${total} rule failures. ${file}`);
+writeFileSync(file, JSON.stringify({ labels: ['live-model', 'typed-text', 'persona-model'], base: BASE, at: new Date().toISOString(), turnsPerConversation: TURNS, conversations: out.length, failures: total, rateLimitedTurns: rateLimited, results: out }, null, 2));
+console.log(`agent-vs-agent: ${out.length} conversations, ${total} rule failures; ${rateLimited} turns the model service refused (not scored). ${file}`);
 process.exit(total === 0 ? 0 : 1);

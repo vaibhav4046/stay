@@ -364,6 +364,28 @@ describe('FastSocket', () => {
     expect(events.find((e) => e.type === 'transcript.agent')?.text).toBe('Done.');
   });
 
+  it('an orb-look call the person did not ask for is not run: the model is asked again, in words', async () => {
+    // persona run, 2 Nov 2026: "show me exactly how you'd log a sprint" made the model set the orb shape to "exactly" and Stay said Done
+    fetchMock
+      .mockResolvedValueOnce(sse({ choices: [{ delta: { tool_calls: [{ index: 0, id: 's1', function: { name: 'app', arguments: '{"action":"shape","value":"exactly"}' } }] } }] }))
+      .mockResolvedValueOnce(sse(text('At the end of each sprint I check in with you.')));
+    const { stt } = await open({ tools: true });
+    stt.push({ type: 'Turn', transcript: "show me exactly how you'd log a sprint.", end_of_turn: true, turn_order: 0 });
+    await tick(30);
+    expect(events.find((e) => e.type === 'tool.call')).toBeUndefined();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body as string).withTools).toBe(false);
+    expect(events.find((e) => e.type === 'transcript.agent')?.text).toContain('check in');
+  });
+
+  it('an orb-look call the person did ask for still runs', async () => {
+    fetchMock.mockResolvedValueOnce(sse({ choices: [{ delta: { tool_calls: [{ index: 0, id: 's2', function: { name: 'app', arguments: '{"action":"shape","value":"heart"}' } }] } }] }));
+    const { stt } = await open({ tools: true });
+    stt.push({ type: 'Turn', transcript: 'make the orb a heart.', end_of_turn: true, turn_order: 0 });
+    await tick(30);
+    expect(events.find((e) => e.type === 'tool.call')).toMatchObject({ call_id: 's2', arguments: { action: 'shape', value: 'heart' } });
+  });
+
   it('after an interruption, a short fragment is held so the rest of the sentence is heard too', async () => {
     FakeWS.auto = false; // Stay is mid-reply: audio has arrived and is still playing
     fetchMock.mockImplementation(async () => sse(text('Here is a long reply that is being spoken right now.')));

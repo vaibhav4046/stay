@@ -10,7 +10,7 @@
 import { toSpeech } from '@/lib/voice/speechText';
 import { isImageDataUrl, looksVisual } from '@/lib/vision/image';
 import { honestFailureMessage } from '@/lib/conversation/response';
-import { mayStartTimer } from '@/lib/conversation/capabilities';
+import { mayChangeLook, mayStartTimer } from '@/lib/conversation/capabilities';
 import { MEDICAL_BOUNDARY_FIXED_MESSAGE } from '@/lib/safety/crisis';
 import { byokHeaders } from '@/lib/byok/config';
 import type { TtsConnection } from '@/lib/voice/tts/types';
@@ -1340,6 +1340,19 @@ export class FastSocket {
         this.say(this.spoken === '' ? 'Want me to start a timer?' : '', gen);
         return;
       }
+    }
+    // Same for the orb's look (persona run: "show me exactly how..." set the shape to "exactly" and Stay said Done to a question). The call
+    // is not run; the model is told so and answers the person's words, without tools.
+    if (call && !toolFollowUp && /"action"\s*:\s*"(?:shape|color)"/.test(call.args) && !mayChangeLook(asked)) {
+      const id = call.id || `call-${Date.now()}`;
+      this.history = [
+        ...this.history,
+        { role: 'assistant' as const, content: null, tool_calls: [{ id, type: 'function', function: { name: call.name, arguments: call.args || '{}' } }] },
+        { role: 'tool' as const, tool_call_id: id, content: '{"ok":false,"error":"They did not ask to change the orb. Answer what they said, in words."}' },
+      ].slice(-MAX_HISTORY);
+      this.lastToolOk = false;
+      this.lastToolSay = undefined;
+      return void this.generate(undefined, true);
     }
     if (call) {
       const id = call.id || `call-${Date.now()}`;
