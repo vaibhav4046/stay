@@ -51,3 +51,7 @@ demo-out/
 
 # silent screen recording from scripts/real-voice-e2e.mjs (large); regenerate with the script
 docs/evidence/real-e2e/*.webm
+
+# files that browser specs write into the repo root
+/card-*.png
+/elevenlabs-*.png
