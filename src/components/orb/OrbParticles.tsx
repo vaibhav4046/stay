@@ -54,7 +54,7 @@ interface Props {
 }
 
 const VERT = /* glsl */ `
-  uniform float uMix, uTime, uEnergy, uLow, uMid, uHigh, uSwirl, uThink, uBreath, uYaw, uPx, uSize, uJelly;
+  uniform float uMix, uTime, uEnergy, uLow, uMid, uHigh, uSwirl, uThink, uBreath, uYaw, uPx, uSize, uJelly, uPulse, uPulseAge;
   uniform vec4 uFaceA; // mouth open, mouth wide, blink, brow
   uniform vec4 uFaceB; // head tilt, nod, sway, breath
   uniform vec2 uGaze;
@@ -160,6 +160,11 @@ const VERT = /* glsl */ `
                 + uLow * 0.06 * sin(length(p) * 8.0 - uTime * 5.0)
                 + uMid * 0.025 * sin(ph * 4.0);
     p += n3 * (breathe + voice) * calm;
+    // a slow breath of the whole body under the dots' own motion
+    p *= 1.0 + uBreath * 0.012 * sin(uTime * 0.9) * calm;
+    // a ripple runs out across the surface when Stay starts to speak or to listen (2 Nov 2026: "enhance it, transform effects")
+    float ring = length(p.xy);
+    p += n3 * uPulse * 0.07 * sin(ring * 11.0 - uPulseAge * 15.0) * smoothstep(uPulseAge * 1.6 + 0.25, uPulseAge * 1.6 - 0.15, ring) * calm;
 
     // jelly: the whole body squashes and stretches on a soft spring and a ripple runs through the surface
     float j = uJelly * uSwirl;
@@ -186,6 +191,7 @@ const FRAG = /* glsl */ `
   uniform float uDesat;
   uniform float uTint;
   uniform float uFade;
+  uniform float uGlow;
   varying vec3 vCol;
   varying float vC;
   varying float vDepth;
@@ -198,6 +204,8 @@ const FRAG = /* glsl */ `
     col = mix(col, vec3(dot(col, vec3(0.3, 0.59, 0.11))), uDesat);
     col = mix(col, vec3(1.0), vDepth * 0.22);
     col += vTravel * 0.1;
+    // the orb brightens with Stay's real voice, and briefly with each ripple
+    col += uGlow * (1.0 - 0.5 * vDepth) * 0.55;
     gl_FragColor = vec4(col, a * (0.94 - 0.4 * vDepth) * uFade);
   }
 `;
@@ -238,6 +246,9 @@ interface OrbDebug {
   shape: string;
   figureOn: boolean;
   onsets: number;
+  /** ripple strength (0..1) and voice glow (0..1) this frame */
+  pulse?: number;
+  glow?: number;
 }
 declare global {
   interface Window {
@@ -347,6 +358,9 @@ export default function OrbParticles({ state, energy, bands, target, tint, think
       uTint: { value: 0 },
       uFade: { value: 1 },
       uJelly: { value: 0 },
+      uPulse: { value: 0 },
+      uPulseAge: { value: 0 },
+      uGlow: { value: 0 },
       uFaceA: { value: new THREE.Vector4() },
       uFaceB: { value: new THREE.Vector4() },
       uGaze: { value: new THREE.Vector2() },
@@ -465,6 +479,8 @@ export default function OrbParticles({ state, energy, bands, target, tint, think
     let frameMsEma = 16;
     let frames = 0;
     let smoothEnergy = 0, sLow = 0, sMid = 0, sHigh = 0;
+    let pulseState: VoiceVisualState | null = null;
+    let pulseAge = 9;
     const debug: OrbDebug = { frameMs: [], cpuMs: [], face: REST_FACE, shape: currentKey, figureOn: false, onsets: 0 };
 
     const render = () => {
@@ -548,6 +564,15 @@ export default function OrbParticles({ state, energy, bands, target, tint, think
         ptrYaw += (ptrTarget - ptrYaw) * ease(5);
         uniforms.uYaw.value = spin + ptrYaw * (1 - 0.5 * sphereW) + Math.sin(t * 0.45) * (0.1 - 0.06 * figW) * (1 - sphereW);
         uniforms.uJelly.value = jelly.step(dt);
+        // a ripple when Stay starts to speak or to listen
+        if (L.state !== pulseState) {
+          if ((L.state === 'speaking' || L.state === 'listening') && pulseState !== null) pulseAge = 0;
+          pulseState = L.state;
+        }
+        pulseAge += dt;
+        uniforms.uPulseAge.value = pulseAge;
+        uniforms.uPulse.value = pulseAge < 1.6 ? Math.exp(-pulseAge * 2.2) : 0;
+        uniforms.uGlow.value += (Math.min(1, smoothEnergy * 1.4) * 0.6 + uniforms.uPulse.value * 0.25 - uniforms.uGlow.value) * ease(10);
       }
       uniforms.uEnergy.value = smoothEnergy;
       uniforms.uLow.value = sLow;
@@ -580,6 +605,8 @@ export default function OrbParticles({ state, energy, bands, target, tint, think
         debug.shape = currentKey;
         debug.figureOn = toIsFigure;
         debug.onsets = face.onsets;
+        debug.pulse = uniforms.uPulse.value;
+        debug.glow = uniforms.uGlow.value;
         window.__stayOrb = debug;
       }
 
