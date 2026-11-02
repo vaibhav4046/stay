@@ -14,7 +14,7 @@ describe('toSpeech: the text the voice is given', () => {
   });
   it('leaves other languages and apostrophes alone', () => {
     expect(toSpeech('Hola, ¿qué tal? Don’t worry.')).toBe("Hola, ¿qué tal? Don't worry.");
-    expect(toSpeech('नमस्ते, कैसे हैं?')).toBe('नमस्ते, कैसे हैं?');
+    expect(toSpeech('नमस्ते, कैसे हैं?')).toBe('namaste, kaise hain?'); // Devanagari is spoken in Roman letters: no TTS voice reads Devanagari (2 Nov 2026)
   });
   it('is empty for text with nothing to say', () => {
     expect(toSpeech(' 😊 ** \n ')).toBe('');
@@ -67,7 +67,7 @@ describe('T1.4 numbers and units are said, not read out', () => {
 
   it('only English gets this; another language is left as written', () => {
     expect(toSpeech('Faltan 7 min.', 'spanish')).toBe('Faltan 7 min.');
-    expect(toSpeech('अभी 7 मिनट बाकी हैं।', 'hindi')).toBe('अभी 7 मिनट बाकी हैं।');
+    expect(toSpeech('अभी 7 मिनट बाकी हैं।', 'hindi')).toBe('abhee 7 minat baakee hain.'); // the number rules stay English-only; Devanagari becomes Roman letters
   });
 });
 

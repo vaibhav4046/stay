@@ -184,6 +184,9 @@ export const NATIVE_VOICE_FOR_LANG: Record<string, string> = NATIVE_PERSONA_FOR_
  * silent when pinned, so they use the browser's speech recognition instead.
  */
 export const AGENT_VERIFIED_LANGS = ['en', 'es', 'fr', 'de', 'it', 'pt', 'hi', 'ja', 'zh', 'ko', 'nl', 'ru', 'tr', 'ar', 'sv', 'no', 'da', 'fi', 'ro', 'vi', 'id', 'ms', 'he'] as const;
+/** Languages the fast path hears but the voice cannot speak: replies are written in Roman letters and spoken by the English voice. */
+const FAST_HEARS_ONLY = new Set(['hi']);
+
 export function isAgentVerifiedLanguage(code: string): boolean {
   return (AGENT_VERIFIED_LANGS as readonly string[]).includes(code.split('-')[0].toLowerCase());
 }
@@ -2228,8 +2231,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       // which detects the spoken language itself.
       const uiLang = selectedLanguageRef.current === 'auto' ? (typeof navigator !== 'undefined' ? navigator.language : 'en') : selectedLanguageRef.current;
       const fastLangBase = (uiLang || 'en').split('-')[0].toLowerCase();
-      const useFast = fastVoiceRef.current && Boolean(FAST_TTS_LANGUAGE[fastLangBase]);
-      const speech = planSpeech(selectedVoiceRef.current, fastLangBase, cachedTtsCaps());
+      // Hindi is heard by the fast path too (2 Nov 2026, live: 3 of 3 Hindi sentences transcribed correctly, first audio about 1.3 to 1.5 s,
+      // against about 3.3 s through the managed agent). The voice cannot speak Hindi, so replies come as Hinglish in the English voice.
+      const fastHears = Boolean(FAST_TTS_LANGUAGE[fastLangBase]) || FAST_HEARS_ONLY.has(fastLangBase);
+      const useFast = fastVoiceRef.current && fastHears;
+      const speech = planSpeech(selectedVoiceRef.current, FAST_TTS_LANGUAGE[fastLangBase] ? fastLangBase : 'en', cachedTtsCaps());
       const longQuery = companionRef.current ? '?long=1' : '';
       const tokenRes = await fetch(`/api/voice/${useFast ? 'fast-token' : 'token'}${longQuery}`, {
         method: 'POST',
