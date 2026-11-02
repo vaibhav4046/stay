@@ -1,5 +1,5 @@
 # Stay loop ledger
-Updated: 2026-11-02 (field-test pass)  Branch: hackathon-polish  HEAD: see `git log -1`  (nothing pushed or deployed; origin/master = 63cc399)
+Updated: 2026-11-02 (field-test pass)  Branch: hackathon-polish  HEAD: see `git log -1`  (pushed 2 Nov 2026 as PR #2 on the owner's yes in chat; the owner also said to merge it, which happens only after its checks pass; origin/master was 63cc399)
 
 Labels (H8): `synthetic-mic` = a TTS "person" injected as the microphone. `real-mic` = a human speaking. `mocked-model` / `live-model`. Only `real-mic` + `live-model` supports a public latency or quality claim. **Nothing in this ledger is `real-mic`.**
 
@@ -19,7 +19,7 @@ Labels (H8): `synthetic-mic` = a TTS "person" injected as the microphone. `real-
 | T1.3 | NOT STARTED | baseline 1,824 ms | | |
 | T1.4 | PASS | 49 cases: numbers, units, times, money, ordinals, 20-word sentences, breathing commas, English only | `tests/unit/speechText.test.ts` | |
 | T1.5 | PASS | 14 overload phrases, 8 non-overload; prompt gets the short-reply clause only then (text only, never the voice) | `tests/unit/overload.test.ts` | Not measured on a live model. |
-| T1.6 | HUMAN | | | `/lab/voices` not built. |
+| T1.6 | HUMAN | | `src/app/lab/voices` | The hidden listening-test page `/lab/voices` is built. It needs five listeners; no rating has been collected. |
 | T1.7 | NOT STARTED | | | My words already feed STT `keyterms_prompt`; TTS pronunciation control not checked. |
 | T2.1 | PASS | the worklet marks the first non-silent sample rendered and the page maps it to the performance clock; older "first sound" figures relabelled packet receipt | `tests/unit/playbackWorklet.test.ts` | The benchmark scripts (`sim-human`, `real-voice-e2e`) now report time to first sample played. `bench:voice` had been timing a playback path Stay no longer uses. |
 | T2.2 | NOT MET | median 966 ms, P95 1,847 ms, 24 turns in 3 valid runs (synthetic-mic + live-model, local build 3cc950a, first sound from the audio context) | `docs/evidence/loop/T2-bench-2026-11-02-series2.json`; earlier valid run `…-series1.json` | Target: median 900 ms or less, P95 1,500 ms or less, 20 turns or more. Turn count met; both timings missed (median by 66 ms). Timed separately over 3 turns: the speech service ends the turn a median 585 ms after the speaker stops. Not a real-mic number. |
@@ -28,7 +28,7 @@ Labels (H8): `synthetic-mic` = a TTS "person" injected as the microphone. `real-
 | T2.5 | NOT STARTED | | | |
 | T2.6 | NOT STARTED | | | |
 | T2.7 | NOT STARTED | | | |
-| T2.8 | HUMAN | | | `/lab/latency` not built. This is the only evidence allowed for public latency numbers. |
+| T2.8 | HUMAN | | `src/app/lab/latency`, `src/components/lab/LatencyRecorder.tsx` | The instructions page `/lab/latency` and the in-app recorder (`/app/today?lab=latency`) are built. A real-microphone run (20 turns, headphones) is the only evidence allowed for public latency numbers; none has been done. |
 | T3.1 | PARTIAL | | `src/lib/voice/toolSelfCheck.ts`, `tests/unit/agenticTools.test.ts` | The self-check exists and is wired into the voice hook; per-tool coverage not re-audited this pass. |
 | T3.2 | PARTIAL | screen / camera / picture built and tested end to end with the real vision model (live-model) | `tests/e2e/vision.spec.ts`, `scripts/vision-real.mjs` | Not done: "frame older than 30 s is mentioned as older" (frames are taken at the moment of the question, so it rarely applies); a vision question and a tool in one turn; fixture images other than the planted-instruction one. |
 | T3.3 | NOT STARTED | | | `/api/voice/translate` exists, now behind the safety gate, not exposed in the app. |
@@ -82,16 +82,22 @@ Source: the owner watched their own recording of a real call to the live site (o
 Sound: the test browsers I start are launched with `--mute-audio` and I do not play anything on the owner's speakers.
 
 ## Handoff
-Next gate: T1.2 (picker: the shortlist, hide failed voices), T2.3 (pause then cancel), T2.4 tuning, T1.3 (warm TTS for the next language), T3.1 per-tool tests, then the lab pages for T1.6 and T2.8.
+Done since the first handoff: voice picker has a Recommended group of 4 and the other 14 behind "More voices" (a 6–9 shortlist needs listening, so it is yours); pause-first barge-in exists (duck on the microphone's energy, cancel only after two or more words or a stop word) and measures 371 ms against a 300 ms target; patience through pauses is now 20 of 20; axe, overflow, reduced-motion and keyboard checks are in the browser tests; the model chain is three buckets deep.
 
-Owner requests waiting (nothing is done until you say yes, per H9):
-1. **Push `hackathon-polish` and open a PR**, and/or deploy a preview, so the live eval can be re-run against it and your phone can try it.
-2. **Groq plan.** The key allows 8,000 tokens a minute. With judges trying the site together, replies will fail with the plain "too many requests" message. Options: upgrade the Groq tier, add a second provider key, or tell judges to bring their own key (Settings). Only you can change that.
-3. **Real-microphone run** (T2.8, 20 turns, headphones) and the **listening test** (T1.6): the pages are not built yet; say if you want them built first.
+Not done, and why:
+- **Pause-first barge-in is slower than its target** (371 ms median, n = 6 over two series; target 300 ms). Lowering the microphone threshold would also duck on Stay's own echo, so I did not.
+- **Turn-taking values were not retuned** (see T2.4).
+- **Warm TTS for the next language (T1.3), per-tool tests (T3.1), backchannels (T2.5), the phone agent (T3.5)** are untouched.
+- **Demo video** is from an older build; the composed one says "simulated speaker". Record a new one with `docs/DEMO_SCRIPT.md` option A.
+
+Owner requests (nothing below is done until you say so, per H9):
+1. ~~Push and PR~~ done on your yes: PR #2. You also said to merge it; I do that after its checks pass.
+2. **More Groq room.** The key gives three models with 8,000 tokens a minute each (and 1,000 requests a day each), about 18 to 28 turns a minute for the whole site. For more, make a **second Groq account's key** and set `GROQ_API_KEYS=key1,key2` in Vercel (the app already rotates keys). AssemblyAI's own account limit (5 new voice sessions a minute) caps simultaneous judges regardless, and only AssemblyAI can raise it. I did not use Perplexity: its chat models search the web, which does not suit a low-latency voice call that needs app tools, and signing in to accounts and creating keys is something I do not do.
+3. **Real-microphone run** (T2.8, 20 turns, headphones, start at `/lab/latency`, which opens the recorder inside the app) and the **listening test** (T1.6, hidden page): both pages exist; they need a person.
 4. Confirm the **deadline** on Discord (7 Nov 2026 19:00 GMT is what we have).
-5. Keep or drop the **synthetic-mic head-to-head table** on the landing page (H8).
-6. **Orb:** the spec says off by default, no morphing, no face. Change the default?
-7. **Phone (T3.5):** rewrite for livekit-agents 1.x, deploy, buy a number, or hide "Call Stay" for the phone and say so.
-8. **Video and posts:** record with `docs/DEMO_SCRIPT.md`, then post `docs/submission/POSTS.md`. I will not post.
+5. **Orb:** the spec says off by default, no morphing, no face. Change the default?
+6. **Phone (T3.5):** rewrite for livekit-agents 1.x, deploy, buy a number, or hide "Call Stay" for the phone and say so.
+7. **Video and posts:** record with `docs/DEMO_SCRIPT.md`, then post `docs/submission/POSTS.md`. I will not post.
+8. **Comparison with ChatGPT Live** (T5.3): I make no claim either way. The 20-scenario set and scoring are in `docs/benchmark/HEAD_TO_HEAD.md`; the runs against other apps are yours.
 
 Open questions: none blocking.
