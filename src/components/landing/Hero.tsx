@@ -77,6 +77,11 @@ export function Hero() {
   return (
     <section className="lp-hero lp-wrap" aria-labelledby="hero-title">
       <div className="lp-hero-copy">
+        <p className="glass mb-5 flex w-fit max-w-full items-center gap-2 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[0.74rem] font-medium text-ink-2 sm:text-[0.8rem]" data-testid="hero-badge">
+          Live speech in your browser, powered by
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/assemblyai-logo.svg" alt="AssemblyAI" height={16} className="h-4 w-auto" />
+        </p>
         <h1 id="hero-title" className="hero-title max-w-[17ch]">Start the thing you&apos;ve been avoiding.</h1>
         <p className="mt-5 max-w-[46ch] text-[1.12rem] leading-relaxed text-ink-2">
           Say the thing you can&apos;t start. Stay turns it into a two-minute step and keeps you company while you do it.

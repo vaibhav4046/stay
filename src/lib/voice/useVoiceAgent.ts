@@ -688,6 +688,8 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const companionRef = useRef(false);
   const renewingRef = useRef(false);
   const renewAttemptsRef = useRef(0);
+  /** a connection that fails before it is ready (a busy account, a dropped handshake) is tried again with fresh tokens, twice */
+  const connectRetriesRef = useRef(0);
   useEffect(() => {
     try {
       const on = window.localStorage.getItem('stay_companion') === '1';
@@ -1195,7 +1197,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           if (panel) { o.onShowPanelRequested?.(panel); return { ok: true, opened: panel }; }
           if (lower === 'voice' || lower === 'voices') { o.onChangeVoiceRequested?.(); return { ok: true, opened: 'voices' }; }
           const hit = Object.entries(screens).find(([k]) => lower.includes(k));
-          if (!hit) return { ok: false, error: 'unknown screen' };
+          if (!hit) return { ok: false, error: 'unknown screen', say: 'I can only open my own screens: history, memory, your list, brain dump, routines or settings.' };
           o.onNavigateRequested?.(hit[1][0], hit[1][1]);
           return { ok: true, opened: hit[1][1] };
         }
@@ -2085,6 +2087,9 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         },
         onTelemetry: (t) => {
           pushAudioLevels(Math.min(1, t.rms * 3.8));
+          if ((window as unknown as { __stayFastDebug?: boolean }).__stayFastDebug) {
+            (window as unknown as { __stayPlayback?: unknown }).__stayPlayback = { underflows: t.underflowCount, prebufferMs: t.prebufferMs, bufferedMs: t.bufferedMs, state: t.state };
+          }
           if (t.state === 'PLAYING' && !playbackClockLockedRef.current && speechAudioStartTimeRef.current > 0) {
             speechAudioStartTimeRef.current = performance.now() - pcmPlayer.getPlaybackPositionMs();
             playbackClockLockedRef.current = true;
@@ -2235,6 +2240,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           renewAttemptsRef.current = 0;
           setIsConnected(true);
           setVisualState('listening');
+          connectRetriesRef.current = 0;
           dispatchVoiceEvent({ type: 'session_ready' });
 
           // Start streaming microphone audio now that session.ready has fired
@@ -2729,6 +2735,15 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
         if (type === 'session.error' && socket instanceof FastSocket) {
           const code = String(msg.code || 'connection_failed');
+          if (!sessionReadyRef.current && connectRetriesRef.current < 2) {
+            connectRetriesRef.current += 1;
+            console.warn('AssemblyAI voice connection failed before it was ready; trying again', msg.message);
+            disconnectVoiceSession();
+            setVisualState('connecting');
+            window.setTimeout(() => void startVoiceSession(), 700 * connectRetriesRef.current);
+            return;
+          }
+          connectRetriesRef.current = 0;
           setTransportInfo((prev) => ({
             ...prev,
             mode: 'text_only',

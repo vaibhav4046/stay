@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { DM_Sans, Instrument_Sans } from 'next/font/google';
 import './globals.css';
+import './glass.css';
 import { CrisisHelpProvider } from '@/components/CrisisHelpPanel';
 import { RegisterServiceWorker } from '@/components/RegisterServiceWorker';
 
@@ -49,6 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en-GB" className={`${sans.variable} ${display.variable}`}>
       <body>
+        <div className="scroll-progress" aria-hidden="true" />
         <CrisisHelpProvider>{children}</CrisisHelpProvider>
         <RegisterServiceWorker />
       </body>

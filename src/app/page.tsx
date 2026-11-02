@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
 import { PERSONAS } from '@/lib/voice/personas';
 import { Hero } from '@/components/landing/Hero';
+import { SmoothScroll } from '@/components/landing/SmoothScroll';
+import { ProofStrip } from '@/components/landing/ProofStrip';
 import { DemoPlayer } from '@/components/landing/DemoPlayer';
 import { Story } from '@/components/landing/Story';
 import { WeekExplorer } from '@/components/landing/WeekExplorer';
@@ -21,16 +23,18 @@ export default function Home() {
 
   return (
     <>
+      <SmoothScroll />
       <SiteHeader anchors />
       <main>
         <Hero />
+        <ProofStrip />
 
         <section id="watch" className="lp-night lp-band" aria-labelledby="watch-title" data-testid="demo-video">
           <div className="lp-wrap">
             <p className="eyebrow lp-eyebrow-night">The demo</p>
-            <h2 id="watch-title" className="section-title lp-night-title max-w-[26ch]">Watch it in under three minutes.</h2>
+            <h2 id="watch-title" className="section-title lp-night-title max-w-[26ch]">Watch a real call.</h2>
             <p className="lp-night-copy mt-3 max-w-[62ch]">
-              Recorded on the live site. The speaker is a synthesized voice fed into the microphone and labelled as simulated on screen; Stay&apos;s replies are the real audio. Captions are on. This recording was made before the side-by-side with ChatGPT voice and Gemini Live, so its closing line about not having measured them is out of date; the comparison is below.
+              A screen recording of the live app, with no sound: the browser cannot record page audio, so the words are in the captions. The speaker is a synthesised AssemblyAI voice fed into the microphone, marked as such in the captions; Stay&apos;s replies are real AssemblyAI speech. It shows the chat-first screen, a spoken interruption, a switch to Spanish, and two panels opened by typing.
             </p>
           </div>
           <div className="lp-player-bleed">

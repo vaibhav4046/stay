@@ -12,7 +12,8 @@ const ANCHORS = [
 /** `anchors` adds in-page links on the landing page; privacy and terms keep the plain header. */
 export function SiteHeader({ anchors = false }: { anchors?: boolean }) {
   return (
-    <header className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-5 sm:px-8">
+    <div className="sticky top-0 z-40 px-2 pt-2 sm:px-4 sm:pt-3">
+    <header className="glass-nav mx-auto flex max-w-6xl items-center justify-between gap-2 py-1.5 pl-4 pr-1.5 sm:pl-6">
       <Link href="/" aria-label="Stay home">
         <StayWordmark />
       </Link>
@@ -28,6 +29,7 @@ export function SiteHeader({ anchors = false }: { anchors?: boolean }) {
         <Link href="/app/today" className="btn btn-primary !px-3 sm:!px-5">Open Stay</Link>
       </nav>
     </header>
+    </div>
   );
 }
 

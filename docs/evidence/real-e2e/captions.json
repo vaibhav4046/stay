@@ -1,0 +1,56 @@
+{
+  "recStart": 1793583794293,
+  "callEndAt": 1793583830981,
+  "caps": [
+    {
+      "t": 1793583801295,
+      "who": "stay",
+      "text": "Hi. It is late, so nothing big is needed. What would feel kind to start with? just keep me company, or empty my head, or one small start?"
+    },
+    {
+      "t": 1793583814429,
+      "who": "person",
+      "text": "I keep putting off replying to my landlord about the renewal."
+    },
+    {
+      "t": 1793583816104,
+      "who": "stay",
+      "text": "Hey. Pick one sentence to send. Draft “Thanks for the notice; I’ll review and reply by tomorrow.” Then send it. Ready?"
+    },
+    {
+      "t": 1793583819635,
+      "who": "person",
+      "text": "Can you break this down into an ultra-micro step?"
+    },
+    {
+      "t": 1793583819836,
+      "who": "person",
+      "text": "Wait, stop. Actually, can we just make it smaller?"
+    },
+    {
+      "t": 1793583820880,
+      "who": "stay",
+      "text": "Sure. Type “Thanks, will reply.” and hit send."
+    },
+    {
+      "t": 1793583828229,
+      "who": "person",
+      "text": "Hola, ahora necesito empezar mi declaración de impuestos, pero no sé por dónde empezar."
+    },
+    {
+      "t": 1793583829845,
+      "who": "stay",
+      "text": "Hola. Busca el formulario 1040 en el sitio del IRS. ¿Quieres abrirlo?"
+    },
+    {
+      "t": 1793583834542,
+      "who": "person",
+      "text": "show my history"
+    },
+    {
+      "t": 1793583839254,
+      "who": "person",
+      "text": "open brain dump"
+    }
+  ]
+}

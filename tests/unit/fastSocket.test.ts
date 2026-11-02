@@ -5,6 +5,7 @@ import {
   fastVoiceFor,
   isBackchannelOnly,
   isExplicitInterruption,
+  isOpenerOnly,
   quickConfirmation,
   soundsUnfinished,
   takeSpeakable,
@@ -71,10 +72,12 @@ const text = (t: string) => ({ choices: [{ delta: { content: t } }] });
 const tick = (n = 6) => new Promise((r) => { let i = 0; const f = () => (++i >= n ? r(null) : setTimeout(f, 0)); f(); });
 
 let events: Array<Record<string, unknown>>;
+let openedSockets: FastSocket[] = []; // closed after each test so a late timer of one test never writes into the next
 let fetchMock: ReturnType<typeof vi.fn>;
 async function open(opts: { tools?: boolean; greeting?: string; holdMs?: number; autoLanguage?: boolean } = {}) {
   const s = new FastSocket({ sttToken: 'stt', ttsToken: 'tts', holdMs: opts.holdMs ?? 60, interruptHoldMs: opts.holdMs ?? 60, warmUp: false, autoLanguage: opts.autoLanguage });
   events = [];
+  openedSockets.push(s);
   s.onmessage = (e) => events.push(JSON.parse(e.data));
   await tick(2);
   s.send(JSON.stringify({ type: 'session.update', session: { system_prompt: 'You are Stay.', greeting: opts.greeting ?? '', output: { voice: 'anna' }, tools: opts.tools ? [{}] : [], tts_language: 'english' } }));
@@ -96,7 +99,11 @@ beforeEach(() => {
   (globalThis as unknown as { fetch: unknown }).fetch = fetchMock;
   (globalThis as unknown as { window: unknown }).window = { localStorage: { getItem: () => null } };
 });
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  openedSockets.forEach((s) => s.close());
+  openedSockets = [];
+  vi.restoreAllMocks();
+});
 
 describe('takeSpeakable', () => {
   it('waits for enough text, then cuts at a sentence end', () => {
@@ -594,6 +601,34 @@ describe('FastSocket: auto language follows what the person speaks', () => {
     expect(ttsSockets().length).toBe(1);
   });
 });
+describe('FastSocket: a lone greeting waits for the rest of the sentence', () => {
+  it('isOpenerOnly: one greeting or filler word, never a real answer or a two-word greeting', () => {
+    for (const t of ['Hola.', 'Hi,', 'Hello!', 'Um.', 'Okay.']) expect(isOpenerOnly(t), t).toBe(true);
+    for (const t of ['Yes.', 'No.', 'Hi hello.', 'Hola, necesito ayuda.', 'Stop.', 'I am stuck', 'Okay, do it']) expect(isOpenerOnly(t), t).toBe(false);
+  });
+
+  it('"Hola." then the rest of the sentence is answered once, as one turn, not "Hola!" first', async () => {
+    fetchMock.mockResolvedValue(sse(text('Claro, vamos paso a paso.')));
+    const { stt } = await open();
+    stt.push({ type: 'Turn', turn_order: 0, transcript: 'Hola.', end_of_turn: true });
+    await new Promise((r) => setTimeout(r, 250));
+    expect(types()).not.toContain('reply.started'); // still waiting: it was only the opening
+    stt.push({ type: 'Turn', turn_order: 1, transcript: 'Hola, ahora necesito empezar mi tarea.', end_of_turn: true });
+    await new Promise((r) => setTimeout(r, 900));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    expect(body.messages.at(-1).content).toMatch(/necesito empezar mi tarea/);
+  });
+
+  it('a lone greeting that is not followed by anything is answered after the short wait', async () => {
+    fetchMock.mockResolvedValue(sse(text('Hola, qué tal.')));
+    const { stt } = await open();
+    stt.push({ type: 'Turn', turn_order: 0, transcript: 'Hola.', end_of_turn: true });
+    await new Promise((r) => setTimeout(r, 1100));
+    expect(types()).toContain('reply.started');
+  });
+});
+
 describe('FastSocket: a reply is never left on "Speaking"', () => {
   it('cancels whose acks were lost with the old voice session do not mute the next reply on the new one', async () => {
     FakeWS.dropCancelAck = true;

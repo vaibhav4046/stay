@@ -557,19 +557,9 @@ export function LiveChatBox({
                         )}
                       </div>
                     <div
-                      className="rounded-[12px] px-3.5 py-2.5 max-w-[68ch] text-[1.0625rem] leading-[1.55] break-words border transition-opacity duration-150"
+                      className={`bubble stay-pop ${isUser ? 'bubble-user' : 'bubble-agent'} px-4 py-2.5 max-w-[68ch] text-[1.0625rem] leading-[1.55] break-words`}
                       style={
-                        isUser
-                          ? {
-                              backgroundColor: '#12304A',
-                              color: '#EEF6FF',
-                              borderColor: 'rgba(143, 211, 255, 0.28)',
-                              overflowWrap: 'anywhere',
-                            }
-                          : {
-                              backgroundColor: '#1A2433',
-                              color: '#EEF6FF',
-                              borderColor: '#1E2B3D',
+                        {
                               overflowWrap: 'anywhere',
                             }
                       }
@@ -661,8 +651,8 @@ export function LiveChatBox({
                     <span>You (speaking)</span>
                   </div>
                   <div
-                    className="rounded-[12px] px-3.5 py-2.5 max-w-[68ch] text-[1.0625rem] leading-[1.55] break-words border border-[#8FD3FF]/30"
-                    style={{ backgroundColor: '#05080C', color: '#C5D6E6', overflowWrap: 'anywhere' }}
+                    className="bubble bubble-user bubble-live px-4 py-2.5 max-w-[68ch] text-[1.0625rem] leading-[1.55] break-words"
+                    style={{ overflowWrap: 'anywhere' }}
                   >
                     <span>{partialUserTranscript}</span>
                   </div>
@@ -685,6 +675,7 @@ export function LiveChatBox({
                   >
                     <StayLogo size={13} className="shrink-0" />
                     <span>Stay · {thinkingStatusLine}</span>
+                    <span className="typing-dots" aria-hidden="true"><i /><i /><i /></span>
                   </div>
                 </div>
               )}
@@ -700,8 +691,8 @@ export function LiveChatBox({
                     <span>Stay (speaking)</span>
                   </div>
                   <div
-                    className="rounded-[12px] px-3.5 py-2.5 max-w-[68ch] text-[1.0625rem] leading-[1.55] break-words border border-[#1E2B3D]"
-                    style={{ backgroundColor: '#1A2433', color: '#EEF6FF', overflowWrap: 'anywhere' }}
+                    className="bubble bubble-agent bubble-live px-4 py-2.5 max-w-[68ch] text-[1.0625rem] leading-[1.55] break-words"
+                    style={{ overflowWrap: 'anywhere' }}
                   >
                     <span>{liveSpokenText}</span>
                   </div>

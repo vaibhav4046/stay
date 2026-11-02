@@ -7,6 +7,7 @@
  * Why: measured from the true end of speech, the Voice Agent took about 2.5 s; speech-to-text 0.9 s + first model token
  * 0.3 s + first synthesized audio 0.2 s add up to about 1.4 s. This class is how that sum is realised and checked.
  */
+import { toSpeech } from '@/lib/voice/speechText';
 import { byokHeaders } from '@/lib/byok/config';
 import type { TtsConnection } from '@/lib/voice/tts/types';
 
@@ -273,6 +274,8 @@ const MAX_HISTORY = 14;
 const FIRST_BLOCK_CHARS = 90;
 /** The reply is fully written but the voice has sent no sound and no "done" for this long: end it here, never stay on "Speaking". */
 const REPLY_STALL_MS = 8000;
+/** After a lone greeting or filler turn, how long to wait for the rest of the sentence before answering it. */
+const OPENER_HOLD_MS = 700;
 
 /** Splits streamed text into speakable chunks: a sentence end followed by space, once there is enough to say. */
 export function takeSpeakable(buffer: string, first = false): { chunk: string; rest: string } | null {
@@ -293,6 +296,12 @@ export function soundsUnfinished(text: string): boolean {
   if (/[.?!。！？]["')\]]?$/.test(t) && !/\.{2,}$|…$/.test(t)) return false;
   if (/[,;:…-]$/.test(t) || /\.{2,}$/.test(t)) return true;
   return /\b(?:um+|uh+|er+m?|ah+|hmm+|mm+|like|and|but|so|because|cause|or|then|if|that|which|to|the|a|an|my|of|for|with|about|maybe|just|i|i'm|i've|it's)$/i.test(t);
+}
+
+/** A single word that only opens a sentence: a greeting or a filler. ("Hi hello." is two words and is answered at once.) */
+export function isOpenerOnly(text: string): boolean {
+  const words = text.trim().toLowerCase().replace(/[.,!?¿¡…]+/g, ' ').split(/\s+/).filter(Boolean);
+  return words.length === 1 && words.every((w) => /^(?:hi|hello|hey|hiya|hola|buenas|bonjour|salut|ciao|hallo|ola|olá|okay|ok|so|well|right|alright|um+|uh+|er+m?)$/.test(w));
 }
 
 /** Two transcripts of the same words (capitals and punctuation aside) share a key. */
@@ -600,8 +609,8 @@ export class FastSocket {
     if (!this.closed) this.onmessage?.({ data: JSON.stringify(m) });
   }
 
-  private fail(code: string): void {
-    this.emit({ type: 'session.error', code, message: 'fast voice connection failed' });
+  private fail(code: string, detail = ''): void {
+    this.emit({ type: 'session.error', code, message: detail ? `fast voice connection failed: ${detail}` : 'fast voice connection failed' });
     this.close();
   }
 
@@ -619,8 +628,8 @@ export class FastSocket {
     };
     try {
       await Promise.all([this.openStt(), this.openTts()]);
-    } catch {
-      return this.fail('connection_failed');
+    } catch (err) {
+      return this.fail('connection_failed', String((err as Error)?.message || err));
     }
     this.emit({ type: 'session.ready' });
     if (this.cfg.warmUp) void fetch('/api/voice/chat', { method: 'GET' }).catch(() => undefined); // warm the function while the greeting plays
@@ -887,14 +896,16 @@ export class FastSocket {
     if (this.spec && this.spec.key !== specKey(full)) this.dropSpec(); // they said more than the partial: start over
     // someone who cuts in with "Wait, stop." usually has more to say: give the rest of the sentence a moment
     const interruptHold = this.interrupted && !unfinished && full.split(/\s+/).length <= 5 && this.holds < 2;
-    if ((unfinished && this.holds < 3) || interruptHold) {
+    // a lone "Hola." / "Hi," / "Um." is an opening, not a finished thought: wait a beat for the rest instead of answering the greeting
+    const opener = !unfinished && this.holds < 1 && isOpenerOnly(full);
+    if ((unfinished && this.holds < 3) || interruptHold || opener) {
       // trailing off: keep the turn open and give them time to finish the thought
       this.holds++;
       this.dropSpec();
       this.carry = full;
       this.inUserTurn = true;
       if (this.holdTimer) clearTimeout(this.holdTimer);
-      this.holdTimer = setTimeout(() => this.finishTurn(order), unfinished ? this.cfg.holdMs : this.cfg.interruptHoldMs);
+      this.holdTimer = setTimeout(() => this.finishTurn(order), unfinished ? this.cfg.holdMs : opener ? OPENER_HOLD_MS : this.cfg.interruptHoldMs);
       return;
     }
     this.carry = full;
@@ -1072,12 +1083,14 @@ export class FastSocket {
       return;
     }
     if (!text || gen !== this.genId || this.tts?.readyState !== WebSocket.OPEN) return;
+    const voiced = toSpeech(text); // what the voice is given: no markdown, emoji, quote marks or line breaks
+    if (!voiced) return;
     if (this.spoken === '') this.emit({ type: 'reply.started' });
     this.emit({ type: 'reply.text', text });
     this.spoken += (this.spoken ? ' ' : '') + text;
     this.mark('gen');
     this.resetKeepAliveTimer();
-    this.tts.send(JSON.stringify({ type: 'Generate', text: flush ? text : `${text} ` }));
+    this.tts.send(JSON.stringify({ type: 'Generate', text: flush ? voiced : `${voiced} ` }));
     if (flush) {
       this.sentFlushes++;
       this.unflushed = false;

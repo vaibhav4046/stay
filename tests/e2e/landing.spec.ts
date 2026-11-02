@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { CHAPTERS, TRANSCRIPT } from '../../src/components/landing/demoData';
 
 const shapeOf = (page: Page) => page.locator('[data-testid="hero-orb"] [data-shape]').first().getAttribute('data-shape');
 
@@ -41,8 +42,8 @@ test.describe('Landing: demo player', () => {
     await expect(player.getByTestId('player-bigplay')).toBeVisible();
     await expect(player.getByTestId('player-scrub')).toHaveAttribute('type', 'range');
     await expect(player.getByTestId('player-toggle')).toHaveAccessibleName('Play');
-    // the captions file is loaded as a real text track (9 cues), whether or not this browser can decode the video
-    await expect.poll(() => page.evaluate(() => (document.querySelector('video')!.textTracks[0].cues ?? []).length)).toBe(9);
+    // the captions file is loaded as a real text track (one cue per transcript line), whether or not this browser can decode the video
+    await expect.poll(() => page.evaluate(() => (document.querySelector('video')!.textTracks[0].cues ?? []).length)).toBe(TRANSCRIPT.length);
 
     const cap = player.getByTestId('player-captions');
     await expect(cap).toHaveAttribute('aria-pressed', 'true');
@@ -52,12 +53,13 @@ test.describe('Landing: demo player', () => {
     await expect(cap).toHaveAttribute('aria-pressed', 'true');
 
     const chapters = player.getByTestId('chapter');
-    await expect(chapters).toHaveCount(8);
-    await chapters.filter({ hasText: 'It waits' }).click();
+    await expect(chapters).toHaveCount(CHAPTERS.length);
+    const target = CHAPTERS[2]; // the chapter starts where its caption starts
+    await chapters.filter({ hasText: target.label }).click();
     const t = await page.evaluate(() => document.querySelector('video')!.currentTime);
-    expect(t).toBeGreaterThan(40);
-    expect(t).toBeLessThan(41);
-    await expect(chapters.filter({ hasText: 'It waits' })).toHaveAttribute('aria-current', 'true');
+    expect(t).toBeGreaterThan(target.t - 0.05);
+    expect(t).toBeLessThan(target.t + 1);
+    await expect(chapters.filter({ hasText: target.label })).toHaveAttribute('aria-current', 'true');
   });
 
   test('the player keeps one consistent frame: 16:9, never wider than the screen, same radius token as the stage', async ({ page }) => {
@@ -75,7 +77,7 @@ test.describe('Landing: demo player', () => {
   test('a transcript is there for anyone who cannot watch', async ({ page }) => {
     await open(page);
     await page.locator('summary', { hasText: 'Read the transcript' }).click();
-    await expect(page.locator('.lp-transcript li')).toHaveCount(9);
+    await expect(page.locator('.lp-transcript li')).toHaveCount(TRANSCRIPT.length);
   });
 });
 
@@ -151,7 +153,7 @@ test.describe('Landing: measured results', () => {
   test('the bars animate in when scrolled to, and stay still with reduced motion', async ({ page }) => {
     await open(page);
     const state = () => page.locator('[data-testid="measured"] [data-reveal]').first().getAttribute('data-reveal');
-    await page.getByTestId('measured').scrollIntoViewIfNeeded();
+    await page.locator('[data-testid="measured"] [data-reveal]').first().scrollIntoViewIfNeeded();
     await expect.poll(state).toBe('in');
 
     const ctx = await page.context().browser()!.newContext({ reducedMotion: 'reduce' });
@@ -168,7 +170,7 @@ test.describe('Landing: scroll story and artifacts', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await open(page);
     const story = page.getByTestId('story');
-    await story.scrollIntoViewIfNeeded();
+    await story.evaluate((el) => el.scrollIntoView({ block: 'start' })); // the top of a section taller than the screen
     await expect(story.locator('li[aria-current="step"]')).toContainText('You say it, badly');
     await story.locator('li[data-step="3"]').scrollIntoViewIfNeeded();
     await page.evaluate(() => window.scrollBy(0, 100));

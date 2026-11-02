@@ -2,17 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react';
 
-/** Chapter starts are the start times of the captions in public/demo/stay-demo.vtt (a unit test keeps them in step). */
-export const CHAPTERS = [
-  { t: 1.339, label: 'Hello' },
-  { t: 11.746, label: 'Type it, see it' },
-  { t: 25.106, label: 'Talk to it' },
-  { t: 40.405, label: 'It waits' },
-  { t: 79.664, label: 'Park it' },
-  { t: 90.995, label: 'Brain dump' },
-  { t: 105.481, label: 'Routines' },
-  { t: 126.279, label: 'Measured' },
-] as const;
+import { CHAPTERS } from './demoData';
+
+/** Chapter starts are the start times of the captions in public/demo/stay-demo.vtt (generated together; a unit test keeps them in step). */
+export { CHAPTERS };
 
 const fmt = (s: number) => {
   if (!Number.isFinite(s)) return '0:00';
@@ -31,7 +24,7 @@ export function DemoPlayer() {
   const [playing, setPlaying] = useState(false);
   const [started, setStarted] = useState(false);
   const [time, setTime] = useState(0);
-  const [duration, setDuration] = useState(155.12);
+  const [duration, setDuration] = useState(48.6);
   const [buffered, setBuffered] = useState(0);
   const [muted, setMuted] = useState(false);
   const [captionsOn, setCaptionsOn] = useState(true);

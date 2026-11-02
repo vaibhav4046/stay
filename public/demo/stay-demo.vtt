@@ -1,37 +1,41 @@
 WEBVTT
 
 1
-00:00:01.339 --> 00:00:10.603
-Stay is a voice companion for adults with ADHD. It helps you start the thing you have been avoiding, and it does not talk over your pauses.
+00:00:06.602 --> 00:00:18.362
+Stay: Hi. It is late, so nothing big is needed. What would feel kind to start with? just keep me company, or empty my head, or one small start?
 
 2
-00:00:11.746 --> 00:00:23.170
-Type or say what is in the way, and the dots become it. Overwhelmed is a tangle. Stuck is a staircase with one dot on the first step. Taxes are a coin.
+00:00:19.736 --> 00:00:21.311
+Simulated voice: I keep putting off replying to my landlord about the renewal.
 
 3
-00:00:25.106 --> 00:00:34.898
-In the app you just talk. This is a simulated person, so you can see exactly what happens. Replies start about a second after you stop.
+00:00:21.411 --> 00:00:24.842
+Stay: Hey. Pick one sentence to send. Draft “Thanks for the notice; I’ll review and reply by tomorrow.” Then send it. Ready?
 
 4
-00:00:40.405 --> 00:00:47.437
-People with ADHD pause mid-thought. Most voice assistants jump in. Stay waits.
+00:00:24.942 --> 00:00:25.742
+Simulated voice: Can you break this down into an ultra-micro step?
 
 5
-00:01:19.664 --> 00:01:28.016
-Parked, in one second. It can also start timers, run routines, set check-ins and keep a list for today.
+00:00:25.143 --> 00:00:26.087
+Simulated voice: Wait, stop. Actually, can we just make it smaller?
 
 6
-00:01:30.995 --> 00:01:41.291
-Everything on your mind, in any order. Stay picks one thing to start, a few for today, and the rest for later. No overdue, no guilt.
+00:00:26.187 --> 00:00:29.547
+Stay: Sure. Type “Thanks, will reply.” and hit send.
 
 7
-00:01:45.481 --> 00:01:54.601
-Routines give you one visible next step, each with its own timer. Check-ins nudge you softly, even when the tab is in the background.
+00:00:33.536 --> 00:00:35.052
+Simulated voice: Hola, ahora necesito empezar mi declaración de impuestos, pero no sé por dónde empezar.
 
 8
-00:02:06.279 --> 00:02:27.663
-We measured it with a simulated speaker. Replies in about 1.3 seconds, against 2.8 for the managed voice we replaced. It waited through the pause, noticed an interruption in well under a second, and never answered its own voice. We have not measured ChatGPT or Gemini, so we claim nothing against them.
+00:00:35.152 --> 00:00:39.749
+Stay: Hola. Busca el formulario 1040 en el sitio del IRS. ¿Quieres abrirlo?
 
 9
-00:02:28.588 --> 00:02:34.108
-Stay. Open source, local-first, and built on AssemblyAI.
+00:00:39.849 --> 00:00:42.849
+Typed: show my history
+
+10
+00:00:44.561 --> 00:00:47.561
+Typed: open brain dump

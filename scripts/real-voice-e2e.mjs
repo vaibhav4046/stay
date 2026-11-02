@@ -85,6 +85,21 @@ const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gestur
   // NO_VIDEO=1 skips the screen recording, which loads the machine and can delay the audio thread
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, ...(process.env.NO_VIDEO ? {} : { recordVideo: { dir: OUT, size: { width: 1280, height: 720 } } }) });
 const page = await ctx.newPage();
+const recStart = Date.now(); // the screen recording starts with the page
+// every chat message, the first time its text appears, with the time: the captions of the recording
+await page.addInitScript(() => {
+  window.__stayCaps = [];
+  const seen = new Set();
+  const scan = () => document.querySelectorAll('[data-testid="chat-user-message"],[data-testid="chat-agent-message"]').forEach((el) => {
+    const who = el.getAttribute('data-testid') === 'chat-user-message' ? 'person' : 'stay';
+    const text = (el.querySelector('.bubble')?.textContent || '').trim();
+    const key = who + '|' + text;
+    if (!text || seen.has(key)) return;
+    seen.add(key);
+    window.__stayCaps.push({ t: Date.now(), who, text });
+  });
+  new MutationObserver(scan).observe(document, { childList: true, subtree: true, characterData: true });
+});
 
 const sockets = [];
 page.on('websocket', (ws) => sockets.push(ws.url().replace(/token=[^&]+/, 'token=REDACTED')));
@@ -93,6 +108,8 @@ const apiCalls = [];
 page.on('response', (r) => { if (r.url().includes('/api/')) apiCalls.push(`${r.status()} ${r.request().method()} ${new URL(r.url()).pathname}`); });
 page.on('console', (m) => m.type() === 'error' && consoleErrors.push(m.text().slice(0, 160)));
 
+const connectWarnings = []; // the app retries a connection that fails before it is ready; what it said when it did
+page.on('console', (m) => m.type() === 'warning' && /connection failed/.test(m.text()) && connectWarnings.push(m.text().slice(0, 200)));
 const fastLog = [];
 page.on('console', (m) => {
   const txt = m.text();
@@ -237,6 +254,7 @@ try {
 
   const lines = await page.evaluate(() => [...document.querySelectorAll('[data-testid="chat-user-message"],[data-testid="chat-agent-message"]')].map((e) => ({ who: e.getAttribute('data-testid') === 'chat-user-message' ? 'person' : 'stay', text: (e.textContent || '').trim().slice(0, 400) })));
   results.transcript = lines;
+  results.playback = await page.evaluate(() => window.__stayPlayback ?? null); // underflows = times the speaker ran dry mid-reply (an audible gap)
   const heardAll = lines.some((l) => l.who === 'person' && /impuestos/i.test(l.text));
   results.steps[results.steps.length - 1].heardWholeSentence = heardAll;
   if (!heardAll) results.failures.push('the Spanish sentence was not heard whole: only part of it reached the transcript');
@@ -246,9 +264,21 @@ try {
   results.ttsLanguages = [...new Set(sockets.filter((u) => u.includes('tts.us.assemblyai.com')).map((u) => (u.match(/language=(\w+)/) || [])[1]))];
   results.sttOpened = sockets.some((u) => u.includes('streaming.assemblyai.com'));
   results.consoleErrors = consoleErrors.slice(0, 5);
+  results.connectRetries = connectWarnings;
   await page.getByTestId('call-end').click();
+  const callEndAt = Date.now();
   await page.waitForTimeout(800);
   await page.screenshot({ path: `${OUT}/07-ended.png` });
+  if (!process.env.NO_VIDEO) {
+    // for the recording: back in the chat, ask for two panels by typing, the way a person would
+    for (const phrase of ['show my history', 'open brain dump']) {
+      await page.waitForTimeout(1500);
+      await page.getByTestId('task-input').pressSequentially(phrase, { delay: 55 });
+      await page.keyboard.press('Enter');
+      await page.waitForTimeout(2200);
+    }
+    writeFileSync(`${OUT}/captions.json`, JSON.stringify({ recStart, callEndAt, caps: await page.evaluate(() => window.__stayCaps) }, null, 2));
+  }
 } catch (e) {
   results.failures.push(String(e.message || e));
   results.fastEventLogTail = fastLog.slice(-40);
@@ -256,6 +286,7 @@ try {
   results.ttsLanguages = [...new Set(sockets.filter((u) => u.includes('tts.us.assemblyai.com')).map((u) => (u.match(/language=(\w+)/) || [])[1]))];
   results.apiCalls = apiCalls.slice(-12);
   results.consoleErrors = consoleErrors.slice(0, 8);
+  results.connectRetries = connectWarnings;
   results.websockets = [...new Set(sockets)];
   results.transportLabel = await page.getByTestId('transport-badge').first().textContent().catch(() => null);
   await page.screenshot({ path: `${OUT}/error.png` }).catch(() => undefined);

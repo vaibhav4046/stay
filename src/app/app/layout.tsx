@@ -20,7 +20,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   return (
     <div className="min-h-[100dvh]">
-      <header className="sticky top-0 z-30 border-b border-line bg-canvas/95 backdrop-blur-[2px]">
+      <header className="glass-bar sticky top-0 z-30">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-5 sm:px-8">
           <Link href="/" aria-label="Stay home">
             <StayWordmark />

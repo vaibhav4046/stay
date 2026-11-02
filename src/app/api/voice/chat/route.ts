@@ -192,7 +192,7 @@ export async function POST(req: NextRequest) {
     messages: outboundMessages,
     tools,
     maxTokens: 110, // room for 2 to 4 spoken sentences; the first sentence still streams to the voice at once
-    temperature: 0.7,
+    temperature: 0.85, // varied wording, so replies do not sound templated
     serverModel: process.env.GROQ_VOICE_MODEL || 'openai/gpt-oss-120b',
     timeoutMs: 6000,
   });
