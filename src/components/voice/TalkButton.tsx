@@ -26,6 +26,7 @@ function labelFor(state: VoiceVisualState, connected: boolean, paused: boolean):
 /** The composer's Talk control: a mic and the state in one word; once live, the real signal wave (flat until there is real sound). */
 export function TalkButton({ visualState, isConnected, isHandsFreePaused = false, onToggleVoice, onToggleHandsFreeMute, className = '' }: TalkButtonProps) {
   const live = isConnected && visualState !== 'error' && !isHandsFreePaused;
+  const word = labelFor(visualState, isConnected, isHandsFreePaused);
   return (
     <div
       className={`inline-flex items-center gap-0.5 rounded-full border bg-surface-2 px-1 transition-shadow duration-300 ${
@@ -35,7 +36,7 @@ export function TalkButton({ visualState, isConnected, isHandsFreePaused = false
       <button
         type="button"
         onClick={onToggleVoice}
-        aria-label={isConnected ? 'End live voice' : 'Start live voice'}
+        aria-label={`${word}. ${isConnected ? 'End live voice' : 'Start live voice'}`} // the shown word comes first, so the name contains the visible label (WCAG 2.5.3)
         aria-pressed={isConnected}
         data-testid="mic-button"
         className="group flex h-11 items-center gap-1.5 rounded-full px-2.5 outline-none focus-visible:ring-2 focus-visible:ring-accent"
@@ -45,7 +46,7 @@ export function TalkButton({ visualState, isConnected, isHandsFreePaused = false
           <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
         </svg>
         {isConnected && <SignalWave state={visualState} height={24} className="hidden w-10 sm:block" />}
-        <span className="min-w-[2.9rem] text-left text-xs font-medium tracking-wide text-ink">{labelFor(visualState, isConnected, isHandsFreePaused)}</span>
+        <span className="min-w-[2.9rem] text-left text-xs font-medium tracking-wide text-ink">{word}</span>
       </button>
 
       {isConnected && onToggleHandsFreeMute && (
