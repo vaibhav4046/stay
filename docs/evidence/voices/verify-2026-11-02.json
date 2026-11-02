@@ -1,0 +1,192 @@
+{
+  "status": "PASS",
+  "gate": "T1.1",
+  "label": "live-provider handshake",
+  "gitSha": "4378275",
+  "date": "2026-11-02",
+  "at": "2026-11-02T08:05:05.855Z",
+  "checked": 18,
+  "passed": 18,
+  "results": [
+    {
+      "id": "49c443a4-8a1d-5f7e-b70b-98bdbd9823c3",
+      "name": "Audrey",
+      "accent": "American",
+      "gender": "F",
+      "language": "english",
+      "pass": true,
+      "outcome": "begin",
+      "ms": 1096
+    },
+    {
+      "id": "ac73d2f0-888d-500a-b5fa-3e98a271ee92",
+      "name": "Ernest",
+      "accent": "American",
+      "gender": "M",
+      "language": "english",
+      "pass": true,
+      "outcome": "begin",
+      "ms": 981
+    },
+    {
+      "id": "478badc1-a7eb-5bef-b916-c6e51bd2771e",
+      "name": "Adrienne",
+      "accent": "British",
+      "gender": "F",
+      "language": "english",
+      "pass": true,
+      "outcome": "begin",
+      "ms": 1002
+    },
+    {
+      "id": "1edcb3f4-d874-5c38-8839-8a29b854d294",
+      "name": "Aaron",
+      "accent": "British",
+      "gender": "M",
+      "language": "english",
+      "pass": true,
+      "outcome": "begin",
+      "ms": 986
+    },
+    {
+      "id": "d9e70892-1ace-5638-b749-dd6a0ba44686",
+      "name": "Andrew",
+      "accent": "Indian English",
+      "gender": "M",
+      "language": "english",
+      "pass": true,
+      "outcome": "begin",
+      "ms": 966
+    },
+    {
+      "id": "4be3fff4-fe61-5dfb-8b8a-dfd85e84a527",
+      "name": "Joe",
+      "accent": "Indian English",
+      "gender": "M",
+      "language": "english",
+      "pass": true,
+      "outcome": "begin",
+      "ms": 1009
+    },
+    {
+      "id": "bf7d036b-b18a-5b6b-94d3-d6a6bdd6febe",
+      "name": "Elvia",
+      "accent": "Australian",
+      "gender": "F",
+      "language": "english",
+      "pass": true,
+      "outcome": "begin",
+      "ms": 977
+    },
+    {
+      "id": "c6e763ab-1ac0-5a5b-9c38-75f909bc1924",
+      "name": "Steven",
+      "accent": "Australian",
+      "gender": "M",
+      "language": "english",
+      "pass": true,
+      "outcome": "begin",
+      "ms": 979
+    },
+    {
+      "id": "5ca091ad-519c-5f3f-89aa-1d2cd2f5a9ed",
+      "name": "Betty",
+      "accent": "Irish",
+      "gender": "F",
+      "language": "english",
+      "pass": true,
+      "outcome": "begin",
+      "ms": 991
+    },
+    {
+      "id": "5db34b17-ccd6-542f-bb62-8b947a04947b",
+      "name": "Aixa",
+      "accent": "Spain",
+      "gender": "F",
+      "language": "spanish",
+      "pass": true,
+      "outcome": "begin",
+      "ms": 996
+    },
+    {
+      "id": "2aadec9a-80cc-5181-a9fc-f2a9fda0cf50",
+      "name": "Constanza",
+      "accent": "Mexican",
+      "gender": "F",
+      "language": "spanish",
+      "pass": true,
+      "outcome": "begin",
+      "ms": 1039
+    },
+    {
+      "id": "04e17f09-99f7-5cac-8903-30d6b3de48fc",
+      "name": "Agathe",
+      "accent": "France",
+      "gender": "F",
+      "language": "french",
+      "pass": true,
+      "outcome": "begin",
+      "ms": 985
+    },
+    {
+      "id": "8659d94f-872e-554f-8152-71a535ec0da5",
+      "name": "Amelie",
+      "accent": "Germany",
+      "gender": "F",
+      "language": "german",
+      "pass": true,
+      "outcome": "begin",
+      "ms": 953
+    },
+    {
+      "id": "590f46de-c993-5cdf-9aae-1bc70a45a485",
+      "name": "Agnese",
+      "accent": "Italy",
+      "gender": "F",
+      "language": "italian",
+      "pass": true,
+      "outcome": "begin",
+      "ms": 971
+    },
+    {
+      "id": "0739ceb4-e8f2-5b54-bed4-7fe534aa9b95",
+      "name": "Aline",
+      "accent": "Brazilian",
+      "gender": "F",
+      "language": "portuguese",
+      "pass": true,
+      "outcome": "begin",
+      "ms": 957
+    },
+    {
+      "id": "aai-jane",
+      "name": "Jane (built in)",
+      "accent": "built in",
+      "gender": "F",
+      "language": "english",
+      "pass": true,
+      "outcome": "begin",
+      "ms": 1047
+    },
+    {
+      "id": "aai-michael",
+      "name": "Michael (built in)",
+      "accent": "built in",
+      "gender": "M",
+      "language": "english",
+      "pass": true,
+      "outcome": "begin",
+      "ms": 981
+    },
+    {
+      "id": "aai-vera",
+      "name": "Vera (built in)",
+      "accent": "built in",
+      "gender": "F",
+      "language": "english",
+      "pass": true,
+      "outcome": "begin",
+      "ms": 991
+    }
+  ]
+}

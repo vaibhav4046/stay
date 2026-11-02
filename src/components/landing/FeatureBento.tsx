@@ -40,7 +40,7 @@ export function FeatureBento() {
       title: 'Switches language with you',
       body:
         LIVE.spanishFirstSound !== null
-          ? `Start in English, continue in Spanish: the voice follows. The Spanish reply started ${sec(LIVE.spanishFirstSound)} after the sentence ended in the recorded call.`
+          ? `Start in English, continue in Spanish: the voice follows. The first piece of the Spanish voice arrived ${sec(LIVE.spanishFirstSound)} after the sentence ended in the recorded call.`
           : 'Start in English, continue in Spanish: the voice follows.',
       vis: 'langs',
     },

@@ -277,9 +277,9 @@ test('the landing page shows measured results with their limits, including where
   await page.goto('/');
   const sec = page.getByTestId('measured');
   await expect(sec).toContainText('What we tested');
-  await page.locator('summary', { hasText: 'Voice speed' }).click();
-  await expect(sec).toContainText('about 1.3 seconds');
-  await expect(sec).toContainText(/synthesized voices/i);
+  // the fast-voice-vs-managed-voice table was removed (T0.6): its numbers had no raw data file, so none of it may come back
+  await expect(sec).not.toContainText('about 1.3 seconds');
+  await expect(sec.getByTestId('result-reply')).toContainText('Stay is slower here');
   await expect(sec.getByTestId('vs-products')).toBeVisible();
   await expect(sec).toContainText(/Stay was not the fastest/i);
   await expect(sec).toContainText(/not a microphone test/i);
@@ -472,12 +472,11 @@ test.describe('Judge feedback: blocks, trust copy, check-in, urgent help', () =>
     await page.getByTestId('checkin-submit').waitFor();
   });
 
-  test('both comparison tables are readable on a phone without sideways scrolling', async ({ page }) => {
+  test('the comparison charts are readable on a phone without sideways scrolling', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/');
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow).toBeLessThanOrEqual(1);
-    await page.locator('summary', { hasText: 'Voice speed' }).click();
     await expect(page.getByTestId('measured').getByText('Reply after you stop talking').first()).toBeVisible();
   });
 });

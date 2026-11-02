@@ -2196,6 +2196,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           }
         },
       });
+      // T2.1: the moment the first sample of each reply was actually output (epoch ms), kept only when the test harness asks for it
+      pcmPlayer.onPlayStart((playedAt) => {
+        const w = window as unknown as { __stayFastDebug?: boolean; __stayPlayStarts?: number[] };
+        if (w.__stayFastDebug) (w.__stayPlayStarts ??= []).push(Math.round(performance.timeOrigin + playedAt));
+      });
       pcmPlayerRef.current = pcmPlayer;
 
       // 3. Mint ephemeral AssemblyAI tokens from our server routes

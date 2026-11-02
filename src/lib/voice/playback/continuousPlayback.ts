@@ -64,6 +64,9 @@ export class ContinuousPcmPlayer {
   };
 
   private firstRenderTimestamp: number | null = null;
+  /** performance.now() time at which the first sample of the current reply reached the output (T2.1), or null before that */
+  private firstPlayedAt: number | null = null;
+  private onPlayStartCallback: ((playedAt: number) => void) | null = null;
   private replyEnqueueStartTimestamp: number | null = null;
   private onTelemetryCallback: ((t: PlaybackTelemetry) => void) | null = null;
   private onAudioRenderedCallback: ((float32: Float32Array, sampleRate: number) => void) | null = null;
@@ -100,6 +103,14 @@ export class ContinuousPcmPlayer {
 
         this.workletNode.port.onmessage = (e) => {
           const msg = e.data;
+          if (msg?.type === 'playStart' && typeof msg.contextTime === 'number') {
+            const playedAt = this.contextTimeToPerformance(msg.contextTime);
+            if (this.firstPlayedAt === null) {
+              this.firstPlayedAt = playedAt;
+              this.onPlayStartCallback?.(playedAt);
+            }
+            return;
+          }
           if (msg?.type === 'telemetry') {
             this.telemetry = {
               state: msg.state,
@@ -244,6 +255,7 @@ export class ContinuousPcmPlayer {
     this.decoder.reset();
     this.resampler?.reset();
     this.firstRenderTimestamp = null;
+    this.firstPlayedAt = null;
     this.replyEnqueueStartTimestamp = null;
 
     if (!this.fallbackMode && this.workletNode) {
@@ -297,6 +309,35 @@ export class ContinuousPcmPlayer {
 
   getDupDropped(): number {
     return this.telemetry.dupDropped;
+  }
+
+  /**
+   * T2.1: when the first sample of this reply was actually being output, on the performance.now() clock. The context's output
+   * timestamp pairs a context time with the performance time at which that sample leaves the device, so this includes the
+   * device's own latency. Null until the reply has started playing.
+   */
+  getFirstPlayedAt(): number | null {
+    return this.firstPlayedAt;
+  }
+
+  /** Called once per reply with the time its first sample played. */
+  onPlayStart(cb: ((playedAt: number) => void) | null): void {
+    this.onPlayStartCallback = cb;
+  }
+
+  private contextTimeToPerformance(contextTime: number): number {
+    const ctx = this.ctx;
+    try {
+      const ts = ctx?.getOutputTimestamp?.();
+      if (ts && typeof ts.contextTime === 'number' && typeof ts.performanceTime === 'number' && ts.performanceTime > 0) {
+        return ts.performanceTime + (contextTime - ts.contextTime) * 1000;
+      }
+    } catch {
+      // no output timestamp in this browser: fall through to the estimate
+    }
+    // estimate: the time on the context clock now, plus the device's reported latency
+    const behindMs = ctx ? (ctx.currentTime - contextTime) * 1000 : 0;
+    return performance.now() - behindMs + (ctx?.outputLatency ? ctx.outputLatency * 1000 : 0);
   }
 
   /**

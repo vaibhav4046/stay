@@ -11,6 +11,7 @@ function loadWorkletClass(sampleRate = 24000) {
   const messages: any[] = [];
   const sandbox: any = {
     sampleRate,
+    currentTime: 1.5, // the context clock at the start of the render block
     Float32Array,
     Math,
     AudioWorkletProcessor: class {
@@ -252,5 +253,45 @@ describe('Gate 2 — StayPcmPlaybackProcessor worklet & heard/unheard split', ()
     const split = splitHeardAndUnheard('Here is one tiny step.', words, 13200, 24000);
     expect(split.heardText).toBe('Here is one');
     expect(split.unheardText).toBe('tiny step.');
+  });
+});
+
+describe('T2.1 the first sample played is marked by the audio thread, not by packet arrival', () => {
+  const sampleRate = 24000;
+  const run = (proc: any, quanta: number) => {
+    for (let q = 0; q < quanta; q++) proc.process([], [[new Float32Array(128)]], {});
+  };
+
+  it('posts one playStart per reply, at the context time of the first non-silent sample', () => {
+    const { ProcessorClass, messages } = loadWorkletClass(sampleRate);
+    const proc = new ProcessorClass();
+    proc.handleMessage({ data: { type: 'enqueue', sessionEpoch: 1, replyEpoch: 1, seq: 0, samples: new Float32Array(sampleRate).fill(0.3) } });
+    expect(messages.filter((m) => m.type === 'playStart')).toHaveLength(0); // enqueued is not played
+    run(proc, 80); // past the prebuffer
+    const starts = messages.filter((m) => m.type === 'playStart');
+    expect(starts).toHaveLength(1);
+    expect(starts[0].contextTime).toBeGreaterThanOrEqual(1.5);
+    expect(starts[0].contextTime).toBeLessThan(1.5 + 128 / sampleRate + 0.001); // inside the first block that had sound
+    run(proc, 40);
+    expect(messages.filter((m) => m.type === 'playStart')).toHaveLength(1); // not again for the same reply
+  });
+
+  it('a new reply after a cancel announces itself again', () => {
+    const { ProcessorClass, messages } = loadWorkletClass(sampleRate);
+    const proc = new ProcessorClass();
+    proc.handleMessage({ data: { type: 'enqueue', sessionEpoch: 1, replyEpoch: 1, seq: 0, samples: new Float32Array(sampleRate).fill(0.3) } });
+    run(proc, 80);
+    proc.handleMessage({ data: { type: 'cancel', sessionEpoch: 1, replyEpoch: 2 } });
+    proc.handleMessage({ data: { type: 'enqueue', sessionEpoch: 1, replyEpoch: 2, seq: 0, samples: new Float32Array(sampleRate).fill(0.3) } });
+    run(proc, 80);
+    expect(messages.filter((m) => m.type === 'playStart')).toHaveLength(2);
+  });
+
+  it('silence does not count as playing', () => {
+    const { ProcessorClass, messages } = loadWorkletClass(sampleRate);
+    const proc = new ProcessorClass();
+    proc.handleMessage({ data: { type: 'enqueue', sessionEpoch: 1, replyEpoch: 1, seq: 0, samples: new Float32Array(sampleRate).fill(0) } });
+    run(proc, 80);
+    expect(messages.filter((m) => m.type === 'playStart')).toHaveLength(0);
   });
 });

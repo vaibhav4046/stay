@@ -266,7 +266,10 @@ try {
   const wallEnd1 = Date.now() - (sp1.now - speechEnd1); // wall-clock time of the end of speech
   const marks1 = await page.evaluate(() => (window.__stayFastMarks || []).map(([n, t]) => [n, t]));
   const afterEnd = marks1.filter(([, t]) => t >= wallEnd1 - 50).map(([n, t]) => `${n.split(' ')[0]}@+${Math.round(t - wallEnd1)}ms`);
-  results.steps.push({ step: 'task', spoken: clips.task.text, speaker: clips.task.who, endOfSpeechToStaySpeakingMs: reply1Ms, audibleOutputDetected: Boolean(drive1), appMarksAfterEndOfSpeech: afterEnd, micToSocket: micLag });
+  // T2.1: end of speech to the first sample actually output by the AudioContext (played), next to the older packet-receipt mark (aud1)
+  const playStarts1 = await page.evaluate(() => window.__stayPlayStarts || []);
+  const played1 = playStarts1.find((t) => t >= wallEnd1 - 50);
+  results.steps.push({ step: 'task', spoken: clips.task.text, speaker: clips.task.who, endOfSpeechToFirstSamplePlayedMs: played1 ? Math.round(played1 - wallEnd1) : null, endOfSpeechToStaySpeakingMs: reply1Ms, audibleOutputDetected: Boolean(drive1), appMarksAfterEndOfSpeech: afterEnd, micToSocket: micLag });
   if (process.env.ONLY_TASK) {
     console.log(JSON.stringify({ endOfSpeechToStaySpeakingMs: reply1Ms, appMarksAfterEndOfSpeech: afterEnd, micToSocket: micLag }, null, 2));
     throw new Error('ONLY_TASK: stopped after the first turn on purpose');
@@ -297,7 +300,8 @@ try {
   const marks3 = await page.evaluate(() => (window.__stayFastMarks || []).map(([n, t]) => [n, t]));
   const after3 = marks3.filter(([, t]) => t >= wallEnd3 - 50).map(([n, t]) => n.split(' ')[0] + '@+' + Math.round(t - wallEnd3) + 'ms');
   const firstAudio3 = marks3.find(([n, t]) => n.startsWith('aud1') && t >= wallEnd3 - 50);
-  results.steps.push({ step: 'spanish', spoken: clips.spanish.text, speaker: clips.spanish.who, endOfSpeechToFirstAudioMs: firstAudio3 ? Math.round(firstAudio3[1] - wallEnd3) : null, appMarksAfterEndOfSpeech: after3 });
+  const played3 = (await page.evaluate(() => window.__stayPlayStarts || [])).find((t) => t >= wallEnd3 - 50);
+  results.steps.push({ step: 'spanish', spoken: clips.spanish.text, speaker: clips.spanish.who, endOfSpeechToFirstSamplePlayedMs: played3 ? Math.round(played3 - wallEnd3) : null, endOfSpeechToFirstAudioPacketMs: firstAudio3 ? Math.round(firstAudio3[1] - wallEnd3) : null, appMarksAfterEndOfSpeech: after3 });
   await page.screenshot({ path: `${OUT}/06-spanish.png` });
   await waitFor((s) => s.s === 'Listening', 90000, 'Spanish reply to finish');
   await page.waitForTimeout(800);
