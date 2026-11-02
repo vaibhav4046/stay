@@ -1,6 +1,7 @@
 import type { Page, WebSocketRoute } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { grantMicConsent } from './consent';
 import { replyPcm } from './fakeVoice';
 
 // Same ids the app can send; whether the live API accepts them is checked by scripts/verify-voices.mjs.
@@ -53,6 +54,7 @@ export async function installFakeFastVoice(
   page: Page,
   options: InstallFakeFastVoiceOptions = {}
 ): Promise<FakeFastVoice> {
+  await grantMicConsent(page); // this person has already agreed; consent.spec.ts covers the first-time sheet
   let sttWs: WebSocketRoute | null = null;
   let ttsWs: WebSocketRoute | null = null;
   let sttConnectedUrl: string | null = null;

@@ -327,6 +327,8 @@ export function StayHome({
   });
   const voiceRef = useRef(voice);
   voiceRef.current = voice;
+  /** every way to start or stop the microphone (button, hardware key, ?voice=auto, host app) goes through this: it asks for consent first */
+  const startWithConsentRef = useRef<() => void>(() => {});
 
   // ---- vision handlers (the voice hook is needed for these, so they sit after it) ----
   const stopSharing = useCallback(() => {
@@ -448,7 +450,7 @@ export function StayHome({
     isConnected: voice.isConnected,
     isHandsFreePaused: voice.isHandsFreePaused,
     keepScreenAwake: running || voice.isConnected,
-    onToggleVoice: () => (voice.isConnected ? voice.disconnectVoiceSession() : voice.startVoiceSession()),
+    onToggleVoice: () => startWithConsentRef.current(),
     onToggleHandsFreeMute: voice.toggleHandsFreeMute,
     onTriggerGrounding: () => setGrounding(true),
     onStartTimer: (m) => startTimer(m),
@@ -459,7 +461,7 @@ export function StayHome({
     const params = new URLSearchParams(window.location.search);
     if (params.get('action') === 'dump') setSheet('dump');
     if (params.get('voice') === 'auto' && !quietMode && !voiceRef.current.isConnected) {
-      void voiceRef.current.startVoiceSession();
+      startWithConsentRef.current();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -475,12 +477,9 @@ export function StayHome({
     () =>
       onHostCommand((c) => {
         const v = voiceRef.current;
-        if (c.type === 'voice-start' && !v.isConnected) void v.startVoiceSession();
+        if (c.type === 'voice-start' && !v.isConnected) startWithConsentRef.current();
         else if (c.type === 'voice-stop' && v.isConnected) v.disconnectVoiceSession();
-        else if (c.type === 'voice-toggle') {
-          if (v.isConnected) v.disconnectVoiceSession();
-          else void v.startVoiceSession();
-        }
+        else if (c.type === 'voice-toggle') startWithConsentRef.current();
         else if (c.type === 'grounding') setGrounding(true);
         else if (c.type === 'timer') startTimer(c.minutes);
       }),
@@ -643,12 +642,8 @@ export function StayHome({
       return;
     }
     const consentedState = typeof window !== 'undefined' ? window.localStorage.getItem('stay:mic_consented:v1') : null;
-    const isAutomated = typeof window !== 'undefined' && Boolean(
-      (navigator as unknown as { webdriver?: boolean }).webdriver ||
-      (window as unknown as { __stayOrbDebug?: boolean }).__stayOrbDebug ||
-      (window as unknown as { __playwright?: boolean }).__playwright
-    );
-    if (consentedState !== '1' && !isAutomated) {
+    // no exception for test browsers: the microphone is never opened before the person says yes
+    if (consentedState !== '1') {
       setShowMicConsent(true);
       return;
     }
@@ -656,6 +651,7 @@ export function StayHome({
   }, [quietMode, onQuietModeChange, voice]);
 
   const toggleVoice = handleStartVoice;
+  startWithConsentRef.current = handleStartVoice;
 
   // Call mode: the call screen opens at once and rings; the voice session starts after one ring.
   const [callIntent, setCallIntent] = useState(false);

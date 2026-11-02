@@ -458,7 +458,8 @@ function clearAllStayLocalData(): void {
   const doomed: string[] = [];
   for (let i = 0; i < window.localStorage.length; i++) {
     const k = window.localStorage.key(i);
-    if (k && k.startsWith('stay_') && !KEPT_CONFIG_KEYS.has(k)) doomed.push(k);
+    // both namespaces: "stay_" records and "stay:" settings (microphone consent, scheduled call, key terms)
+    if (k && (k.startsWith('stay_') || k.startsWith('stay:')) && !KEPT_CONFIG_KEYS.has(k)) doomed.push(k);
   }
   doomed.forEach((k) => window.localStorage.removeItem(k));
 }

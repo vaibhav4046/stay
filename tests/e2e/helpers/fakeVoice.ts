@@ -1,4 +1,5 @@
 import type { Page, WebSocketRoute } from '@playwright/test';
+import { grantMicConsent } from './consent';
 
 /**
  * A fake managed voice agent for the browser: the app connects to wss://agents.assemblyai.com as usual, but the
@@ -61,6 +62,7 @@ export interface FakeVoice {
 }
 
 export async function installFakeVoice(page: Page): Promise<FakeVoice> {
+  await grantMicConsent(page); // this person has already agreed; consent.spec.ts covers the first-time sheet
   let sock: WebSocketRoute | null = null;
   let ready = false;
   const sent: string[] = [];
