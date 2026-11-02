@@ -224,6 +224,11 @@ export class ContinuousPcmPlayer {
     };
   }
 
+  /** Is Stay's voice coming out of the speaker right now (playing, or finishing what is buffered)? */
+  isAudible(): boolean {
+    return this.telemetry.state === 'PLAYING' || this.telemetry.state === 'DRAINING';
+  }
+
   /**
    * §6.3.1 — Duck playback to -18 dB within one audio render quantum when SpeechStarted arrives.
    */

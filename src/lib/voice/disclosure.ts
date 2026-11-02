@@ -20,15 +20,24 @@ export function aiDisclosureLine(lang: string): string {
 }
 
 /**
- * The line to put at the front of the greeting, the first time on this device only (null after that).
+ * The line to put at the front of the greeting if this device has not heard it yet (null after that). It does NOT mark the line as
+ * heard: a first connection can fail and be retried, and the retry must still say it. Call markAiDisclosed() once the session is up.
  * If storage is blocked it is said every time, which is the safe side.
  */
-export function takeAiDisclosure(lang: string, storage: Pick<Storage, 'getItem' | 'setItem'> | null): string | null {
+export function peekAiDisclosure(lang: string, storage: Pick<Storage, 'getItem'> | null): string | null {
   try {
     if (storage?.getItem(AI_DISCLOSED_KEY) === '1') return null;
-    storage?.setItem(AI_DISCLOSED_KEY, '1');
   } catch {
     // storage blocked: say it
   }
   return aiDisclosureLine(lang);
+}
+
+/** The session is up and the greeting is on its way: this device has now been told. */
+export function markAiDisclosed(storage: Pick<Storage, 'setItem'> | null): void {
+  try {
+    storage?.setItem(AI_DISCLOSED_KEY, '1');
+  } catch {
+    // storage blocked: it will be said again next time
+  }
 }

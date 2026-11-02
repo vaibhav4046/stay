@@ -39,7 +39,8 @@ import { cachedTtsCaps, refreshTtsCaps, voiceNeeds } from '@/lib/voice/tts/caps'
 import { resolvePersonaBrowserSpeech } from '@/lib/voice/tts/browserVoices';
 import { createTtsConnection } from '@/lib/voice/tts';
 import { APP_TOOL, appKeyterms, buildGreeting, buildSystemPrompt, type AppActionArgs } from '@/lib/voice/agentTool';
-import { takeAiDisclosure } from '@/lib/voice/disclosure';
+import { markAiDisclosed, peekAiDisclosure } from '@/lib/voice/disclosure';
+import { LocalBargeIn } from '@/lib/voice/localBargeIn';
 import {
   MEDICAL_BOUNDARY_FIXED_MESSAGE,
   crisisMessage,
@@ -741,6 +742,15 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const mediaStreamSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const workletNodeRef = useRef<AudioWorkletNode | null>(null);
   const pcmPlayerRef = useRef<ContinuousPcmPlayer | null>(null);
+  const localBargeInRef = useRef(new LocalBargeIn());
+  /** quiet or restore Stay's voice; with the test flag on, remember when it was quieted (epoch ms) so a run can report how fast */
+  const duckPlayback = useCallback((on: boolean) => {
+    pcmPlayerRef.current?.setDucked(on);
+    const w = window as unknown as { __stayFastDebug?: boolean; __stayDucks?: number[] };
+    if (on && w.__stayFastDebug) (w.__stayDucks ??= []).push(Date.now());
+  }, []);
+  /** the greeting being sent carries the AI line; it counts as told only once the session is up (a failed connect is retried) */
+  const disclosurePendingRef = useRef(false);
   const speechRecRef = useRef<any>(null);
   const activeSourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
   const nextPlaybackTimeRef = useRef<number>(0);
@@ -828,6 +838,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   }, [playEarcon]);
 
   const stopPlaybackQueue = useCallback(() => {
+    localBargeInRef.current.reset();
     pcmPlayerRef.current?.cancelReply('stopPlaybackQueue');
     isAssistantSpeakingRef.current = false;
     if (assistantCooldownTimerRef.current) {
@@ -2300,7 +2311,8 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         const dailyGreeting = !renewingRef.current && greetLang === 'en' ? optionsRef.current.getDailyGreetingSpoken?.() ?? null : null;
         const opening = dailyGreeting ?? buildGreeting(persona, memory, renewingRef.current, greetLang);
         // T0.7: the first session on this device says it is an AI before anything else (a renewed session is the same call)
-        const disclosure = renewingRef.current ? null : takeAiDisclosure(greetLang, typeof window === 'undefined' ? null : window.localStorage);
+        const disclosure = renewingRef.current ? null : peekAiDisclosure(greetLang, typeof window === 'undefined' ? null : window.localStorage);
+        disclosurePendingRef.current = disclosure !== null;
         const greeting = disclosure ? `${disclosure} ${opening}` : opening;
         renewingRef.current = false;
 
@@ -2341,6 +2353,10 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
         if (type === 'session.ready') {
           sessionReadyRef.current = true;
+          if (disclosurePendingRef.current) {
+            disclosurePendingRef.current = false;
+            markAiDisclosed(window.localStorage);
+          }
           renewAttemptsRef.current = 0;
           setIsConnected(true);
           setVisualState('listening');
@@ -2354,7 +2370,6 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           const worklet = new AudioWorkletNode(audioCtx, 'pcm-processor');
           workletNodeRef.current = worklet;
 
-          let duckHits = 0;
           worklet.port.onmessage = (e) => {
             const payload = e.data;
             if (!payload) return;
@@ -2363,18 +2378,10 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
               signalBus.setInput(payload.rms); // the real microphone level, for the Signal visuals (module state, no render)
               if (payload.rms > 0.08) lastLoudAtRef.current = performance.now();
               pushAudioLevels(payload.rms);
-              // Barge-in without waiting ~1 s for the server: sustained loud mic input while the agent is audible ducks it.
-              // (Echo cancellation is on; a stray blip never hard-stops anything, only quiets it briefly.)
-              if (activeSourcesRef.current.size > 0 && payload.rms > 0.3) {
-                duckHits += 1;
-                if (duckHits >= 2 && playbackGainRef.current) {
-                  playbackGainRef.current.gain.setTargetAtTime(0.18, audioCtx.currentTime, 0.02);
-                  if (duckTimerRef.current) clearTimeout(duckTimerRef.current);
-                  duckTimerRef.current = setTimeout(() => playbackGainRef.current?.gain.setTargetAtTime(1, audioCtx.currentTime, 0.08), 900);
-                }
-              } else {
-                duckHits = 0;
-              }
+              // T2.3: the person starts talking over Stay -> Stay gets quiet within a couple of frames, without waiting about 0.8 s for
+              // the server. This only ducks (the worklet's -18 dB); cancelling is decided later from words, and the duck lifts by itself.
+              const bargeCommand = localBargeInRef.current.feed(payload.rms, Boolean(pcmPlayerRef.current?.isAudible()), performance.now());
+              if (bargeCommand) duckPlayback(bargeCommand === 'duck');
               return;
             }
 
@@ -2732,6 +2739,12 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           if (callId && name) {
             handleClientToolCall(callId, name, args);
           }
+          return;
+        }
+
+        if (type === 'playback.duck') {
+          // the speech-to-text service heard the person start (about 0.8 s after they did): quiet Stay now, lift after the hold
+          duckPlayback(Boolean(msg.ducked));
           return;
         }
 

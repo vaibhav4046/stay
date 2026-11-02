@@ -97,10 +97,10 @@ await page.addInitScript(({ debug, sttExtra }) => {
   // overlay: Stay's own voice leaking back into the mic, quieter, right now
   window.__leak = (b64, gain) => { const src = ac.createBufferSource(); src.buffer = toBuf(b64); const g = ac.createGain(); g.gain.value = gain; src.connect(g); g.connect(dest); src.start(ac.currentTime + 0.02); };
   navigator.mediaDevices.getUserMedia = async () => { await ac.resume(); return dest.stream; };
-  // stage timing: every playback start that is not the injected microphone (Stay's own voice being scheduled)
+  // T2.1: the app (with __stayFastDebug on) records the epoch time at which each reply's first sample was actually output by its
+  // AudioContext. Stay now plays through an AudioWorklet, so the old hook on AudioBufferSourceNode.start no longer sees its voice.
   window.__stayPlays = [];
-  const origStart = AudioBufferSourceNode.prototype.start;
-  AudioBufferSourceNode.prototype.start = function (...a) { if (this.context !== ac) window.__stayPlays.push(Date.now()); return origStart.apply(this, a); };
+  window.__stayPlayStarts = window.__stayPlays;
 }, { debug: engine === 'fast', sttExtra: process.env.STT_EXTRA || '' });
 
 // ---- timeline from the sockets and the fast-voice debug events ------------------------------------------------------------
@@ -116,8 +116,8 @@ const sttEot = [], ttsGen = [];
 page.on('websocket', (ws) => {
   const url = ws.url();
   if (url.includes('streaming.assemblyai.com')) ws.on('framereceived', (f) => { try { const m = JSON.parse(String(f.payload)); if (m.type === 'Turn' && m.end_of_turn) sttEot.push({ t: now(), text: String(m.transcript || '') }); } catch { /* binary */ } });
-  if (url.includes('streaming-tts.assemblyai.com')) ws.on('framesent', (f) => { try { if (JSON.parse(String(f.payload)).type === 'Generate') ttsGen.push(now()); } catch { /* binary */ } });
-  const isAgent = url.includes('agents.assemblyai.com'), isTts = url.includes('streaming-tts.assemblyai.com');
+  if (url.includes('tts.us.assemblyai.com')) ws.on('framesent', (f) => { try { if (JSON.parse(String(f.payload)).type === 'Generate') ttsGen.push(now()); } catch { /* binary */ } });
+  const isAgent = url.includes('agents.assemblyai.com'), isTts = url.includes('tts.us.assemblyai.com');
   if (!isAgent && !isTts) return;
   ws.on('framereceived', (f) => {
     let m; try { m = JSON.parse(String(f.payload)); } catch { return; }
@@ -141,7 +141,7 @@ page.on('console', (m) => {
 // ---- open the app, onboard, choose the engine, start listening --------------------------------------------------------------
 page.on('pageerror', (e) => console.log('[pageerror]', String(e).slice(0, 160)));
 for (let i = 0; ; i++) { try { await page.goto(base + '/app/today', { waitUntil: 'domcontentloaded', timeout: 45000 }); break; } catch (e) { if (i >= 4) throw e; console.log('navigation hung, retrying'); await sleep(2000); } }
-await page.evaluate((e) => { localStorage.clear(); localStorage.setItem('stay_fast_voice', e === 'fast' ? '1' : '0'); }, engine);
+await page.evaluate((e) => { localStorage.clear(); localStorage.setItem('stay_fast_voice', e === 'fast' ? '1' : '0'); localStorage.setItem('stay:mic_consented:v1', '1'); /* a person who already pressed Start talking (T0.5) */ }, engine);
 await page.reload();
 await page.getByTestId('care-self_managing').click();
 await page.getByTestId('onboarding-ack').click();
@@ -170,8 +170,8 @@ async function say(pcm, label = '') { // returns when the human has finished spe
 }
 async function firstAudioAfter(t, max = 15000) {
   const start = now();
-  // the first moment Stay's voice is scheduled to play in the page (not when audio bytes reach the socket: a reply prepared early
-  // arrives on the wire before it is released, and only the release is what the person hears)
+  // the first moment a sample of Stay's voice was actually output by the page's AudioContext (T2.1), not when audio bytes reach the
+  // socket: a reply prepared early arrives on the wire before it is released, and only the playing is what the person hears
   while (now() - start < max) { const p = await page.evaluate((t0) => (window.__stayPlays || []).find((x) => x > t0) ?? null, t); if (p) return p; await sleep(30); }
   return null;
 }
@@ -186,11 +186,12 @@ console.log(`engine=${engine}${ECHO ? ' +echo' : ''} voice=${VOICE} noise=on llm
 
 const history = [];
 const latencies = [];
+const bargeDuckMs = [];
 const stageRows = [];
 const STAGE_ORDER = ['stt.eot', 'page.eot', 'req', 'hdr', 'srv.llm', 'srv.n', 'tok1', 'clause1', 'gen', 'gen.wire', 'aud1.wire', 'aud1', 'play1'];
 // ms after the true end of speech for each stage of this turn (first occurrence after the speech end)
 async function collectStages(tEnd, wireAudio) {
-  const marks = await page.evaluate(() => { const m = window.__stayFastMarks || []; window.__stayFastMarks = []; const p = window.__stayPlays || []; window.__stayPlays = []; return { m, p }; });
+  const marks = await page.evaluate(() => { const m = window.__stayFastMarks || []; window.__stayFastMarks = []; const p = window.__stayPlays || []; window.__stayPlays = window.__stayPlayStarts = []; return { m, p }; });
   if (flag('--debug-marks')) console.log('marks', JSON.stringify(marks.m.map(([n, t]) => [n, t - tEnd])), 'plays', marks.p.length);
   const first = (name) => marks.m.find(([n, t]) => n === name && t >= tEnd - 50)?.[1];
   const row = {};
@@ -262,9 +263,13 @@ SUMMARY engine=${engine} lang=${LANG}: ordinary-turn first audio ${latencies.len
     const interrupt = 'Wait, stop, just one tiny step please.';
     const b = await say(speechPcm(interrupt), interrupt);
     const noticed = ev.find((e) => e.type === 'input.speech.started' && e.t >= b.tStart - 100);
+    // T2.3: when Stay's voice was quieted (by the page's own mic energy check or by the server's notice), on the same clock as b.tStart
+    const ducks = await page.evaluate(() => (window.__stayDucks || []).slice());
+    const duckedAt = ducks.find((t) => t >= b.tStart - 100);
+    bargeDuckMs.push(duckedAt ? duckedAt - b.tStart : null);
     const heardAt = await (async () => { for (let i = 0; i < 80; i++) { const h = ev.find((e) => e.type === 'transcript.user' && e.t >= b.tStart); if (h) return h; await sleep(100); } return null; })();
     await agentQuiet(1200);
-    console.log(`barge-in: Stay still had ${playingLeft} ms of speech queued when I interrupted; it noticed me ${noticed ? noticed.t - b.tStart + ' ms' : 'NEVER'} after I started talking; it heard: "${(heardAt?.text || '').slice(0, 60)}"; then said: "${lastText('transcript.agent', b.tStart).slice(0, 70)}"`);
+    console.log(`barge-in: Stay still had ${playingLeft} ms of speech queued when I interrupted; it was quieted ${bargeDuckMs.at(-1) != null ? Math.round(bargeDuckMs.at(-1)) + ' ms' : 'NEVER'} and the speech service noticed me ${noticed ? noticed.t - b.tStart + ' ms' : 'NEVER'} after I started talking; it heard: "${(heardAt?.text || '').slice(0, 60)}"; then said: "${lastText('transcript.agent', b.tStart).slice(0, 70)}"`);
   } else console.log('barge-in: no reply to interrupt');
 }
 
