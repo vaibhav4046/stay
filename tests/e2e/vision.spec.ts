@@ -77,6 +77,26 @@ test.describe('Vision: show Stay a screen, the camera or a picture', () => {
     await expect(page.getByTestId('plan-card')).toHaveCount(0);
   });
 
+  test('crisis wording the server found in a picture goes to help, not to "could not make that out"', async ({ page }) => {
+    await openHome(page);
+    // the server read the vision model's reply, found crisis wording from the picture, and stopped it (T0.3)
+    await page.route('**/api/voice/chat', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ safety: 'crisis' }) }));
+    await page.getByTestId('picture-input').setInputFiles({ name: 'note.png', mimeType: 'image/png', buffer: PNG });
+    await page.getByTestId('task-input').fill('what does this say?');
+    await page.getByTestId('send').click();
+    await expect(page.getByText('116 123').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('could not make that out')).toHaveCount(0);
+  });
+
+  test('an instruction about medication in a picture reply shows the boundary, never the order', async ({ page }) => {
+    await openHome(page);
+    await page.route('**/api/voice/chat', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ safety: 'medication' }) }));
+    await page.getByTestId('picture-input').setInputFiles({ name: 'note.png', mimeType: 'image/png', buffer: PNG });
+    await page.getByTestId('task-input').fill('what does this say?');
+    await page.getByTestId('send').click();
+    await expect(page.getByTestId('chat-agent-message').last()).toContainText('cannot advise on medication', { timeout: 8000 });
+  });
+
   test('a picture alone can be sent, and a non-picture file is refused kindly', async ({ page }) => {
     const seen = await openHome(page);
     await page.getByTestId('picture-input').setInputFiles({ name: 'notes.txt', mimeType: 'text/plain', buffer: Buffer.from('hello') });

@@ -6,11 +6,12 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Glide } from '@/components/Glide';
 import type { CareContext, CoachPlanProposal, CoachSessionRecord, SessionOutcome, VoiceVisualState } from '@/types/domain';
 import { buildDeterministicCoachPlan } from '@/lib/coach/strategies';
 import { computeStrategyStats } from '@/lib/coach/patterns';
 import {
-  CRISIS_FIXED_MESSAGE,
+  crisisMessage,
   detectCrisisSignal,
   detectImpulsiveActionRisk,
   detectSensoryGroundingRequest,
@@ -327,6 +328,8 @@ export function StayHome({
   });
   const voiceRef = useRef(voice);
   voiceRef.current = voice;
+  /** every way to start or stop the microphone (button, hardware key, ?voice=auto, host app) goes through this: it asks for consent first */
+  const startWithConsentRef = useRef<() => void>(() => {});
 
   // ---- vision handlers (the voice hook is needed for these, so they sit after it) ----
   const stopSharing = useCallback(() => {
@@ -448,7 +451,7 @@ export function StayHome({
     isConnected: voice.isConnected,
     isHandsFreePaused: voice.isHandsFreePaused,
     keepScreenAwake: running || voice.isConnected,
-    onToggleVoice: () => (voice.isConnected ? voice.disconnectVoiceSession() : voice.startVoiceSession()),
+    onToggleVoice: () => startWithConsentRef.current(),
     onToggleHandsFreeMute: voice.toggleHandsFreeMute,
     onTriggerGrounding: () => setGrounding(true),
     onStartTimer: (m) => startTimer(m),
@@ -459,7 +462,7 @@ export function StayHome({
     const params = new URLSearchParams(window.location.search);
     if (params.get('action') === 'dump') setSheet('dump');
     if (params.get('voice') === 'auto' && !quietMode && !voiceRef.current.isConnected) {
-      void voiceRef.current.startVoiceSession();
+      startWithConsentRef.current();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -475,12 +478,9 @@ export function StayHome({
     () =>
       onHostCommand((c) => {
         const v = voiceRef.current;
-        if (c.type === 'voice-start' && !v.isConnected) void v.startVoiceSession();
+        if (c.type === 'voice-start' && !v.isConnected) startWithConsentRef.current();
         else if (c.type === 'voice-stop' && v.isConnected) v.disconnectVoiceSession();
-        else if (c.type === 'voice-toggle') {
-          if (v.isConnected) v.disconnectVoiceSession();
-          else void v.startVoiceSession();
-        }
+        else if (c.type === 'voice-toggle') startWithConsentRef.current();
         else if (c.type === 'grounding') setGrounding(true);
         else if (c.type === 'timer') startTimer(c.minutes);
       }),
@@ -526,18 +526,22 @@ export function StayHome({
           voice.speakProactively(
             `The user's ${minutes}-minute focus timer just ended. Speak first: in under 20 words, warmly ask whether they got started on "${plan.firstStep}". When they answer, call record_session_outcome.`,
           );
+        } else {
+          // Stay says "when the time is up I'll tell you" for any timer, so it does, plan or no plan (field test: a timer nobody told about)
+          setNote(`Time is up: your ${minutes} minutes are done.`);
+          if (!quietMode) voice.speakProactively(`The user's ${minutes}-minute timer just ended. Say in under 10 words that their time is up. Ask nothing.`);
         }
       }
     }, 500);
     return () => window.clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [running, minutes, proactiveCheckins, plan]);
+  }, [running, minutes, proactiveCheckins, plan, quietMode]);
 
   const requestPlan = useCallback(
     async (text: string, preferredStrategy?: CoachPlanProposal['strategyKey']) => {
       const t = text.trim();
       if (!t) return;
-      if (detectCrisisSignal(t).triggered) return triggerCrisis(CRISIS_FIXED_MESSAGE);
+      if (detectCrisisSignal(t).triggered) return triggerCrisis(crisisMessage());
       setPlanLoading(true);
       setNote(null);
       try {
@@ -643,12 +647,8 @@ export function StayHome({
       return;
     }
     const consentedState = typeof window !== 'undefined' ? window.localStorage.getItem('stay:mic_consented:v1') : null;
-    const isAutomated = typeof window !== 'undefined' && Boolean(
-      (navigator as unknown as { webdriver?: boolean }).webdriver ||
-      (window as unknown as { __stayOrbDebug?: boolean }).__stayOrbDebug ||
-      (window as unknown as { __playwright?: boolean }).__playwright
-    );
-    if (consentedState !== '1' && !isAutomated) {
+    // no exception for test browsers: the microphone is never opened before the person says yes
+    if (consentedState !== '1') {
       setShowMicConsent(true);
       return;
     }
@@ -656,6 +656,7 @@ export function StayHome({
   }, [quietMode, onQuietModeChange, voice]);
 
   const toggleVoice = handleStartVoice;
+  startWithConsentRef.current = handleStartVoice;
 
   // Call mode: the call screen opens at once and rings; the voice session starts after one ring.
   const [callIntent, setCallIntent] = useState(false);
@@ -978,6 +979,7 @@ export function StayHome({
       </div>
 
       {/* The orb: speak straight to it. Large when the screen is empty, a small one above the conversation once it starts. */}
+      <Glide token={chatActive}>
       <div
         className={
           chatActive
@@ -992,6 +994,8 @@ export function StayHome({
           onClick={toggleVoice}
           aria-label={voice.isConnected ? 'Stop listening' : 'Talk to Stay'}
           aria-pressed={voice.isConnected}
+          data-glide="orb"
+          data-glide-scale=""
           data-testid="orb-button"
           className={`relative aspect-square shrink-0 overflow-hidden rounded-full outline-none focus-visible:ring-4 focus-visible:ring-accent/30 ${
             chatActive ? 'h-14 w-14' : isDebug ? 'h-60 w-60' : 'h-44 w-44 sm:h-56 sm:w-56'
@@ -1009,10 +1013,11 @@ export function StayHome({
             className="h-full w-full"
           />
         </button>
-        <p className="meta min-h-[1.25rem]" role="status" aria-live="polite" data-testid="orb-status">
+        <p className="meta min-h-[1.25rem]" role="status" aria-live="polite" data-glide="status" data-testid="orb-status">
           {status}
         </p>
       </div>
+      </Glide>
 
       {callIntent && (
         <CallStayOverlay
@@ -1273,7 +1278,7 @@ export function StayHome({
           {sheet === 'dump' && (
             <BrainDumpSheet
               onClose={() => (closePanel(), voice.dismissDump())}
-              onCrisis={(m) => (setSheet(null), triggerCrisis(m || CRISIS_FIXED_MESSAGE))}
+              onCrisis={(m) => (setSheet(null), triggerCrisis(m || crisisMessage()))}
               onSaved={() => (setToday(loadToday()), (showTodayNext.current = true))}
               live={voice.dump}
               voiceOn={voice.isConnected}

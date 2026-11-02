@@ -5,6 +5,11 @@
 import { getNextGroqKey, reportGroqKeyRateLimit } from '@/lib/voice/tokenOptimizer';
 import { allowServerUse, clientIp, classifyStatus, readUserLlm, userTargetUsable, GROQ_BASE, type LlmError, type LlmTarget } from './provider';
 
+/** Models tried, in order, after the main one is out of tokens for the minute (each has its own 8,000-token bucket). */
+const DEFAULT_SPARE_MODELS = 'openai/gpt-oss-20b,qwen/qwen3.8-27b';
+/** The longest a spoken reply will wait for a spent bucket to refill before the person is told plainly. */
+const MAX_REFILL_WAIT_MS = 3000;
+
 export interface LlmStreamCall {
   messages: Array<Record<string, unknown>>;
   tools?: unknown[];
@@ -24,7 +29,7 @@ export interface LlmStreamResult {
   timing?: string;
 }
 
-async function openStream(t: LlmTarget, call: LlmStreamCall, timings?: string[]): Promise<{ res: Response | null; error?: LlmError }> {
+async function openStream(t: LlmTarget, call: LlmStreamCall, timings?: string[]): Promise<{ res: Response | null; error?: LlmError; retryAfterMs?: number }> {
   const t0 = performance.now();
   const note = (status: number | string) => timings?.push(`llm${timings.length};dur=${Math.round(performance.now() - t0)};desc="${t.model.split('/').pop()} ${status}"`);
   const isGroqGptOss = t.baseUrl.startsWith(GROQ_BASE) && /gpt-oss/i.test(t.model);
@@ -50,7 +55,10 @@ async function openStream(t: LlmTarget, call: LlmStreamCall, timings?: string[])
     });
     clearTimeout(timer);
     note(res.status);
-    if (!res.ok || !res.body) return { res: null, error: res.status >= 300 && res.status < 400 ? 'bad_endpoint' : classifyStatus(res.status) };
+    if (!res.ok || !res.body) {
+      const seconds = res.status === 429 ? Number.parseFloat(res.headers.get('retry-after') ?? '') : NaN;
+      return { res: null, error: res.status >= 300 && res.status < 400 ? 'bad_endpoint' : classifyStatus(res.status), retryAfterMs: Number.isFinite(seconds) ? Math.round(seconds * 1000) : undefined };
+    }
     return { res };
   } catch {
     clearTimeout(timer);
@@ -76,14 +84,26 @@ export async function openLlmStream(req: Request, call: LlmStreamCall): Promise<
   if (!allowServerUse(clientIp(req))) return done({ res: null, source: 'server', error: 'rate_limited', userKeyError });
   const first = getNextGroqKey() || process.env.GROQ_API_KEY;
   if (!first) return done({ res: null, source: 'server', error: 'no_server_key', userKeyError });
-  let r = await openStream({ baseUrl: GROQ_BASE, key: first, model: call.serverModel }, call, timings);
+  const primary: LlmTarget = { baseUrl: GROQ_BASE, key: first, model: call.serverModel };
+  let r = await openStream(primary, call, timings);
+  let soonest = r.retryAfterMs ?? Infinity; // the shortest wait any refused bucket asked for
+  const note = (x: { retryAfterMs?: number }) => { if (x.retryAfterMs != null) soonest = Math.min(soonest, x.retryAfterMs); };
   if (!r.res && (r.error === 'quota' || r.error === 'invalid_key')) {
     reportGroqKeyRateLimit(first);
     const backup = getNextGroqKey();
-    if (backup && backup !== first) r = await openStream({ baseUrl: GROQ_BASE, key: backup, model: call.serverModel }, call, timings);
+    if (backup && backup !== first) { r = await openStream({ ...primary, key: backup }, call, timings); note(r); }
   }
-  // each Groq model has its own per-minute token bucket: when the main one is spent, a smaller sibling still answers
-  const spare = process.env.GROQ_FALLBACK_MODEL || 'openai/gpt-oss-20b';
-  if (!r.res && r.error === 'quota' && spare !== call.serverModel) r = await openStream({ baseUrl: GROQ_BASE, key: first, model: spare }, call, timings);
+  // each Groq model has its own per-minute token bucket: when the main one is spent, the next one still answers
+  const spares = (process.env.GROQ_FALLBACK_MODELS || process.env.GROQ_FALLBACK_MODEL || DEFAULT_SPARE_MODELS).split(',').map((m) => m.trim()).filter((m) => m && m !== call.serverModel);
+  for (const spare of spares) {
+    if (r.res || r.error !== 'quota') break;
+    r = await openStream({ ...primary, model: spare }, call, timings);
+    note(r);
+  }
+  // every bucket spent, but one refills within a moment: wait for that rather than turn the person away
+  if (!r.res && r.error === 'quota' && soonest <= MAX_REFILL_WAIT_MS) {
+    await new Promise((resolve) => setTimeout(resolve, soonest + 50));
+    r = await openStream(primary, call, timings);
+  }
   return done({ res: r.res, source: 'server', error: r.error, userKeyError });
 }

@@ -10,7 +10,7 @@ All metrics and claims in this pack link to reproducible outputs under `docs/evi
 
 ## One-Sentence Summary
 
-Stay is a calm, voice-first companion for adults with ADHD that turns overwhelming tasks into one two-minute starting step and prepares one-page doctor/therapist visit handouts in your own words.
+Stay is a calm, voice-first companion for adults with ADHD that turns overwhelming tasks into one two-minute starting step and prepares one-page doctor/counsellor visit handouts in your own words.
 
 ## AssemblyAI Integration Summary
 

@@ -395,7 +395,7 @@ export const SEMANTIC_SHAPE_ARCHETYPES: ArchetypeDefinition[] = [
   },
   {
     conceptKey: 'crown',
-    regex: /\b(?:crown|king|queen|royal|victory|winner|champion|1st|first\s*place|hackathon\s*winner)\b/i,
+    regex: /\b(?:crown|king|queen|royal|victory|winner|champion|1st|first\s*place|hackathon\s*winner)\b/i, // claims-lint-allow: words a person might say, mapped to a shape
     catalogId: 100_000_007,
     legacyTopicShape: 8,
     label: 'Sovereign Crown Diadem',

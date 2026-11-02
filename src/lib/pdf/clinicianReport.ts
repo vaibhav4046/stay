@@ -15,7 +15,7 @@ import {
 const CARE_CONTEXT_LABELS: Record<CareContext, string> = {
   waitlisted: 'Waiting for assessment or specialist care',
   medicated: 'Taking prescribed ADHD medication',
-  in_therapy: 'In CBT, therapy, or structured coaching',
+  in_therapy: 'In CBT, counselling, or structured coaching',
   self_managing: 'Self-managing without formal clinical care',
   prefer_not_to_say: 'Prefer not to specify care context',
 };

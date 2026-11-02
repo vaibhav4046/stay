@@ -1,3 +1,5 @@
+import { crisisMessageFor, detectRegion } from '@/lib/safety/region';
+
 export interface CrisisCheckResult {
   triggered: boolean;
   matchedPhrase?: string;
@@ -10,38 +12,7 @@ export interface MedicalBoundaryCheckResult {
   message: string;
 }
 
-export const UK_CRISIS_RESOURCES = [
-  {
-    name: 'Emergency Services (UK)',
-    contact: '999',
-    href: 'tel:999',
-    detail: 'Call 999 or go to your nearest A&E if you or someone else is in immediate physical danger.',
-  },
-  {
-    name: 'NHS Mental Health Support',
-    contact: '111',
-    href: 'tel:111',
-    detail: 'Call 111 and select the mental health option for urgent NHS mental health advice.',
-  },
-  {
-    name: 'Samaritans (24/7, free)',
-    contact: '116 123',
-    href: 'tel:116123',
-    detail: 'Free, confidential 24-hour listening support. You can also email jo@samaritans.org.',
-  },
-  {
-    name: 'Shout Crisis Text Line (UK)',
-    contact: 'Text SHOUT to 85258',
-    href: 'sms:85258',
-    detail: 'Free 24/7 text support for anyone in crisis across the UK.',
-  },
-  {
-    name: '988 Suicide & Crisis Lifeline (US & Canada)',
-    contact: '988',
-    href: 'tel:988',
-    detail: 'Free, confidential 24/7 support by call or text across the US and Canada.',
-  },
-] as const;
+export { CRISIS_RESOURCES } from '@/lib/safety/region';
 
 /** Lowercase, strip zero-width chars, unify quotes, collapse whitespace. */
 function normalizeSafetyText(input: string): string {
@@ -111,7 +82,8 @@ const MULTILINGUAL_CRISIS_REGEX = new RegExp(
 const SQUASHED_CRISIS_REGEX = /(killmyself|killingmyself|endmylife|endingmylife|takemyownlife|suicide|suicidal|hurtmyself|harmmyself|wanttodie|wannadie|cutmywrists)/;
 
 const MED_TERM =
-  '(?:elvanse|vyvanse|ritalin|concerta|medikinet|equasym|xaggitin|delmosart|methylphenidate|lisdexamfetamine|dexamfetamine|dextroamphetamine|amphetamines?|adderall|dexedrine|atomoxetine|strattera|guanfacine|intuniv|clonidine|modafinil|antidepressants?|ssris?|medications?|medicines?|meds|my\\s+(?:pills?|tablets?|capsules?|prescription|dose|dosage)|dos(?:e|es|age)|\\d+\\s*mg)';
+  // brand names allow the usual misspellings (adderal, ritilin, vyvance, straterra): a missed one reaches the model
+  '(?:elv[ao]n[cs]e|v[iy]v[ao]n[cs]e|r[iy]t[ai]l[iey]n|conc[ei]r+t+[ao]|medikinet|equasym|xaggitin|delmosart|methylphenidate|lisdexamfetamine|dexamfetamine|dextroamphetamine|amphetamines?|a?dd?e+r+a+l+|dexedrine|atomoxetine|str?a+t+[ea]r+[ao]|guanfacine|intuniv|clonidine|modafinil|antidepressants?|ssris?|medications?|medicines?|meds|my\\s+(?:pills?|tablets?|capsules?|prescription|dose|dosage)|dos(?:e|es|age)|\\d+\\s*mg)';
 
 const MED_ADVICE_INTENT =
   "(?:should\\s+i|can\\s+i|could\\s+i|may\\s+i|do\\s+i\\s+need|is\\s+it\\s+(?:ok|okay|safe|fine|alright|bad)|is\\s+(?:this|that|it)\\s+(?:safe|dangerous|normal|bad|too)|how\\s+(?:much|many)|too\\s+(?:much|many|high|low|strong)|maximum|max\\s+dose|safe\\s+to|(?:ok|okay)\\s+to|mix(?:ing)?|combin(?:e|ing)|with\\s+(?:alcohol|caffeine|coffee|ibuprofen|antidepressants?|cannabis|weed|energy\\s+drinks?)|double(?:d)?|triple|increas(?:e|ing)|decreas(?:e|ing)|lower(?:ing)?|rais(?:e|ing)|skip(?:ping)?\\s+(?:my|a|the|today)|stop(?:ping)?\\s+(?:taking|my|the|using)|quit(?:ting)?|wean|snort|crush|inject|side\\s*effects?|withdrawals?|interact|dangerous|what\\s+happens\\s+if\\s+(?:i|someone)\\s+(?:take|takes|took)|all\\s+at\\s+once|(?:makes|making|made)\\s+me\\s+(?:feel\\s+)?(?:shaky|sick|dizzy|anxious|jittery))";
@@ -141,8 +113,13 @@ const MEDICATION_ADVICE_PATTERNS: Array<{ regex: RegExp; label: string }> = [
   },
 ];
 
-export const CRISIS_FIXED_MESSAGE =
-  'Coaching has paused because what you shared sounds like you may be in crisis or unsafe. Stay is not a crisis service. Please reach out for immediate human support right now: call 999 in an emergency, call NHS 111 for urgent mental health help, or call Samaritans free on 116 123. Outside the UK, call your local emergency number or visit findahelpline.com.';
+/** Every region, for replies built on a server that does not know where the person is. */
+export const CRISIS_FIXED_MESSAGE = crisisMessageFor(null);
+
+/** In the browser: the message for the person's own region. On a server: every region. */
+export function crisisMessage(): string {
+  return crisisMessageFor(detectRegion());
+}
 
 export const MEDICAL_BOUNDARY_FIXED_MESSAGE =
   'Stay can log whether you took your prescribed treatment and any notes you want to show your clinician, but it cannot advise on medication choices, doses, or side effects. Please check your prescription label or speak with your prescribing clinician, GP, or pharmacist.';
@@ -155,17 +132,30 @@ export function detectCrisisSignal(input: string): CrisisCheckResult {
 
   for (const item of CRISIS_PATTERNS) {
     if (item.regex.test(normalized)) {
-      return { triggered: true, matchedPhrase: item.label, message: CRISIS_FIXED_MESSAGE };
+      return { triggered: true, matchedPhrase: item.label, message: crisisMessage() };
     }
   }
   if (MULTILINGUAL_CRISIS_REGEX.test(normalized)) {
-    return { triggered: true, matchedPhrase: 'multilingual crisis phrase', message: CRISIS_FIXED_MESSAGE };
+    return { triggered: true, matchedPhrase: 'multilingual crisis phrase', message: crisisMessage() };
   }
   if (SQUASHED_CRISIS_REGEX.test(squashSafetyText(normalized))) {
-    return { triggered: true, matchedPhrase: 'obfuscated crisis phrase', message: CRISIS_FIXED_MESSAGE };
+    return { triggered: true, matchedPhrase: 'obfuscated crisis phrase', message: crisisMessage() };
   }
 
   return { triggered: false, message: '' };
+}
+
+// What Stay must never say back: an instruction about someone's medication, as an order or as "you should". Third-person
+// description ("the note tells the reader to stop their medication") is not matched, so Stay can still say what a picture says.
+const DOSE_VERB = '(?:stop|quit|skip|double|triple|increase|decrease|reduce|lower|raise|halve|cut|change|switch|come off|take (?:more|less|extra|double))';
+const MEDICATION_DIRECTIVE = new RegExp(
+  `(?:^|[.!?:]\\s+)${DOSE_VERB}\\b[^.?!]{0,40}\\b${MED_TERM}\\b|\\b(?:you\\s+(?:should|must|need\\s+to|can|could|may|ought\\s+to|have\\s+to)|please|just|go\\s+ahead\\s+and|it(?:'s|\\s+is)\\s+(?:safe|fine|ok|okay)\\s+to)\\s+${DOSE_VERB}\\b[^.?!]{0,40}\\b${MED_TERM}\\b`,
+  'i'
+);
+
+/** True when text (for example a vision model's reply) tells the reader what to do with their medication or dose. */
+export function detectMedicationDirective(input: string): boolean {
+  return MEDICATION_DIRECTIVE.test(normalizeSafetyText(input));
 }
 
 export function detectMedicationAdviceRequest(input: string): MedicalBoundaryCheckResult {

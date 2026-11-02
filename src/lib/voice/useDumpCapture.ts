@@ -8,7 +8,7 @@
  */
 import { useCallback, useRef, useState } from 'react';
 import { byokHeaders } from '@/lib/byok/config';
-import { CRISIS_FIXED_MESSAGE, detectMedicationAdviceRequest } from '@/lib/safety/crisis';
+import { crisisMessage, detectMedicationAdviceRequest } from '@/lib/safety/crisis';
 import { enforceLater, fallbackTriage, type TriageResponse } from '@/lib/coach/triage';
 import { addToday } from '@/lib/coach/todayList';
 import { captureItems, classifyDumpUtterance, detectDumpStart, dropFromCapture, readBackLine } from '@/lib/coach/dumpSession';
@@ -98,7 +98,7 @@ export function useDumpCapture(deps: DumpDeps) {
         muteAgent.current = false;
         releaseSoon(0);
         setDump(DUMP_OFF);
-        return d.current.crisis(CRISIS_FIXED_MESSAGE);
+        return d.current.crisis(crisisMessage());
       }
       if (json.safety === 'medication') {
         muteAgent.current = false;

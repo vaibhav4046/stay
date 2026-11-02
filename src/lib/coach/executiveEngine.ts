@@ -176,7 +176,7 @@ export function brainstormStarterAngles(taskText: string): TaskBrainstormResult 
         name: 'Visual Reconnaissance',
         prompt: `Take a screenshot of the form or bill and glance at the first question only.`,
         timeSeconds: 30,
-        rationale: 'Low-threat exposure therapy reduces administrative anxiety.',
+        rationale: 'A low-threat first step takes the dread out of admin tasks.',
       },
     ];
   } else {

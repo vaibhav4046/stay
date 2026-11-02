@@ -1,0 +1,26 @@
+T2.4 patient-pause run, 2026-11-02. Label: synthetic-mic + live-model, local build (fefceb3 plus later commits), one session, muted.
+Scenario: 'I need to, um, send that email to my landlord and, uh...' then silence for the stated time, then '...and I keep thinking about how to start it.' Pause lengths cycle 1,800 / 2,300 / 2,500 ms.
+Turn settings in the app (coaching preset): end_of_turn_confidence_threshold 0.4, min_turn_silence 128 ms, max_turn_silence 1280 ms. Not changed in this pass.
+
+pause run 1/20: 1800 ms pause, Stay waited; reply to the finished thought 2539.416748046875 ms
+pause run 2/20: 2300 ms pause, Stay waited; reply to the finished thought 811.416748046875 ms
+pause run 3/20: 2500 ms pause, Stay waited; reply to the finished thought 1618.416748046875 ms
+pause run 4/20: 1800 ms pause, Stay waited; reply to the finished thought 1321.416748046875 ms
+pause run 5/20: 2300 ms pause, Stay waited; reply to the finished thought 1382.416748046875 ms
+pause run 6/20: 2500 ms pause, Stay waited; reply to the finished thought 3024.416748046875 ms
+pause run 7/20: 1800 ms pause, Stay waited; reply to the finished thought 1340.416748046875 ms
+pause run 8/20: 2300 ms pause, Stay waited; reply to the finished thought 2230.416748046875 ms
+pause run 9/20: 2500 ms pause, Stay waited; reply to the finished thought 1327.416748046875 ms
+pause run 10/20: 1800 ms pause, Stay waited; reply to the finished thought 2272.416748046875 ms
+pause run 11/20: 2300 ms pause, Stay waited; reply to the finished thought 1177.416748046875 ms
+pause run 12/20: 2500 ms pause, Stay waited; reply to the finished thought 2260.416748046875 ms
+pause run 13/20: 1800 ms pause, Stay waited; reply to the finished thought 1548.416748046875 ms
+pause run 14/20: 2300 ms pause, Stay waited; reply to the finished thought 1191.416748046875 ms
+pause run 15/20: 2500 ms pause, Stay waited; reply to the finished thought 3076.416748046875 ms
+pause run 16/20: 1800 ms pause, Stay waited; reply to the finished thought 1284.416748046875 ms
+pause run 17/20: 2300 ms pause, Stay waited; reply to the finished thought 1153.416748046875 ms
+pause run 18/20: 2500 ms pause, Stay waited; reply to the finished thought 1171.416748046875 ms
+pause run 19/20: 1800 ms pause, Stay waited; reply to the finished thought 1314.416748046875 ms
+pause run 20/20: 2300 ms pause, Stay waited; reply to the finished thought 1370.416748046875 ms
+PAUSE SUMMARY: 20 runs, pauses of 1800 / 2300 / 2500 ms; Stay talked into the pause 0 times; a reply to the finished thought came 20 times (median 1370.416748046875 ms)
+PLAYBACK HEALTH (cpu x1): underruns 0; prebuffer 180 ms; long tasks 5 (>=100 ms: 2, longest 134 ms)

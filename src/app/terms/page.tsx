@@ -1,5 +1,5 @@
 import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
-import { UK_CRISIS_RESOURCES } from '@/lib/safety/crisis';
+import { CRISIS_RESOURCES } from '@/lib/safety/crisis';
 
 export const metadata = { title: 'Terms and safety — Stay' };
 
@@ -15,7 +15,7 @@ export default function TermsPage() {
           <p><strong className="text-ink">Evidence.</strong> Stay&apos;s strategies are drawn from CBT-based ADHD skills programmes. Stay itself has not been tested in a clinical trial. Your strategy stats are personal self-tracking, shown with exact counts.</p>
           <p><strong className="text-ink">Not for emergencies.</strong> If anything you say or type suggests you may be unsafe, Stay stops coaching and shows these services:</p>
           <ul className="space-y-2">
-            {UK_CRISIS_RESOURCES.map((r) => (
+            {CRISIS_RESOURCES.map((r) => (
               <li key={r.name}>
                 <a className="text-accent font-medium" href={r.href}>{r.name}: {r.contact}</a>
               </li>

@@ -5,6 +5,7 @@ import { ContinuousPcmPlayer } from '@/lib/voice/playback/continuousPlayback';
 import { replyLanguageInstruction } from '@/lib/voice/replyLanguage';
 import { GLANCE_PROMPT, isQuietReply } from '@/lib/vision/image';
 import { answerAboutStay } from '@/lib/voice/aboutStay';
+import { honestFailureMessage } from '@/lib/conversation/response';
 import { FastSocket, FAST_TTS_LANGUAGE, toAssemblyVoiceId } from '@/lib/voice/fastSocket';
 import {
   computeProgressiveCaption,
@@ -38,7 +39,11 @@ import { cachedTtsCaps, refreshTtsCaps, voiceNeeds } from '@/lib/voice/tts/caps'
 import { resolvePersonaBrowserSpeech } from '@/lib/voice/tts/browserVoices';
 import { createTtsConnection } from '@/lib/voice/tts';
 import { APP_TOOL, appKeyterms, buildGreeting, buildSystemPrompt, type AppActionArgs } from '@/lib/voice/agentTool';
+import { markAiDisclosed, peekAiDisclosure } from '@/lib/voice/disclosure';
+import { LocalBargeIn } from '@/lib/voice/localBargeIn';
 import {
+  MEDICAL_BOUNDARY_FIXED_MESSAGE,
+  crisisMessage,
   detectCrisisSignal,
   detectMedicationAdviceRequest,
 } from '@/lib/safety/crisis';
@@ -236,7 +241,7 @@ export function detectTopicShape(text: string): number {
     return 3;
   }
   // 3. Calming Concentric Ripples / Somatic Grounding / Chaotic Brain Fog / Frozen / Overwhelm (Mode 4)
-  if (/\b(?:breath|breathe|breathing|calm|calming|therapeutic|therapy|soothe|soothing|gentle|zen|mindful|mindfulness|serene|ground|grounding|overwhelm(?:ed|ing)?|anxious|anxiety|panic|relax|slow|meditate|meditation|peace|rest|frozen|stuck|paralyzed|brain\s*fog|spiraling|scrolling|can'?t\s+think|mess|drowning|burnt?\s+out|exhausted)\b/i.test(clean)) {
+  if (/\b(?:breath|breathe|breathing|calm|calming|therapeutic|therapy|soothe|soothing|gentle|zen|mindful|mindfulness|serene|ground|grounding|overwhelm(?:ed|ing)?|anxious|anxiety|panic|relax|slow|meditate|meditation|peace|rest|frozen|stuck|paralyzed|brain\s*fog|spiraling|scrolling|can'?t\s+think|mess|drowning|burnt?\s+out|exhausted)\b/i.test(clean)) { // claims-lint-allow: words a person might say, mapped to a shape
     return 4;
   }
   // 4. Structured Geometric Facets / Letters / Writing / Docs / Taxes / Code / Paperwork (Mode 2)
@@ -737,6 +742,15 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const mediaStreamSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const workletNodeRef = useRef<AudioWorkletNode | null>(null);
   const pcmPlayerRef = useRef<ContinuousPcmPlayer | null>(null);
+  const localBargeInRef = useRef(new LocalBargeIn());
+  /** quiet or restore Stay's voice; with the test flag on, remember when it was quieted (epoch ms) so a run can report how fast */
+  const duckPlayback = useCallback((on: boolean) => {
+    pcmPlayerRef.current?.setDucked(on);
+    const w = window as unknown as { __stayFastDebug?: boolean; __stayDucks?: number[] };
+    if (on && w.__stayFastDebug) (w.__stayDucks ??= []).push(Date.now());
+  }, []);
+  /** the greeting being sent carries the AI line; it counts as told only once the session is up (a failed connect is retried) */
+  const disclosurePendingRef = useRef(false);
   const speechRecRef = useRef<any>(null);
   const activeSourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
   const nextPlaybackTimeRef = useRef<number>(0);
@@ -824,6 +838,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   }, [playEarcon]);
 
   const stopPlaybackQueue = useCallback(() => {
+    localBargeInRef.current.reset();
     pcmPlayerRef.current?.cancelReply('stopPlaybackQueue');
     isAssistantSpeakingRef.current = false;
     if (assistantCooldownTimerRef.current) {
@@ -1245,8 +1260,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           return { ok: true, language: l.label };
         }
         case 'voice': {
-          const p = setSelectedVoice(value);
-          return p ? { ok: true, voice: p.name, note: p.voiceLabel } : { ok: false, error: 'no such voice', options: PERSONAS.map((x) => x.name) };
+          const p = value ? setSelectedVoice(value) : null;
+          if (p) return { ok: true, voice: p.name, note: p.voiceLabel };
+          // no name, or a name Stay does not have ("default", "friendly"): show the voices and say so, never fail silently
+          o.onChangeVoiceRequested?.();
+          return { ok: true, opened: 'voices', say: 'Here are the voices. Tap one to hear it.' };
         }
         case 'memory_add': {
           if (!value) return { ok: false };
@@ -1463,7 +1481,19 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         headers: { 'Content-Type': 'application/json', ...byokHeaders(), 'x-stay-image': '1' },
         body: JSON.stringify({ messages, withTools: false, image, context: selectedLanguageRef.current === 'auto' ? undefined : { language: selectedLanguageRef.current } }),
       });
-      if (!res.ok || !res.body) throw new Error(String(res.status));
+      if (!res.ok || !res.body) {
+        // the server says why in plain words (see conversation/response.ts); show that, never an invented reply
+        const msg = await res.json().then((j: { message?: unknown }) => (typeof j.message === 'string' ? j.message : '')).catch(() => '');
+        throw new Error(msg || String(res.status));
+      }
+      // a safety gate answered instead of the model (crisis wording read from the picture, or an instruction about medication)
+      if ((res.headers.get('content-type') || '').includes('application/json')) {
+        const j = (await res.json().catch(() => ({}))) as { safety?: string };
+        if (j.safety === 'crisis') return void optionsRef.current.onCrisisDetected?.(crisisMessage());
+        if (j.safety === 'medication') return add(MEDICAL_BOUNDARY_FIXED_MESSAGE);
+        if (!opts.glance) add(honestFailureMessage('vision'));
+        return;
+      }
       const reader = res.body.getReader();
       const dec = new TextDecoder();
       let buf = '';
@@ -1486,8 +1516,9 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       reply = reply.trim();
       if (opts.glance && (!reply || isQuietReply(reply))) return; // nothing to say: stay quiet
       add(reply || 'I could not make that out. Can you show me again?');
-    } catch {
-      if (!opts.glance) add('I could not look just now. Try again in a moment.');
+    } catch (e) {
+      const said = (e as Error).message;
+      if (!opts.glance) add(said && !/^\d+$/.test(said) ? said : honestFailureMessage('vision'));
     } finally {
       if (!opts.glance) setVisualState(wsRef.current ? 'listening' : 'idle');
     }
@@ -2112,7 +2143,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     }
   }, [playEarcon, sendUserTextMessage]);
 
-  const startVoiceSession = useCallback(async () => {
+  const startVoiceSessionInner = useCallback(async () => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
     }
@@ -2178,6 +2209,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
             setAudioBands({ low: 0, mid: 0, high: 0, overall: 0.05 });
           }
         },
+      });
+      // T2.1: the moment the first sample of each reply was actually output (epoch ms), kept only when the test harness asks for it
+      pcmPlayer.onPlayStart((playedAt) => {
+        const w = window as unknown as { __stayFastDebug?: boolean; __stayPlayStarts?: number[] };
+        if (w.__stayFastDebug) (w.__stayPlayStarts ??= []).push(Math.round(performance.timeOrigin + playedAt));
       });
       pcmPlayerRef.current = pcmPlayer;
 
@@ -2276,7 +2312,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         const greetLang = useFast ? fastLangBase : 'en';
         // the first session of a day opens with the calm daily greeting (English; other languages keep their short native hello)
         const dailyGreeting = !renewingRef.current && greetLang === 'en' ? optionsRef.current.getDailyGreetingSpoken?.() ?? null : null;
-        const greeting = dailyGreeting ?? buildGreeting(persona, memory, renewingRef.current, greetLang);
+        const opening = dailyGreeting ?? buildGreeting(persona, memory, renewingRef.current, greetLang);
+        // T0.7: the first session on this device says it is an AI before anything else (a renewed session is the same call)
+        const disclosure = renewingRef.current ? null : peekAiDisclosure(greetLang, typeof window === 'undefined' ? null : window.localStorage);
+        disclosurePendingRef.current = disclosure !== null;
+        const greeting = disclosure ? `${disclosure} ${opening}` : opening;
         renewingRef.current = false;
 
         const langBase = selectedLanguageRef.current !== 'auto' && isAgentVerifiedLanguage(selectedLanguageRef.current) ? selectedLanguageRef.current.split('-')[0].toLowerCase() : null;
@@ -2305,6 +2345,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
       socket.onmessage = (event) => {
         if (typeof event.data !== 'string') return;
+        // A session that is no longer the current one (replaced, or closed on purpose) must not speak, show text or move shared state.
+        if (wsRef.current !== socket) {
+          try { socket.close(); } catch { /* already closed */ }
+          return;
+        }
         let msg: Record<string, unknown>;
         try {
           msg = JSON.parse(event.data);
@@ -2316,6 +2361,10 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
         if (type === 'session.ready') {
           sessionReadyRef.current = true;
+          if (disclosurePendingRef.current) {
+            disclosurePendingRef.current = false;
+            markAiDisclosed(window.localStorage);
+          }
           renewAttemptsRef.current = 0;
           setIsConnected(true);
           setVisualState('listening');
@@ -2329,27 +2378,27 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           const worklet = new AudioWorkletNode(audioCtx, 'pcm-processor');
           workletNodeRef.current = worklet;
 
-          let duckHits = 0;
           worklet.port.onmessage = (e) => {
             const payload = e.data;
             if (!payload) return;
 
             if (payload.type === 'energy') {
               signalBus.setInput(payload.rms); // the real microphone level, for the Signal visuals (module state, no render)
-              if (payload.rms > 0.08) lastLoudAtRef.current = performance.now();
-              pushAudioLevels(payload.rms);
-              // Barge-in without waiting ~1 s for the server: sustained loud mic input while the agent is audible ducks it.
-              // (Echo cancellation is on; a stray blip never hard-stops anything, only quiets it briefly.)
-              if (activeSourcesRef.current.size > 0 && payload.rms > 0.3) {
-                duckHits += 1;
-                if (duckHits >= 2 && playbackGainRef.current) {
-                  playbackGainRef.current.gain.setTargetAtTime(0.18, audioCtx.currentTime, 0.02);
-                  if (duckTimerRef.current) clearTimeout(duckTimerRef.current);
-                  duckTimerRef.current = setTimeout(() => playbackGainRef.current?.gain.setTargetAtTime(1, audioCtx.currentTime, 0.08), 900);
+              if (payload.rms > 0.08) {
+                lastLoudAtRef.current = performance.now();
+                // test pages only: when the microphone was loud, to tell where the person's speech really ended (T2.8)
+                const w = window as unknown as { __stayFastDebug?: boolean; __stayLoud?: number[] };
+                if (w.__stayFastDebug) {
+                  const loud = (w.__stayLoud ??= []);
+                  if (loud.length > 20000) loud.splice(0, 5000);
+                  loud.push(Date.now());
                 }
-              } else {
-                duckHits = 0;
               }
+              pushAudioLevels(payload.rms);
+              // T2.3: the person starts talking over Stay -> Stay gets quiet within a couple of frames, without waiting about 0.8 s for
+              // the server. This only ducks (the worklet's -18 dB); cancelling is decided later from words, and the duck lifts by itself.
+              const bargeCommand = localBargeInRef.current.feed(payload.rms, Boolean(pcmPlayerRef.current?.isAudible()), performance.now());
+              if (bargeCommand) duckPlayback(bargeCommand === 'duck');
               return;
             }
 
@@ -2710,6 +2759,19 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           return;
         }
 
+        if (type === 'playback.duck') {
+          // the speech-to-text service heard the person start (about 0.8 s after they did): quiet Stay now, lift after the hold
+          duckPlayback(Boolean(msg.ducked));
+          return;
+        }
+
+        if (type === 'safety.blocked') {
+          // the server stopped a reply to a picture because of crisis wording in it: same screen as when the person's own words trigger it
+          disconnectVoiceSession();
+          optionsRef.current.onCrisisDetected?.(crisisMessage());
+          return;
+        }
+
         if (type === 'reply.done') {
           medicationSuppressionRef.current = false;
           const status = String(msg.status || 'completed');
@@ -2876,6 +2938,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       };
 
       socket.onclose = () => {
+        if (wsRef.current !== socket) return; // closed on purpose or replaced: the session that replaced it owns the shared flags
         const unexpected = wsRef.current === socket; // we set wsRef to null before closing on purpose
         sessionReadyRef.current = false;
         setIsConnected(false);
@@ -2897,6 +2960,22 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     stopPlaybackQueue,
     startNativeSpeechRecognition,
   ]);
+
+  /**
+   * Start a voice session, once. A second start while one is connecting or live is ignored: the "connected" flag only turns true
+   * when the session is ready (seconds after the tap), so a second tap, the call ring timer and a retry could each start their own
+   * session, and the first, no longer tracked, kept speaking into the same player. Field test, 2 Nov 2026: two or three voices at once.
+   */
+  const startingRef = useRef(false);
+  const startVoiceSession = useCallback(async () => {
+    if (startingRef.current || wsRef.current) return;
+    startingRef.current = true;
+    try {
+      await startVoiceSessionInner();
+    } finally {
+      startingRef.current = false; // from here on wsRef marks a live or connecting session
+    }
+  }, [startVoiceSessionInner]);
 
   // Restart cleanly (used when something immutable changes mid-session, like the voice).
   useEffect(() => {

@@ -18,7 +18,7 @@ const COMPARE = [
   { who: 'Goblin Tools', is: 'A free, typed task breaker.', stay: 'Spoken, with a timer and someone beside you while you do it.' },
   { who: 'Tiimo and planners', is: 'A visual day you have to set up and keep up.', stay: 'No setup. You say what is in the way and it gives you the next step.' },
   { who: 'Body-doubling with a person', is: 'A real human, at a time you booked.', stay: 'There at 11pm and on a bad day. Not a replacement for people.' },
-  { who: 'A general voice assistant', is: 'Answers anything.', stay: 'Does one job: getting you started, and it remembers what helped. How it compares on speed, with the numbers where it loses, is in the measured results above.' },
+  { who: 'A general voice assistant', is: 'Answers anything.', stay: 'Does one job: getting you started, and it remembers what helped.' },
 ];
 
 export function Compare() {
@@ -62,7 +62,7 @@ const PROMISES = [
   { shape: 'house', title: 'Your history stays on your device', body: 'Sessions and memory are stored in your browser. Download or delete all of it in Settings, in one tap.' },
   { shape: 'shield', title: 'No medication advice', body: 'Ask about a dose and Stay says it cannot help and points you to your prescriber or pharmacist.' },
   { shape: 'person', title: 'Not a diagnosis, not a clinician', body: 'Stay is a self-help companion. It never diagnoses and does not replace treatment.' },
-  { shape: 'heart', title: 'If you are in danger, it stops coaching', body: 'Crisis wording pauses everything and shows UK emergency numbers (999, NHS 111, Samaritans 116 123) and findahelpline.com for anywhere else.' },
+  { shape: 'heart', title: 'If you are in danger, it stops coaching', body: 'Crisis wording pauses everything and shows emergency and helpline numbers for where you are (UK, US or Canada), and findahelpline.com for anywhere else.' },
 ];
 
 export function Promises() {
@@ -82,7 +82,7 @@ export function Promises() {
 }
 
 const NOT_FOR = [
-  'Anyone in crisis. Press Urgent help, call 999, or Samaritans on 116 123. Stay is not a crisis service.',
+  'Anyone in crisis. Press Urgent help for numbers in your country, or call your local emergency number. Stay is not a crisis service.',
   'Anyone who wants a calendar or a full planner. Use Tiimo for that.',
   'Anyone who wants advice about medication. Stay will always send you to a prescriber.',
   'Anyone who needs proof it works. It has not been trialled. See above.',
@@ -114,7 +114,7 @@ const PLATFORMS: Array<{ id: string; shape: string; name: string; status: Platfo
     name: 'Installed web app',
     status: 'installable',
     badge: 'Installable now',
-    body: 'Add it to your home screen or install it from the browser menu. It opens in its own window with shortcuts for Talk, a 20 minute block and Ground me. The app shell opens offline; voice and plans need the network. We have not tested installing on every device.',
+    body: 'Add it to your home screen or install it from the browser menu. It opens in its own window with shortcuts for Talk, a 20 minute block and Ground me. The app shell opens offline; voice and plans need the network. We have not tested installing on every device.', // claims-lint-allow: a timer length in the app, not a measurement
   },
   { id: 'desktop', shape: 'laptop', name: 'Desktop app', status: 'not-built', badge: 'Not available yet', body: 'A desktop wrapper is being built but is not released, and there is nothing to download. On desktop Chrome or Edge, the installed web app is the closest thing today.' },
   { id: 'mobile', shape: 'rocket', name: 'iPhone and Android app', status: 'not-built', badge: 'Not available yet', body: 'A phone wrapper is being built but is not released: no store listing, nothing to download. The installed web app is the mobile version today.' },

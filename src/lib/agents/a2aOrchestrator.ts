@@ -100,7 +100,7 @@ export async function delegateA2ATask(
         output: {
           safe: !isCrisis,
           flag: isCrisis ? 'crisis' : 'normal',
-          message: isCrisis ? 'Crisis protocol triggered. Please contact 988 or 111.' : 'Safe',
+          message: isCrisis ? 'Crisis protocol triggered. Please contact a crisis line: 988 (US, Canada), 111 option 2 or Samaritans 116 123 (UK), or findahelpline.com.' : 'Safe',
         },
       },
     };

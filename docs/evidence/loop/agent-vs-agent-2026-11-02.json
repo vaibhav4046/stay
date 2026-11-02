@@ -1,0 +1,151 @@
+{
+  "labels": [
+    "live-model",
+    "typed-text",
+    "persona-model"
+  ],
+  "base": "http://localhost:3120",
+  "at": "2026-11-02T14:10:51.703Z",
+  "turnsPerConversation": 4,
+  "conversations": 4,
+  "failures": 0,
+  "rateLimitedTurns": 5,
+  "results": [
+    {
+      "persona": "angry-first-time",
+      "turns": [
+        {
+          "who": "human",
+          "text": "Hi. Why are you picking this voice?",
+          "tools": []
+        },
+        {
+          "who": "stay",
+          "text": "That's the voice currently selected, one of AssemblyAI's. You can change it any time: say \"change voice\", or open the voice menu.",
+          "tools": [],
+          "rateLimited": false
+        },
+        {
+          "who": "human",
+          "text": "Change voice.",
+          "tools": []
+        },
+        {
+          "who": "stay",
+          "text": "",
+          "tools": [
+            "app({\"action\":\"voice\",\"value\":\"neutral\"})"
+          ],
+          "rateLimited": false
+        },
+        {
+          "who": "human",
+          "text": "Okay, try the new voice.",
+          "tools": []
+        },
+        {
+          "who": "stay",
+          "text": "",
+          "tools": [],
+          "rateLimited": true
+        },
+        {
+          "who": "human",
+          "text": "Finally something that works. How do I ask a question?",
+          "tools": []
+        },
+        {
+          "who": "stay",
+          "text": "",
+          "tools": [],
+          "rateLimited": true
+        }
+      ],
+      "failures": []
+    },
+    {
+      "persona": "tests-the-product",
+      "turns": [
+        {
+          "who": "human",
+          "text": "Okay, so what's your main differentiator? Why should I use you and not ChatGPT?",
+          "tools": []
+        },
+        {
+          "who": "stay",
+          "text": "The hard part isn't the timer, it's starting. So I do the starting with you: one tiny step, a clock running while I'm here, no talking over your pauses, a check-in when time's up, and a memory of what worked. Your list and history stay on your device.",
+          "tools": [],
+          "rateLimited": false
+        }
+      ],
+      "failures": []
+    },
+    {
+      "persona": "netflix-then-close",
+      "turns": [
+        {
+          "who": "human",
+          "text": "Open Netflix for five minutes.",
+          "tools": []
+        },
+        {
+          "who": "stay",
+          "text": "I can't open other apps or sites for you. What I can do is start a timer and tell you when your time is up. Want me to start a 5-minute timer?",
+          "tools": [],
+          "rateLimited": false
+        }
+      ],
+      "failures": []
+    },
+    {
+      "persona": "avoiding-the-email",
+      "turns": [
+        {
+          "who": "human",
+          "text": "I need to reply to my landlord and I keep avoiding it.",
+          "tools": []
+        },
+        {
+          "who": "stay",
+          "text": "That email is hanging over you. Pick up your phone and call the landlord. Want to do that now?",
+          "tools": [],
+          "rateLimited": false
+        },
+        {
+          "who": "human",
+          "text": "Yeah, I guess I can call now.",
+          "tools": []
+        },
+        {
+          "who": "stay",
+          "text": "",
+          "tools": [],
+          "rateLimited": true
+        },
+        {
+          "who": "human",
+          "text": "Okay, dialing now.",
+          "tools": []
+        },
+        {
+          "who": "stay",
+          "text": "",
+          "tools": [],
+          "rateLimited": true
+        },
+        {
+          "who": "human",
+          "text": "Um, hi... I wanted to ask about renewing the lease.",
+          "tools": []
+        },
+        {
+          "who": "stay",
+          "text": "",
+          "tools": [],
+          "rateLimited": true
+        }
+      ],
+      "failures": []
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+##### cpu x1
+engine=fast voice=en-GB-RyanNeural noise=on llm-human=false
+turn 1: human "Um, I keep putting off replying to my landlord about the renewal."
+turn 2: human "I do not even know what to write, it feels huge."
+turn 3: human "Okay, maybe. What would the first sentence even be?"
+STAGES (ms after the human stopped speaking; per turn, then median)
+stt.eot    600.75 580.541748046875 585.208251953125  | median 585.208251953125
+page.eot   598.75 579.541748046875 585.208251953125  | median 585.208251953125
+req        603.75 580.541748046875 585.208251953125  | median 585.208251953125
+hdr        1024.75 960.541748046875 894.208251953125  | median 960.541748046875
+srv.llm        73     88     44  | median 73
+srv.n           2      2      2  | median 2
+tok1       1150.75 1026.541748046875 971.208251953125  | median 1026.541748046875
+clause1         -      -      -  | median null
+gen        1197.75 1050.541748046875 1003.208251953125  | median 1050.541748046875
+gen.wire   1199.75 1063.541748046875 1009.208251953125  | median 1063.541748046875
+aud1.wire  1468.75 1331.541748046875 1272.208251953125  | median 1331.541748046875
+aud1       1396.75 1269.541748046875 1199.208251953125  | median 1269.541748046875
+play1      1468.75 1331.541748046875 1272.208251953125  | median 1331.541748046875
+PLAYBACK HEALTH (cpu x1): underruns 0; prebuffer 200 ms; long tasks 1 (>=100 ms: 0, longest 92 ms)
+SUMMARY engine=fast lang=en: ordinary-turn first audio median 1331.541748046875 ms (n=3; 1272.208251953125, 1331.541748046875, 1468.75)
+##### cpu x4
+engine=fast voice=en-GB-RyanNeural noise=on llm-human=false
+turn 1: human "Um, I keep putting off replying to my landlord about the renewal."
+turn 2: human "I do not even know what to write, it feels huge."
+turn 3: human "Okay, maybe. What would the first sentence even be?"
+STAGES (ms after the human stopped speaking; per turn, then median)
+stt.eot    584.75 611.541748046875 610.208251953125  | median 610.208251953125
+page.eot   586.75 614.541748046875 610.208251953125  | median 610.208251953125
+req        331.75 615.541748046875 611.208251953125  | median 611.208251953125
+hdr        691.75 870.541748046875 986.208251953125  | median 870.541748046875
+srv.llm       104    104     35  | median 104
+srv.n           2      2      2  | median 2
+tok1       778.75 937.541748046875 1049.208251953125  | median 937.541748046875
+clause1         -      -      -  | median null
+gen        811.75 971.541748046875 1072.208251953125  | median 971.541748046875
+gen.wire   809.75 969.541748046875 1074.208251953125  | median 969.541748046875
+aud1.wire  1081.75 1251.541748046875 1333.208251953125  | median 1251.541748046875
+aud1       1019.75 1175.541748046875 1269.208251953125  | median 1175.541748046875
+play1      1081.75 1251.541748046875 1333.208251953125  | median 1251.541748046875
+PLAYBACK HEALTH (cpu x4): underruns 0; prebuffer 190 ms; long tasks 7 (>=100 ms: 3, longest 411 ms)
+SUMMARY engine=fast lang=en: ordinary-turn first audio median 1251.541748046875 ms (n=3; 1081.75, 1251.541748046875, 1333.208251953125)
+##### cpu x6
+engine=fast voice=en-GB-RyanNeural noise=on llm-human=false
+turn 1: human "Um, I keep putting off replying to my landlord about the renewal."
+turn 2: human "I do not even know what to write, it feels huge."
+turn 3: human "Okay, maybe. What would the first sentence even be?"
+STAGES (ms after the human stopped speaking; per turn, then median)
+stt.eot    583.75 686.541748046875 462.208251953125  | median 583.75
+page.eot   582.75 681.541748046875 460.208251953125  | median 582.75
+req        200.75 682.541748046875 462.208251953125  | median 462.208251953125
+hdr        723.75 952.541748046875 810.208251953125  | median 810.208251953125
+srv.llm       100     56     36  | median 56
+srv.n           2      2      2  | median 2
+tok1       840.75 1033.541748046875 891.208251953125  | median 891.208251953125
+clause1         -      -      -  | median null
+gen        861.75 1071.541748046875 920.208251953125  | median 920.208251953125
+gen.wire   864.75 1073.541748046875 925.208251953125  | median 925.208251953125
+aud1.wire  1154.75 1358.541748046875 1198.208251953125  | median 1198.208251953125
+aud1       1060.75 1297.541748046875 1133.208251953125  | median 1133.208251953125
+play1      1154.75 1358.541748046875 1198.208251953125  | median 1198.208251953125
+PLAYBACK HEALTH (cpu x6): underruns 0; prebuffer 190 ms; long tasks 9 (>=100 ms: 5, longest 620 ms)
+SUMMARY engine=fast lang=en: ordinary-turn first audio median 1198.208251953125 ms (n=3; 1154.75, 1198.208251953125, 1358.541748046875)

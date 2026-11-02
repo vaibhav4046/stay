@@ -4,7 +4,7 @@ import {
   detectMedicationAdviceRequest,
   detectSensoryGroundingRequest,
   detectImpulsiveActionRisk,
-  UK_CRISIS_RESOURCES,
+  CRISIS_RESOURCES,
 } from '@/lib/safety/crisis';
 import { buildDeterministicCoachPlan, chooseBestStrategy } from '@/lib/coach/strategies';
 import { computeAdherenceSummary, computeOverallMetrics, computeStrategyStats } from '@/lib/coach/patterns';
@@ -20,7 +20,7 @@ describe('crisis detection', () => {
     expect(detectCrisisSignal(t).triggered).toBe(false)
   );
   it('includes 999, 111, 116 123, 85258 and 988 in emergency resources', () => {
-    const contacts = UK_CRISIS_RESOURCES.map((r) => r.contact);
+    const contacts = CRISIS_RESOURCES.map((r) => r.contact);
     expect(contacts).toContain('999');
     expect(contacts).toContain('111');
     expect(contacts).toContain('116 123');

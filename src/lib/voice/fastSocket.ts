@@ -9,6 +9,9 @@
  */
 import { toSpeech } from '@/lib/voice/speechText';
 import { isImageDataUrl, looksVisual } from '@/lib/vision/image';
+import { honestFailureMessage } from '@/lib/conversation/response';
+import { mayChangeLook, mayStartTimer } from '@/lib/conversation/capabilities';
+import { MEDICAL_BOUNDARY_FIXED_MESSAGE } from '@/lib/safety/crisis';
 import { byokHeaders } from '@/lib/byok/config';
 import type { TtsConnection } from '@/lib/voice/tts/types';
 
@@ -1097,7 +1100,7 @@ export class FastSocket {
       return;
     }
     if (!text || gen !== this.genId || this.tts?.readyState !== WebSocket.OPEN) return;
-    const voiced = toSpeech(text); // what the voice is given: no markdown, emoji, quote marks or line breaks
+    const voiced = toSpeech(text, this.session?.ttsLanguage); // what the voice is given: no markdown, emoji, quote marks or line breaks; English also gets numbers and units written out
     if (!voiced) return;
     if (this.spoken === '') this.emit({ type: 'reply.started' });
     this.emit({ type: 'reply.text', text });
@@ -1225,14 +1228,33 @@ export class FastSocket {
         signal: ctl.signal,
       });
     } catch {
-      if (gen === this.genId) this.finishSilently();
+      // the request never got an answer (offline, or the function timed out): the person is told, not left in silence
+      if (gen === this.genId) this.speakOnly(honestFailureMessage('timeout'));
       return;
     }
     if (gen !== this.genId) return;
     this.mark('hdr');
     this.mark(`srv ${res.headers.get('server-timing') ?? ''}`);
     if (!res.ok || !res.body || (res.headers.get('content-type') || '').includes('application/json')) {
-      // a safety gate answered instead of the model (the hook already shows the right screen), or the model was unavailable
+      // a safety gate answered instead of the model (the hook already shows the right screen), or the model failed:
+      // when the server sent a plain-words message, say it; never leave the person in silence
+      let message = '';
+      let safety = '';
+      try {
+        const j = (await res.clone().json()) as { message?: unknown; safety?: unknown };
+        if (typeof j.message === 'string') message = j.message.slice(0, 300);
+        if (typeof j.safety === 'string') safety = j.safety;
+      } catch {
+        // not JSON: nothing to say
+      }
+      // The person's own words are checked by the app before they get here. What can arrive here is the picture path: the server
+      // read the model's reply to a picture and stopped it (crisis wording in the picture, or an instruction about medication).
+      if (image && safety === 'medication' && gen === this.genId) return this.speakOnly(MEDICAL_BOUNDARY_FIXED_MESSAGE);
+      if (image && safety === 'crisis' && gen === this.genId) {
+        this.emit({ type: 'safety.blocked', safety });
+        return this.finishSilently();
+      }
+      if (message && gen === this.genId) return this.speakOnly(message);
       return this.finishSilently();
     }
 
@@ -1307,7 +1329,31 @@ export class FastSocket {
     if (gen !== this.genId) return;
     this.flushSpeech(gen); // end of the reply (or before a tool call): the one flush
 
-    const call =[...calls.values()].find((c) => c.name);
+    let call = [...calls.values()].find((c) => c.name);
+    // Defence in depth: the server already withholds the timer unless asked for. If a timer call still arrives for words that did not
+    // ask for one (field test: "open Netflix" started a 5-minute timer), it is not run: Stay offers it instead.
+    if (call && !toolFollowUp && /"action"\s*:\s*"timer_start"/.test(call.args)) {
+      const lastAssistant = [...this.history].reverse().find((m) => m.role === 'assistant' && typeof m.content === 'string');
+      if (!mayStartTimer(asked, [typeof lastAssistant?.content === 'string' ? lastAssistant.content : ''])) {
+        call = undefined;
+        this.llmDone = true;
+        this.say(this.spoken === '' ? 'Want me to start a timer?' : '', gen);
+        return;
+      }
+    }
+    // Same for the orb's look (persona run: "show me exactly how..." set the shape to "exactly" and Stay said Done to a question). The call
+    // is not run; the model is told so and answers the person's words, without tools.
+    if (call && !toolFollowUp && /"action"\s*:\s*"(?:shape|color)"/.test(call.args) && !mayChangeLook(asked)) {
+      const id = call.id || `call-${Date.now()}`;
+      this.history = [
+        ...this.history,
+        { role: 'assistant' as const, content: null, tool_calls: [{ id, type: 'function', function: { name: call.name, arguments: call.args || '{}' } }] },
+        { role: 'tool' as const, tool_call_id: id, content: '{"ok":false,"error":"They did not ask to change the orb. Answer what they said, in words."}' },
+      ].slice(-MAX_HISTORY);
+      this.lastToolOk = false;
+      this.lastToolSay = undefined;
+      return void this.generate(undefined, true);
+    }
     if (call) {
       const id = call.id || `call-${Date.now()}`;
       let args: Json = {};

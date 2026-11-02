@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { UK_CRISIS_RESOURCES } from '@/lib/safety/crisis';
+import { crisisResourcesFor, detectRegion } from '@/lib/safety/region';
 
 interface CrisisContextValue {
   openCrisisPanel: (reason?: string) => void;
@@ -44,6 +44,8 @@ export function CrisisHelpProvider({ children }: { children: React.ReactNode }) 
 
 function CrisisHelpPanel({ reason, onClose }: { reason?: string; onClose: () => void }) {
   const closeRef = useRef<HTMLButtonElement>(null);
+  // the services for where the person is come first; the rest stay listed because the guess can be wrong
+  const [resources] = useState(() => crisisResourcesFor(detectRegion()));
 
   useEffect(() => {
     closeRef.current?.focus();
@@ -73,10 +75,10 @@ function CrisisHelpPanel({ reason, onClose }: { reason?: string; onClose: () => 
           </p>
         )}
         <p className="mt-3 text-ink-2 text-[0.95rem]">
-          Stay is not a crisis service and can&apos;t help in an emergency. These UK services can.
+          Stay is not a crisis service and can&apos;t help in an emergency. These services can, and the ones for your country are listed first.
         </p>
         <ul className="mt-5 space-y-3">
-          {UK_CRISIS_RESOURCES.map((r) => (
+          {resources.map((r) => (
             <li key={r.name} className="flex items-start justify-between gap-4 border-t border-line pt-3">
               <div>
                 <p className="font-medium">{r.name}</p>
@@ -89,7 +91,7 @@ function CrisisHelpPanel({ reason, onClose }: { reason?: string; onClose: () => 
           ))}
         </ul>
         <p className="meta mt-4">
-          Outside the UK, call your local emergency number or visit findahelpline.com.
+          Not sure which applies to you? Call your local emergency number, or visit findahelpline.com.
         </p>
         <div className="mt-5 flex justify-end">
           <button ref={closeRef} type="button" className="btn btn-ghost" onClick={onClose}>

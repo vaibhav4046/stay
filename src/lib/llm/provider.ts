@@ -16,7 +16,12 @@ export interface LlmResult {
 }
 
 export interface LlmCall {
-  messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
+  /** content is text, or content parts (text and image_url) for a vision model */
+  messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string | unknown[] }>;
+  /** ask the provider for one JSON object (the caller still validates it) */
+  json?: boolean;
+  /** cancels the call when the person's request is cancelled */
+  signal?: AbortSignal;
   maxTokens: number;
   temperature: number;
   serverModel: string;
@@ -186,8 +191,10 @@ export function classifyStatus(status: number): LlmError {
 
 async function post(t: LlmTarget, call: LlmCall): Promise<{ ok: boolean; status: number; text: string; error?: LlmError }> {
   const isGroqGptOss = t.baseUrl.startsWith(GROQ_BASE) && /gpt-oss/i.test(t.model);
+  const isGroqQwen = t.baseUrl.startsWith(GROQ_BASE) && /qwen/i.test(t.model);
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), call.timeoutMs);
+  call.signal?.addEventListener('abort', () => ctl.abort(), { once: true });
   try {
     const res = await fetch(`${t.baseUrl}/chat/completions`, {
       method: 'POST',
@@ -200,6 +207,8 @@ async function post(t: LlmTarget, call: LlmCall): Promise<{ ok: boolean; status:
         max_tokens: call.maxTokens,
         // gpt-oss is a reasoning model: low effort and no reasoning text, or the visible answer comes back empty
         ...(isGroqGptOss ? { reasoning_effort: 'low', include_reasoning: false } : {}),
+        ...(isGroqQwen ? { reasoning_effort: 'none' } : {}),
+        ...(call.json ? { response_format: { type: 'json_object' } } : {}),
       }),
       signal: ctl.signal,
     });

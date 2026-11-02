@@ -70,7 +70,7 @@ export function useAssistantHardware({
       title: isConnected
         ? isHandsFreePaused
           ? 'Stay — Listening Paused'
-          : 'Stay — Living Voice AGI Companion'
+          : 'Stay — voice companion'
         : 'Stay — ADHD Voice Companion',
       artist: 'Stay ADHD System',
       album: 'Living 24/7 Companion',

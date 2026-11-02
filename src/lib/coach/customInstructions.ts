@@ -25,7 +25,7 @@ export const PRESETS: Record<PresetKey, { label: string; hint: string; prompt: s
 const BLOCKED: RegExp[] = [
   /\b(?:ignore|disable|skip|bypass|override|turn off|switch off|stop|remove|forget)\b.{0,40}\b(?:safety|crisis|rules?|guardrails?|medication|boundar\w+|instructions?|prompt)\b/i,
   /\b(?:system prompt|previous instructions|jailbreak|developer mode|you are now)\b/i,
-  /\b(?:never|don'?t|do not|no need to)\b.{0,25}\b(?:mention|suggest|offer|recommend)\b.{0,25}\b(?:help ?lines?|crisis|emergency|professional|doctor|therapist)\b/i,
+  /\b(?:never|don'?t|do not|no need to)\b.{0,25}\b(?:mention|suggest|offer|recommend)\b.{0,25}\b(?:help ?lines?|crisis|emergency|professional|doctor|therapist)\b/i, // claims-lint-allow: matches the person's own words about helplines
   /\b(?:medic\w*|meds|dos(?:e|age)s?|prescri\w+|pills?|tablets?)\b.{0,40}\b(?:advice|advise|recommend|tell me|suggest|how much|increase|decrease)\b/i,
   /\b(?:advice|advise|recommend|tell me|suggest|how much|increase|decrease)\b.{0,40}\b(?:medic\w*|meds|dos(?:e|age)s?|prescri\w+|pills?|tablets?)\b/i,
   /\bhow (?:much|many)\b.{0,30}\b(?:take|taking)\b/i,

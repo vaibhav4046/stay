@@ -2,12 +2,26 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { detectCrisisSignal, detectMedicationAdviceRequest } from '@/lib/safety/crisis';
 import { APP_TOOL, buildServerVoiceSystemPrompt } from '@/lib/voice/agentTool';
+import { carriesAnswer } from '@/lib/conversation/sse';
+import { isOverloaded } from '@/lib/conversation/overload';
+import { mayChangeLook, mayStartTimer, recentOpeners, unsupportedActionAnswer } from '@/lib/conversation/capabilities';
 import { llmHeaders } from '@/lib/llm/provider';
 import { openLlmStream } from '@/lib/llm/stream';
 import { resolveDeterministicVoice, createDeterministicSseResponse } from '@/lib/voice/deterministicVoiceFallback';
 import { attachGuardHeaders, guardPaidRoute, readBoundedJson } from '@/lib/security/apiGuard';
 import { answerAboutStay } from '@/lib/voice/aboutStay';
+import { classifyIntent } from '@/lib/conversation/intent';
+import { NOTHING_SHOWN, honestFailureMessage, failureKindFromError } from '@/lib/conversation/response';
+import { readSseText, visionReplyVerdict } from '@/lib/conversation/visionGate';
 import { MAX_IMAGE_CHARS, VISION_SYSTEM, isImageDataUrl, withImage } from '@/lib/vision/image';
+
+/** The app tool's parameters with some actions taken out of its list of actions. */
+function withoutActions(parameters: typeof APP_TOOL.parameters, removed: readonly string[]) {
+  return {
+    ...parameters,
+    properties: { ...parameters.properties, action: { ...parameters.properties.action, enum: parameters.properties.action.enum.filter((a) => !removed.includes(a)) } },
+  };
+}
 
 const MAX_HISTORY_TURNS = 20;
 const MAX_HISTORY_BYTES = 8_192;
@@ -47,6 +61,7 @@ function createResilientStream(incoming: ReadableStream<Uint8Array>, lastUser: s
   const encoder = new TextEncoder();
   let emittedMeaningfulChunk = false;
   let buffered = '';
+  let sseTail = ''; // the last, possibly unfinished, line of the stream
 
   return new ReadableStream({
     async start(controller) {
@@ -54,8 +69,11 @@ function createResilientStream(incoming: ReadableStream<Uint8Array>, lastUser: s
         while (true) {
           const { done, value } = await reader.read();
           if (done) {
+            if (!emittedMeaningfulChunk && carriesAnswer([sseTail])) emittedMeaningfulChunk = true;
             if (!emittedMeaningfulChunk) {
-              const fallback = resolveDeterministicVoice(lastUser);
+              // the stream ended with no answer: say so, never invent one
+              console.warn('[stay] empty_model_stream');
+              const fallback = { text: honestFailureMessage('unavailable') };
               if (fallback.text) {
                 controller.enqueue(
                   encoder.encode(
@@ -81,7 +99,9 @@ function createResilientStream(incoming: ReadableStream<Uint8Array>, lastUser: s
             buffered.includes('"type":"invalid_request_error"')
           ) {
             if (!emittedMeaningfulChunk) {
-              const fallback = resolveDeterministicVoice(lastUser);
+              // the stream ended with no answer: say so, never invent one
+              console.warn('[stay] empty_model_stream');
+              const fallback = { text: honestFailureMessage('unavailable') };
               if (fallback.text) {
                 controller.enqueue(
                   encoder.encode(
@@ -100,18 +120,17 @@ function createResilientStream(incoming: ReadableStream<Uint8Array>, lastUser: s
             break;
           }
 
-          if (
-            (text.includes('"content":"') && !text.includes('"content":""')) ||
-            text.includes('"tool_calls":')
-          ) {
-            emittedMeaningfulChunk = true;
-          }
+          sseTail += text;
+          const lines = sseTail.split('\n');
+          sseTail = lines.pop() ?? '';
+          if (carriesAnswer(lines)) emittedMeaningfulChunk = true;
 
           controller.enqueue(value);
         }
       } catch {
         if (!emittedMeaningfulChunk) {
-          const fallback = resolveDeterministicVoice(lastUser);
+          console.warn('[stay] model_stream_error');
+          const fallback = { text: honestFailureMessage('timeout') };
           if (fallback.text) {
             controller.enqueue(
               encoder.encode(
@@ -183,7 +202,18 @@ export async function POST(req: NextRequest) {
   const about = image ? null : answerAboutStay(lastUser);
   if (about) return createDeterministicSseResponse({ text: about });
 
-  const serverSystemPrompt = buildServerVoiceSystemPrompt(context);
+  // a question about the screen with nothing shared: say so, never guess what might be on it
+  const recent = clientMessages.slice(-5, -1).map((m) => m.content || '');
+  const intent = classifyIntent(lastUser, { hasVisualSource: Boolean(image), hasHistory: clientMessages.length > 1, recent });
+  if (intent === 'screen_question' && !image) return createDeterministicSseResponse({ text: NOTHING_SHOWN });
+  // asked to open or close something outside Stay: the straight answer, and the one thing Stay can do about it (no model, no invented success)
+  if (intent === 'unsupported_action' && !image) {
+    const said = unsupportedActionAnswer(lastUser, recent);
+    if (said) return createDeterministicSseResponse({ text: said });
+  }
+
+  const openers = recentOpeners(clientMessages.filter((m) => m.role === 'assistant').map((m) => m.content || ''));
+  const serverSystemPrompt = buildServerVoiceSystemPrompt(context, intent, { overloaded: isOverloaded(lastUser), recentOpeners: openers });
   // a turn with a picture: the vision model looks at it, no app tools, and the picture goes nowhere else
   const outboundMessages = [
     { role: 'system' as const, content: image ? `${serverSystemPrompt}
@@ -200,7 +230,9 @@ ${VISION_SYSTEM}` : serverSystemPrompt },
             function: {
               name: APP_TOOL.name,
               description: APP_TOOL.description,
-              parameters: APP_TOOL.parameters,
+              // a timer is offered to the model only when the person asked for one or said yes to Stay's offer of one; the orb's shape
+              // and colour only when the words ask for a different look
+              parameters: withoutActions(APP_TOOL.parameters, [...(mayStartTimer(lastUser, recent) ? [] : ['timer_start']), ...(mayChangeLook(lastUser) ? [] : ['shape', 'color'])]),
             },
           },
         ];
@@ -219,20 +251,23 @@ ${VISION_SYSTEM}` : serverSystemPrompt },
     error: r.error,
     userKeyError: r.userKeyError,
   });
-  if (!r.res && image) {
-    return attachGuardHeaders(NextResponse.json({ error: 'vision_unavailable' }, { status: 503, headers: hdr }), guard);
-  }
   if (!r.res) {
-    const isExplicitConfigError =
-      r.userKeyError === 'invalid_key' || r.userKeyError === 'bad_endpoint';
-    if (!isExplicitConfigError) {
-      const fallbackResult = resolveDeterministicVoice(lastUser);
-      return createDeterministicSseResponse(fallbackResult);
+    // The model failed. Say so. The only thing that still works without a model is a tool the person plainly asked for
+    // (a timer, a parked thought); everything else gets the honest message, never an invented reply.
+    console.warn('[stay] model_failed', { intent, vision: Boolean(image), source: r.source, error: r.error ?? null });
+    if (!image) {
+      const tool = resolveDeterministicVoice(lastUser).tool;
+      if (tool) return createDeterministicSseResponse({ tool });
     }
-    return attachGuardHeaders(
-      NextResponse.json({ error: r.error || 'unavailable' }, { status: 502, headers: hdr }),
-      guard
-    );
+    const message = honestFailureMessage(failureKindFromError(r.error, Boolean(image)));
+    return attachGuardHeaders(NextResponse.json({ error: r.error || 'unavailable', message }, { status: 503, headers: hdr }), guard);
+  }
+  // a reply that came from looking at a picture is read in full and checked before anyone sees or hears it
+  if (image) {
+    const text = await readSseText(r.res);
+    const verdict = visionReplyVerdict(text);
+    if (verdict !== 'ok') return attachGuardHeaders(NextResponse.json({ safety: verdict }), guard);
+    return createDeterministicSseResponse({ text });
   }
   const stream = createResilientStream(r.res.body as ReadableStream<Uint8Array>, lastUser);
   return new Response(stream, {

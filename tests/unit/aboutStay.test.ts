@@ -6,15 +6,15 @@ describe('answerAboutStay: questions about Stay get a straight answer', () => {
     const q = "What more you can do just for like completing a task? Another, what's your specialty and why should I use you and rather use ChatGPT or Claude?";
     const a = answerAboutStay(q);
     expect(a).not.toBeNull();
-    expect(a).toMatch(/ChatGPT|Claude|big assistants/);
+    expect(a).toMatch(/stuck|starting/i);
     expect(a).not.toMatch(/reward|stretch|reminder set/i);
   });
 
   it.each([
     ['what can you do', /start things|get you started/i],
     ['How can you help me?', /start things|get you started/i],
-    ['why should I use you', /ChatGPT|Claude|big assistants|stay small/i],
-    ['better than ChatGPT?', /ChatGPT|Claude|big assistants|stay small/i],
+    ["why should I use you", /stuck|starting/i],
+    ["better than ChatGPT?", /stuck|starting/i],
     ['who are you', /Stay/],
     ['is my data private', /device/],
     ['is it free', /nothing to pay/i],

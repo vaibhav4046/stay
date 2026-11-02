@@ -1,0 +1,521 @@
+{
+  "gate": "T0.1",
+  "labels": [
+    "live-model",
+    "typed-text"
+  ],
+  "url": "http://localhost:3120",
+  "at": "2026-11-02T07:39:04.712Z",
+  "grounded": 52,
+  "total": 60,
+  "canned": 0,
+  "results": [
+    {
+      "id": "factual-01",
+      "kind": "factual",
+      "ask": "What is the capital of France?",
+      "reply": "Paris is the capital of France. It's a major cultural and economic hub in Europe.",
+      "ms": 327,
+      "failures": []
+    },
+    {
+      "id": "factual-02",
+      "kind": "factual",
+      "ask": "How many days are in a leap year?",
+      "reply": "366 days. The extra day is added to February.",
+      "ms": 409,
+      "failures": []
+    },
+    {
+      "id": "factual-03",
+      "kind": "factual",
+      "ask": "Who wrote Pride and Prejudice?",
+      "reply": "Jane Austen wrote Pride and Prejudice. She wrote it in 1796–1797, and it was first published in 1813.",
+      "ms": 155,
+      "failures": []
+    },
+    {
+      "id": "factual-04",
+      "kind": "factual",
+      "ask": "What is the boiling point of water in Celsius at sea level?",
+      "reply": "The boiling point of water at sea level is 100 °C. This value is standard for most everyday measurements.",
+      "ms": 358,
+      "failures": []
+    },
+    {
+      "id": "factual-05",
+      "kind": "factual",
+      "ask": "What is the largest planet in our solar system?",
+      "reply": "The largest planet in our solar system is Jupiter. You can look up interesting facts about its moons or storms to keep your curiosity flowing. If you want a quick reminder, let me know.",
+      "ms": 386,
+      "failures": [
+        "reminder_not_requested"
+      ]
+    },
+    {
+      "id": "factual-06",
+      "kind": "factual",
+      "ask": "What is the chemical symbol for gold?",
+      "reply": "Au. This is the symbol you’ll see on periodic tables and in chemistry notes. Keep it handy if you’re studying elements.",
+      "ms": 131,
+      "failures": []
+    },
+    {
+      "id": "factual-07",
+      "kind": "factual",
+      "ask": "How many minutes are in a day?",
+      "reply": "There are 1,440 minutes in a day. Each of the 24 hours has 60 minutes, and 24 times 60 equals 1,440. This can be handy if you need to plan tasks around a daily time budget.",
+      "ms": 516,
+      "failures": []
+    },
+    {
+      "id": "factual-08",
+      "kind": "factual",
+      "ask": "What does CPU stand for?",
+      "reply": "CPU stands for Central Processing Unit. It’s the main component that executes instructions in a computer. Knowing its full name can help you explain it to others or remember what it does.",
+      "ms": 426,
+      "failures": []
+    },
+    {
+      "id": "factual-09",
+      "kind": "factual",
+      "ask": "Who painted the Mona Lisa?",
+      "reply": "Leonardo da Vinci painted the Mona Lisa. He completed it in the early 1500s.",
+      "ms": 565,
+      "failures": []
+    },
+    {
+      "id": "factual-10",
+      "kind": "factual",
+      "ask": "What year did the Second World War end?",
+      "reply": "It ended in 1945. You can note that down if you like.",
+      "ms": 111,
+      "failures": []
+    },
+    {
+      "id": "factual-11",
+      "kind": "factual",
+      "ask": "What is 15 percent of 80?",
+      "reply": "15 percent of 80 is 12. That's the answer.",
+      "ms": 322,
+      "failures": []
+    },
+    {
+      "id": "factual-12",
+      "kind": "factual",
+      "ask": "Which ocean is the largest?",
+      "reply": "The Pacific Ocean is the largest. It covers more area than any other ocean on Earth.",
+      "ms": 139,
+      "failures": []
+    },
+    {
+      "id": "factual-13",
+      "kind": "factual",
+      "ask": "What is the square root of 144?",
+      "reply": "The square root of 144 is 12. It’s a perfect square, so the root is an integer. If you need to check, 12 times 12 equals 144.",
+      "ms": 199,
+      "failures": []
+    },
+    {
+      "id": "factual-14",
+      "kind": "factual",
+      "ask": "What is the longest river in Africa?",
+      "reply": "The longest river in Africa is the Nile. It stretches about 6,650 kilometers (4,130 miles) from its sources in Central Africa to the Mediterranean Sea.",
+      "ms": 382,
+      "failures": []
+    },
+    {
+      "id": "factual-15",
+      "kind": "factual",
+      "ask": "How many continents are there?",
+      "reply": "There are seven continents. The continents are Asia, Africa, North America, South America, Antarctica, Europe, and Australia.",
+      "ms": 211,
+      "failures": []
+    },
+    {
+      "id": "factual-16",
+      "kind": "factual",
+      "ask": "Roughly how fast does light travel?",
+      "reply": "Light travels about 299,792 kilometers per second, or roughly 186,282 miles per second. That means it can circle the Earth more than seven times in just one second.",
+      "ms": 154,
+      "failures": []
+    },
+    {
+      "id": "factual-17",
+      "kind": "factual",
+      "ask": "What does ADHD stand for?",
+      "reply": "ADHD stands for Attention‑Deficit/Hyperactivity Disorder. It’s a neurodevelopmental condition that affects focus, impulse control, and activity levels.",
+      "ms": 144,
+      "failures": []
+    },
+    {
+      "id": "factual-18",
+      "kind": "factual",
+      "ask": "What is the difference between a virus and a bacterium?",
+      "reply": "A virus is a tiny infectious agent that can only replicate inside a host cell, while a bacterium is a single‑cell microbe that can live independently and reproduce on its own. Viruses rely on hijacking host machinery, whereas bacteria have their own cellular processes. This difference explains why antibiotics work against bacteria but not viruses.",
+      "ms": 364,
+      "failures": []
+    },
+    {
+      "id": "factual-19",
+      "kind": "factual",
+      "ask": "Why is the sky blue?",
+      "reply": "The sky looks blue because air molecules scatter shorter‑wavelength light from the sun, and blue light is scattered the most. This scattering makes the sky appear blue to our eyes.",
+      "ms": 156,
+      "failures": []
+    },
+    {
+      "id": "factual-20",
+      "kind": "factual",
+      "ask": "What is the capital of Australia?",
+      "reply": "The capital of Australia is Canberra. Canberra is located inland, in the Australian Capital Territory. It’s a good idea to note its location if you need to plan a visit.",
+      "ms": 516,
+      "failures": []
+    },
+    {
+      "id": "howto-01",
+      "kind": "howto",
+      "ask": "How do I convert a PDF to Word?",
+      "reply": "Open the PDF in a program that can export it, like Adobe Acrobat or Microsoft Word, and choose “Export” or “Save As” → Word (.docx). If you don’t have those, use an online converter such as Smallpdf or ILovePDF, upload the PDF, then download the Word file.",
+      "ms": 195,
+      "failures": []
+    },
+    {
+      "id": "howto-02",
+      "kind": "howto",
+      "ask": "How do I take a screenshot on Windows?",
+      "reply": "Press the Print Screen key (PrtScn) to copy the whole screen to the clipboard, or press Windows + Shift + S to open the snipping toolbar and select an area. Then paste it into an image editor or document with Ctrl + V.",
+      "ms": 698,
+      "failures": []
+    },
+    {
+      "id": "howto-03",
+      "kind": "howto",
+      "ask": "How do I make a simple budget spreadsheet?",
+      "reply": "Create a new sheet and add three columns: Item, Planned Cost, Actual Cost. In the first column list each expense category (rent, groceries, utilities, etc.). In the second column enter the amount you expect to spend, and in the third column fill in the real amount after you pay. At the bottom of each column add a SUM formula to see totals, and you can subtract the totals to see if you stayed on budget.",
+      "ms": 263,
+      "failures": []
+    },
+    {
+      "id": "howto-04",
+      "kind": "howto",
+      "ask": "How do I write a polite email asking for an extension?",
+      "reply": "Write a brief, respectful message that explains why you need more time and offers a new deadline. Keep it short, apologize for the inconvenience, and thank the recipient for their understanding. If you want a sample, let me know and I can draft one for you.",
+      "ms": 424,
+      "failures": []
+    },
+    {
+      "id": "howto-05",
+      "kind": "howto",
+      "ask": "How do I boil an egg?",
+      "reply": "Boil an egg by placing it in a pot of cold water, bringing the water to a rolling boil, then reducing the heat to maintain a gentle simmer for about 9–12 minutes depending on desired doneness. After cooking, plunge the egg into ice water to stop the cooking process and make peeling easier. Keep a timer handy so you don’t overcook it.",
+      "ms": 233,
+      "failures": []
+    },
+    {
+      "id": "howto-06",
+      "kind": "howto",
+      "ask": "How do I merge two PDF files?",
+      "reply": "Merge two PDFs by opening a PDF editor or online tool, selecting “Merge” or “Combine,” adding both files, then saving the combined document. If you prefer a free desktop option, use PDFsam Basic.",
+      "ms": 367,
+      "failures": []
+    },
+    {
+      "id": "howto-07",
+      "kind": "howto",
+      "ask": "How do I set a recurring reminder on my phone?",
+      "reply": "Set a recurring reminder by opening the built‑in Reminders app (or your preferred reminder app), create a new reminder, and toggle the “Repeat” or “Recurring” option to choose the frequency—daily, weekly, or custom. Then save it and it will pop up at the set time each cycle. If you need help setting it up on a specific phone model, let me know.",
+      "ms": 201,
+      "failures": []
+    },
+    {
+      "id": "howto-08",
+      "kind": "howto",
+      "ask": "How do I clear my browser cache?",
+      "reply": "Clear the cache by opening your browser settings, finding “Privacy & Security,” then selecting “Clear browsing data.” Choose a time range (e.g., “All time”), tick the box for “Cached images and files,” and click “Clear data.” If you’re using Chrome, you can also press Ctrl+Shift+Del (Cmd+Shift+Del on Mac) to bring up that dialog.",
+      "ms": 348,
+      "failures": []
+    },
+    {
+      "id": "howto-09",
+      "kind": "howto",
+      "ask": "How do I write the first line of a cover letter?",
+      "reply": "Start with a concise greeting that names the hiring manager and the position you’re applying for. A clear opener like, “Dear Ms. Johnson, I am excited to apply for the Marketing Coordinator role at ABC Company,” sets the tone and shows you’ve tailored the letter. Keep it friendly, professional, and to the point.",
+      "ms": 374,
+      "failures": []
+    },
+    {
+      "id": "howto-10",
+      "kind": "howto",
+      "ask": "How do I back up the photos on my phone?",
+      "reply": "Back up your phone photos by using the built‑in cloud service on your device, like Google Photos for Android or iCloud Photos for iPhone. Turn on the automatic backup setting so new pictures sync to the cloud each time you’re connected to Wi‑Fi. If you want a local copy, connect your phone to a computer and copy the DCIM folder to an external drive.",
+      "ms": 189,
+      "failures": []
+    },
+    {
+      "id": "followup-01",
+      "kind": "followup",
+      "ask": "How do I fix it?",
+      "reply": "Check the config or .env file for the missing key and add it with the correct value. Then restart the app.",
+      "ms": 160,
+      "failures": []
+    },
+    {
+      "id": "followup-02",
+      "kind": "followup",
+      "ask": "And roughly how many people live there?",
+      "reply": "About 3.3 million people live in Madrid.",
+      "ms": 182,
+      "failures": []
+    },
+    {
+      "id": "followup-03",
+      "kind": "followup",
+      "ask": "Why is the interest so high?",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "ms": 68,
+      "failures": [
+        "ignores_subject",
+        "http_503",
+        "missing_expected_fact"
+      ]
+    },
+    {
+      "id": "followup-04",
+      "kind": "followup",
+      "ask": "Can you give me the first sentence?",
+      "reply": "The roof over the kitchen has a persistent leak that drips onto the floor and damages my cabinets.",
+      "ms": 139,
+      "failures": []
+    },
+    {
+      "id": "followup-05",
+      "kind": "followup",
+      "ask": "And in Fahrenheit?",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "ms": 68,
+      "failures": [
+        "ignores_subject",
+        "http_503",
+        "missing_expected_fact"
+      ]
+    },
+    {
+      "id": "followup-06",
+      "kind": "followup",
+      "ask": "What if it is a scanned PDF?",
+      "reply": "Use an OCR tool—many scanners or online services can read the image and turn it into editable text. Then copy the result into Word.",
+      "ms": 172,
+      "failures": []
+    },
+    {
+      "id": "followup-07",
+      "kind": "followup",
+      "ask": "When did he write it?",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "ms": 67,
+      "failures": [
+        "ignores_subject",
+        "http_503",
+        "missing_expected_fact"
+      ]
+    },
+    {
+      "id": "followup-08",
+      "kind": "followup",
+      "ask": "Is it only in kids?",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "ms": 66,
+      "failures": [
+        "ignores_subject",
+        "http_503",
+        "missing_expected_fact"
+      ]
+    },
+    {
+      "id": "followup-09",
+      "kind": "followup",
+      "ask": "Show me a quick example.",
+      "reply": "If you put $1,000 in an account that pays 5 % per year, after one year you have $1,050. The next year you earn 5 % on $1,050, giving $1,102.50, and so on.",
+      "ms": 397,
+      "failures": []
+    },
+    {
+      "id": "followup-10",
+      "kind": "followup",
+      "ask": "Which option should I tick?",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "ms": 63,
+      "failures": [
+        "ignores_subject",
+        "http_503",
+        "missing_expected_fact"
+      ]
+    },
+    {
+      "id": "stay-01",
+      "kind": "stay",
+      "ask": "What can you do apart from completing tasks?",
+      "reply": "I help you start things. Past getting tasks started, I run a timer beside you, sort a messy brain dump into a short list, keep your list and remind you. You can also show me your screen or a photo, and I'll look at it with you.",
+      "ms": 3,
+      "failures": []
+    },
+    {
+      "id": "stay-02",
+      "kind": "stay",
+      "ask": "What is Stay?",
+      "reply": "I'm Stay, a voice companion for the things you keep putting off. Talk or type, and I'll keep it small.",
+      "ms": 3,
+      "failures": []
+    },
+    {
+      "id": "stay-03",
+      "kind": "stay",
+      "ask": "Why should I use you and not ChatGPT?",
+      "reply": "Use whatever helps. What I do differently is stay small: I wait for you to finish thinking, give you one step instead of an essay, and keep your timer, list and history together. I don't claim to beat the big assistants at everything.",
+      "ms": 4,
+      "failures": []
+    },
+    {
+      "id": "stay-04",
+      "kind": "stay",
+      "ask": "Can you see my screen?",
+      "reply": "Only what you choose to show me. Tap the plus button beside the message box to share your screen, use the camera or add a picture, then ask me about it. I look when you ask, and I don't keep what you show me.",
+      "ms": 3,
+      "failures": []
+    },
+    {
+      "id": "stay-05",
+      "kind": "stay",
+      "ask": "Do you remember what I tell you?",
+      "reply": "On this device, yes: your list, your timer history and the things you ask me to remember are kept in this browser. I only save a memory when you ask me to, and you can delete everything in Settings.",
+      "ms": 3,
+      "failures": []
+    },
+    {
+      "id": "stay-06",
+      "kind": "stay",
+      "ask": "Are you a real person?",
+      "reply": "No, I'm an AI, not a person. I'm also not a doctor or a therapist, so I can't diagnose anything or advise on medication.",
+      "ms": 4,
+      "failures": []
+    },
+    {
+      "id": "stay-07",
+      "kind": "stay",
+      "ask": "What languages do you speak?",
+      "reply": "I work best in English, Spanish, French, German, Italian and Portuguese. Many other languages worked in my tests and some did not; for those I use your browser's speech recognition. Talk to me in your language and I'll answer in it.",
+      "ms": 3,
+      "failures": []
+    },
+    {
+      "id": "stay-08",
+      "kind": "stay",
+      "ask": "Do you save my voice?",
+      "reply": "Your history, memory and list stay on this device. Your voice goes to AssemblyAI to be heard and answered, and a picture goes to an AI model to be looked at. Stay doesn't save recordings or pictures.",
+      "ms": 3,
+      "failures": []
+    },
+    {
+      "id": "stay-09",
+      "kind": "stay",
+      "ask": "How do I show you something?",
+      "reply": "Only what you choose to show me. Tap the plus button beside the message box to share your screen, use the camera or add a picture, then ask me about it. I look when you ask, and I don't keep what you show me.",
+      "ms": 3,
+      "failures": []
+    },
+    {
+      "id": "stay-10",
+      "kind": "stay",
+      "ask": "Who made you?",
+      "reply": "I was built by one developer as a hackathon project. I use AssemblyAI to hear and speak, and a language model to think.",
+      "ms": 4,
+      "failures": []
+    },
+    {
+      "id": "taskstart-01",
+      "kind": "taskstart",
+      "ask": "I can't start the email to my landlord.",
+      "reply": "I hear you. Open a new email draft. Write “Hi [Landlord’s Name],” and hit send. Ready to draft the body?",
+      "ms": 403,
+      "failures": []
+    },
+    {
+      "id": "taskstart-02",
+      "kind": "taskstart",
+      "ask": "I keep putting off my taxes.",
+      "reply": "I hear that.  \nOpen a 5‑minute timer and write “tax documents” on a sticky note.  \nReady to start?",
+      "ms": 232,
+      "failures": []
+    },
+    {
+      "id": "taskstart-03",
+      "kind": "taskstart",
+      "ask": "I need to clean the kitchen but I can't get going.",
+      "reply": "Got it.  \nPick up a trash bag and toss the dishes.  \nHow's that feeling?",
+      "ms": 186,
+      "failures": []
+    },
+    {
+      "id": "taskstart-04",
+      "kind": "taskstart",
+      "ask": "I have to write my essay and I'm frozen.",
+      "reply": "Got it.  \nPick a page and write one sentence.  \nHow many pages need it?",
+      "ms": 366,
+      "failures": []
+    },
+    {
+      "id": "taskstart-05",
+      "kind": "taskstart",
+      "ask": "I've been avoiding calling the dentist.",
+      "reply": "I hear you. Pick a number on your phone. Want a quick reminder?",
+      "ms": 364,
+      "failures": [
+        "reminder_not_requested"
+      ]
+    },
+    {
+      "id": "taskstart-06",
+      "kind": "taskstart",
+      "ask": "I need to email my boss back and I keep stalling.",
+      "reply": "Got it.  \nPick a time, say 5 minutes, and draft a single sentence reply.  \nReady to start?",
+      "ms": 219,
+      "failures": []
+    },
+    {
+      "id": "taskstart-07",
+      "kind": "taskstart",
+      "ask": "Help me start my CV.",
+      "reply": "Sure, you’re ready.  \nPick one section—skills, experience, or education—and write one bullet point for it.  \nReady to dive in?",
+      "ms": 158,
+      "failures": []
+    },
+    {
+      "id": "taskstart-08",
+      "kind": "taskstart",
+      "ask": "I can't begin the report.",
+      "reply": "I hear how tough that feels.  \nStand at the edge of the report file and click “Open.”  \nHow much time do you have for this?",
+      "ms": 372,
+      "failures": []
+    },
+    {
+      "id": "taskstart-09",
+      "kind": "taskstart",
+      "ask": "I keep avoiding paying the bills.",
+      "reply": "I hear you.  \nStand at the bill folder and pick one bill to read.  \nReady to tackle it?",
+      "ms": 156,
+      "failures": []
+    },
+    {
+      "id": "taskstart-10",
+      "kind": "taskstart",
+      "ask": "I need to study for my exam but I can't start.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "ms": 75,
+      "failures": [
+        "http_503",
+        "not_three_beats"
+      ]
+    }
+  ]
+}

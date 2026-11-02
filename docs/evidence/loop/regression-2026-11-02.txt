@@ -1,0 +1,13 @@
+Regression run, 2026-11-02, local production build (next build + next start on :3120), after the rate-limit chain, the mic-button name fix and the accessibility spec
+Labels: all voice services faked in these specs (mocked-model / synthetic mic); nothing here is real-mic.
+
+== tsc ==
+tsc exit 0
+== claims-lint ==
+claims-lint: clean
+== vitest ==
+ Test Files  84 passed | 1 skipped (85)
+      Tests  1277 passed | 1 skipped (1278)
+== playwright (chromium, full suite) ==
+  2 skipped
+  197 passed (7.2m)

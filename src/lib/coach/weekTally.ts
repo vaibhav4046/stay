@@ -33,7 +33,7 @@ export function weekTally(sessions: TallySession[], now = new Date()): WeekTally
 /** One honest sentence for the tally, with the real denominator. */
 export function weekTallyLine(t: WeekTally): string {
   if (t.blocks === 0) return 'No blocks in the last 7 days. Starting one small thing counts.';
-  const won = t.started + t.partly;
-  const base = `${won} of ${t.blocks} block${t.blocks === 1 ? '' : 's'} this week got started`;
+  const gotStarted = t.started + t.partly;
+  const base = `${gotStarted} of ${t.blocks} block${t.blocks === 1 ? '' : 's'} this week got started`;
   return t.partly > 0 ? `${base} (${t.partly} partly).` : `${base}.`;
 }

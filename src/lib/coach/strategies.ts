@@ -7,7 +7,7 @@ import type {
 import {
   detectCrisisSignal,
   detectMedicationAdviceRequest,
-  UK_CRISIS_RESOURCES,
+  CRISIS_RESOURCES,
 } from '@/lib/safety/crisis';
 
 export interface BarrierDefinition {
@@ -264,9 +264,9 @@ export function buildDeterministicCoachPlan(params: {
       firstStep: 'Pause task coaching and connect with human crisis support right now.',
       whyThisFits: 'Immediate personal safety comes before any task.',
       timerMinutes: 0,
-      checkinPrompt: 'Please connect with 999, NHS 111, or Samaritans on 116 123.',
+      checkinPrompt: 'Please reach out for human support now. Numbers for your country are listed here, and findahelpline.com has more.',
       safetyFlag: 'crisis',
-      resources: UK_CRISIS_RESOURCES,
+      resources: CRISIS_RESOURCES,
     };
   }
 

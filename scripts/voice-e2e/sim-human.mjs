@@ -5,7 +5,7 @@
 //     cancellation (our injected stream bypasses it), so this is a worst case for self-interruption.
 //   - Scenarios: normal turns, a patient pause mid-sentence (must not be talked over), a barge-in, a spoken app command.
 // Reports, per turn, time from the end of the human's speech to the first reply audio, measured outside the app.
-// Usage: node scripts/voice-e2e/sim-human.mjs <engine: agent|fast> <baseURL> [--echo] [--voice en-GB-RyanNeural] [--turns 4] [--no-llm]
+// Usage: node scripts/voice-e2e/sim-human.mjs <engine: agent|fast> <baseURL> [--echo] [--voice en-GB-RyanNeural] [--turns 4] [--no-llm] [--cpu 4]
 // Needs the app running (npm run start), edge-tts via uv, ffmpeg, GROQ_API_KEY in .env.local.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -24,6 +24,7 @@ const LANG_SETUP = { en: { voice: 'en-GB-RyanNeural', locale: 'en-GB' }, es: { v
 const VOICE = opt('--voice', LANG_SETUP[LANG]?.voice || 'en-GB-RyanNeural');
 const TURNS = Number(opt('--turns', 4));
 const USE_LLM = !flag('--no-llm');
+const CPU = Number(opt('--cpu', 1)); // field test 2 Nov 2026 ("voice is breaking"): 4 = a phone-class CPU, 6 = a weak one. Reported as underruns below
 const work = path.join((await import('node:os')).tmpdir(), 'stay-sim-human'); // not under test-results: Playwright empties that folder
 fs.mkdirSync(work, { recursive: true });
 
@@ -76,11 +77,14 @@ async function humanSays(history) {
 
 // ---- browser with an injected microphone --------------------------------------------------------------------------------
 let browser;
-for (let i = 0; ; i++) { try { browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'], timeout: 60000 }); break; } catch (e) { if (i >= 3) throw e; console.log('browser launch timed out, retrying'); } }
+for (let i = 0; ; i++) { try { browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required', '--mute-audio'], timeout: 60000 }); break; } catch (e) { if (i >= 3) throw e; console.log('browser launch timed out, retrying'); } }
 const ctx = await browser.newContext({ viewport: { width: 1200, height: 900 }, locale: LANG_SETUP[LANG]?.locale || 'en-GB' });
 const page = await ctx.newPage();
+if (CPU > 1) await (await ctx.newCDPSession(page)).send('Emulation.setCPUThrottlingRate', { rate: CPU });
 await page.addInitScript(({ debug, sttExtra }) => {
   window.__stayFastDebug = debug;
+  window.__longTasks = [];
+  try { new PerformanceObserver((l) => { for (const e of l.getEntries()) window.__longTasks.push(Math.round(e.duration)); }).observe({ type: 'longtask', buffered: true }); } catch { /* not supported */ }
   if (sttExtra) window.__stayFastSttExtra = sttExtra;
   const ac = new AudioContext({ sampleRate: 24000 });
   const dest = ac.createMediaStreamDestination();
@@ -96,11 +100,13 @@ await page.addInitScript(({ debug, sttExtra }) => {
   window.__say = (b64) => { ac.resume(); const buf = toBuf(b64), src = ac.createBufferSource(); src.buffer = buf; src.connect(dest); const at = Math.max(ac.currentTime + 0.05, window.__micEnd); src.start(at); window.__micEnd = at + buf.duration; return { startsIn: at - ac.currentTime, dur: buf.duration }; };
   // overlay: Stay's own voice leaking back into the mic, quieter, right now
   window.__leak = (b64, gain) => { const src = ac.createBufferSource(); src.buffer = toBuf(b64); const g = ac.createGain(); g.gain.value = gain; src.connect(g); g.connect(dest); src.start(ac.currentTime + 0.02); };
-  navigator.mediaDevices.getUserMedia = async () => { await ac.resume(); return dest.stream; };
-  // stage timing: every playback start that is not the injected microphone (Stay's own voice being scheduled)
+  // a fresh stream every call, as a real microphone gives: the app stops its tracks when a connection attempt fails and retries, and
+  // handing back the same stopped stream made every retried session deaf (found 2 Nov 2026; it was the rig, not the app)
+  navigator.mediaDevices.getUserMedia = async () => { await ac.resume(); return dest.stream.clone(); };
+  // T2.1: the app (with __stayFastDebug on) records the epoch time at which each reply's first sample was actually output by its
+  // AudioContext. Stay now plays through an AudioWorklet, so the old hook on AudioBufferSourceNode.start no longer sees its voice.
   window.__stayPlays = [];
-  const origStart = AudioBufferSourceNode.prototype.start;
-  AudioBufferSourceNode.prototype.start = function (...a) { if (this.context !== ac) window.__stayPlays.push(Date.now()); return origStart.apply(this, a); };
+  window.__stayPlayStarts = window.__stayPlays;
 }, { debug: engine === 'fast', sttExtra: process.env.STT_EXTRA || '' });
 
 // ---- timeline from the sockets and the fast-voice debug events ------------------------------------------------------------
@@ -116,8 +122,8 @@ const sttEot = [], ttsGen = [];
 page.on('websocket', (ws) => {
   const url = ws.url();
   if (url.includes('streaming.assemblyai.com')) ws.on('framereceived', (f) => { try { const m = JSON.parse(String(f.payload)); if (m.type === 'Turn' && m.end_of_turn) sttEot.push({ t: now(), text: String(m.transcript || '') }); } catch { /* binary */ } });
-  if (url.includes('streaming-tts.assemblyai.com')) ws.on('framesent', (f) => { try { if (JSON.parse(String(f.payload)).type === 'Generate') ttsGen.push(now()); } catch { /* binary */ } });
-  const isAgent = url.includes('agents.assemblyai.com'), isTts = url.includes('streaming-tts.assemblyai.com');
+  if (url.includes('tts.us.assemblyai.com')) ws.on('framesent', (f) => { try { if (JSON.parse(String(f.payload)).type === 'Generate') ttsGen.push(now()); } catch { /* binary */ } });
+  const isAgent = url.includes('agents.assemblyai.com'), isTts = url.includes('tts.us.assemblyai.com');
   if (!isAgent && !isTts) return;
   ws.on('framereceived', (f) => {
     let m; try { m = JSON.parse(String(f.payload)); } catch { return; }
@@ -141,7 +147,7 @@ page.on('console', (m) => {
 // ---- open the app, onboard, choose the engine, start listening --------------------------------------------------------------
 page.on('pageerror', (e) => console.log('[pageerror]', String(e).slice(0, 160)));
 for (let i = 0; ; i++) { try { await page.goto(base + '/app/today', { waitUntil: 'domcontentloaded', timeout: 45000 }); break; } catch (e) { if (i >= 4) throw e; console.log('navigation hung, retrying'); await sleep(2000); } }
-await page.evaluate((e) => { localStorage.clear(); localStorage.setItem('stay_fast_voice', e === 'fast' ? '1' : '0'); }, engine);
+await page.evaluate((e) => { localStorage.clear(); localStorage.setItem('stay_fast_voice', e === 'fast' ? '1' : '0'); localStorage.setItem('stay:mic_consented:v1', '1'); /* a person who already pressed Start talking (T0.5) */ }, engine);
 await page.reload();
 await page.getByTestId('care-self_managing').click();
 await page.getByTestId('onboarding-ack').click();
@@ -170,8 +176,8 @@ async function say(pcm, label = '') { // returns when the human has finished spe
 }
 async function firstAudioAfter(t, max = 15000) {
   const start = now();
-  // the first moment Stay's voice is scheduled to play in the page (not when audio bytes reach the socket: a reply prepared early
-  // arrives on the wire before it is released, and only the release is what the person hears)
+  // the first moment a sample of Stay's voice was actually output by the page's AudioContext (T2.1), not when audio bytes reach the
+  // socket: a reply prepared early arrives on the wire before it is released, and only the playing is what the person hears
   while (now() - start < max) { const p = await page.evaluate((t0) => (window.__stayPlays || []).find((x) => x > t0) ?? null, t); if (p) return p; await sleep(30); }
   return null;
 }
@@ -186,11 +192,12 @@ console.log(`engine=${engine}${ECHO ? ' +echo' : ''} voice=${VOICE} noise=on llm
 
 const history = [];
 const latencies = [];
+const bargeDuckMs = [];
 const stageRows = [];
 const STAGE_ORDER = ['stt.eot', 'page.eot', 'req', 'hdr', 'srv.llm', 'srv.n', 'tok1', 'clause1', 'gen', 'gen.wire', 'aud1.wire', 'aud1', 'play1'];
 // ms after the true end of speech for each stage of this turn (first occurrence after the speech end)
 async function collectStages(tEnd, wireAudio) {
-  const marks = await page.evaluate(() => { const m = window.__stayFastMarks || []; window.__stayFastMarks = []; const p = window.__stayPlays || []; window.__stayPlays = []; return { m, p }; });
+  const marks = await page.evaluate(() => { const m = window.__stayFastMarks || []; window.__stayFastMarks = []; const p = window.__stayPlays || []; window.__stayPlays = window.__stayPlayStarts = []; return { m, p }; });
   if (flag('--debug-marks')) console.log('marks', JSON.stringify(marks.m.map(([n, t]) => [n, t - tEnd])), 'plays', marks.p.length);
   const first = (name) => marks.m.find(([n, t]) => n === name && t >= tEnd - 50)?.[1];
   const row = {};
@@ -205,6 +212,14 @@ async function collectStages(tEnd, wireAudio) {
   row['aud1.wire'] = after(wireAudio);
   row.play1 = after(marks.p.find((t) => t >= tEnd - 50));
   return row;
+}
+// "Is the voice breaking?": underruns are the times the speaker ran out of audio mid-reply (a click or a gap); long tasks are the
+// page blocking its own main thread (they delay the AudioWorklet's feed). Both are read from the page, nothing is inferred.
+async function printPlaybackHealth() {
+  const h = await page.evaluate(() => ({ pb: window.__stayPlayback || null, tasks: window.__longTasks || [] })).catch(() => null);
+  if (!h) return;
+  const over = h.tasks.filter((d) => d >= 100);
+  console.log(`PLAYBACK HEALTH (cpu x${CPU}): underruns ${h.pb ? h.pb.underflows : 'unknown'}; prebuffer ${h.pb ? Math.round(h.pb.prebufferMs) + ' ms' : 'unknown'}; long tasks ${h.tasks.length} (>=100 ms: ${over.length}, longest ${Math.max(0, ...h.tasks)} ms)`);
 }
 function printStages() {
   if (!stageRows.length) return;
@@ -232,24 +247,45 @@ if (flag('--turns-only')) { // other languages: ordinary turns only (the pause, 
   latencies.sort((x, y) => x - y);
   if (flag('--dump')) dump();
   printStages();
+  await printPlaybackHealth();
   console.log(`
 SUMMARY engine=${engine} lang=${LANG}: ordinary-turn first audio ${latencies.length ? `median ${latencies[Math.floor(latencies.length / 2)]} ms (n=${latencies.length}; ${latencies.join(', ')})` : 'none'}`);
   await browser.close();
   process.exit(0);
 }
 // ---- scenario 2: a patient pause (must not be talked over) -----------------------------------------------------------------------
-{
-  const tBefore = now();
+async function pauseScenario(pauseMs = 2300) {
   const p1 = await say(speechPcm('I need to, um, send that email to my landlord and, uh...'), 'I need to, um, send that email to my landlord and, uh...');
   const quietStart = now();
-  await sleep(2300); // a real ADHD pause
+  await sleep(pauseMs); // a real ADHD pause
   const plays = await page.evaluate(() => (window.__stayPlays || []).slice());
-  const talkedInto = plays.some((x) => x > p1.tEnd + 100 && x < quietStart + 2300) || ev.some((e) => e.type === 'reply.started' && e.t > p1.tEnd && e.t < quietStart + 2300);
+  const talkedInto = plays.some((x) => x > p1.tEnd + 100 && x < quietStart + pauseMs) || ev.some((e) => e.type === 'reply.started' && e.t > p1.tEnd && e.t < quietStart + pauseMs);
   const p2 = await say(speechPcm('...and I keep thinking about how to start it.'), '...and I keep thinking about how to start it.');
   const f = await firstAudioAfter(p2.tEnd);
   await agentQuiet();
-  console.log(`pause test: Stay ${talkedInto ? 'TALKED INTO the 2.3 s pause' : 'waited through the 2.3 s pause'}; reply to the finished thought after ${f ? f - p2.tEnd + ' ms' : 'NONE'}`);
-  void tBefore;
+  return { talkedInto, replyMs: f ? f - p2.tEnd : null, pauseMs };
+}
+if (flag('--pause-runs')) { // T2.4: the same patient pause many times in one session
+  const N = Number(opt('--pause-runs', 20));
+  const pauses = [1800, 2300, 2500];
+  const rows = [];
+  for (let i = 0; i < N; i++) {
+    const r = await pauseScenario(pauses[i % pauses.length]);
+    rows.push(r);
+    console.log(`pause run ${i + 1}/${N}: ${r.pauseMs} ms pause, Stay ${r.talkedInto ? 'TALKED INTO IT' : 'waited'}; reply to the finished thought ${r.replyMs == null ? 'NONE' : r.replyMs + ' ms'}`);
+    await sleep(2500); // spaced out: the model key allows about 8,000 tokens a minute per model
+  }
+  const answered = rows.filter((r) => r.replyMs != null);
+  const talked = rows.filter((r) => r.talkedInto).length;
+  const med = answered.map((r) => r.replyMs).sort((a, b) => a - b)[Math.floor(answered.length / 2)];
+  console.log(`PAUSE SUMMARY: ${N} runs, pauses of ${[...new Set(pauses)].join(' / ')} ms; Stay talked into the pause ${talked} times; a reply to the finished thought came ${answered.length} times (median ${med ?? 'none'} ms)`);
+  await printPlaybackHealth();
+  await browser.close();
+  process.exit(0);
+}
+{
+  const r = await pauseScenario();
+  console.log(`pause test: Stay ${r.talkedInto ? 'TALKED INTO the 2.3 s pause' : 'waited through the 2.3 s pause'}; reply to the finished thought after ${r.replyMs != null ? r.replyMs + ' ms' : 'NONE'}`);
 }
 
 // ---- scenario 3: barge-in ---------------------------------------------------------------------------------------------------------
@@ -262,9 +298,13 @@ SUMMARY engine=${engine} lang=${LANG}: ordinary-turn first audio ${latencies.len
     const interrupt = 'Wait, stop, just one tiny step please.';
     const b = await say(speechPcm(interrupt), interrupt);
     const noticed = ev.find((e) => e.type === 'input.speech.started' && e.t >= b.tStart - 100);
+    // T2.3: when Stay's voice was quieted (by the page's own mic energy check or by the server's notice), on the same clock as b.tStart
+    const ducks = await page.evaluate(() => (window.__stayDucks || []).slice());
+    const duckedAt = ducks.find((t) => t >= b.tStart - 100);
+    bargeDuckMs.push(duckedAt ? duckedAt - b.tStart : null);
     const heardAt = await (async () => { for (let i = 0; i < 80; i++) { const h = ev.find((e) => e.type === 'transcript.user' && e.t >= b.tStart); if (h) return h; await sleep(100); } return null; })();
     await agentQuiet(1200);
-    console.log(`barge-in: Stay still had ${playingLeft} ms of speech queued when I interrupted; it noticed me ${noticed ? noticed.t - b.tStart + ' ms' : 'NEVER'} after I started talking; it heard: "${(heardAt?.text || '').slice(0, 60)}"; then said: "${lastText('transcript.agent', b.tStart).slice(0, 70)}"`);
+    console.log(`barge-in: Stay still had ${playingLeft} ms of speech queued when I interrupted; it was quieted ${bargeDuckMs.at(-1) != null ? Math.round(bargeDuckMs.at(-1)) + ' ms' : 'NEVER'} and the speech service noticed me ${noticed ? noticed.t - b.tStart + ' ms' : 'NEVER'} after I started talking; it heard: "${(heardAt?.text || '').slice(0, 60)}"; then said: "${lastText('transcript.agent', b.tStart).slice(0, 70)}"`);
   } else console.log('barge-in: no reply to interrupt');
 }
 
@@ -288,6 +328,7 @@ SUMMARY engine=${engine} lang=${LANG}: ordinary-turn first audio ${latencies.len
 
 if (flag('--dump')) dump();
 printStages();
+await printPlaybackHealth();
 latencies.sort((a, b) => a - b);
 console.log(`\nSUMMARY engine=${engine}${ECHO ? '+echo' : ''}: ordinary-turn first audio ${latencies.length ? `median ${latencies[Math.floor(latencies.length / 2)]} ms (n=${latencies.length}; ${latencies.join(', ')})` : 'none'}`);
 await browser.close();

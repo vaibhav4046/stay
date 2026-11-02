@@ -39,7 +39,7 @@ export const CLINICAL_INTERVENTIONS: ClinicalIntervention[] = [
     barrier: 'perfectionism_or_fear',
     strategy: 'reframing',
     strategyTitle: 'Rough Draft Permission (Cognitive Reframing)',
-    evidenceSource: 'Ramsay & Rostain (2015) Cognitive Behavioral Therapy for Adult ADHD',
+    evidenceSource: 'Ramsay & Rostain (2015) Cognitive Behavioral Therapy for Adult ADHD', // claims-lint-allow: title of a published book
     targetMechanism: 'Neutralizes emotional self-protection and fear of negative evaluation by legalizing imperfect work.',
     defaultMinutes: 5,
     interventionPrompt: (task) =>

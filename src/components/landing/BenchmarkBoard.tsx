@@ -1,3 +1,5 @@
+// evidence: docs/evidence/real-provider/measure-0f93339.json
+// evidence: docs/evidence/real-e2e/run-ba6a337.json
 import { CURRENT } from './currentMeasured';
 import { LIVE } from './liveRun';
 
@@ -15,7 +17,7 @@ export function BenchmarkBoard() {
           { label: 'You stop talking', from: 0, to: 0 },
           { label: 'AssemblyAI says you are done', from: 0, to: LIVE.endOfTurn },
           { label: 'The answer starts to arrive', from: LIVE.endOfTurn, to: LIVE.firstWord },
-          { label: 'Stay’s voice makes its first sound', from: LIVE.firstWord, to: LIVE.firstSound },
+          { label: 'The first piece of Stay’s voice arrives', from: LIVE.firstWord, to: LIVE.firstSound },
         ]
       : [];
   const total = LIVE.firstSound ?? 1;
@@ -48,8 +50,8 @@ export function BenchmarkBoard() {
               </ol>
             )}
             <p className="bench-note">
-              <strong className="tnum">{LIVE.firstSound} ms</strong> from the end of your speech to Stay&rsquo;s first sound, in one recorded call
-              {LIVE.toSpeaking !== null && <> (the screen showed &ldquo;Speaking&rdquo; at {LIVE.toSpeaking} ms)</>}. Source: <code>{LIVE.file}</code>. Stay is not the fastest on every measure; the comparison below says where it is slower.
+              <strong className="tnum">{LIVE.firstSound} ms</strong> from the end of your speech to the first piece of Stay&rsquo;s voice reaching the browser (packet arrival, before it is played), in one recorded call
+              {LIVE.toSpeaking !== null && <> (the screen showed &ldquo;Speaking&rdquo; at {LIVE.toSpeaking} ms)</>}. Source: <code>{LIVE.file}</code>.
             </p>
           </article>
 

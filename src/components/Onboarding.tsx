@@ -6,7 +6,7 @@ import type { CareContext, InteractionMode, UserProfile } from '@/types/domain';
 export const CARE_OPTIONS: Array<{ key: CareContext; label: string; hint: string }> = [
   { key: 'waitlisted', label: "I'm waiting for an assessment or care", hint: 'Daily support while you wait.' },
   { key: 'medicated', label: "I'm taking prescribed ADHD medication", hint: 'Adds a quick treatment check-in.' },
-  { key: 'in_therapy', label: "I'm in therapy or coaching", hint: 'Practise skills between sessions.' },
+  { key: 'in_therapy', label: "I work with a coach or counsellor", hint: 'Practise skills between sessions.' },
   { key: 'self_managing', label: "I'm managing on my own", hint: 'Practical help starting tasks.' },
   { key: 'prefer_not_to_say', label: "I'd rather not say", hint: 'That works too.' },
 ];
@@ -107,8 +107,12 @@ export function Onboarding({ onDone }: { onDone: (patch: Partial<UserProfile>) =
         </label>
       </fieldset>
 
+      <p className="meta mt-6" data-testid="onboarding-age">
+        Stay is for adults aged 18 or over. It is an AI, not a person.
+      </p>
+
       <label
-        className={`notice mt-6 flex items-start gap-3 cursor-pointer transition-all ${
+        className={`notice mt-3 flex items-start gap-3 cursor-pointer transition-all ${
           error && !ack ? 'border-red-500/60 bg-red-500/10 ring-2 ring-red-500/30' : ''
         }`}
       >
