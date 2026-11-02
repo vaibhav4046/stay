@@ -1,5 +1,6 @@
-livekit-agents>=1.8.0
-livekit-plugins-assemblyai>=1.8.0
-livekit-plugins-openai>=1.8.0
-livekit-plugins-silero>=1.8.0
+livekit-agents>=1.8.0,<2
+livekit-plugins-assemblyai>=1.8.0,<2
+livekit-plugins-openai>=1.8.0,<2
+livekit-plugins-silero>=1.8.0,<2
+aiohttp>=3.9
 python-dotenv>=1.0.0
