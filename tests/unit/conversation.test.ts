@@ -4,6 +4,7 @@ import { classifyIntent, type ConvIntent } from '@/lib/conversation/intent';
 import { GENERIC_PHRASES, checkGrounded } from '@/lib/conversation/grounding';
 import { NOTHING_SHOWN, honestFailureMessage, failureKindFromError, type FailureKind } from '@/lib/conversation/response';
 import { visionReplyIsSafe } from '@/lib/conversation/visionGate';
+import { carriesAnswer } from '@/lib/conversation/sse';
 import { resetSecurityStateForTests } from '@/lib/security/apiGuard';
 
 const streamMock = vi.hoisted(() => ({ openLlmStream: vi.fn() }));
@@ -80,6 +81,12 @@ describe('groundedness: replies that ignore the question fail', () => {
 
   it('"I appreciate that." to a question fails', () => {
     expect(ok({ question: 'Then reply to me', text: 'I appreciate that.' }).failures).toContain('generic_coaching_phrase');
+  });
+
+  it('the stock stretch line is caught with any kind of hyphen, including the non-breaking one a model writes', () => {
+    for (const hy of ['-', ' ', '‐', '‑', '–']) {
+      expect(ok({ question: 'Is it only in kids?', text: `Pick a quick 5${hy}minute stretch now.` }).failures, JSON.stringify(hy)).toContain('generic_coaching_phrase');
+    }
   });
 
   it('claims to see something with no visual source fail; with a source and evidence they pass', () => {
@@ -188,6 +195,20 @@ describe('the chat route: what happens on each path (mocked model)', () => {
     expect(call.tools).toBeUndefined();
     const system = String(call.messages[0].content);
     expect(system).toMatch(/text (?:inside|in|on) (?:a|the) (?:picture|image|screen)[^.]*(?:content|data)[^.]*not (?:an )?instruction/i);
+  });
+
+  it('a model stream that ends with only reasoning and no words is an honest failure, not silence (found by the live eval)', async () => {
+    const reasoningOnly = `data: ${JSON.stringify({ choices: [{ delta: { role: 'assistant', content: '', reasoning: 'let me think' } }] })}\n\ndata: ${JSON.stringify({ choices: [{ delta: {}, finish_reason: 'stop' }] })}\n\ndata: [DONE]\n\n`;
+    streamMock.openLlmStream.mockResolvedValue({ res: new Response(reasoningOnly, { headers: { 'content-type': 'text/event-stream' } }), source: 'server' });
+    const res = await post({ messages: [{ role: 'user', content: 'How do I make a simple budget spreadsheet?' }] });
+    expect(await readText(res)).toBe(honestFailureMessage('unavailable'));
+  });
+
+  it('words that arrive split across reads still count as an answer', () => {
+    expect(carriesAnswer(['data: {"choices":[{"delta":{"content":"Hello"}}]}'])).toBe(true);
+    expect(carriesAnswer(['data: {"choices":[{"delta":{"content":""}}]}', ': keep-alive', 'data: [DONE]'])).toBe(false);
+    expect(carriesAnswer(['data: {"choices":[{"delta":{"tool_calls":[{"index":0}]}}]}'])).toBe(true);
+    expect(carriesAnswer(['data: {"choices":[{"delta":{"content":"   "}}]}'])).toBe(false);
   });
 
   it('a vision failure is honest too', async () => {

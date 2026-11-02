@@ -156,7 +156,7 @@ test.describe('Landing: platforms and honesty', () => {
   test('no invented social proof anywhere on the page', async ({ page }) => {
     await open(page);
     const text = (await page.locator('main').innerText()).toLowerCase();
-    for (const banned of [/testimonial/, /trusted by/, /users love/, /rated/, /\d+ stars/, /join thousands/, /faster than chatgpt/, /beats chatgpt/, /better than google/]) expect(text, String(banned)).not.toMatch(banned);
+    for (const banned of [/testimonial/, /trusted by/, /users love/, /\brated\b/, /\d+ stars/, /join thousands/, /faster than chatgpt/, /beats chatgpt/, /better than google/]) expect(text, String(banned)).not.toMatch(banned);
   });
 });
 

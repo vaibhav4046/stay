@@ -14,7 +14,7 @@ const FEELING = /\b(?:i (?:feel|am feeling)|i'?m (?:so |really |very )?(?:sad|an
 const TASK_START =
   /\b(?:i (?:can'?t|cannot|won'?t|couldn'?t) (?:start|begin|get started|do)|i keep (?:putting off|avoiding|procrastinating)|i(?:'ve| have) been (?:avoiding|putting off)|i (?:need|have|got) to (?:do|write|send|finish|start|call|email|file|pay|clean|study)|help me (?:start|begin|get started|with))\b/i;
 const QUESTION = /\?\s*$|^\s*(?:what|why|how|who|where|when|which|can you|could you|do you|does|is |are |explain|tell me|define|compare|translate)\b/i;
-const FOLLOW_UP = /^\s*(?:and |so |ok(?:ay)? |then )?(?:how (?:do|can|should) i (?:fix|do|change|use) (?:it|that|this)|why (?:is|does|did) (?:it|that|this)|what (?:about|does) (?:it|that|this)|can you (?:explain|show) (?:it|that|more)|and then|what next|why)\b/i;
+const FOLLOW_UP = /^\s*(?:and |so |ok(?:ay)? |then )?(?:(?:show|give|tell) me (?:a |an |one )?(?:quick |simple |short )?(?:example|more)|tell me more|how (?:do|can|should) i (?:fix|do|change|use) (?:it|that|this)|why (?:is|does|did) (?:it|that|this)|what (?:about|does) (?:it|that|this)|can you (?:explain|show) (?:it|that|more)|and then|what next|why)\b/i;
 
 export interface IntentContext {
   /** is a picture, screen frame or video attached to this turn */

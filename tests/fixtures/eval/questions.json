@@ -1,0 +1,800 @@
+[
+  {
+    "id": "factual-01",
+    "kind": "factual",
+    "ask": "What is the capital of France?",
+    "expectIntent": [
+      "question"
+    ],
+    "anyOf": [
+      "Paris"
+    ]
+  },
+  {
+    "id": "factual-02",
+    "kind": "factual",
+    "ask": "How many days are in a leap year?",
+    "expectIntent": [
+      "question"
+    ],
+    "anyOf": [
+      "366"
+    ]
+  },
+  {
+    "id": "factual-03",
+    "kind": "factual",
+    "ask": "Who wrote Pride and Prejudice?",
+    "expectIntent": [
+      "question"
+    ],
+    "anyOf": [
+      "Austen"
+    ]
+  },
+  {
+    "id": "factual-04",
+    "kind": "factual",
+    "ask": "What is the boiling point of water in Celsius at sea level?",
+    "expectIntent": [
+      "question"
+    ],
+    "anyOf": [
+      "100"
+    ]
+  },
+  {
+    "id": "factual-05",
+    "kind": "factual",
+    "ask": "What is the largest planet in our solar system?",
+    "expectIntent": [
+      "question"
+    ],
+    "anyOf": [
+      "Jupiter"
+    ]
+  },
+  {
+    "id": "factual-06",
+    "kind": "factual",
+    "ask": "What is the chemical symbol for gold?",
+    "expectIntent": [
+      "question"
+    ],
+    "anyOf": [
+      "Au"
+    ]
+  },
+  {
+    "id": "factual-07",
+    "kind": "factual",
+    "ask": "How many minutes are in a day?",
+    "expectIntent": [
+      "question"
+    ],
+    "anyOf": [
+      "1440",
+      "1,440"
+    ]
+  },
+  {
+    "id": "factual-08",
+    "kind": "factual",
+    "ask": "What does CPU stand for?",
+    "expectIntent": [
+      "question"
+    ],
+    "anyOf": [
+      "central processing unit"
+    ]
+  },
+  {
+    "id": "factual-09",
+    "kind": "factual",
+    "ask": "Who painted the Mona Lisa?",
+    "expectIntent": [
+      "question"
+    ],
+    "anyOf": [
+      "Leonardo",
+      "da Vinci"
+    ]
+  },
+  {
+    "id": "factual-10",
+    "kind": "factual",
+    "ask": "What year did the Second World War end?",
+    "expectIntent": [
+      "question"
+    ],
+    "anyOf": [
+      "1945"
+    ]
+  },
+  {
+    "id": "factual-11",
+    "kind": "factual",
+    "ask": "What is 15 percent of 80?",
+    "expectIntent": [
+      "question"
+    ],
+    "anyOf": [
+      "12"
+    ]
+  },
+  {
+    "id": "factual-12",
+    "kind": "factual",
+    "ask": "Which ocean is the largest?",
+    "expectIntent": [
+      "question"
+    ],
+    "anyOf": [
+      "Pacific"
+    ]
+  },
+  {
+    "id": "factual-13",
+    "kind": "factual",
+    "ask": "What is the square root of 144?",
+    "expectIntent": [
+      "question"
+    ],
+    "anyOf": [
+      "12"
+    ]
+  },
+  {
+    "id": "factual-14",
+    "kind": "factual",
+    "ask": "What is the longest river in Africa?",
+    "expectIntent": [
+      "question"
+    ],
+    "anyOf": [
+      "Nile"
+    ]
+  },
+  {
+    "id": "factual-15",
+    "kind": "factual",
+    "ask": "How many continents are there?",
+    "expectIntent": [
+      "question"
+    ],
+    "anyOf": [
+      "seven",
+      "7"
+    ]
+  },
+  {
+    "id": "factual-16",
+    "kind": "factual",
+    "ask": "Roughly how fast does light travel?",
+    "expectIntent": [
+      "question"
+    ],
+    "anyOf": [
+      "300,000",
+      "299",
+      "186,000",
+      "3 x 10",
+      "3×10"
+    ]
+  },
+  {
+    "id": "factual-17",
+    "kind": "factual",
+    "ask": "What does ADHD stand for?",
+    "expectIntent": [
+      "question"
+    ],
+    "anyOf": [
+      "attention"
+    ]
+  },
+  {
+    "id": "factual-18",
+    "kind": "factual",
+    "ask": "What is the difference between a virus and a bacterium?",
+    "expectIntent": [
+      "question"
+    ],
+    "anyOf": [
+      "cell",
+      "antibiotic",
+      "living",
+      "host"
+    ]
+  },
+  {
+    "id": "factual-19",
+    "kind": "factual",
+    "ask": "Why is the sky blue?",
+    "expectIntent": [
+      "question"
+    ],
+    "anyOf": [
+      "scatter"
+    ]
+  },
+  {
+    "id": "factual-20",
+    "kind": "factual",
+    "ask": "What is the capital of Australia?",
+    "expectIntent": [
+      "question"
+    ],
+    "anyOf": [
+      "Canberra"
+    ]
+  },
+  {
+    "id": "howto-01",
+    "kind": "howto",
+    "ask": "How do I convert a PDF to Word?",
+    "expectIntent": [
+      "question"
+    ],
+    "anyOf": [
+      "Word",
+      "Google Docs",
+      "convert",
+      "online"
+    ]
+  },
+  {
+    "id": "howto-02",
+    "kind": "howto",
+    "ask": "How do I take a screenshot on Windows?",
+    "expectIntent": [
+      "question"
+    ],
+    "anyOf": [
+      "Windows",
+      "Shift",
+      "Snip",
+      "Print",
+      "PrtScn",
+      "Win +"
+    ]
+  },
+  {
+    "id": "howto-03",
+    "kind": "howto",
+    "ask": "How do I make a simple budget spreadsheet?",
+    "expectIntent": [
+      "question"
+    ],
+    "anyOf": [
+      "column",
+      "income",
+      "expense",
+      "spreadsheet"
+    ]
+  },
+  {
+    "id": "howto-04",
+    "kind": "howto",
+    "ask": "How do I write a polite email asking for an extension?",
+    "expectIntent": [
+      "question"
+    ],
+    "anyOf": [
+      "subject",
+      "thank",
+      "deadline",
+      "extension"
+    ]
+  },
+  {
+    "id": "howto-05",
+    "kind": "howto",
+    "ask": "How do I boil an egg?",
+    "expectIntent": [
+      "question"
+    ],
+    "anyOf": [
+      "water",
+      "minute",
+      "boil"
+    ]
+  },
+  {
+    "id": "howto-06",
+    "kind": "howto",
+    "ask": "How do I merge two PDF files?",
+    "expectIntent": [
+      "question"
+    ],
+    "anyOf": [
+      "merge",
+      "combine",
+      "PDF"
+    ]
+  },
+  {
+    "id": "howto-07",
+    "kind": "howto",
+    "ask": "How do I set a recurring reminder on my phone?",
+    "expectIntent": [
+      "question"
+    ],
+    "anyOf": [
+      "reminder",
+      "repeat",
+      "app"
+    ]
+  },
+  {
+    "id": "howto-08",
+    "kind": "howto",
+    "ask": "How do I clear my browser cache?",
+    "expectIntent": [
+      "question"
+    ],
+    "anyOf": [
+      "settings",
+      "history",
+      "cache",
+      "browsing data"
+    ]
+  },
+  {
+    "id": "howto-09",
+    "kind": "howto",
+    "ask": "How do I write the first line of a cover letter?",
+    "expectIntent": [
+      "question"
+    ],
+    "anyOf": [
+      "role",
+      "name",
+      "apply",
+      "opening",
+      "position"
+    ]
+  },
+  {
+    "id": "howto-10",
+    "kind": "howto",
+    "ask": "How do I back up the photos on my phone?",
+    "expectIntent": [
+      "question"
+    ],
+    "anyOf": [
+      "cloud",
+      "Google Photos",
+      "iCloud",
+      "computer",
+      "backup"
+    ]
+  },
+  {
+    "id": "followup-01",
+    "kind": "followup",
+    "history": [
+      {
+        "role": "user",
+        "content": "What is a missing environment variable error?"
+      },
+      {
+        "role": "assistant",
+        "content": "It means the app looked for a setting by name and did not find it."
+      }
+    ],
+    "ask": "How do I fix it?",
+    "expectIntent": [
+      "follow_up",
+      "question"
+    ],
+    "anyOf": [
+      "set",
+      "add",
+      "define",
+      ".env",
+      "variable"
+    ]
+  },
+  {
+    "id": "followup-02",
+    "kind": "followup",
+    "history": [
+      {
+        "role": "user",
+        "content": "What is the capital of Spain?"
+      },
+      {
+        "role": "assistant",
+        "content": "Madrid."
+      }
+    ],
+    "ask": "And roughly how many people live there?",
+    "expectIntent": [
+      "follow_up",
+      "question"
+    ],
+    "anyOf": [
+      "million",
+      "3",
+      "6",
+      "7"
+    ]
+  },
+  {
+    "id": "followup-03",
+    "kind": "followup",
+    "history": [
+      {
+        "role": "user",
+        "content": "Explain what a mortgage is."
+      },
+      {
+        "role": "assistant",
+        "content": "A loan used to buy a home, repaid monthly with interest."
+      }
+    ],
+    "ask": "Why is the interest so high?",
+    "expectIntent": [
+      "follow_up",
+      "question"
+    ],
+    "anyOf": [
+      "interest",
+      "rate",
+      "risk",
+      "inflation"
+    ]
+  },
+  {
+    "id": "followup-04",
+    "kind": "followup",
+    "history": [
+      {
+        "role": "user",
+        "content": "I need to write to my landlord about the leak."
+      },
+      {
+        "role": "assistant",
+        "content": "Start with one line: what is leaking and where."
+      }
+    ],
+    "ask": "Can you give me the first sentence?",
+    "expectIntent": [
+      "follow_up",
+      "question"
+    ],
+    "anyOf": [
+      "leak"
+    ]
+  },
+  {
+    "id": "followup-05",
+    "kind": "followup",
+    "history": [
+      {
+        "role": "user",
+        "content": "What is the boiling point of water?"
+      },
+      {
+        "role": "assistant",
+        "content": "100 degrees Celsius at sea level."
+      }
+    ],
+    "ask": "And in Fahrenheit?",
+    "expectIntent": [
+      "follow_up",
+      "question"
+    ],
+    "anyOf": [
+      "212"
+    ]
+  },
+  {
+    "id": "followup-06",
+    "kind": "followup",
+    "history": [
+      {
+        "role": "user",
+        "content": "How do I convert a PDF to Word?"
+      },
+      {
+        "role": "assistant",
+        "content": "Open it in Word and choose Open."
+      }
+    ],
+    "ask": "What if it is a scanned PDF?",
+    "expectIntent": [
+      "follow_up",
+      "question"
+    ],
+    "anyOf": [
+      "OCR",
+      "scan",
+      "text",
+      "recogni"
+    ]
+  },
+  {
+    "id": "followup-07",
+    "kind": "followup",
+    "history": [
+      {
+        "role": "user",
+        "content": "Who wrote Hamlet?"
+      },
+      {
+        "role": "assistant",
+        "content": "William Shakespeare."
+      }
+    ],
+    "ask": "When did he write it?",
+    "expectIntent": [
+      "follow_up",
+      "question"
+    ],
+    "anyOf": [
+      "1599",
+      "1600",
+      "1601",
+      "16th",
+      "sixteenth",
+      "early 1600s"
+    ]
+  },
+  {
+    "id": "followup-08",
+    "kind": "followup",
+    "history": [
+      {
+        "role": "user",
+        "content": "What does ADHD stand for?"
+      },
+      {
+        "role": "assistant",
+        "content": "Attention deficit hyperactivity disorder."
+      }
+    ],
+    "ask": "Is it only in kids?",
+    "expectIntent": [
+      "follow_up",
+      "question"
+    ],
+    "anyOf": [
+      "adult",
+      "lifelong",
+      "not only",
+      "also"
+    ]
+  },
+  {
+    "id": "followup-09",
+    "kind": "followup",
+    "history": [
+      {
+        "role": "user",
+        "content": "What is compound interest?"
+      },
+      {
+        "role": "assistant",
+        "content": "Interest earned on your money and on the interest it already earned."
+      }
+    ],
+    "ask": "Show me a quick example.",
+    "expectIntent": [
+      "follow_up",
+      "question"
+    ],
+    "anyOf": [
+      "%",
+      "year",
+      "percent",
+      "$",
+      "£"
+    ]
+  },
+  {
+    "id": "followup-10",
+    "kind": "followup",
+    "history": [
+      {
+        "role": "user",
+        "content": "How do I clear my browser cache?"
+      },
+      {
+        "role": "assistant",
+        "content": "Open your browser settings and find browsing data."
+      }
+    ],
+    "ask": "Which option should I tick?",
+    "expectIntent": [
+      "follow_up",
+      "question"
+    ],
+    "anyOf": [
+      "cache",
+      "cached",
+      "images"
+    ]
+  },
+  {
+    "id": "stay-01",
+    "kind": "stay",
+    "ask": "What can you do apart from completing tasks?",
+    "expectIntent": [
+      "stay_question"
+    ],
+    "deterministic": true
+  },
+  {
+    "id": "stay-02",
+    "kind": "stay",
+    "ask": "What is Stay?",
+    "expectIntent": [
+      "stay_question"
+    ],
+    "deterministic": true
+  },
+  {
+    "id": "stay-03",
+    "kind": "stay",
+    "ask": "Why should I use you and not ChatGPT?",
+    "expectIntent": [
+      "stay_question"
+    ],
+    "deterministic": true
+  },
+  {
+    "id": "stay-04",
+    "kind": "stay",
+    "ask": "Can you see my screen?",
+    "expectIntent": [
+      "stay_question"
+    ],
+    "deterministic": true
+  },
+  {
+    "id": "stay-05",
+    "kind": "stay",
+    "ask": "Do you remember what I tell you?",
+    "expectIntent": [
+      "stay_question"
+    ],
+    "deterministic": true
+  },
+  {
+    "id": "stay-06",
+    "kind": "stay",
+    "ask": "Are you a real person?",
+    "expectIntent": [
+      "stay_question"
+    ],
+    "deterministic": true
+  },
+  {
+    "id": "stay-07",
+    "kind": "stay",
+    "ask": "What languages do you speak?",
+    "expectIntent": [
+      "stay_question"
+    ],
+    "deterministic": true
+  },
+  {
+    "id": "stay-08",
+    "kind": "stay",
+    "ask": "Do you save my voice?",
+    "expectIntent": [
+      "stay_question"
+    ],
+    "deterministic": true
+  },
+  {
+    "id": "stay-09",
+    "kind": "stay",
+    "ask": "How do I show you something?",
+    "expectIntent": [
+      "stay_question"
+    ],
+    "deterministic": true
+  },
+  {
+    "id": "stay-10",
+    "kind": "stay",
+    "ask": "Who made you?",
+    "expectIntent": [
+      "stay_question"
+    ],
+    "deterministic": true
+  },
+  {
+    "id": "taskstart-01",
+    "kind": "taskstart",
+    "ask": "I can't start the email to my landlord.",
+    "expectIntent": [
+      "task_start"
+    ],
+    "threeBeats": true
+  },
+  {
+    "id": "taskstart-02",
+    "kind": "taskstart",
+    "ask": "I keep putting off my taxes.",
+    "expectIntent": [
+      "task_start"
+    ],
+    "threeBeats": true
+  },
+  {
+    "id": "taskstart-03",
+    "kind": "taskstart",
+    "ask": "I need to clean the kitchen but I can't get going.",
+    "expectIntent": [
+      "task_start"
+    ],
+    "threeBeats": true
+  },
+  {
+    "id": "taskstart-04",
+    "kind": "taskstart",
+    "ask": "I have to write my essay and I'm frozen.",
+    "expectIntent": [
+      "task_start"
+    ],
+    "threeBeats": true
+  },
+  {
+    "id": "taskstart-05",
+    "kind": "taskstart",
+    "ask": "I've been avoiding calling the dentist.",
+    "expectIntent": [
+      "task_start"
+    ],
+    "threeBeats": true
+  },
+  {
+    "id": "taskstart-06",
+    "kind": "taskstart",
+    "ask": "I need to email my boss back and I keep stalling.",
+    "expectIntent": [
+      "task_start"
+    ],
+    "threeBeats": true
+  },
+  {
+    "id": "taskstart-07",
+    "kind": "taskstart",
+    "ask": "Help me start my CV.",
+    "expectIntent": [
+      "task_start"
+    ],
+    "threeBeats": true
+  },
+  {
+    "id": "taskstart-08",
+    "kind": "taskstart",
+    "ask": "I can't begin the report.",
+    "expectIntent": [
+      "task_start"
+    ],
+    "threeBeats": true
+  },
+  {
+    "id": "taskstart-09",
+    "kind": "taskstart",
+    "ask": "I keep avoiding paying the bills.",
+    "expectIntent": [
+      "task_start"
+    ],
+    "threeBeats": true
+  },
+  {
+    "id": "taskstart-10",
+    "kind": "taskstart",
+    "ask": "I need to study for my exam but I can't start.",
+    "expectIntent": [
+      "task_start"
+    ],
+    "threeBeats": true
+  }
+]

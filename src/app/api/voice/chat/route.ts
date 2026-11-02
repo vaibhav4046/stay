@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { detectCrisisSignal, detectMedicationAdviceRequest } from '@/lib/safety/crisis';
 import { APP_TOOL, buildServerVoiceSystemPrompt } from '@/lib/voice/agentTool';
+import { carriesAnswer } from '@/lib/conversation/sse';
 import { llmHeaders } from '@/lib/llm/provider';
 import { openLlmStream } from '@/lib/llm/stream';
 import { resolveDeterministicVoice, createDeterministicSseResponse } from '@/lib/voice/deterministicVoiceFallback';
@@ -50,6 +51,7 @@ function createResilientStream(incoming: ReadableStream<Uint8Array>, lastUser: s
   const encoder = new TextEncoder();
   let emittedMeaningfulChunk = false;
   let buffered = '';
+  let sseTail = ''; // the last, possibly unfinished, line of the stream
 
   return new ReadableStream({
     async start(controller) {
@@ -57,6 +59,7 @@ function createResilientStream(incoming: ReadableStream<Uint8Array>, lastUser: s
         while (true) {
           const { done, value } = await reader.read();
           if (done) {
+            if (!emittedMeaningfulChunk && carriesAnswer([sseTail])) emittedMeaningfulChunk = true;
             if (!emittedMeaningfulChunk) {
               // the stream ended with no answer: say so, never invent one
               console.warn('[stay] empty_model_stream');
@@ -107,12 +110,10 @@ function createResilientStream(incoming: ReadableStream<Uint8Array>, lastUser: s
             break;
           }
 
-          if (
-            (text.includes('"content":"') && !text.includes('"content":""')) ||
-            text.includes('"tool_calls":')
-          ) {
-            emittedMeaningfulChunk = true;
-          }
+          sseTail += text;
+          const lines = sseTail.split('\n');
+          sseTail = lines.pop() ?? '';
+          if (carriesAnswer(lines)) emittedMeaningfulChunk = true;
 
           controller.enqueue(value);
         }
@@ -195,7 +196,7 @@ export async function POST(req: NextRequest) {
   const intent = classifyIntent(lastUser, { hasVisualSource: Boolean(image), hasHistory: clientMessages.length > 1 });
   if (intent === 'screen_question' && !image) return createDeterministicSseResponse({ text: NOTHING_SHOWN });
 
-  const serverSystemPrompt = buildServerVoiceSystemPrompt(context);
+  const serverSystemPrompt = buildServerVoiceSystemPrompt(context, intent);
   // a turn with a picture: the vision model looks at it, no app tools, and the picture goes nowhere else
   const outboundMessages = [
     { role: 'system' as const, content: image ? `${serverSystemPrompt}
