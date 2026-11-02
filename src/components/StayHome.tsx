@@ -10,7 +10,7 @@ import type { CareContext, CoachPlanProposal, CoachSessionRecord, SessionOutcome
 import { buildDeterministicCoachPlan } from '@/lib/coach/strategies';
 import { computeStrategyStats } from '@/lib/coach/patterns';
 import {
-  CRISIS_FIXED_MESSAGE,
+  crisisMessage,
   detectCrisisSignal,
   detectImpulsiveActionRisk,
   detectSensoryGroundingRequest,
@@ -536,7 +536,7 @@ export function StayHome({
     async (text: string, preferredStrategy?: CoachPlanProposal['strategyKey']) => {
       const t = text.trim();
       if (!t) return;
-      if (detectCrisisSignal(t).triggered) return triggerCrisis(CRISIS_FIXED_MESSAGE);
+      if (detectCrisisSignal(t).triggered) return triggerCrisis(crisisMessage());
       setPlanLoading(true);
       setNote(null);
       try {
@@ -1269,7 +1269,7 @@ export function StayHome({
           {sheet === 'dump' && (
             <BrainDumpSheet
               onClose={() => (closePanel(), voice.dismissDump())}
-              onCrisis={(m) => (setSheet(null), triggerCrisis(m || CRISIS_FIXED_MESSAGE))}
+              onCrisis={(m) => (setSheet(null), triggerCrisis(m || crisisMessage()))}
               onSaved={() => (setToday(loadToday()), (showTodayNext.current = true))}
               live={voice.dump}
               voiceOn={voice.isConnected}

@@ -62,7 +62,7 @@ const PROMISES = [
   { shape: 'house', title: 'Your history stays on your device', body: 'Sessions and memory are stored in your browser. Download or delete all of it in Settings, in one tap.' },
   { shape: 'shield', title: 'No medication advice', body: 'Ask about a dose and Stay says it cannot help and points you to your prescriber or pharmacist.' },
   { shape: 'person', title: 'Not a diagnosis, not a clinician', body: 'Stay is a self-help companion. It never diagnoses and does not replace treatment.' },
-  { shape: 'heart', title: 'If you are in danger, it stops coaching', body: 'Crisis wording pauses everything and shows UK emergency numbers (999, NHS 111, Samaritans 116 123) and findahelpline.com for anywhere else.' },
+  { shape: 'heart', title: 'If you are in danger, it stops coaching', body: 'Crisis wording pauses everything and shows emergency and helpline numbers for where you are (UK, US or Canada), and findahelpline.com for anywhere else.' },
 ];
 
 export function Promises() {
@@ -82,7 +82,7 @@ export function Promises() {
 }
 
 const NOT_FOR = [
-  'Anyone in crisis. Press Urgent help, call 999, or Samaritans on 116 123. Stay is not a crisis service.',
+  'Anyone in crisis. Press Urgent help for numbers in your country, or call your local emergency number. Stay is not a crisis service.',
   'Anyone who wants a calendar or a full planner. Use Tiimo for that.',
   'Anyone who wants advice about medication. Stay will always send you to a prescriber.',
   'Anyone who needs proof it works. It has not been trialled. See above.',

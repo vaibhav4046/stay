@@ -1,3 +1,5 @@
+import { crisisMessageFor, detectRegion } from '@/lib/safety/region';
+
 export interface CrisisCheckResult {
   triggered: boolean;
   matchedPhrase?: string;
@@ -10,38 +12,7 @@ export interface MedicalBoundaryCheckResult {
   message: string;
 }
 
-export const UK_CRISIS_RESOURCES = [
-  {
-    name: 'Emergency Services (UK)',
-    contact: '999',
-    href: 'tel:999',
-    detail: 'Call 999 or go to your nearest A&E if you or someone else is in immediate physical danger.',
-  },
-  {
-    name: 'NHS Mental Health Support',
-    contact: '111',
-    href: 'tel:111',
-    detail: 'Call 111 and select the mental health option for urgent NHS mental health advice.',
-  },
-  {
-    name: 'Samaritans (24/7, free)',
-    contact: '116 123',
-    href: 'tel:116123',
-    detail: 'Free, confidential 24-hour listening support. You can also email jo@samaritans.org.',
-  },
-  {
-    name: 'Shout Crisis Text Line (UK)',
-    contact: 'Text SHOUT to 85258',
-    href: 'sms:85258',
-    detail: 'Free 24/7 text support for anyone in crisis across the UK.',
-  },
-  {
-    name: '988 Suicide & Crisis Lifeline (US & Canada)',
-    contact: '988',
-    href: 'tel:988',
-    detail: 'Free, confidential 24/7 support by call or text across the US and Canada.',
-  },
-] as const;
+export { CRISIS_RESOURCES } from '@/lib/safety/region';
 
 /** Lowercase, strip zero-width chars, unify quotes, collapse whitespace. */
 function normalizeSafetyText(input: string): string {
@@ -142,8 +113,13 @@ const MEDICATION_ADVICE_PATTERNS: Array<{ regex: RegExp; label: string }> = [
   },
 ];
 
-export const CRISIS_FIXED_MESSAGE =
-  'Coaching has paused because what you shared sounds like you may be in crisis or unsafe. Stay is not a crisis service. Please reach out for immediate human support right now: call 999 in an emergency, call NHS 111 for urgent mental health help, or call Samaritans free on 116 123. Outside the UK, call your local emergency number or visit findahelpline.com.';
+/** Every region, for replies built on a server that does not know where the person is. */
+export const CRISIS_FIXED_MESSAGE = crisisMessageFor(null);
+
+/** In the browser: the message for the person's own region. On a server: every region. */
+export function crisisMessage(): string {
+  return crisisMessageFor(detectRegion());
+}
 
 export const MEDICAL_BOUNDARY_FIXED_MESSAGE =
   'Stay can log whether you took your prescribed treatment and any notes you want to show your clinician, but it cannot advise on medication choices, doses, or side effects. Please check your prescription label or speak with your prescribing clinician, GP, or pharmacist.';
@@ -156,14 +132,14 @@ export function detectCrisisSignal(input: string): CrisisCheckResult {
 
   for (const item of CRISIS_PATTERNS) {
     if (item.regex.test(normalized)) {
-      return { triggered: true, matchedPhrase: item.label, message: CRISIS_FIXED_MESSAGE };
+      return { triggered: true, matchedPhrase: item.label, message: crisisMessage() };
     }
   }
   if (MULTILINGUAL_CRISIS_REGEX.test(normalized)) {
-    return { triggered: true, matchedPhrase: 'multilingual crisis phrase', message: CRISIS_FIXED_MESSAGE };
+    return { triggered: true, matchedPhrase: 'multilingual crisis phrase', message: crisisMessage() };
   }
   if (SQUASHED_CRISIS_REGEX.test(squashSafetyText(normalized))) {
-    return { triggered: true, matchedPhrase: 'obfuscated crisis phrase', message: CRISIS_FIXED_MESSAGE };
+    return { triggered: true, matchedPhrase: 'obfuscated crisis phrase', message: crisisMessage() };
   }
 
   return { triggered: false, message: '' };

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { attachGuardHeaders, guardPaidRoute, readBoundedJson } from '@/lib/security/apiGuard';
 import { callLlm, llmHeaders } from '@/lib/llm/provider';
+import { detectCrisisSignal, detectMedicationAdviceRequest } from '@/lib/safety/crisis';
 
 const TranslateBodySchema = z.object({
   text: z.string().min(1).max(2000),
@@ -52,6 +53,12 @@ export async function POST(req: NextRequest) {
   }
 
   const { text, targetLanguage } = parsed.data;
+
+  // the safety gates run before any model, here too: nothing a person said in crisis, or asked about medication, goes to a translator model
+  const safety = detectCrisisSignal(text).triggered ? 'crisis' : detectMedicationAdviceRequest(text).triggered ? 'medication' : null;
+  if (safety) {
+    return attachGuardHeaders(NextResponse.json({ error: `not_translated_${safety}`, safety }, { status: 422 }), guard);
+  }
   const targetLower = targetLanguage.toLowerCase().slice(0, 2);
 
   // Quick dictionary lookup

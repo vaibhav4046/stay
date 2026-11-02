@@ -41,7 +41,7 @@ export function SiteFooter() {
           <StayWordmark />
           <p className="meta mt-3">
             Stay is a self-help and self-tracking tool. It is not a medical device, does not diagnose ADHD, and never gives
-            medication advice. In an emergency call 999.
+            medication advice. In an emergency call your local emergency number (999 in the UK, 911 in the US and Canada).
           </p>
         </div>
         <nav className="flex flex-col gap-2 text-[0.9rem]" aria-label="Product">

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { buildDeterministicFirstStep } from '@/lib/coach/strategies';
 import { fallbackTriage } from '@/lib/coach/triage';
 import { attachGuardHeaders, guardPaidRoute, readBoundedJson } from '@/lib/security/apiGuard';
+import { CRISIS_FIXED_MESSAGE, MEDICAL_BOUNDARY_FIXED_MESSAGE, detectCrisisSignal, detectMedicationAdviceRequest } from '@/lib/safety/crisis';
 
 export const runtime = 'nodejs';
 
@@ -116,6 +117,20 @@ export async function POST(req: NextRequest) {
     if (method === 'tools/call') {
       const toolName = params?.name;
       const args = params?.arguments || {};
+
+      // crisis and medication gates come before any tool, as on every other path
+      const toolInput = [args.taskText, args.rawThoughts].filter((v): v is string => typeof v === 'string').join(' ');
+      const toolSafety = detectCrisisSignal(toolInput).triggered ? 'crisis' : detectMedicationAdviceRequest(toolInput).triggered ? 'medication' : null;
+      if (toolSafety) {
+        return attachGuardHeaders(
+          NextResponse.json({
+            jsonrpc: '2.0',
+            id,
+            result: { isError: false, content: [{ type: 'text', text: JSON.stringify({ safety: toolSafety, message: toolSafety === 'crisis' ? CRISIS_FIXED_MESSAGE : MEDICAL_BOUNDARY_FIXED_MESSAGE }) }] },
+          }),
+          guard
+        );
+      }
 
       if (toolName === 'break_down_task') {
         const taskText = String(args.taskText || 'start task').slice(0, 500);

@@ -144,7 +144,7 @@ export function TreatmentCheckinForm({
       </div>
       {boundary && <p className="notice mt-4" data-testid="checkin-boundary">{boundary}</p>}
       <p className="meta mt-4">
-        Questions about doses or side effects? Ask your prescriber or pharmacist. Feeling unwell: NHS 111. Emergency: 999.
+        Questions about doses or side effects? Ask your prescriber or pharmacist. Feeling unwell? Contact a doctor or pharmacist. In an emergency, call your local emergency number.
       </p>
     </form>
   );

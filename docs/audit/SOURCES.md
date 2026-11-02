@@ -119,3 +119,16 @@ Verified on **2026-11-01** against upstream AssemblyAI and LiveKit documentation
   - "LiveKit Phone Numbers currently only supports inbound calling."
   - Python plugin: `uv add "livekit-agents[assemblyai]~=1.8"`, `assemblyai.STT(model="universal-3-6-pro")`, `assemblyai.TTS(model="assemblyai-tts-1", voice="<UUID>", language="english", sample_rate=24000)`.
   - Custom cloned voices require the AssemblyAI plugin (not LiveKit Inference).
+
+---
+
+## Crisis contacts (T0.3), checked 2026-11-02
+
+Search results only; the owner should open each page once before release (the master prompt marks these numbers "re-check").
+
+- **NHS 111, mental health option (England):** https://www.nhs.uk/mental-health/feelings-symptoms-behaviours/behaviours/help-for-suicidal-thoughts/ and several NHS trust pages ("call 111 and choose the mental health option"; some say option 2). Wording in the app: "choose the mental health option (option 2 in most of England)". Scotland, Wales and Northern Ireland have their own routes; the app does not claim they use option 2.
+- **Samaritans 116 123, 24/7, free:** https://www.samaritans.org (listed by NHS pages above).
+- **Shout, text SHOUT to 85258, 24/7, UK:** https://giveusashout.org
+- **988, Canada (call or text, English and French):** https://988.ca/about ; **988, US (call or text):** the US 988 Suicide & Crisis Lifeline; the search did not return a US page, so this one rests on common knowledge until the owner opens https://988lifeline.org.
+- **Anywhere else:** https://findahelpline.com (lists the Canadian 988 service, so it is a live directory).
+- Region choice: browser time zone first, then the language's country; unknown shows every region (src/lib/safety/region.ts).
