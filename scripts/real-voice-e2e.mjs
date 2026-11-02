@@ -204,8 +204,7 @@ try {
     console.log(JSON.stringify({ endOfSpeechToStaySpeakingMs: reply1Ms, appMarksAfterEndOfSpeech: afterEnd, micToSocket: micLag }, null, 2));
     throw new Error('ONLY_TASK: stopped after the first turn on purpose');
   }
-  await page.screenshot({ path: `${OUT}/04-stay-speaking.png` });
-  await page.waitForTimeout(300);
+  await page.screenshot({ path: `${OUT}/04-stay-speaking.png` }); // then straight to the interruption: replies are short, so do not wait
 
   // --- turn 2: talk over Stay
   log('person talks over Stay');
