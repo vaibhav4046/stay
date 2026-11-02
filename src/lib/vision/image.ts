@@ -16,8 +16,16 @@ export function isImageDataUrl(s: unknown): s is string {
 const VISUAL_CUE =
   /\b(?:see|seeing|look|looks|looking|watch|show(?:ing)?|screen|picture|photo|image|camera|what(?:'s| is) (?:on|wrong with)|read (?:it|this|that)|is this (?:right|ok|okay|good)|help me with (?:this|that))\b/i;
 
+/**
+ * Pointing at something on the shared screen without saying "look": "what do you think of this?", "how do I fix this", "which one",
+ * "what should I write here?". Without these Stay answered such questions blind while the screen was shared (field test, 2 Nov 2026).
+ * Feelings about "this" ("this is so hard", "I can not start this") are not pointing.
+ */
+const POINTING =
+  /\b(?:what do you think (?:of|about) (?:this|that|it)\b|how (?:do|can|would|should) i (?:fix|change|do|use|fill|answer|write|get past|solve) (?:this|that|it)\b|which (?:one|option|button|link|tab|of these)\b|what should i (?:write|type|click|pick|choose|say|put|do here)\b|(?:write|type|click|put) here\b|this (?:error|message|button|page|form|email|line|code|slide|tab|bit|part|field|option|thing on|screen)\b|does (?:this|it) (?:make sense|look|read)\b|(?:check|review|read) (?:this|that) (?:for me|over|please)\b|is (?:this|that) (?:email|message|text|reply) (?:ok|okay|good|fine|right)\b)/i;
+
 export function looksVisual(text: string): boolean {
-  return VISUAL_CUE.test(text);
+  return VISUAL_CUE.test(text) || POINTING.test(text);
 }
 
 /** "Look at my screen", "share my screen", "use the camera", "what do you see": the person wants Stay to see something. */

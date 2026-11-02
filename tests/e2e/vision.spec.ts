@@ -113,10 +113,12 @@ test.describe('Vision: show Stay a screen, the camera or a picture', () => {
     const seen = await openHome(page);
     await page.getByTestId('attach-button').click();
     await page.getByTestId('share-camera').click();
+    // sharing now turns the voice on; this person says no to the microphone and keeps typing
+    await page.getByTestId('consent-text-only').click();
     const bar = page.getByTestId('share-bar');
     await expect(bar).toBeVisible();
     await expect(bar).toHaveAttribute('data-share-mode', 'camera');
-    await expect(bar).toContainText('Stay only looks when you ask');
+    await expect(bar).toContainText('it only looks when you ask');
     await expect.poll(() => page.evaluate(() => (document.querySelector('[data-testid="share-preview"]') as HTMLVideoElement).readyState), { timeout: 8000 }).toBeGreaterThanOrEqual(2);
     await page.getByTestId('look-now').click();
     await expect.poll(() => seen.length, { timeout: 8000 }).toBe(1);
@@ -135,6 +137,7 @@ test.describe('Vision: show Stay a screen, the camera or a picture', () => {
     expect(seen).toHaveLength(0);
 
     await page.getByTestId('share-screen').click();
+    await page.getByTestId('consent-text-only').click(); // no microphone: sharing still works by typing
     await expect(page.getByTestId('share-bar')).toHaveAttribute('data-share-mode', 'screen');
     await expect.poll(() => page.evaluate(() => (document.querySelector('[data-testid="share-preview"]') as HTMLVideoElement).readyState), { timeout: 8000 }).toBeGreaterThanOrEqual(2);
 

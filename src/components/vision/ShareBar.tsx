@@ -35,7 +35,7 @@ export function ShareBar({ mode, stream, videoRef, glance, onGlance, onLook, onS
           <span className="h-2 w-2 shrink-0 rounded-full bg-accent shadow-[0_0_10px_rgb(143_211_255/0.9)]" aria-hidden="true" />
           {mode === 'screen' ? 'Sharing your screen' : 'Camera is on'}
         </p>
-        <p className="meta">Stay only looks when you ask, or press Look now.</p>
+        <p className="meta">With voice on, Stay looks once to start. After that it only looks when you ask, or press Look now.</p>
       </div>
       <label className="flex cursor-pointer items-center gap-2 text-xs text-ink-2">
         <input type="checkbox" className="h-4 w-4 accent-[#8FD3FF]" checked={glance} onChange={(e) => onGlance(e.target.checked)} data-testid="glance-toggle" />
