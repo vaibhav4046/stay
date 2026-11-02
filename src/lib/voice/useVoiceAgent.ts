@@ -184,6 +184,9 @@ export const NATIVE_VOICE_FOR_LANG: Record<string, string> = NATIVE_PERSONA_FOR_
  * silent when pinned, so they use the browser's speech recognition instead.
  */
 export const AGENT_VERIFIED_LANGS = ['en', 'es', 'fr', 'de', 'it', 'pt', 'hi', 'ja', 'zh', 'ko', 'nl', 'ru', 'tr', 'ar', 'sv', 'no', 'da', 'fi', 'ro', 'vi', 'id', 'ms', 'he'] as const;
+/** Languages the fast path hears but the voice cannot speak: replies are written in Roman letters and spoken by the English voice. */
+const FAST_HEARS_ONLY = new Set(['hi']);
+
 export function isAgentVerifiedLanguage(code: string): boolean {
   return (AGENT_VERIFIED_LANGS as readonly string[]).includes(code.split('-')[0].toLowerCase());
 }
@@ -473,6 +476,8 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const expectedAudioDurationMsRef = useRef<number>(0);
   const replyDoneReceivedRef = useRef<boolean>(false);
   const playbackClockLockedRef = useRef<boolean>(false);
+  /** where in the player's timeline (ms of audio rendered since the call began) this reply's first sample plays */
+  const replyStartPositionMsRef = useRef<number>(0);
   const replyEpochRef = useRef<number>(0);
   const interruptedAtRef = useRef<number>(0);
   const captionTickerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -2200,8 +2205,12 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           if ((window as unknown as { __stayFastDebug?: boolean }).__stayFastDebug) {
             (window as unknown as { __stayPlayback?: unknown }).__stayPlayback = { underflows: t.underflowCount, prebufferMs: t.prebufferMs, bufferedMs: t.bufferedMs, state: t.state };
           }
-          if (t.state === 'PLAYING' && !playbackClockLockedRef.current && speechAudioStartTimeRef.current > 0) {
-            speechAudioStartTimeRef.current = performance.now() - pcmPlayer.getPlaybackPositionMs();
+          // The player's position counts every sample since the call began, so the reply's own clock is measured from where its first
+          // sample sits. Using the raw position made every reply after the first reveal its words seconds early (field test, 2 Nov 2026:
+          // "the full sentences came in one go"), and more so the longer the call went on.
+          const intoReplyMs = pcmPlayer.getPlaybackPositionMs() - replyStartPositionMsRef.current;
+          if (t.state === 'PLAYING' && !playbackClockLockedRef.current && speechAudioStartTimeRef.current > 0 && intoReplyMs >= 0) {
+            speechAudioStartTimeRef.current = performance.now() - intoReplyMs;
             playbackClockLockedRef.current = true;
           }
           if (t.state === 'STOPPED' || (t.state === 'BUFFERING' && t.bufferedMs === 0)) {
@@ -2222,8 +2231,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       // which detects the spoken language itself.
       const uiLang = selectedLanguageRef.current === 'auto' ? (typeof navigator !== 'undefined' ? navigator.language : 'en') : selectedLanguageRef.current;
       const fastLangBase = (uiLang || 'en').split('-')[0].toLowerCase();
-      const useFast = fastVoiceRef.current && Boolean(FAST_TTS_LANGUAGE[fastLangBase]);
-      const speech = planSpeech(selectedVoiceRef.current, fastLangBase, cachedTtsCaps());
+      // Hindi is heard by the fast path too (2 Nov 2026, live: 3 of 3 Hindi sentences transcribed correctly, first audio about 1.3 to 1.5 s,
+      // against about 3.3 s through the managed agent). The voice cannot speak Hindi, so replies come as Hinglish in the English voice.
+      const fastHears = Boolean(FAST_TTS_LANGUAGE[fastLangBase]) || FAST_HEARS_ONLY.has(fastLangBase);
+      const useFast = fastVoiceRef.current && fastHears;
+      const speech = planSpeech(selectedVoiceRef.current, FAST_TTS_LANGUAGE[fastLangBase] ? fastLangBase : 'en', cachedTtsCaps());
       const longQuery = companionRef.current ? '?long=1' : '';
       const tokenRes = await fetch(`/api/voice/${useFast ? 'fast-token' : 'token'}${longQuery}`, {
         method: 'POST',
@@ -2671,6 +2683,10 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
             setVisualState('speaking');
             dispatchVoiceEvent({ type: 'assistant_started' });
             const chunkDurationMs = (b64.length * 0.75) / 48; // 24kHz 16-bit mono = 48 bytes per ms
+            if (speechAudioStartTimeRef.current === 0 && pcmPlayerRef.current) {
+              // this reply starts after whatever is still queued from before
+              replyStartPositionMsRef.current = pcmPlayerRef.current.getPlaybackPositionMs() + pcmPlayerRef.current.getBufferedMs();
+            }
             expectedAudioDurationMsRef.current += chunkDurationMs;
             scheduleAgentPcmChunk(b64);
 

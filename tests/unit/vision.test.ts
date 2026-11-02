@@ -38,6 +38,11 @@ describe('vision: what may be sent', () => {
 });
 
 describe('vision: when a shared screen is looked at', () => {
+  it('pointing at something on the shared screen carries a frame too (field test: "it looks gimmick", Stay answered blind)', () => {
+    for (const t of ['what do you think of this?', 'how do I fix this', 'which one should I pick', 'what should I write here?', 'what does this error mean', 'does this make sense', 'is this email okay to send', 'what should I click', 'this button does nothing', 'can you check this for me']) expect(looksVisual(t), t).toBe(true);
+    for (const t of ['I can not start this', 'this is so hard', 'I hate this week', 'what do you think about procrastination', 'how do I stop avoiding things']) expect(looksVisual(t), t).toBe(false);
+  });
+
   it('turns that point at the screen carry a frame; ordinary talk does not', () => {
     for (const t of ['what do you see', 'look at this', 'is this right?', 'read it for me', 'help me with this', "what's on my screen", 'what is wrong with this form']) expect(looksVisual(t), t).toBe(true);
     for (const t of ['I keep putting off the email', 'I feel overwhelmed', 'yes', 'start a five minute timer', 'I can not start this']) expect(looksVisual(t), t).toBe(false);

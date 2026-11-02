@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Glide } from '@/components/Glide';
+import { playChime } from '@/lib/sound/chime';
 import type { CareContext, CoachPlanProposal, CoachSessionRecord, SessionOutcome, VoiceVisualState } from '@/types/domain';
 import { buildDeterministicCoachPlan } from '@/lib/coach/strategies';
 import { computeStrategyStats } from '@/lib/coach/patterns';
@@ -339,6 +340,9 @@ export function StayHome({
     voiceRef.current?.setVisionFrame(null);
   }, []);
 
+  // Sharing is a conversation, not a setting (field test: "share my screen... looks gimmick"): sharing turns the voice on (through the
+  // usual consent step) and Stay takes a first look and says what it sees, as soon as both are ready.
+  const shareIntroPendingRef = useRef(false);
   const startSharing = useCallback(
     async (mode: ShareMode) => {
       try {
@@ -347,7 +351,12 @@ export function StayHome({
         stream.getVideoTracks()[0]?.addEventListener('ended', () => stopSharing()); // the browser's own "Stop sharing" button
         setShare({ mode, stream });
         setSheet(null);
-        say(mode === 'screen' ? 'Sharing your screen. Ask me anything about it.' : 'Camera is on. Show me.');
+        if (quietRef.current) {
+          say(mode === 'screen' ? 'Sharing your screen. Ask me anything about it.' : 'Camera is on. Show me.');
+          return;
+        }
+        shareIntroPendingRef.current = true;
+        if (!voiceRef.current?.isConnected) startWithConsentRef.current();
       } catch {
         say('Nothing is shared. You can try again any time.'); // refused or cancelled: that is a fine answer
       }
@@ -369,6 +378,22 @@ export function StayHome({
     [say, sendPicture],
   );
   lookNowRef.current = lookNow;
+
+  // the first look, once the voice is live and the shared picture has a frame (it can take a moment to arrive)
+  useEffect(() => {
+    if (!share || !voice.isConnected || !shareIntroPendingRef.current) return;
+    let tries = 0;
+    const id = window.setInterval(() => {
+      tries += 1;
+      const frame = frameFromVideo(shareVideoRef.current);
+      if (!frame && tries < 15) return;
+      window.clearInterval(id);
+      shareIntroPendingRef.current = false;
+      if (frame) sendPicture(share.mode === 'screen' ? "Here's my screen. What do you see?" : "Here's my camera. What do you see?", frame);
+      else say('I cannot see a picture yet. Ask me again in a moment.');
+    }, 200);
+    return () => window.clearInterval(id);
+  }, [share, voice.isConnected, sendPicture, say]);
 
   const onPictureChosen = useCallback(
     async (file: File | undefined) => {
@@ -670,6 +695,14 @@ export function StayHome({
       if (!voiceRef.current.isConnected) handleStartVoice();
     }, RING_MS);
   }, [handleStartVoice]);
+  // a soft chime when a call connects and when it ends, however it ended (button, call screen, dropped line)
+  const wasConnectedRef = useRef(false);
+  useEffect(() => {
+    if (voice.isConnected === wasConnectedRef.current) return;
+    wasConnectedRef.current = voice.isConnected;
+    playChime(voice.isConnected ? 'connect' : 'end');
+  }, [voice.isConnected]);
+
   const endCall = useCallback(() => {
     window.clearTimeout(ringTimer.current);
     setCallIntent(false);

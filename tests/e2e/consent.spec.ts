@@ -129,6 +129,7 @@ test.describe('T0.5 screen, camera and pictures', () => {
 
     await page.getByTestId('attach-button').click();
     await page.getByTestId('share-camera').click();
+    await page.getByTestId('consent-text-only').click(); // sharing offers voice; this person keeps typing
     await expect(page.getByTestId('share-bar')).toBeVisible();
     expect((await media(page)).camera).toBe(1);
 
@@ -144,6 +145,7 @@ test.describe('T0.5 screen, camera and pictures', () => {
     await onboard(page);
     await page.getByTestId('attach-button').click();
     await page.getByTestId('share-camera').click();
+    await page.getByTestId('consent-text-only').click(); // sharing offers voice; this person keeps typing
     await expect(page.getByTestId('share-bar')).toBeVisible();
     await expect.poll(() => page.evaluate(() => (document.querySelector('[data-testid="share-preview"]') as HTMLVideoElement).readyState), { timeout: 8000 }).toBeGreaterThanOrEqual(2);
 
@@ -164,6 +166,7 @@ test.describe('T0.5 screen, camera and pictures', () => {
     await onboard(page);
     await page.getByTestId('attach-button').click();
     await page.getByTestId('share-camera').click();
+    await page.getByTestId('consent-text-only').click(); // sharing offers voice; this person keeps typing
     await expect(page.getByTestId('share-bar')).toBeVisible();
     await page.getByTestId('stop-share').click();
     await expect(page.getByTestId('share-bar')).toHaveCount(0);

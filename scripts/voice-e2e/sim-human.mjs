@@ -20,7 +20,7 @@ const flag = (n) => args.includes(n);
 const opt = (n, d) => (args.includes(n) ? args[args.indexOf(n) + 1] : d);
 const ECHO = flag('--echo');
 const LANG = opt('--lang', 'en');
-const LANG_SETUP = { en: { voice: 'en-GB-RyanNeural', locale: 'en-GB' }, es: { voice: 'es-ES-AlvaroNeural', locale: 'es-ES' }, fr: { voice: 'fr-FR-HenriNeural', locale: 'fr-FR' }, de: { voice: 'de-DE-ConradNeural', locale: 'de-DE' }, it: { voice: 'it-IT-DiegoNeural', locale: 'it-IT' }, pt: { voice: 'pt-PT-DuarteNeural', locale: 'pt-PT' } };
+const LANG_SETUP = { en: { voice: 'en-GB-RyanNeural', locale: 'en-GB' }, es: { voice: 'es-ES-AlvaroNeural', locale: 'es-ES' }, fr: { voice: 'fr-FR-HenriNeural', locale: 'fr-FR' }, de: { voice: 'de-DE-ConradNeural', locale: 'de-DE' }, it: { voice: 'it-IT-DiegoNeural', locale: 'it-IT' }, pt: { voice: 'pt-PT-DuarteNeural', locale: 'pt-PT' }, hi: { voice: 'hi-IN-MadhurNeural', locale: 'hi-IN' } };
 const VOICE = opt('--voice', LANG_SETUP[LANG]?.voice || 'en-GB-RyanNeural');
 const TURNS = Number(opt('--turns', 4));
 const USE_LLM = !flag('--no-llm');
@@ -55,6 +55,7 @@ async function humanSays(history) {
     fr: ['Euh, je repousse depuis des jours ma réponse à mon propriétaire au sujet du renouvellement.', 'Je ne sais même pas quoi écrire, ça me paraît énorme.', 'D\'accord, peut-être. Quelle serait la première phrase ?', 'Oui. Bon, je m\'y mets tout de suite.'],
     de: ['Ähm, ich schiebe seit Tagen die Antwort an meinen Vermieter wegen der Verlängerung auf.', 'Ich weiß nicht einmal, was ich schreiben soll, es wirkt riesig.', 'Okay, vielleicht. Wie wäre der erste Satz?', 'Ja. Gut, ich fange jetzt an.'],
     it: ['Ehm, rimando da giorni la risposta al mio padrone di casa sul rinnovo.', 'Non so nemmeno cosa scrivere, mi sembra enorme.', 'Va bene, forse. Quale sarebbe la prima frase?', 'Sì. Okay, ci provo adesso.'],
+    hi: ['मैं कई दिनों से अपने मकान मालिक को ईमेल का जवाब देना टाल रहा हूँ।', 'मुझे समझ नहीं आ रहा कि क्या लिखूँ, बहुत भारी लग रहा है।', 'ठीक है, पहली लाइन क्या होनी चाहिए?', 'हाँ, मैं अभी कोशिश करता हूँ।'],
     pt: ['Hum, há dias que adio responder ao meu senhorio sobre a renovação.', 'Nem sei o que escrever, parece enorme.', 'Está bem, talvez. Qual seria a primeira frase?', 'Sim. Pronto, vou tentar agora.'],
   };
   const scripted = SCRIPTS[LANG] || SCRIPTS.en;
@@ -78,7 +79,7 @@ async function humanSays(history) {
 // ---- browser with an injected microphone --------------------------------------------------------------------------------
 let browser;
 for (let i = 0; ; i++) { try { browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required', '--mute-audio'], timeout: 60000 }); break; } catch (e) { if (i >= 3) throw e; console.log('browser launch timed out, retrying'); } }
-const ctx = await browser.newContext({ viewport: { width: 1200, height: 900 }, locale: LANG_SETUP[LANG]?.locale || 'en-GB' });
+const ctx = await browser.newContext({ viewport: { width: 1200, height: 900 }, locale: opt('--locale', LANG_SETUP[LANG]?.locale || 'en-GB') });
 const page = await ctx.newPage();
 if (CPU > 1) await (await ctx.newCDPSession(page)).send('Emulation.setCPUThrottlingRate', { rate: CPU });
 await page.addInitScript(({ debug, sttExtra }) => {

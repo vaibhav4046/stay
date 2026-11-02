@@ -7,6 +7,7 @@
  * The number, unit, comma and sentence rules are English only. For other languages only the cleanup runs, because a rule
  * that is right in English can be wrong in another language.
  */
+import { romanizeDevanagari } from './devanagari';
 
 const ONES = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
 const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
@@ -165,7 +166,8 @@ function spokenEnglish(input: string): string {
   return limitSentences(t);
 }
 
-export function toSpeech(text: string, language = 'english'): string {
+export function toSpeech(rawText: string, language = 'english'): string {
+  const text = romanizeDevanagari(rawText); // the voice cannot say Devanagari in any of its languages; the chat keeps the original
   const english = language.toLowerCase() === 'english';
   const cleaned = (english ? text.replace(/~(?=\s?\d)/g, 'about ') : text) // "~5 min" is "about five minutes"; the cleanup below would drop the mark
     .replace(/```[\s\S]*?```/g, ' ')

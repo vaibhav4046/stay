@@ -33,6 +33,7 @@
   .lp-hero { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 3.5rem; padding-top: 3.5rem; padding-bottom: 4rem; }
   .lp-hero-copy { order: 1; }
   .lp-hero-orb { order: 2; }
+  .lp-hero-example { order: 2; }
 }
 .lp-hero-copy { order: 2; }
 .lp-hero-orb { order: 1; position: relative; width: 100%; max-width: 520px; aspect-ratio: 1; margin-inline: auto; isolation: isolate; }
@@ -468,3 +469,5 @@ i[data-who] { background: var(--who); }
   .lp-stage-pane { transform: none; }
   .lp-wave i { transform: scaleY(calc(var(--h) * 0.6)); }
 }
+/* the example exchange that replaced the dot orb: after the words on a phone, beside them on a wide screen */
+.lp-hero-example { order: 3; width: 100%; max-width: 520px; margin: 0 auto; }

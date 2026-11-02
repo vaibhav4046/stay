@@ -91,19 +91,18 @@ test.describe('STAY Signal: the wave is driven by real audio and tells the truth
       }
     });
     await page.goto('/');
-    await page.getByTestId('hero-orb').hover();
+    await page.getByTestId('hero-example').hover();
     await page.mouse.wheel(0, 1800);
     await page.waitForTimeout(600);
     expect(await page.evaluate(() => (window as unknown as { __gum: number }).__gum)).toBe(0);
   });
 
-  test('reduced motion: the hero shows a still wave and everything still works', async ({ page }) => {
+  test('reduced motion: the hero and its start still work', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
-    await expect(page.getByTestId('hero-orb').locator('canvas').first()).toBeVisible();
+    await expect(page.getByTestId('hero-example')).toBeVisible();
+    await page.getByTestId('hero-input').fill('my taxes');
     await expect(page.getByTestId('hero-start')).toBeVisible();
-    await page.getByTestId('hero-chips').getByRole('button', { name: 'Taxes' }).click();
-    await expect(page.getByTestId('hero-input')).toHaveValue('my taxes');
   });
 });
 
@@ -114,12 +113,12 @@ test.describe('STAY Signal evidence (real screenshots and a measured frame rate)
 
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/');
-    await page.waitForSelector('[data-testid="hero-orb"] canvas');
+    await page.getByTestId('hero-example').waitFor();
     await page.waitForTimeout(1200);
     await page.screenshot({ path: `${SHOTS}/landing-hero-desktop.png` });
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/');
-    await page.waitForSelector('[data-testid="hero-orb"] canvas');
+    await page.getByTestId('hero-example').waitFor();
     await page.waitForTimeout(1200);
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(overflow).toBeLessThanOrEqual(0); // no horizontal scroll on a phone
@@ -172,7 +171,7 @@ test.describe('STAY Signal evidence (real screenshots and a measured frame rate)
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/');
-    await page.waitForSelector('[data-testid="hero-orb"] canvas');
+    await page.getByTestId('hero-example').waitFor();
     await page.waitForTimeout(800);
     await page.screenshot({ path: `${SHOTS}/landing-hero-reduced-motion.png` });
     expect(perf.frames).toBeGreaterThan(30);

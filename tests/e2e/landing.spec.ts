@@ -1,12 +1,9 @@
 import { test, expect, type Page } from '@playwright/test';
 import { CHAPTERS, TRANSCRIPT } from '../../src/components/landing/demoData';
 
-const shapeOf = (page: Page) => page.locator('[data-testid="hero-orb"] [data-shape]').first().getAttribute('data-shape');
-
 async function open(page: Page) {
-  await page.addInitScript(() => localStorage.setItem('stay:playful_orb:v1', '1')); // chip morphing is opt-in
   await page.goto('/', { waitUntil: 'networkidle' });
-  await page.waitForSelector('[data-testid="hero-orb"] canvas');
+  await page.getByTestId('hero-example').waitFor();
 }
 
 test.describe('Landing: five sections', () => {
@@ -28,27 +25,11 @@ test.describe('Landing: five sections', () => {
 });
 
 test.describe('Landing: hero', () => {
-  test('chips reshape the same dots, and one of them becomes the face, still dots only', async ({ page }) => {
+  test('the words typed on the landing page are handed to the app', async ({ page }) => {
     await open(page);
-    const chips = page.getByTestId('hero-chips');
-    await chips.getByRole('button', { name: 'Taxes' }).click();
-    await expect.poll(() => shapeOf(page), { timeout: 8000 }).toBe('coin');
-    await expect(chips.getByRole('button', { name: 'Taxes' })).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.getByTestId('hero-input')).toHaveValue('my taxes');
-    await chips.getByRole('button', { name: 'Overwhelmed' }).click();
-    await expect.poll(() => shapeOf(page), { timeout: 8000 }).toBe('tangle');
-    await page.getByTestId('hero-face').click();
-    await expect.poll(() => shapeOf(page), { timeout: 8000 }).toBe('human');
-    await expect(page.locator('[data-testid="hero-orb"] img, [data-testid="hero-orb"] svg, [data-testid="hero-orb"] video')).toHaveCount(0);
-    // typing takes the face away again
     await page.getByTestId('hero-input').fill('my taxes');
-    await expect.poll(() => shapeOf(page), { timeout: 8000 }).toBe('coin');
-  });
-
-  test('hovering a chip with a mouse previews it', async ({ page }) => {
-    await open(page);
-    await page.getByTestId('hero-chips').getByRole('button', { name: 'No energy' }).hover();
-    await expect.poll(() => shapeOf(page), { timeout: 8000 }).toBe('battery');
+    await page.getByTestId('hero-start').click();
+    await expect(page).toHaveURL(/\/app\/today/);
   });
 });
 
@@ -192,14 +173,11 @@ test.describe('Landing: accessibility and policy', () => {
     expect(errors.filter((e) => !/media|video|codec|mp4|DEMUXER|NotSupported/i.test(e))).toEqual([]);
   });
 
-  test('the keyboard can reach and operate the hero chips and the player', async ({ page }) => {
+  test('the keyboard can reach the hero start and the player', async ({ page }) => {
     await open(page);
     await page.getByTestId('hero-input').focus();
-    await page.keyboard.press('Tab'); // the submit link
-    await page.keyboard.press('Tab'); // first chip
-    await expect(page.getByTestId('hero-chips').getByRole('button').first()).toBeFocused();
-    await page.keyboard.press('Enter');
-    await expect.poll(() => shapeOf(page), { timeout: 8000 }).toBe('coin');
+    await page.keyboard.press('Tab'); // the start link
+    await expect(page.getByTestId('hero-start')).toBeFocused();
     await page.getByTestId('player-bigplay').focus();
     await expect(page.getByTestId('player-bigplay')).toBeFocused();
   });

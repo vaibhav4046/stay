@@ -1,49 +1,24 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import { Signal } from '@/components/Signal';
-import type { OrbTarget } from '@/components/orb/OrbParticles';
-import { useOrbShape } from '@/lib/orb/useOrbShape';
 
-/** What the orb shows on its own until you touch the field: the kind of thing people actually avoid. */
-const INTRO = ['landlord email', 'taxes', 'overwhelmed', 'first step'];
 const HANDOFF_KEY = 'stay_handoff_task';
 
-/** Hover, focus or tap a chip and the same dots become it. Each phrase is matched by the built-in shape library. */
-const CHIPS = [
-  { label: 'Taxes', text: 'my taxes' },
-  { label: 'Overwhelmed', text: 'I feel overwhelmed' },
-  { label: 'Stuck', text: 'stuck on the first step' },
-  { label: 'A landlord email', text: 'landlord email' },
-  { label: 'No energy', text: 'I have no energy' },
-];
+/**
+ * One short exchange, written to show the shape of a Stay reply (a plain acknowledgement, one tiny step, a check-in). It is labelled as an
+ * example; Stay's real replies are generated live and differ each time. This replaced the dot orb that turned typed words into shapes,
+ * which the owner found a distraction from what Stay does (2 Nov 2026).
+ */
+const EXAMPLE = [
+  { who: 'you', text: 'I keep avoiding the email to my landlord.' },
+  { who: 'stay', text: 'That email is hanging over you. Open it and type one word, any word. Want to do that now?' },
+  { who: 'you', text: 'Um… okay, I’ve opened it.' },
+  { who: 'stay', text: 'Good. I’ll stay with you for two minutes while you write the first line.' },
+] as const;
 
 export function Hero() {
-  const orb = useOrbShape();
   const [text, setText] = useState('');
-  const [chip, setChip] = useState<string | null>(null);
-  const [figure, setFigure] = useState<OrbTarget | null>(null);
-  const touched = useRef(false);
-  const pause = useRef<number | undefined>(undefined);
-
-  useEffect(() => {
-    let i = 0;
-    const timers: number[] = [];
-    const tick = () => {
-      if (touched.current) return;
-      if (i < INTRO.length) {
-        orb.feed(INTRO[i], 'typed');
-        i++;
-        timers.push(window.setTimeout(tick, 3300));
-      } else {
-        orb.rest();
-      }
-    };
-    timers.push(window.setTimeout(tick, 1400));
-    return () => timers.forEach((t) => window.clearTimeout(t));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const handoff = () => {
     const trimmed = text.trim();
@@ -56,23 +31,6 @@ export function Hero() {
       // private mode: the app simply opens empty
     }
   };
-
-  const showChip = useCallback(
-    (c: (typeof CHIPS)[number]) => {
-      touched.current = true;
-      setFigure(null);
-      setChip(c.label);
-      orb.feed(c.text, 'typed');
-    },
-    [orb],
-  );
-
-  const showFigure = useCallback(async () => {
-    touched.current = true;
-    setChip('Meet Stay');
-    const m = await import('@/lib/orb/useOrbPresence'); // loaded on demand: it only matters once someone asks to see her
-    setFigure(m.getFigureTarget());
-  }, []);
 
   return (
     <section className="lp-hero lp-wrap" aria-labelledby="hero-title">
@@ -87,15 +45,7 @@ export function Hero() {
           Say the thing you can&apos;t start. Stay turns it into a two-minute step and keeps you company while you do it.
         </p>
 
-        <form
-          className="mt-8 flex max-w-lg flex-col gap-3 sm:flex-row"
-          onSubmit={(e) => {
-            e.preventDefault();
-            touched.current = true;
-            setFigure(null);
-            orb.feed(text, 'typed');
-          }}
-        >
+        <form className="mt-8 flex max-w-lg flex-col gap-3 sm:flex-row" onSubmit={(e) => e.preventDefault()}>
           <label className="sr-only" htmlFor="hero-task">
             What are you putting off?
           </label>
@@ -106,53 +56,13 @@ export function Hero() {
             placeholder="What are you putting off?"
             value={text}
             maxLength={120}
-            onFocus={() => {
-              touched.current = true;
-            }}
-            onChange={(e) => {
-              touched.current = true;
-              setFigure(null);
-              setChip(null);
-              setText(e.target.value);
-              orb.feed(e.target.value, 'partial');
-              // when typing pauses, let any word (not just built-in ones) become a shape
-              window.clearTimeout(pause.current);
-              const v = e.target.value;
-              if (v.trim().length >= 3) pause.current = window.setTimeout(() => orb.feed(v, 'typed'), 700);
-            }}
+            onChange={(e) => setText(e.target.value)}
           />
-          <Link
-            href="/app/today"
-            onClick={handoff}
-            className="btn btn-primary h-12 whitespace-nowrap"
-            data-testid="hero-start"
-          >
+          <Link href="/app/today" onClick={handoff} className="btn btn-primary h-12 whitespace-nowrap" data-testid="hero-start">
             Talk to Stay
           </Link>
         </form>
-        <p className="meta mt-3 max-w-[46ch]">Type what you are avoiding, like taxes, a landlord email or &quot;I&apos;m overwhelmed&quot;, and watch the dots become it. Then continue in Stay by voice or text.</p>
-
-        <div className="lp-chip-row mt-5" role="group" aria-label="Or try one of these" data-testid="hero-chips">
-          {CHIPS.map((c) => (
-            <button
-              key={c.label}
-              type="button"
-              className="chip"
-              aria-pressed={chip === c.label}
-              onPointerEnter={(e) => e.pointerType === 'mouse' && showChip(c)}
-              onFocus={() => showChip(c)}
-              onClick={() => {
-                showChip(c);
-                setText(c.text);
-              }}
-            >
-              {c.label}
-            </button>
-          ))}
-          <button type="button" className="chip lp-chip-face" aria-pressed={chip === 'Meet Stay'} onClick={showFigure} data-testid="hero-face">
-            Meet the face
-          </button>
-        </div>
+        <p className="meta mt-3 max-w-[46ch]">Type it here or just press Talk to Stay and say it out loud. You can switch between voice and typing at any time.</p>
 
         <ul className="lp-proof" aria-label="At a glance">
           <li>Waits through your pauses</li>
@@ -161,9 +71,19 @@ export function Hero() {
         </ul>
       </div>
 
-      <div className="lp-hero-orb" data-testid="hero-orb" style={{ position: 'relative' }}>
-        <Signal state={orb.thinking ? 'thinking' : 'idle'} energy={0} hideLabel shape={figure ?? orb.target} thinking={orb.thinking} className="h-full w-full" />
-      </div>
+      <figure className="lp-hero-example card p-5 sm:p-6" data-testid="hero-example" aria-labelledby="hero-example-caption">
+        <figcaption id="hero-example-caption" className="meta mb-3">
+          An example exchange <span aria-hidden="true">·</span> real replies are generated live
+        </figcaption>
+        <div className="flex flex-col gap-3">
+          {EXAMPLE.map((line, i) => (
+            <div key={i} className={`flex flex-col ${line.who === 'you' ? 'items-end' : 'items-start'}`}>
+              <span className="mb-1 px-1 text-[0.78rem] font-medium text-ink-2">{line.who === 'you' ? 'You' : 'Stay'}</span>
+              <p className={`bubble ${line.who === 'you' ? 'bubble-user' : 'bubble-agent'} max-w-[34ch] px-4 py-2.5 text-[1rem] leading-[1.5]`}>{line.text}</p>
+            </div>
+          ))}
+        </div>
+      </figure>
     </section>
   );
 }
