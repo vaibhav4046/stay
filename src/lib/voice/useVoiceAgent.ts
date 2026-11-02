@@ -748,9 +748,24 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const workletNodeRef = useRef<AudioWorkletNode | null>(null);
   const pcmPlayerRef = useRef<ContinuousPcmPlayer | null>(null);
   const localBargeInRef = useRef(new LocalBargeIn());
-  /** quiet or restore Stay's voice; with the test flag on, remember when it was quieted (epoch ms) so a run can report how fast */
+  /**
+   * The person started talking over Stay: Stay pauses where it is (it used to only get quieter and keep talking under them), and carries
+   * on from the same word if it was only "mm-hm", a cough or its own echo. A real turn cancels the reply as before. The captions'
+   * clock is moved on by the time spent paused, so the words stay in step. With the test flag on, the moment of pausing is recorded.
+   */
+  const heldSinceRef = useRef(0);
   const duckPlayback = useCallback((on: boolean) => {
-    pcmPlayerRef.current?.setDucked(on);
+    const player = pcmPlayerRef.current;
+    if (!player) return;
+    if (on && heldSinceRef.current === 0) {
+      heldSinceRef.current = performance.now();
+      player.setHeld(true);
+    } else if (!on && heldSinceRef.current > 0) {
+      const pausedMs = performance.now() - heldSinceRef.current;
+      heldSinceRef.current = 0;
+      if (speechAudioStartTimeRef.current > 0) speechAudioStartTimeRef.current += pausedMs;
+      player.setHeld(false);
+    }
     const w = window as unknown as { __stayFastDebug?: boolean; __stayDucks?: number[] };
     if (on && w.__stayFastDebug) (w.__stayDucks ??= []).push(Date.now());
   }, []);
@@ -2661,6 +2676,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           }
           setLiveSpokenText('');
           liveSpokenTextRef.current = '';
+          heldSinceRef.current = 0; // a new reply starts unpaused (a pause on the old one ended with its cancel)
           if (!medicationSuppressionRef.current && !dumpApiRef.current.isAgentMuted()) {
             setVisualState('speaking');
             dispatchVoiceEvent({ type: 'assistant_started' });
