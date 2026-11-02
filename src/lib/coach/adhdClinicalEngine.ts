@@ -103,7 +103,7 @@ export const ADHD_CLINICAL_ENCYCLOPEDIA: AdhdResearchEntry[] = [
   {
     id: 'safren-gollwitzer-cbt',
     eraOrYear: '1999 · 2005 · 2010 (JAMA)',
-    title: 'Adult ADHD Cognitive-Behavioral Therapy & If-Then Implementation Intentions',
+    title: 'Adult ADHD cognitive-behavioural skills & if-then implementation intentions',
     researchers: 'Steven A. Safren, Ph.D. (Harvard) & Peter M. Gollwitzer, Ph.D.',
     clinicalMechanism:
       'Randomized controlled trials show that pairing adult ADHD pharmacology or waitlisted care with structured CBT task-shrinking and Gollwitzer "If-Then" implementation intentions bypasses prefrontal deliberation by binding a situational cue directly to a motor response.',

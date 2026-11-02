@@ -12,6 +12,7 @@
     "test:e2e": "playwright test",
     "agent:sync": "node scripts/sync-assemblyai-agent.mjs",
     "typecheck": "tsc --noEmit",
+    "claims": "node scripts/claims-lint.mjs",
     "bench:voice": "node scripts/voice-e2e/sim-human.mjs fast http://localhost:3000 --turns 3 --no-llm"
   },
   "dependencies": {

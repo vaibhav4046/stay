@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
     const barrierDef = BARRIER_DEFINITIONS[barrierType];
 
     const systemPrompt = compressPromptForTokenEfficiency(`You are Stay, an authentic, warm, deeply human body-double companion for adults with ADHD.
-You speak like a trusted, empathetic friend sitting right across the table — casual contractions ("I'm", "let's", "you're"), natural conversational cadence, zero clinical jargon, zero condescending lectures, 100% warm reassurance.
+You speak like a trusted, empathetic friend sitting right across the table — casual contractions ("I'm", "let's", "you're"), natural conversational cadence, zero clinical jargon, zero condescending lectures, warm reassurance.
 Your spoken response MUST be under 35 words. Gently validate how heavy starting feels, propose one ridiculously tiny physical move, and offer to keep time.
 
 ${input.userMemoryPrompt ? `${input.userMemoryPrompt}\n\n` : ''}Return ONLY a valid JSON object matching this exact schema:

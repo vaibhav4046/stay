@@ -5,7 +5,7 @@
  * and focus timer state across page reloads in the browser's localStorage.
  *
  * Privacy & Safety Guarantees:
- * - 100% client-side: never uploads transcripts or uncommitted thoughts to any server.
+ * - Client-side only: never uploads transcripts or uncommitted thoughts to any server.
  * - Zero raw audio: never persists PCM or audio buffers.
  * - Auto-expiry: automatically expires sessions older than 12 hours or from previous days.
  * - Single-wipe: completely wiped when user clicks "Clear" or "Delete all my data".

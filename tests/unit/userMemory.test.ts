@@ -99,6 +99,6 @@ describe('Persistent Cognitive User Memory Engine', () => {
     expect(prompt).toContain('Jordan');
     expect(prompt).toContain('Product Designer');
     expect(prompt).toContain('Clean apartment desk');
-    expect(prompt).toContain('STAY PERSISTENT USER MEMORY & AGI KNOWLEDGE GRAPH');
+    expect(prompt).toContain('STAY PERSISTENT USER MEMORY & KNOWLEDGE GRAPH');
   });
 });

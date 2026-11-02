@@ -1,3 +1,4 @@
+// evidence: docs/bench-results/realproducts/
 /**
  * Every number here is copied from the repository docs, nothing is rounded in Stay's favour:
  *  - docs/BENCHMARK_REAL_PRODUCTS_2026-10-19.md  (Stay vs ChatGPT voice vs Gemini 3.8 Live)
@@ -104,16 +105,7 @@ export const STAY_BEHIND = [
   'It once saved facts nobody said into local memory. That is fixed: a memory is saved only if your last words asked for it.',
 ];
 
-/** Fast voice against the managed voice it replaced (docs/STAY_VERIFICATION and RESEARCH_VOICE_LATENCY). Kept as the original table. */
-export const MEASURED = [
-  { what: 'Reply after you stop talking', fast: 'about 1.3 seconds', old: 'about 2.8 seconds' },
-  { what: 'You pause mid-thought for 2.3 seconds', fast: 'Waits for you', old: 'Talks over the pause' },
-  { what: 'You interrupt it', fast: 'Notices in 0.5 to 0.8 seconds', old: 'Notices in about 1.0 to 1.1 seconds' },
-  { what: '"Park it: call the dentist"', fast: 'Done and confirmed in 1.3 to 3.3 seconds', old: 'Done, confirmed in about 2.9 seconds (an earlier run)' },
-  { what: "Stay's own voice leaks into the microphone", fast: 'It never mistook itself for you (0 stray transcripts in 26)', old: 'None in 27 this time; it once transcribed its own greeting as if you had said it (1 in 10, an earlier run)' },
-];
-
-/** Character error rate of one synthesized sentence per language on auto-detect (STAY_VERIFICATION part 2). */
+/** One synthesized sentence per language on auto-detect (STAY_VERIFICATION part 2). The page shows ticks only: the raw output was not saved. */
 export const LANGS_OK: Array<[string, string, number]> = [
   ['en', 'English', 0], ['es', 'Spanish', 0], ['fr', 'French', 0], ['de', 'German', 0], ['it', 'Italian', 0], ['pt', 'Portuguese', 13],
   ['hi', 'Hindi', 5], ['ja', 'Japanese', 0], ['zh', 'Chinese', 0], ['ko', 'Korean', 0], ['nl', 'Dutch', 0], ['ru', 'Russian', 0],

@@ -12,6 +12,7 @@ jobs:
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - run: npx tsc --noEmit
+      - run: node scripts/claims-lint.mjs
       - run: npx vitest run
       - run: npx next build
   e2e:

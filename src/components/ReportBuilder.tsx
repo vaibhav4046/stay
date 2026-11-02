@@ -22,7 +22,7 @@ const TOGGLES: Array<{ key: keyof ClinicianReportConfig; label: string }> = [
 const CARE_LABEL: Record<CareContext, string> = {
   waitlisted: 'Waiting for assessment or care',
   medicated: 'Taking prescribed ADHD medication',
-  in_therapy: 'In therapy or coaching',
+  in_therapy: 'Working with a coach or counsellor',
   self_managing: 'Self-managing',
   prefer_not_to_say: 'Not specified',
 };

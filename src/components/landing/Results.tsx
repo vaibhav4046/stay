@@ -1,8 +1,9 @@
 'use client';
+// evidence: docs/bench-results/realproducts/
 
 import { useReveal } from './useReveal';
 import { CURRENT } from './currentMeasured';
-import { LANGS_NO, LANGS_OK, MEASURED, PAUSE, SPAN_CARDS, STAY_BEHIND, TALKED_OVER, WHO_LABEL, type SpanCard, type Who } from './resultsData';
+import { LANGS_NO, LANGS_OK, PAUSE, SPAN_CARDS, STAY_BEHIND, TALKED_OVER, WHO_LABEL, type SpanCard, type Who } from './resultsData';
 
 const pct = (v: number, scale: number) => `${Math.min(100, (v / scale) * 100)}%`;
 
@@ -108,23 +109,21 @@ function PauseChart() {
 function Languages() {
   return (
     <div className="lp-langs" data-testid="languages">
-      <ul className="lp-lang-grid" aria-label="Languages verified">
-        {LANGS_OK.map(([code, name, cer]) => (
-          <li key={code} className="lp-lang" data-ok="true" title={`${name}: character error rate ${cer}%`}>
+      <ul className="lp-lang-grid" aria-label="Languages heard correctly">
+        {LANGS_OK.map(([code, name]) => (
+          <li key={code} className="lp-lang" data-ok="true" title={`${name}: heard correctly`}>
             <span className="lp-lang-code">{code}</span>
-            <span className="lp-lang-bar" aria-hidden="true"><b className="lp-grow lp-origin" style={{ width: `${Math.max(cer, 3)}%` }} /></span>
-            <span className="tnum lp-lang-cer">{cer}%</span>
-            <span className="sr-only">{name}</span>
+            <span className="lp-lang-cer" aria-hidden="true">✓</span>
+            <span className="sr-only">{name}, heard correctly</span>
           </li>
         ))}
       </ul>
-      <ul className="lp-lang-grid" aria-label="Languages not verified">
-        {LANGS_NO.map(([code, name, cer]) => (
-          <li key={code} className="lp-lang" data-ok="false" title={`${name}: character error rate ${cer === 100 ? 'about 100' : cer}%`}>
+      <ul className="lp-lang-grid" aria-label="Languages misheard">
+        {LANGS_NO.map(([code, name]) => (
+          <li key={code} className="lp-lang" data-ok="false" title={`${name}: misheard`}>
             <span className="lp-lang-code">{code}</span>
-            <span className="lp-lang-bar" aria-hidden="true"><b className="lp-grow lp-origin" style={{ width: `${cer}%` }} /></span>
-            <span className="tnum lp-lang-cer">{cer === 100 ? '~100%' : `${cer}%`}</span>
-            <span className="sr-only">{name}</span>
+            <span className="lp-lang-cer" aria-hidden="true">✕</span>
+            <span className="sr-only">{name}, misheard</span>
           </li>
         ))}
       </ul>
@@ -181,50 +180,11 @@ export function Results() {
         Not a microphone test: this laptop&apos;s microphone reads silence, so the speaker was injected as the microphone stream. Free tiers and a playground, not paid products. Medians move by a few tenths of a second between runs. These runs used that week&apos;s build. Stay&apos;s voice pipeline has changed since (new speech and voice models, new turn handling) and these numbers have not been re-run, so treat them as history, not as today&apos;s performance. Method, raw reports and every limit: <code>docs/BENCHMARK_REAL_PRODUCTS_2026-10-19.md</code>.
       </p>
 
-      <details className="lp-details">
-        <summary>Voice speed, measured with a simulated speaker</summary>
-        <div className="lp-details-body">
-          <p className="lp-night-copy">Stay&apos;s two voice engines, same simulated speaker: the fast voice (the default) against the managed voice it replaced.</p>
-          <div className="md:hidden"><ul className="lp-mlist">
-            {MEASURED.map((m) => (
-              <li key={m.what}>
-                <p className="font-display font-semibold">{m.what}</p>
-                <p><span className="meta block">Fast voice (default)</span>{m.fast}</p>
-                <p><span className="meta block">The managed voice it replaced</span>{m.old}</p>
-              </li>
-            ))}
-          </ul></div>
-          <div className="hidden overflow-x-auto md:block">
-            <table className="lp-table">
-              <caption className="sr-only">Stay&apos;s two voice engines, measured with the same simulated speaker</caption>
-              <thead>
-                <tr>
-                  <th scope="col"></th>
-                  <th scope="col">Fast voice (default)</th>
-                  <th scope="col">The managed voice it replaced</th>
-                </tr>
-              </thead>
-              <tbody>
-                {MEASURED.map((m) => (
-                  <tr key={m.what}>
-                    <th scope="row">{m.what}</th>
-                    <td>{m.fast}</td>
-                    <td>{m.old}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <p className="lp-limits">
-            Honest limits: the speakers were synthesized voices played into the browser, not people in a room, and the numbers come from a handful of runs on one machine. Sources and the full comparison are in <code>docs/RESEARCH_VOICE_LATENCY.md</code>.
-          </p>
-        </div>
-      </details>
 
       <div className="lp-rhead lp-rhead-gap">
-        <h3 className="sub-title">23 languages heard correctly, 8 that were not</h3>
+        <h3 className="sub-title">Languages checked in a live test</h3>
         <p className="lp-night-copy">
-          One synthesized sentence per language streamed into a live session. Each tile is the share of characters transcribed wrongly (lower is better). Eight languages were misheard, so for those Stay falls back to your browser&apos;s speech recognition, which was not tested here. The provider documents only six languages for its voice agent; the rest are measured, not promised.
+          On 18 October 2026 one synthesized sentence per language was streamed into a live session. A tick means it came back right on auto-detect; a cross means it was misheard, and for those Stay falls back to your browser&apos;s speech recognition, which was not tested here. The raw output of that older test was not saved, so no error rates are shown. The provider documents only six languages for its voice agent; the rest were seen working, not promised.
         </p>
       </div>
       <Languages />

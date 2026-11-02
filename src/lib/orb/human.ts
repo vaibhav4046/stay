@@ -1,5 +1,5 @@
 /**
- * The therapist: a calm, warm, gender-neutral bust (hair, head, neck, shoulders) drawn entirely as dots.
+ * The companion: a calm, warm, gender-neutral bust (hair, head, neck, shoulders) drawn entirely as dots.
  *
  * It is built with the same drawing language as every other shape (signed-distance parts from sdf.ts for the
  * regions, a blue-noise-style sampler so the stipple looks even), plus two things a flat shape does not need:

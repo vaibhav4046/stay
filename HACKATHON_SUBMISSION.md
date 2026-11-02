@@ -27,7 +27,7 @@
 ---
 ## 1. What Stay Is & Who It Helps
 
-Stay is a calm, voice-first companion for adults with ADHD who get stuck starting avoided tasks or blank out when preparing for a doctor, therapist, or coaching appointment. You speak a messy thought in your own language or accent; Stay gives a brief non-shaming acknowledgement, one concrete two-minute next step, and an optional check-in question — or interviews you in five minutes to build a one-page appointment handout in your own words.
+Stay is a calm, voice-first companion for adults with ADHD who get stuck starting avoided tasks or blank out when preparing for a doctor, counsellor, or coaching appointment. You speak a messy thought in your own language or accent; Stay gives a brief non-shaming acknowledgement, one concrete two-minute next step, and an optional check-in question — or interviews you in five minutes to build a one-page appointment handout in your own words.
 
 ---
 

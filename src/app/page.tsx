@@ -67,6 +67,7 @@ export default function Home() {
               <h3 id="measured-title" className="section-title lp-night-title max-w-[24ch]">What we tested</h3>
             <ul className="lp-night-copy mt-6 max-w-[66ch] space-y-3">
               <li><strong className="lp-night-strong">Safety first.</strong> Unit and browser suites (recorded in <code>docs/evidence/phase0-vitest.txt</code> and <code>docs/evidence/phase0-playwright.txt</code>) verify crisis wording in more than 30 languages against real phrasings and ordinary sentences that must not trigger, spacing-evasion protection, the medication boundary, and the rule that voice never deletes your data.</li>
+              {/* evidence: docs/bench-results/realproducts/ */}
               <li><strong className="lp-night-strong">Patience.</strong> A simulated speaker trailed off mid-sentence for 2.3 seconds, in several accents with room noise. Stay waited in every run. The managed voice it replaced talked over the pause (<code>docs/BENCHMARK_REAL_PRODUCTS_2026-10-19.md</code>).</li>
               <li><strong className="lp-night-strong">Honesty.</strong> Every number below comes from a script in the repository (<code>docs/evidence/</code>), and the tests that found our own mistakes are in it too.</li>
             </ul>

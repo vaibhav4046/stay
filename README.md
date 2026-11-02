@@ -19,7 +19,7 @@ Built on **AssemblyAI Universal-3.6 Pro Streaming STT**, **AssemblyAI-TTS-1 Stre
    - `SpeechStarted` after a 250 ms echo guard ducks playback; the first non-backchannel partial or stop word (`"stop"`, `"wait"`, `"pause"`, `"hold on"`, `"actually"`) sends `Cancel`, flushes the AudioWorklet ring buffer, and splits `heardText` vs `unheardText` using rendered sample counts (`docs/voice/VOICE_PROOF.md`).
 4. **Deterministic Wispr-Style Voice Corrections & "My Words".**
    - Say `"scratch that"`, `"actually, change that to..."`, `"repeat the last thing"`, or `"show me what you heard"` to edit turns in place with an Undo toast, without creating duplicate bubbles. Add custom vocabulary in Settings → My Words (`keyterms_prompt`).
-5. **"Prepare for a Visit" (Doctor / Therapist / Coach).**
+5. **"Prepare for a Visit" (Doctor / Counsellor / Coach).**
    - A 7-question voice or text interview that organizes your top 3 questions, recent dated examples, what helped or didn't, and medications *verbatim as you described them* into a one-page PDF handout with a personal-notes disclaimer.
 
 ## Safety and Privacy

@@ -197,7 +197,7 @@ export function clearAllUserMemories(): UserMemoryProfile {
 }
 
 /**
- * Builds the comprehensive AGI Memory System Prompt block.
+ * Builds the persistent memory block for the system prompt.
  * Injected into both Voice Agent WebSocket and /api/coach/plan.
  */
 export function buildMemorySystemPrompt(profile: UserMemoryProfile): string {
@@ -215,7 +215,7 @@ export function buildMemorySystemPrompt(profile: UserMemoryProfile): string {
     : '• No prior sessions recorded yet.';
 
   return `
-[STAY PERSISTENT USER MEMORY & AGI KNOWLEDGE GRAPH]
+[STAY PERSISTENT USER MEMORY & KNOWLEDGE GRAPH]
 ${nameLine}
 ${roleLine ? roleLine + '\n' : ''}• Known ADHD Avoidance Traps: ${triggers || 'None recorded'}.
 • Known Working Strengths: ${strengths || 'None recorded'}.

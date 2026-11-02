@@ -99,7 +99,7 @@ function build(): CoachSessionRecord[] {
       const p = Math.min(0.95, Math.max(0.08, BASE[strategyKey] + hourEffect(hour) - (rough ? 0.25 : 0)));
       const x = r();
       const outcome: SessionOutcome = x < p * 0.72 ? 'started' : x < p ? 'partly_started' : r() < 0.3 ? 'paused_or_stopped' : 'not_started';
-      const won = outcome === 'started' || outcome === 'partly_started';
+      const didStart = outcome === 'started' || outcome === 'partly_started';
       const minute = Math.floor(r() * 50);
       out.push({
         id: `sample-${d}-${k}`,
@@ -113,9 +113,9 @@ function build(): CoachSessionRecord[] {
         strategyKey,
         firstStep: task.step,
         plannedMinutes: task.minutes,
-        actualSeconds: won ? task.minutes * 60 - Math.floor(r() * 120) : null,
+        actualSeconds: didStart ? task.minutes * 60 - Math.floor(r() * 120) : null,
         outcome,
-        helpfulRating: won ? 3 + Math.floor(r() * 3) : null,
+        helpfulRating: didStart ? 3 + Math.floor(r() * 3) : null,
         crisisTriggered: false,
         isSample: true,
       });

@@ -114,7 +114,7 @@ const PLATFORMS: Array<{ id: string; shape: string; name: string; status: Platfo
     name: 'Installed web app',
     status: 'installable',
     badge: 'Installable now',
-    body: 'Add it to your home screen or install it from the browser menu. It opens in its own window with shortcuts for Talk, a 20 minute block and Ground me. The app shell opens offline; voice and plans need the network. We have not tested installing on every device.',
+    body: 'Add it to your home screen or install it from the browser menu. It opens in its own window with shortcuts for Talk, a 20 minute block and Ground me. The app shell opens offline; voice and plans need the network. We have not tested installing on every device.', // claims-lint-allow: a timer length in the app, not a measurement
   },
   { id: 'desktop', shape: 'laptop', name: 'Desktop app', status: 'not-built', badge: 'Not available yet', body: 'A desktop wrapper is being built but is not released, and there is nothing to download. On desktop Chrome or Edge, the installed web app is the closest thing today.' },
   { id: 'mobile', shape: 'rocket', name: 'iPhone and Android app', status: 'not-built', badge: 'Not available yet', body: 'A phone wrapper is being built but is not released: no store listing, nothing to download. The installed web app is the mobile version today.' },
