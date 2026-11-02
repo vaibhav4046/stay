@@ -161,15 +161,20 @@ export function SignalWave({ state, height = 56, className = '', getLevels = rea
     };
   }, [height]);
 
+  // The canvas is sized from its wrapper, never from itself. As a plain "w-full" canvas inside a shrink-to-fit flex parent (the mic
+  // button) it grew to about 1,300 px while a call was live and pushed the call controls off the screen (field test, 2 Nov 2026).
+  // Absolutely positioned, it cannot affect the wrapper's size; a width the caller gave (w-10) is not overridden by w-full.
+  const widthClass = /(^|\s)(?:\w+:)?w-/.test(className) ? '' : 'w-full';
+  const displayClass = /(^|\s)(?:\w+:)?(?:block|hidden|flex|inline)/.test(className) ? '' : 'block'; // a caller's own display rule (hidden, sm:block) wins
   return (
-    <canvas
-      ref={canvasRef}
-      aria-hidden="true"
-      data-testid="signal-wave"
-      data-signal-state={state}
-      data-drive="0.00"
-      className={`block w-full ${className}`}
-      style={{ height }}
-    />
+    <span className={`relative ${displayClass} ${widthClass} ${className}`} style={{ height }} aria-hidden="true">
+      <canvas
+        ref={canvasRef}
+        data-testid="signal-wave"
+        data-signal-state={state}
+        data-drive="0.00"
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }}
+      />
+    </span>
   );
 }

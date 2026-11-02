@@ -5,7 +5,7 @@
 //     cancellation (our injected stream bypasses it), so this is a worst case for self-interruption.
 //   - Scenarios: normal turns, a patient pause mid-sentence (must not be talked over), a barge-in, a spoken app command.
 // Reports, per turn, time from the end of the human's speech to the first reply audio, measured outside the app.
-// Usage: node scripts/voice-e2e/sim-human.mjs <engine: agent|fast> <baseURL> [--echo] [--voice en-GB-RyanNeural] [--turns 4] [--no-llm]
+// Usage: node scripts/voice-e2e/sim-human.mjs <engine: agent|fast> <baseURL> [--echo] [--voice en-GB-RyanNeural] [--turns 4] [--no-llm] [--cpu 4]
 // Needs the app running (npm run start), edge-tts via uv, ffmpeg, GROQ_API_KEY in .env.local.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -24,6 +24,7 @@ const LANG_SETUP = { en: { voice: 'en-GB-RyanNeural', locale: 'en-GB' }, es: { v
 const VOICE = opt('--voice', LANG_SETUP[LANG]?.voice || 'en-GB-RyanNeural');
 const TURNS = Number(opt('--turns', 4));
 const USE_LLM = !flag('--no-llm');
+const CPU = Number(opt('--cpu', 1)); // field test 2 Nov 2026 ("voice is breaking"): 4 = a phone-class CPU, 6 = a weak one. Reported as underruns below
 const work = path.join((await import('node:os')).tmpdir(), 'stay-sim-human'); // not under test-results: Playwright empties that folder
 fs.mkdirSync(work, { recursive: true });
 
@@ -79,8 +80,11 @@ let browser;
 for (let i = 0; ; i++) { try { browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required', '--mute-audio'], timeout: 60000 }); break; } catch (e) { if (i >= 3) throw e; console.log('browser launch timed out, retrying'); } }
 const ctx = await browser.newContext({ viewport: { width: 1200, height: 900 }, locale: LANG_SETUP[LANG]?.locale || 'en-GB' });
 const page = await ctx.newPage();
+if (CPU > 1) await (await ctx.newCDPSession(page)).send('Emulation.setCPUThrottlingRate', { rate: CPU });
 await page.addInitScript(({ debug, sttExtra }) => {
   window.__stayFastDebug = debug;
+  window.__longTasks = [];
+  try { new PerformanceObserver((l) => { for (const e of l.getEntries()) window.__longTasks.push(Math.round(e.duration)); }).observe({ type: 'longtask', buffered: true }); } catch { /* not supported */ }
   if (sttExtra) window.__stayFastSttExtra = sttExtra;
   const ac = new AudioContext({ sampleRate: 24000 });
   const dest = ac.createMediaStreamDestination();
@@ -209,6 +213,14 @@ async function collectStages(tEnd, wireAudio) {
   row.play1 = after(marks.p.find((t) => t >= tEnd - 50));
   return row;
 }
+// "Is the voice breaking?": underruns are the times the speaker ran out of audio mid-reply (a click or a gap); long tasks are the
+// page blocking its own main thread (they delay the AudioWorklet's feed). Both are read from the page, nothing is inferred.
+async function printPlaybackHealth() {
+  const h = await page.evaluate(() => ({ pb: window.__stayPlayback || null, tasks: window.__longTasks || [] })).catch(() => null);
+  if (!h) return;
+  const over = h.tasks.filter((d) => d >= 100);
+  console.log(`PLAYBACK HEALTH (cpu x${CPU}): underruns ${h.pb ? h.pb.underflows : 'unknown'}; prebuffer ${h.pb ? Math.round(h.pb.prebufferMs) + ' ms' : 'unknown'}; long tasks ${h.tasks.length} (>=100 ms: ${over.length}, longest ${Math.max(0, ...h.tasks)} ms)`);
+}
 function printStages() {
   if (!stageRows.length) return;
   const med = (xs) => { xs = xs.filter((x) => x != null).sort((a, b) => a - b); return xs.length ? xs[Math.floor(xs.length / 2)] : null; };
@@ -235,6 +247,7 @@ if (flag('--turns-only')) { // other languages: ordinary turns only (the pause, 
   latencies.sort((x, y) => x - y);
   if (flag('--dump')) dump();
   printStages();
+  await printPlaybackHealth();
   console.log(`
 SUMMARY engine=${engine} lang=${LANG}: ordinary-turn first audio ${latencies.length ? `median ${latencies[Math.floor(latencies.length / 2)]} ms (n=${latencies.length}; ${latencies.join(', ')})` : 'none'}`);
   await browser.close();
@@ -295,6 +308,7 @@ SUMMARY engine=${engine} lang=${LANG}: ordinary-turn first audio ${latencies.len
 
 if (flag('--dump')) dump();
 printStages();
+await printPlaybackHealth();
 latencies.sort((a, b) => a - b);
 console.log(`\nSUMMARY engine=${engine}${ECHO ? '+echo' : ''}: ordinary-turn first audio ${latencies.length ? `median ${latencies[Math.floor(latencies.length / 2)]} ms (n=${latencies.length}; ${latencies.join(', ')})` : 'none'}`);
 await browser.close();

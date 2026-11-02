@@ -6,6 +6,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Glide } from '@/components/Glide';
 import type { CareContext, CoachPlanProposal, CoachSessionRecord, SessionOutcome, VoiceVisualState } from '@/types/domain';
 import { buildDeterministicCoachPlan } from '@/lib/coach/strategies';
 import { computeStrategyStats } from '@/lib/coach/patterns';
@@ -978,6 +979,7 @@ export function StayHome({
       </div>
 
       {/* The orb: speak straight to it. Large when the screen is empty, a small one above the conversation once it starts. */}
+      <Glide token={chatActive}>
       <div
         className={
           chatActive
@@ -992,6 +994,8 @@ export function StayHome({
           onClick={toggleVoice}
           aria-label={voice.isConnected ? 'Stop listening' : 'Talk to Stay'}
           aria-pressed={voice.isConnected}
+          data-glide="orb"
+          data-glide-scale=""
           data-testid="orb-button"
           className={`relative aspect-square shrink-0 overflow-hidden rounded-full outline-none focus-visible:ring-4 focus-visible:ring-accent/30 ${
             chatActive ? 'h-14 w-14' : isDebug ? 'h-60 w-60' : 'h-44 w-44 sm:h-56 sm:w-56'
@@ -1009,10 +1013,11 @@ export function StayHome({
             className="h-full w-full"
           />
         </button>
-        <p className="meta min-h-[1.25rem]" role="status" aria-live="polite" data-testid="orb-status">
+        <p className="meta min-h-[1.25rem]" role="status" aria-live="polite" data-glide="status" data-testid="orb-status">
           {status}
         </p>
       </div>
+      </Glide>
 
       {callIntent && (
         <CallStayOverlay

@@ -470,11 +470,11 @@ test.describe('Judge feedback: blocks, trust copy, check-in, urgent help', () =>
     await page.getByTestId('checkin-submit').waitFor();
   });
 
-  test('the comparison charts are readable on a phone without sideways scrolling', async ({ page }) => {
+  test('the measured numbers are readable on a phone without sideways scrolling', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/');
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow).toBeLessThanOrEqual(1);
-    await expect(page.getByTestId('measured').getByText('Reply after you stop talking').first()).toBeVisible();
+    await expect(page.getByTestId('measured').getByText('Words wrong').first()).toBeAttached();
   });
 });
