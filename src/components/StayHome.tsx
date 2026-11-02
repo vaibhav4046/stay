@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Glide } from '@/components/Glide';
+import { playChime } from '@/lib/sound/chime';
 import type { CareContext, CoachPlanProposal, CoachSessionRecord, SessionOutcome, VoiceVisualState } from '@/types/domain';
 import { buildDeterministicCoachPlan } from '@/lib/coach/strategies';
 import { computeStrategyStats } from '@/lib/coach/patterns';
@@ -694,6 +695,14 @@ export function StayHome({
       if (!voiceRef.current.isConnected) handleStartVoice();
     }, RING_MS);
   }, [handleStartVoice]);
+  // a soft chime when a call connects and when it ends, however it ended (button, call screen, dropped line)
+  const wasConnectedRef = useRef(false);
+  useEffect(() => {
+    if (voice.isConnected === wasConnectedRef.current) return;
+    wasConnectedRef.current = voice.isConnected;
+    playChime(voice.isConnected ? 'connect' : 'end');
+  }, [voice.isConnected]);
+
   const endCall = useCallback(() => {
     window.clearTimeout(ringTimer.current);
     setCallIntent(false);

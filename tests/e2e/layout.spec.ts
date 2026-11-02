@@ -15,23 +15,26 @@ test.describe('Responsive layout', () => {
     });
   }
 
-  test('hero orb is square, sits within the hero stage on desktop and mobile', async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto('/', { waitUntil: 'networkidle' });
-    await page.waitForSelector('[data-testid="hero-orb"] canvas');
-    const orb = (await page.getByTestId('hero-orb').boundingBox())!;
-    expect(Math.abs(orb.width - orb.height)).toBeLessThanOrEqual(2);
-    expect(orb.width).toBeGreaterThan(150);
-
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/', { waitUntil: 'networkidle' });
-    const orbM = (await page.getByTestId('hero-orb').boundingBox())!;
-    expect(orbM.width).toBeLessThanOrEqual(390);
+  test('the hero example sits within the page on desktop and on a phone', async ({ page }) => {
+    for (const [w, h] of [[1440, 900], [390, 844]] as const) {
+      await page.setViewportSize({ width: w, height: h });
+      await page.goto('/', { waitUntil: 'networkidle' });
+      const box = (await page.getByTestId('hero-example').boundingBox())!;
+      expect(box.x, `left edge at ${w}px`).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width, `right edge at ${w}px`).toBeLessThanOrEqual(w);
+      expect(box.width).toBeGreaterThan(250);
+    }
   });
 
   test('orb draws at a steady 60fps-class pace', async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' });
-    await page.waitForSelector('canvas');
+    // the orb lives in the app (the landing page has no orb since 2 Nov 2026)
+    await page.goto('/app/today');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.getByTestId('care-self_managing').click();
+    await page.getByTestId('onboarding-ack').click();
+    await page.getByTestId('onboarding-done').click();
+    await page.waitForSelector('[data-testid="orb-button"] canvas');
     await page.waitForTimeout(900);
     const p95 = await page.evaluate(() => new Promise<number>((resolve) => {
       const d: number[] = [];
