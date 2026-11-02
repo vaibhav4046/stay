@@ -2376,7 +2376,16 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
             if (payload.type === 'energy') {
               signalBus.setInput(payload.rms); // the real microphone level, for the Signal visuals (module state, no render)
-              if (payload.rms > 0.08) lastLoudAtRef.current = performance.now();
+              if (payload.rms > 0.08) {
+                lastLoudAtRef.current = performance.now();
+                // test pages only: when the microphone was loud, to tell where the person's speech really ended (T2.8)
+                const w = window as unknown as { __stayFastDebug?: boolean; __stayLoud?: number[] };
+                if (w.__stayFastDebug) {
+                  const loud = (w.__stayLoud ??= []);
+                  if (loud.length > 20000) loud.splice(0, 5000);
+                  loud.push(Date.now());
+                }
+              }
               pushAudioLevels(payload.rms);
               // T2.3: the person starts talking over Stay -> Stay gets quiet within a couple of frames, without waiting about 0.8 s for
               // the server. This only ducks (the worklet's -18 dB); cancelling is decided later from words, and the duck lifts by itself.

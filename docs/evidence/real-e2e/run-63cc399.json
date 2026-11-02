@@ -1,0 +1,186 @@
+{
+  "gitSha": "63cc399",
+  "tier": "real provider + real browser; synthetic speaker injected as the microphone",
+  "base": "http://localhost:3120",
+  "steps": [
+    {
+      "step": "task",
+      "spoken": "I keep putting off replying to my landlord about the renewal.",
+      "speaker": "Betty (Irish English)",
+      "endOfSpeechToStaySpeakingMs": 750,
+      "audibleOutputDetected": true,
+      "appMarksAfterEndOfSpeech": [
+        "eot@+261ms",
+        "adopt@+264ms",
+        "hdr@+266ms",
+        "srv@+266ms",
+        "tok1@+330ms",
+        "gen@+371ms",
+        "aud1@+567ms"
+      ],
+      "micToSocket": {
+        "lastLoudFrameSentMsAfterEndOfSpeech": 31,
+        "frameIntervalMs": {
+          "p50": 100,
+          "p95": 115,
+          "max": 151
+        },
+        "framesSent": 78
+      }
+    },
+    {
+      "step": "barge-in",
+      "spoken": "Wait, stop. Actually, can we just make it smaller?",
+      "speaker": "Audrey (American English)",
+      "wasSpeakingBefore": true,
+      "speakStartToStayStoppedMs": 775
+    },
+    {
+      "step": "spanish",
+      "spoken": "Hola, ahora necesito empezar mi declaración de impuestos, pero no sé por dónde empezar.",
+      "speaker": "Aday (Spanish)",
+      "endOfSpeechToFirstAudioMs": 1813,
+      "appMarksAfterEndOfSpeech": [
+        "spec@+927ms",
+        "req@+927ms",
+        "eot@+1129ms",
+        "req@+1131ms",
+        "hdr@+1322ms",
+        "srv@+1322ms",
+        "tok1@+1389ms",
+        "gen@+1617ms",
+        "aud1@+1813ms"
+      ],
+      "heardWholeSentence": true
+    }
+  ],
+  "failures": [],
+  "transcript": [
+    {
+      "who": "stay",
+      "text": "Stay· 02:51 AMAdrienne here. What are you putting off?"
+    },
+    {
+      "who": "person",
+      "text": "You· 02:51 AMI keep putting off replying to my landlord about the renewal."
+    },
+    {
+      "who": "stay",
+      "text": "Stay· 02:51 AMGot it. Open your email draft now. Want to set a timer for five minutes?"
+    },
+    {
+      "who": "person",
+      "text": "You· 02:52 AMCan you break this down into an ultra-micro step?"
+    },
+    {
+      "who": "person",
+      "text": "You· 02:52 AMWait, stop. Actually, can we just make it smaller?"
+    },
+    {
+      "who": "stay",
+      "text": "Stay· 02:52 AMOpen your email app."
+    },
+    {
+      "who": "person",
+      "text": "You· 02:52 AMHola."
+    },
+    {
+      "who": "person",
+      "text": "You· 02:52 AMUndoAhora necesito empezar mi declaración de impuestos, pero no sé por dónde empezar."
+    },
+    {
+      "who": "stay",
+      "text": "Stay· 02:52 AMSay againWhat I heardHola, ¿lista? Abre el archivo de tu declaración. ¿Qué dato te falta hoy?"
+    }
+  ],
+  "playback": {
+    "underflows": 0,
+    "prebufferMs": 200,
+    "bufferedMs": 3231.746031746032,
+    "state": "DRAINING"
+  },
+  "fastEventLogTail": [
+    "1793587910429 [fast] 15963 reply.text Adrienne here. What are you putting off?",
+    "1793587911091 [fast] 16625 transcript.agent Adrienne here. What are you putting off?",
+    "1793587911091 [fast] 16625 reply.done ",
+    "1793587911092 [fast] 16626 word.boundaries ",
+    "1793587914485 [fast] 20019 input.speech.started ",
+    "1793587914487 [fast] 20021 input.speech.started ",
+    "1793587914487 [fast] 20021 transcript.user.delta Are you",
+    "1793587914645 [fast] 20179 barge_in.ready_listening ",
+    "1793587914989 [fast] 20524 transcript.user.delta I keep putting",
+    "1793587916180 [fast] 21713 transcript.user.delta I keep putting off replying to my landlord",
+    "1793587917387 [fast] 22921 transcript.user.delta I keep putting off replying to my landlord about the renewal",
+    "1793587917788 [fast] 23321 input.speech.stopped ",
+    "1793587917789 [fast] 23321 transcript.user I keep putting off replying to my landlord about the renewal",
+    "1793587917910 [fast] 23430 reply.started ",
+    "1793587917910 [fast] 23430 reply.text Got it. Open your email draft now. Want to set a timer for f",
+    "1793587918501 [fast] 24035 transcript.agent Got it. Open your email draft now. Want to set a timer for f",
+    "1793587918501 [fast] 24035 reply.done ",
+    "1793587918519 [fast] 24053 word.boundaries ",
+    "1793587919785 [fast] 25319 playback.duck ",
+    "1793587919785 [fast] 25319 input.speech.started ",
+    "1793587919790 [fast] 25323 playback.duck ",
+    "1793587919790 [fast] 25323 barge_in.committed ",
+    "1793587919790 [fast] 25323 input.speech.started ",
+    "1793587919790 [fast] 25323 transcript.user.delta Wait.",
+    "1793587919947 [fast] 25481 barge_in.ready_listening ",
+    "1793587920344 [fast] 25709 transcript.user.delta Wait.",
+    "1793587921677 [fast] 27210 input.speech.started ",
+    "1793587921679 [fast] 27212 transcript.user.delta Wait, stop. Actually, can",
+    "1793587922789 [fast] 28320 transcript.user.delta Wait, stop. Actually, can we just make it smaller?",
+    "1793587923187 [fast] 28721 input.speech.stopped ",
+    "1793587923187 [fast] 28721 transcript.user Wait, stop. Actually, can we just make it smaller?",
+    "1793587923437 [fast] 28967 reply.started ",
+    "1793587923437 [fast] 28967 reply.text Open your email app.",
+    "1793587923785 [fast] 29317 transcript.agent Open your email app.",
+    "1793587923785 [fast] 29317 reply.done ",
+    "1793587923812 [fast] 29343 word.boundaries ",
+    "1793587926287 [fast] 31819 input.speech.started ",
+    "1793587926287 [fast] 31820 input.speech.started ",
+    "1793587926287 [fast] 31820 transcript.user.delta Hola.",
+    "1793587926442 [fast] 31976 barge_in.ready_listening ",
+    "1793587926644 [fast] 32178 barge_in.ready_listening ",
+    "1793587927200 [fast] 32733 input.speech.stopped ",
+    "1793587927200 [fast] 32733 transcript.user Hola.",
+    "1793587927485 [fast] 33019 input.speech.started ",
+    "1793587927488 [fast] 33022 input.speech.started ",
+    "1793587927488 [fast] 33022 transcript.user.delta Ahora necesito",
+    "1793587927657 [fast] 33192 barge_in.ready_listening ",
+    "1793587928686 [fast] 34219 transcript.user.delta Ahora necesito empezar mi declaración de impuestos.",
+    "1793587929562 [fast] 35096 word.boundaries ",
+    "1793587929987 [fast] 35520 transcript.user.delta Ahora necesito empezar mi declaración de impuestos, pero no ",
+    "1793587930148 [fast] 35679 barge_in.ready_listening ",
+    "1793587931287 [fast] 36821 transcript.user.delta Ahora necesito empezar mi declaración de impuestos, pero no ",
+    "1793587931491 [fast] 37024 tts.language ",
+    "1793587931493 [fast] 37025 input.speech.stopped ",
+    "1793587931493 [fast] 37025 transcript.user Ahora necesito empezar mi declaración de impuestos, pero no ",
+    "1793587931978 [fast] 37511 reply.started ",
+    "1793587931978 [fast] 37512 reply.text Hola, ¿lista? Abre el archivo de tu declaración. ¿Qué dato t",
+    "1793587932794 [fast] 38321 transcript.agent Hola, ¿lista? Abre el archivo de tu declaración. ¿Qué dato t",
+    "1793587932794 [fast] 38321 reply.done ",
+    "1793587932794 [fast] 38321 word.boundaries "
+  ],
+  "websockets": [
+    "wss://streaming.assemblyai.com/v3/ws?sample_rate=16000&encoding=pcm_s16le&speech_model=universal-3-6-pro&min_turn_silence=128&max_turn_silence=1280&vad_threshold=0.2&language_detection=true&token=REDACTED&keyterms_prompt=%5B%22Stay%22%2C%22ADHD%22%2C%22micro-step%22%2C%22parking+lot%22%2C%22brain+dump%22%2C%22two-minute+timer%22%2C%22step+next%22%2C%22wrap+up%22%2C%22park+it%22%5D",
+    "wss://tts.us.assemblyai.com/v1/ws?token=REDACTED&model_id=assemblyai-tts-1&voice_id=478badc1-a7eb-5bef-b916-c6e51bd2771e&language=english&encoding=pcm_s16le&sample_rate=24000",
+    "wss://tts.us.assemblyai.com/v1/ws?token=REDACTED&model_id=assemblyai-tts-1&voice_id=1a48e481-7f02-5e96-bb84-68fcac65c2b2&language=spanish&encoding=pcm_s16le&sample_rate=24000"
+  ],
+  "managedAgentSocketOpened": false,
+  "ttsLanguages": [
+    "english",
+    "spanish"
+  ],
+  "sttOpened": true,
+  "consoleErrors": [],
+  "connectRetries": [
+    "AssemblyAI voice connection failed before it was ready; trying again fast voice connection failed: stt_begin_timeout"
+  ],
+  "status": "PASS",
+  "limits": [
+    "Synthetic speaker (AssemblyAI TTS) played into the page microphone stream; no human voice, no room acoustics",
+    "One run, one machine, one network",
+    "Screen recording has no audio track (Chromium does not capture it)",
+    "Timings are polled from the call screen about every 40 ms; end of speech is the last loud sample of the clip; reply time is until the call screen first says Speaking"
+  ]
+}

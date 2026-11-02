@@ -1,0 +1,87 @@
+{
+  "gates": [
+    "T2.2",
+    "T2.3",
+    "T2.4"
+  ],
+  "labels": [
+    "synthetic-mic",
+    "live-model"
+  ],
+  "measure": "end of simulated speech to the first sample played by the page AudioContext (T2.1)",
+  "gitSha": "0c9075e",
+  "base": "http://localhost:3120",
+  "at": "2026-11-02T08:49:37.947Z",
+  "summary": {
+    "turns": 8,
+    "medianMs": 1358,
+    "p95Ms": 2296,
+    "minMs": 886,
+    "maxMs": 2296,
+    "pauseRuns": 5,
+    "waitedThroughPause": 3,
+    "talkedOverPause": 0,
+    "bargeInRuns": 3
+  },
+  "runs": [
+    {
+      "run": 1,
+      "exit": 3,
+      "turns": [
+        929,
+        1358,
+        2296,
+        1367,
+        1235,
+        1635,
+        945,
+        886
+      ],
+      "pause": "Stay waited through the 2.3 s pause; reply to the finished thought after 1110.416748046875 ms",
+      "barge": "Stay still had 9762 ms of speech queued when I interrupted; it was quieted 382 ms and the speech service noticed me 619 ms after I started talking; it heard: \"Wait, stop, just one tiny step please.\"; then said: \"Start by writing down one goal for the week, like “Finish th\"",
+      "command": "tool={\"action\":\"park\",\"value\":\"Detailed plan for whole week\"}; parked in app=Detailed plan for whole week; reply after 1124.375 ms",
+      "stray": "stray transcripts (not the human's words): 0 of 14; unprompted replies: 0",
+      "raw": "t goes.\n  84.30 transcript.agent       Sounds good. Let me know how it goes.\n  84.30 reply.done             \n  84.31 word.boundaries        \n  88.92 input.speech.started   \n  88.92 input.speech.started   \n  88.92 transcript.user.delta  Yeah,\n  89.07 barge_in.ready_listening \n  89.43 transcript.user.delta  Yeah,\n  89.63 transcript.user.delta  Yeah,\n  89.83 transcript.user.delta  Yeah,\n  90.02 transcript.user.delta  Yeah,\n  90.33 transcript.user.delta  Yeah, all\n  91.63 transcript.user.delta  Yeah, all right, I will try that.\n  92.33 input.speech.stopped   \n  92.33 transcript.user        Yeah, all right, I will try that now.\n  92.48 barge_in.ready_listening \n  93.18 reply.started          \n  93.18 reply.text             Great, give it a shot!\n  93.53 transcript.agent       Great, give it a shot!\n  93.53 reply.done             \n  93.55 word.boundaries        \n  97.72 input.speech.started   \n  97.73 input.speech.started   \n  97.73 transcript.user.delta  Yeah,\n  97.87 barge_in.ready_listening \n  98.12 transcript.user.delta  Yeah,\n  98.33 transcript.user.delta  Yeah,\n  98.42 transcript.user.delta  Yeah,\n  98.62 transcript.user.delta  Yeah,\n  98.93 transcript.user.delta  Yeah, all\n 100.23 transcript.user.delta  Yeah, all right, I will try\n 100.93 input.speech.stopped   \n 100.93 transcript.user        Yeah, all right, I will try that now.\n 101.22 reply.started          \n 101.22 reply.text             Got it—just send it when you’re ready.\n 101.61 transcript.agent       Got it—just send it when you’re ready.\n 101.61 reply.done             \n 101.63 word.boundaries        \n 106.32 input.speech.started   \n 106.32 input.speech.started   \n 106.32 transcript.user.delta  Yeah,\n 106.47 barge_in.ready_listening \n 106.72 transcript.user.delta  Yeah,\n 106.93 transcript.user.delta  Yeah,\n 107.13 transcript.user.delta  Yeah,\n 107.22 transcript.user.delta  Yeah,\n 107.53 transcript.user.delta  Yeah, all\n 108.83 transcript.user.delta  Yeah, all right, I will try that.\n 109.62 input.speech.stopped   \n 109.62 transcript.user        Yeah, all right, I will try that now.\n 109.69 reply.started          \n 109.69 reply.text             I could not reach my thinking service just now, so I do not \n 109.77 barge_in.ready_listening \n 110.45 transcript.agent       I could not reach my thinking service just now, so I do not \n 110.45 reply.done             \n 110.47 word.boundaries        \n 125.12 input.speech.started   \n 125.12 input.speech.started   \n 125.12 transcript.user.delta  I need\n 125.27 barge_in.ready_listening \n 125.43 transcript.user.delta  I need to\n 126.82 transcript.user.delta  I need to, um, send that email.\n 127.72 word.boundaries        \n 128.12 transcript.user.delta  I need to, um, send that email to my landlord and\n 128.27 barge_in.ready_listening \n 128.82 transcript.user.delta  I need to, um, send that email to my landlord and, uh,\n 129.02 transcript.user.delta  I need to, um, send that email to my landlord and, uh,\n 129.22 transcript.user.delta  I need to, um, send that email to my landlord and, uh,\n 129.43 transcript.user.delta  I need to, um, send that email to my landlord and, uh,\n 129.63 transcript.user.delta  I need to, um, send that email to my landlord and, uh,\n 132.03 input.speech.started   \n 132.03 input.speech.stopped   \n 132.03 transcript.user        I need to, um, send that email to my landlord and, uh,\n 132.03 input.speech.started   \n 132.03 transcript.user.delta  I need\n 132.18 barge_in.ready_listening \n 133.42 transcript.user.delta  And I keep thinking about how to\n 134.12 input.speech.stopped   \n 134.12 transcript.user        And I keep thinking about how to start it.\n 134.45 reply.started          \n 134.45 reply.text             A simple opener could be: “Hi [Landlord’s Name], I hope you’\n 134.47 reply.text             If you want to tweak it, just let me know.\n 135.64 transcript.agent       A simple opener could be: “Hi [Landlord’s Name], I hope you’\n 135.64 reply.done             \n 135.66 word.boundaries        \n 147.53 input.speech.started   \n 147.53 input.speech.started   \n 147.53 transcript.user.delta  Can you\n 147.68 barge_in.ready_listening \n 147.93 transcript.user.delta  Can you give me\n 149.23 transcript.user.delta  Can you give me a really detailed plan for\n 150.63 transcript.user.delta  Can you give me a really detailed plan for my whole week, pl\n 150.72 input.speech.stopped   \n 150.72 transcript.user        Can you give me a really detailed plan for my whole week, pl\n 151.10 reply.started          \n 151.10 reply.text             Here’s a straightforward weekly outline you can tweak as nee\n 152.93 playback.duck          \n 152.93 input.speech.started   \n 152.93 playback.duck          \n 152.93 barge_in.committed     \n 152.93 input.speech.started   \n 152.93 transcript.user.delta  Wait.\n 153.08 barge_in.ready_listening \n 153.44 transcript.user.delta  Wait,\n 154.82 transcript.user.delta  Wait, stop, just one tiny\n 155.93 input.speech.stopped   \n 155.93 transcript.user        Wait, stop, just one tiny step please.\n 156.28 reply.started          \n 156.28 reply.text             Start by writing down one goal for the week, like “Finish th\n 156.29 reply.text             That’s your first tiny step.\n 157.57 transcript.agent       Start by writing down one goal for the week, like “Finish th\n 157.57 reply.done             \n 157.60 word.boundaries        \n 181.93 input.speech.started   \n 181.93 input.speech.started   \n 181.93 transcript.user.delta  Park.\n 182.08 barge_in.ready_listening \n 183.43 transcript.user.delta  Park it. I need to call the dentist.\n 183.58 barge_in.ready_listening \n 183.93 input.speech.stopped   \n 183.93 transcript.user        Park it. I need to call the dentist.\n 184.26 tool.call              {\"action\":\"park\",\"value\":\"Detailed plan for whole week\"}\n 184.26 reply.started          \n 184.26 reply.text             Parked.\n 184.53 transcript.agent       Parked.\n 184.53 reply.done             \n 184.54 word.boundaries        \nagent audio frames: 1550 first 2.56 last 184.53\n"
+    },
+    {
+      "run": 2,
+      "exit": 3,
+      "turns": [],
+      "pause": "Stay waited through the 2.3 s pause; reply to the finished thought after NONE",
+      "barge": "no reply to interrupt",
+      "command": "tool=NONE; parked in app=nothing; reply after NONE",
+      "stray": "stray transcripts (not the human's words): 0 of 0; unprompted replies: 0",
+      "raw": "engine=fast voice=en-GB-RyanNeural noise=on llm-human=false\nturn 1: human \"Um, I keep putting off replying to my landlord about the renewal.\"\n        first audio NONE after the human stopped; Stay: \"Just so you know, I'm an AI, not a person. Adrienne here. Wh\"\nturn 2: human \"I do not even know what to write, it feels huge.\"\n        first audio NONE after the human stopped; Stay: \"Just so you know, I'm an AI, not a person. Adrienne here. Wh\"\nturn 3: human \"Okay, maybe. What would the first sentence even be?\"\n        first audio NONE after the human stopped; Stay: \"Just so you know, I'm an AI, not a person. Adrienne here. Wh\"\nturn 4: human \"Yeah. Alright, I will try that now.\"\n        first audio NONE after the human stopped; Stay: \"Just so you know, I'm an AI, not a person. Adrienne here. Wh\"\nturn 5: human \"Yeah. Alright, I will try that now.\"\n        first audio NONE after the human stopped; Stay: \"Just so you know, I'm an AI, not a person. Adrienne here. Wh\"\nturn 6: human \"Yeah. Alright, I will try that now.\"\n        first audio NONE after the human stopped; Stay: \"Just so you know, I'm an AI, not a person. Adrienne here. Wh\"\nturn 7: human \"Yeah. Alright, I will try that now.\"\n        first audio NONE after the human stopped; Stay: \"Just so you know, I'm an AI, not a person. Adrienne here. Wh\"\nturn 8: human \"Yeah. Alright, I will try that now.\"\n        first audio NONE after the human stopped; Stay: \"Just so you know, I'm an AI, not a person. Adrienne here. Wh\"\npause test: Stay waited through the 2.3 s pause; reply to the finished thought after NONE\nbarge-in: no reply to interrupt\ncommand: tool=NONE; parked in app=nothing; reply after NONE\nstray transcripts (not the human's words): 0 of 0; unprompted replies: 0\nSTAGES (ms after the human stopped speaking; per turn, then median)\nstt.eot         -      -      -      -      -      -      -      -  | median null\npage.eot        -      -      -      -      -      -      -      -  | median null\nreq             -      -      -      -      -      -      -      -  | median null\nhdr             -      -      -      -      -      -      -      -  | median null\nsrv.llm         -      -      -      -      -      -      -      -  | median null\nsrv.n           -      -      -      -      -      -      -      -  | median null\ntok1            -      -      -      -      -      -      -      -  | median null\nclause1         -      -      -      -      -      -      -      -  | median null\ngen             -      -      -      -      -      -      -      -  | median null\ngen.wire        -      -      -      -      -      -      -      -  | median null\naud1.wire       -      -      -      -      -      -      -      -  | median null\naud1            -      -      -      -      -      -      -      -  | median null\nplay1           -      -      -      -      -      -      -      -  | median null\n\nSUMMARY engine=fast: ordinary-turn first audio none\nTIME LIMIT\n\n=== timeline (s) ===\n   6.79 session.error          \n  12.37 session.ready          \n  12.37 reply.started          \n  12.37 reply.text             Just so you know, I'm an AI, not a person. Adrienne here. Wh\n  13.21 transcript.agent       Just so you know, I'm an AI, not a person. Adrienne here. Wh\n  13.21 reply.done             \n  13.21 word.boundaries        \nagent audio frames: 72 first 12.58 last 13.21\n"
+    },
+    {
+      "run": 3,
+      "exit": 3,
+      "turns": [],
+      "pause": "Stay waited through the 2.3 s pause; reply to the finished thought after NONE",
+      "barge": "no reply to interrupt",
+      "command": "tool=NONE; parked in app=nothing; reply after NONE",
+      "stray": "stray transcripts (not the human's words): 0 of 0; unprompted replies: 0",
+      "raw": "engine=fast voice=en-GB-RyanNeural noise=on llm-human=false\nturn 1: human \"Um, I keep putting off replying to my landlord about the renewal.\"\n        first audio NONE after the human stopped; Stay: \"Just so you know, I'm an AI, not a person. Adrienne here. Wh\"\nturn 2: human \"I do not even know what to write, it feels huge.\"\n        first audio NONE after the human stopped; Stay: \"Just so you know, I'm an AI, not a person. Adrienne here. Wh\"\nturn 3: human \"Okay, maybe. What would the first sentence even be?\"\n        first audio NONE after the human stopped; Stay: \"Just so you know, I'm an AI, not a person. Adrienne here. Wh\"\nturn 4: human \"Yeah. Alright, I will try that now.\"\n        first audio NONE after the human stopped; Stay: \"Just so you know, I'm an AI, not a person. Adrienne here. Wh\"\nturn 5: human \"Yeah. Alright, I will try that now.\"\n        first audio NONE after the human stopped; Stay: \"Just so you know, I'm an AI, not a person. Adrienne here. Wh\"\nturn 6: human \"Yeah. Alright, I will try that now.\"\n        first audio NONE after the human stopped; Stay: \"Just so you know, I'm an AI, not a person. Adrienne here. Wh\"\nturn 7: human \"Yeah. Alright, I will try that now.\"\n        first audio NONE after the human stopped; Stay: \"Just so you know, I'm an AI, not a person. Adrienne here. Wh\"\nturn 8: human \"Yeah. Alright, I will try that now.\"\n        first audio NONE after the human stopped; Stay: \"Just so you know, I'm an AI, not a person. Adrienne here. Wh\"\npause test: Stay waited through the 2.3 s pause; reply to the finished thought after NONE\nbarge-in: no reply to interrupt\ncommand: tool=NONE; parked in app=nothing; reply after NONE\nstray transcripts (not the human's words): 0 of 0; unprompted replies: 0\nSTAGES (ms after the human stopped speaking; per turn, then median)\nstt.eot         -      -      -      -      -      -      -      -  | median null\npage.eot        -      -      -      -      -      -      -      -  | median null\nreq             -      -      -      -      -      -      -      -  | median null\nhdr             -      -      -      -      -      -      -      -  | median null\nsrv.llm         -      -      -      -      -      -      -      -  | median null\nsrv.n           -      -      -      -      -      -      -      -  | median null\ntok1            -      -      -      -      -      -      -      -  | median null\nclause1         -      -      -      -      -      -      -      -  | median null\ngen             -      -      -      -      -      -      -      -  | median null\ngen.wire        -      -      -      -      -      -      -      -  | median null\naud1.wire       -      -      -      -      -      -      -      -  | median null\naud1            -      -      -      -      -      -      -      -  | median null\nplay1           -      -      -      -      -      -      -      -  | median null\n\nSUMMARY engine=fast: ordinary-turn first audio none\nTIME LIMIT\n\n=== timeline (s) ===\n   6.50 session.error          \n  12.10 session.ready          \n  12.10 reply.started          \n  12.10 reply.text             Just so you know, I'm an AI, not a person. Adrienne here. Wh\n  12.86 transcript.agent       Just so you know, I'm an AI, not a person. Adrienne here. Wh\n  12.86 reply.done             \n  12.86 word.boundaries        \nagent audio frames: 72 first 12.29 last 12.86\n"
+    },
+    {
+      "run": 4,
+      "exit": 4294967295,
+      "turns": [],
+      "pause": null,
+      "barge": null,
+      "command": null,
+      "stray": null,
+      "raw": ""
+    },
+    {
+      "run": 5,
+      "exit": 4294967295,
+      "turns": [],
+      "pause": null,
+      "barge": null,
+      "command": null,
+      "stray": null,
+      "raw": ""
+    }
+  ]
+}

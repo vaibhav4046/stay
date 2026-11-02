@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { StayWordmark } from '@/components/StayMark';
 import { UrgentHelpButton } from '@/components/UrgentHelpButton';
 import { InstallPrompt } from '@/components/InstallPrompt';
+import { LatencyRecorder } from '@/components/lab/LatencyRecorder';
 
 const ICON = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' } as const;
 
@@ -48,6 +49,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <main className="mx-auto max-w-6xl px-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-4 sm:px-8 sm:py-8 sm:pb-12">
         <InstallPrompt />
         {children}
+        <LatencyRecorder />
       </main>
 
       <nav

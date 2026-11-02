@@ -1,0 +1,39 @@
+{
+  "recStart": 1793587893917,
+  "pageAudio": [
+    {
+      "file": "demo/page-audio-0.webm",
+      "startedAt": 1793587897278
+    },
+    {
+      "file": "demo/page-audio-1.webm",
+      "startedAt": 1793587899166
+    },
+    {
+      "file": "demo/page-audio-2.webm",
+      "startedAt": 1793587905516
+    },
+    {
+      "file": "demo/page-audio-3.webm",
+      "startedAt": 1793587938116
+    },
+    {
+      "file": "demo/page-audio-4.webm",
+      "startedAt": 1793587942930
+    }
+  ],
+  "speaker": [
+    {
+      "file": "demo/speaker-task.wav",
+      "at": 1793587913615
+    },
+    {
+      "file": "demo/speaker-interrupt.wav",
+      "at": 1793587918999
+    },
+    {
+      "file": "demo/speaker-spanish.wav",
+      "at": 1793587925316
+    }
+  ]
+}
