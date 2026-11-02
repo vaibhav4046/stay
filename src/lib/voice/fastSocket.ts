@@ -62,6 +62,10 @@ export interface FastSocketConfig {
 
 export interface FastSession {
   systemPrompt: string;
+  /** what Stay learned about this person and their memory line (from their device); sent with every turn as data */
+  personal: string;
+  /** the evidence-based offer Stay ends a "task I'm avoiding" reply with (from the person's own blocks), or '' */
+  offer: string;
   greeting: string;
   voice: string;
   /** the persona's own voice key, kept so the voice can follow a language switch */
@@ -637,6 +641,8 @@ export class FastSocket {
     const rawVoice = String((session.output as Json | undefined)?.voice || 'anna');
     this.session = {
       systemPrompt: String(session.system_prompt || ''),
+      personal: String(session.personal || '').slice(0, 600),
+      offer: String(session.offer || '').slice(0, 200),
       greeting: String(session.greeting || ''),
       voice: toAssemblyVoiceId(rawVoice, ttsLanguage),
       rawVoice,
@@ -1223,6 +1229,8 @@ export class FastSocket {
           context: {
             language: s.ttsLanguage,
             notes: this.notes.slice(-4),
+            ...(this.session?.personal ? { personal: this.session.personal } : {}),
+            ...(this.session?.offer ? { offer: this.session.offer } : {}),
           },
         }),
         signal: ctl.signal,

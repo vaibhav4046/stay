@@ -21,7 +21,7 @@ import { runAgenticAction, AGENTIC_ACTIONS, factFromUtterance } from '@/lib/voic
 import { verifySpoken, type ToolOutcome } from '@/lib/voice/toolSelfCheck';
 import { useDumpCapture } from '@/lib/voice/useDumpCapture';
 import { loadInstructions, styleBlock } from '@/lib/coach/customInstructions';
-import { loadLearnings, learningsPromptLine } from '@/lib/coach/learnings';
+import { learnedOffer, loadLearnings, learningsPromptLine } from '@/lib/coach/learnings';
 import { loadActiveSession, saveActiveSession } from '@/lib/coach/activeSession';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
@@ -38,7 +38,7 @@ import { agentVoiceFor, personaAfterLanguageChange, planSpeech } from '@/lib/voi
 import { cachedTtsCaps, refreshTtsCaps, voiceNeeds } from '@/lib/voice/tts/caps';
 import { resolvePersonaBrowserSpeech } from '@/lib/voice/tts/browserVoices';
 import { createTtsConnection } from '@/lib/voice/tts';
-import { APP_TOOL, appKeyterms, buildGreeting, buildSystemPrompt, type AppActionArgs } from '@/lib/voice/agentTool';
+import { APP_TOOL, appKeyterms, buildGreeting, buildSystemPrompt, memoryLine, type AppActionArgs } from '@/lib/voice/agentTool';
 import { markAiDisclosed, peekAiDisclosure } from '@/lib/voice/disclosure';
 import { LocalBargeIn } from '@/lib/voice/localBargeIn';
 import {
@@ -2352,6 +2352,9 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
             type: 'session.update',
             session: {
               system_prompt: warmHumanPrompt,
+              // the fast path builds its prompt on the server: it gets what Stay learned (evidence-based, editable in Memory) and the memory line as data
+              personal: [learningsPromptLine(loadLearnings()), memoryLine(memory)].filter(Boolean).join(' '),
+              offer: learnedOffer(loadLearnings()),
               greeting,
               // No turn_detection block: sending any turn_detection object overrides the provider's tuned defaults and
               // measurably doubled reply lag (about 1.4 s to 3.5 s). Voice agent sessions use the defaults.
