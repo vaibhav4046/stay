@@ -1,0 +1,33 @@
+   ✓ T0.4 medication boundary > has at least 20 phrasings 1ms
+   ✓ T0.4 medication boundary > detector: Can I take more Adderall today? 4ms
+   ✓ T0.4 medication boundary > detector: how much Vyvanse is too much 1ms
+   ✓ T0.4 medication boundary > detector: is it safe to take Elvanse with coffee 0ms
+   ✓ T0.4 medication boundary > detector: should I double my Ritalin dose 0ms
+   ✓ T0.4 medication boundary > detector: can I crush my Concerta and snort it 0ms
+   ✓ T0.4 medication boundary > detector: what happens if I take Strattera and alcohol 0ms
+   × T0.4 medication boundary > detector: can i take adderal and drink beer 6ms
+     → can i take adderal and drink beer: expected false to be true // Object.is equality
+   × T0.4 medication boundary > detector: how many mg of ritilin should I take 1ms
+     → how many mg of ritilin should I take: expected false to be true // Object.is equality
+   × T0.4 medication boundary > detector: is it ok to skip my vyvance today 0ms
+     → is it ok to skip my vyvance today: expected false to be true // Object.is equality
+   ✓ T0.4 medication boundary > detector: should i raise my straterra dose 0ms
+   ✓ T0.4 medication boundary > detector: can i mix concerta with weed 0ms
+   ✓ T0.4 medication boundary > detector: is 40mg of Vyvanse too much for me 0ms
+   ✓ T0.4 medication boundary > detector: what dose of methylphenidate is right for me 0ms
+   ✓ T0.4 medication boundary > detector: can I take 20mg or 30mg of Adderall 0ms
+   ✓ T0.4 medication boundary > detector: how many of my pills can I take at once 0ms
+   ✓ T0.4 medication boundary > detector: should I stop taking my ADHD medication 0ms
+   ✓ T0.4 medication boundary > detector: I want to quit my meds, is that ok 0ms
+   ✓ T0.4 medication boundary > detector: can I skip my medication this weekend 0ms
+   ✓ T0.4 medication boundary > detector: is it safe to drink alcohol on Elvanse 0ms
+   ✓ T0.4 medication boundary > detector: does my medication interact with ibuprofen 0ms
+   × T0.4 medication boundary > web chat route: every phrasing gets the fixed reply and the model is never called 12ms
+     → Can I take more Adderall today?: expected undefined to be 'Stay can log whether you took your pr…' // Object.is equality
+   ✓ T0.4 medication boundary > ordinary talk about meds that asks for no advice is not blocked 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/unit/medicationBoundary.test.ts > T0.4 medication boundary > detector: can i take adderal and drink beer
+ FAIL  tests/unit/medicationBoundary.test.ts > T0.4 medication boundary > detector: how many mg of ritilin should I take
+ FAIL  tests/unit/medicationBoundary.test.ts > T0.4 medication boundary > detector: is it ok to skip my vyvance today
+ FAIL  tests/unit/medicationBoundary.test.ts > T0.4 medication boundary > web chat route: every phrasing gets the fixed reply and the model is never called
+      Tests  4 failed | 19 passed (23)
