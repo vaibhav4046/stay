@@ -1,0 +1,175 @@
+{
+  "gitSha": "4fe243d",
+  "tier": "real provider + real browser; synthetic speaker injected as the microphone",
+  "base": "http://localhost:3120",
+  "steps": [
+    {
+      "step": "task",
+      "spoken": "I keep putting off replying to my landlord about the renewal.",
+      "speaker": "Betty (Irish English)",
+      "endOfSpeechToStaySpeakingMs": 1091,
+      "audibleOutputDetected": true,
+      "appMarksAfterEndOfSpeech": [
+        "eot@+309ms",
+        "req@+311ms",
+        "hdr@+717ms",
+        "srv@+717ms",
+        "tok1@+775ms",
+        "gen@+795ms",
+        "aud1@+987ms"
+      ],
+      "micToSocket": {
+        "lastLoudFrameSentMsAfterEndOfSpeech": 124,
+        "frameIntervalMs": {
+          "p50": 100,
+          "p95": 113,
+          "max": 116
+        },
+        "framesSent": 146
+      }
+    },
+    {
+      "step": "barge-in",
+      "spoken": "Wait, stop. Actually, can we just make it smaller?",
+      "speaker": "Audrey (American English)",
+      "wasSpeakingBefore": true,
+      "speakStartToStayStoppedMs": 187
+    },
+    {
+      "step": "spanish",
+      "spoken": "Hola, ahora necesito empezar mi declaración de impuestos, pero no sé por dónde empezar.",
+      "speaker": "Aday (Spanish)",
+      "endOfSpeechToFirstAudioMs": 1850,
+      "appMarksAfterEndOfSpeech": [
+        "eot@+1156ms",
+        "req@+1157ms",
+        "hdr@+1261ms",
+        "srv@+1261ms",
+        "tok1@+1296ms",
+        "gen@+1652ms",
+        "aud1@+1850ms"
+      ],
+      "heardWholeSentence": true
+    }
+  ],
+  "failures": [],
+  "transcript": [
+    {
+      "who": "stay",
+      "text": "Stay· 12:57 AMHi. It is late, so nothing big is needed. What would feel kind to start with? just keep me company, or empty my head, or one small start?"
+    },
+    {
+      "who": "person",
+      "text": "You· 12:57 AMI keep putting off replying to my landlord about the renewal."
+    },
+    {
+      "who": "stay",
+      "text": "Stay· 12:57 AMHey. How about writing a one‑sentence reply right now? Then send it. Ready?"
+    },
+    {
+      "who": "person",
+      "text": "You· 12:57 AMWait, stop."
+    },
+    {
+      "who": "person",
+      "text": "You· 12:57 AMCan you break this down into an ultra-micro step?"
+    },
+    {
+      "who": "person",
+      "text": "You· 12:57 AMActually, can we just make it smaller?"
+    },
+    {
+      "who": "stay",
+      "text": "Stay· 12:57 AMSure. Pick one word, type it, then hit send. Sure thing. Open a new email draft to your landlord. Ready?"
+    },
+    {
+      "who": "person",
+      "text": "You· 12:58 AMScratch thatHola, ahora necesito empezar mi declaración de impuestos, pero no sé por dónde empezar."
+    },
+    {
+      "who": "stay",
+      "text": "Stay· 12:58 AMRepeatWhat you heardHola. Empieza abriendo tu archivo de ingresos. ¿Listo?"
+    }
+  ],
+  "fastEventLogTail": [
+    "1793581050026 [fast] 6366 reply.done ",
+    "1793581050058 [fast] 6397 word.boundaries ",
+    "1793581059312 [fast] 15651 input.speech.started ",
+    "1793581059313 [fast] 15652 input.speech.started ",
+    "1793581059313 [fast] 15653 transcript.user.delta I",
+    "1793581059474 [fast] 15813 barge_in.ready_listening ",
+    "1793581060612 [fast] 16950 transcript.user.delta I keep putting off replying",
+    "1793581061897 [fast] 18236 transcript.user.delta I keep putting off replying to my landlord about",
+    "1793581062912 [fast] 19251 input.speech.stopped ",
+    "1793581062912 [fast] 19251 transcript.user I keep putting off replying to my landlord about the renewal",
+    "1793581063398 [fast] 19737 reply.started ",
+    "1793581063398 [fast] 19737 reply.text Hey. How about writing a one‑sentence reply right now? Then ",
+    "1793581064069 [fast] 20408 transcript.agent Hey. How about writing a one‑sentence reply right now? Then ",
+    "1793581064069 [fast] 20408 reply.done ",
+    "1793581064087 [fast] 20426 word.boundaries ",
+    "1793581064610 [fast] 20949 playback.duck ",
+    "1793581064610 [fast] 20949 input.speech.started ",
+    "1793581064611 [fast] 20951 playback.duck ",
+    "1793581064611 [fast] 20951 barge_in.committed ",
+    "1793581064611 [fast] 20951 input.speech.started ",
+    "1793581064611 [fast] 20951 transcript.user.delta Wait.",
+    "1793581064768 [fast] 21107 barge_in.ready_listening ",
+    "1793581065112 [fast] 21451 transcript.user.delta Wait, stop.",
+    "1793581066518 [fast] 22857 input.speech.stopped ",
+    "1793581066518 [fast] 22857 transcript.user Wait, stop.",
+    "1793581066520 [fast] 22859 input.speech.started ",
+    "1793581066523 [fast] 22862 input.speech.started ",
+    "1793581066523 [fast] 22862 transcript.user.delta Actually, can",
+    "1793581066684 [fast] 23024 barge_in.ready_listening ",
+    "1793581067711 [fast] 24050 transcript.user.delta Actually, can we just make it smaller?",
+    "1793581067915 [fast] 24253 input.speech.stopped ",
+    "1793581067915 [fast] 24253 transcript.user Actually, can we just make it smaller?",
+    "1793581067915 [fast] 24254 reply.started ",
+    "1793581067915 [fast] 24254 reply.text Sure. Pick one word, type it, then hit send.",
+    "1793581067915 [fast] 24254 tool.call {\"action\":\"step_next\"}",
+    "1793581068355 [fast] 24695 reply.text Sure thing. Open a new email draft to your landlord. Ready?",
+    "1793581068442 [fast] 24782 word.boundaries ",
+    "1793581068901 [fast] 25241 transcript.agent Sure. Pick one word, type it, then hit send. Sure thing. Ope",
+    "1793581068901 [fast] 25241 reply.done ",
+    "1793581068917 [fast] 25256 word.boundaries ",
+    "1793581082633 [fast] 38972 input.speech.started ",
+    "1793581082635 [fast] 38974 input.speech.started ",
+    "1793581082635 [fast] 38974 transcript.user.delta Hola.",
+    "1793581082816 [fast] 39155 barge_in.ready_listening ",
+    "1793581083020 [fast] 39359 transcript.user.delta Hola.",
+    "1793581083501 [fast] 39840 word.boundaries ",
+    "1793581084312 [fast] 40651 transcript.user.delta Hola, ahora necesito empezar mi",
+    "1793581084472 [fast] 40811 barge_in.ready_listening ",
+    "1793581085166 [fast] 41505 word.boundaries ",
+    "1793581085612 [fast] 41951 transcript.user.delta Hola, ahora necesito empezar mi declaración de impuestos.",
+    "1793581085771 [fast] 42110 barge_in.ready_listening ",
+    "1793581086910 [fast] 43249 transcript.user.delta Hola, ahora necesito empezar mi declaración de impuestos, pe",
+    "1793581088016 [fast] 44355 tts.language ",
+    "1793581088016 [fast] 44356 input.speech.stopped ",
+    "1793581088016 [fast] 44356 transcript.user Hola, ahora necesito empezar mi declaración de impuestos, pe",
+    "1793581088511 [fast] 44851 reply.started ",
+    "1793581088511 [fast] 44851 reply.text Hola. Empieza abriendo tu archivo de ingresos. ¿Listo?",
+    "1793581089399 [fast] 45709 transcript.agent Hola. Empieza abriendo tu archivo de ingresos. ¿Listo?",
+    "1793581089399 [fast] 45709 reply.done ",
+    "1793581089399 [fast] 45709 word.boundaries "
+  ],
+  "websockets": [
+    "wss://streaming.assemblyai.com/v3/ws?sample_rate=16000&encoding=pcm_s16le&speech_model=universal-3-6-pro&min_turn_silence=128&max_turn_silence=1280&vad_threshold=0.2&language_detection=true&token=REDACTED&keyterms_prompt=%5B%22Stay%22%2C%22ADHD%22%2C%22micro-step%22%2C%22parking+lot%22%2C%22brain+dump%22%2C%22two-minute+timer%22%2C%22step+next%22%2C%22wrap+up%22%2C%22park+it%22%5D",
+    "wss://tts.us.assemblyai.com/v1/ws?token=REDACTED&model_id=assemblyai-tts-1&voice_id=478badc1-a7eb-5bef-b916-c6e51bd2771e&language=english&encoding=pcm_s16le&sample_rate=24000",
+    "wss://tts.us.assemblyai.com/v1/ws?token=REDACTED&model_id=assemblyai-tts-1&voice_id=1a48e481-7f02-5e96-bb84-68fcac65c2b2&language=spanish&encoding=pcm_s16le&sample_rate=24000"
+  ],
+  "managedAgentSocketOpened": false,
+  "ttsLanguages": [
+    "english",
+    "spanish"
+  ],
+  "sttOpened": true,
+  "consoleErrors": [],
+  "status": "PASS",
+  "limits": [
+    "Synthetic speaker (AssemblyAI TTS) played into the page microphone stream; no human voice, no room acoustics",
+    "One run, one machine, one network",
+    "Screen recording has no audio track (Chromium does not capture it)",
+    "Timings are polled from the call screen about every 40 ms; end of speech is the last loud sample of the clip; reply time is until the call screen first says Speaking"
+  ]
+}
