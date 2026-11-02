@@ -99,10 +99,21 @@ export function LiveChatBox({
 
   const isUserSpeaking = Boolean(partialUserTranscript.trim());
   const isAgentSpeaking = visualState === 'speaking';
+  // One bubble per reply, revealed as the voice says it. The reply's full text arrives before its audio has played; shown at once it
+  // appeared whole, then a second bubble repeated it word by word (field test, 2 Nov 2026). While Stay is speaking that reply, its
+  // bubble shows only the words already spoken; the separate live bubble is used only before the reply's text has arrived.
+  const squash = (s: string) => s.replace(/\s+/g, ' ').trim();
+  const lastAgentEntryIndex = transcripts.map((t) => t.role).lastIndexOf('agent');
+  const spokenSoFar = squash(liveSpokenText);
+  const speakingEntryIndex =
+    isAgentSpeaking && spokenSoFar && lastAgentEntryIndex >= 0 && squash(transcripts[lastAgentEntryIndex].text).startsWith(spokenSoFar)
+      ? lastAgentEntryIndex
+      : -1;
   const showAgentStreamingBubble =
     isAgentSpeaking &&
-    Boolean(liveSpokenText.trim()) &&
-    !transcripts.some((t) => t.role === 'agent' && t.text === liveSpokenText.trim());
+    Boolean(spokenSoFar) &&
+    speakingEntryIndex < 0 &&
+    !transcripts.some((t) => t.role === 'agent' && squash(t.text) === spokenSoFar);
   const isThinking = visualState === 'thinking';
   const isInterrupted = visualState === 'interrupted' || recentlyInterrupted;
 
@@ -483,7 +494,9 @@ export function LiveChatBox({
                   const isLastUser = index === lastUserIndex;
                   const isLastAgent = index === lastAgentIndex;
                   const displayText =
-                    showVerbatimId === entry.id && entry.verbatimText ? entry.verbatimText : entry.heardText ?? entry.text;
+                    index === speakingEntryIndex
+                      ? liveSpokenText
+                      : showVerbatimId === entry.id && entry.verbatimText ? entry.verbatimText : entry.heardText ?? entry.text;
                   const tx = isUser ? translations[entry.id] : undefined;
                   return (
                     <div

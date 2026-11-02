@@ -473,6 +473,8 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const expectedAudioDurationMsRef = useRef<number>(0);
   const replyDoneReceivedRef = useRef<boolean>(false);
   const playbackClockLockedRef = useRef<boolean>(false);
+  /** where in the player's timeline (ms of audio rendered since the call began) this reply's first sample plays */
+  const replyStartPositionMsRef = useRef<number>(0);
   const replyEpochRef = useRef<number>(0);
   const interruptedAtRef = useRef<number>(0);
   const captionTickerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -2200,8 +2202,12 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           if ((window as unknown as { __stayFastDebug?: boolean }).__stayFastDebug) {
             (window as unknown as { __stayPlayback?: unknown }).__stayPlayback = { underflows: t.underflowCount, prebufferMs: t.prebufferMs, bufferedMs: t.bufferedMs, state: t.state };
           }
-          if (t.state === 'PLAYING' && !playbackClockLockedRef.current && speechAudioStartTimeRef.current > 0) {
-            speechAudioStartTimeRef.current = performance.now() - pcmPlayer.getPlaybackPositionMs();
+          // The player's position counts every sample since the call began, so the reply's own clock is measured from where its first
+          // sample sits. Using the raw position made every reply after the first reveal its words seconds early (field test, 2 Nov 2026:
+          // "the full sentences came in one go"), and more so the longer the call went on.
+          const intoReplyMs = pcmPlayer.getPlaybackPositionMs() - replyStartPositionMsRef.current;
+          if (t.state === 'PLAYING' && !playbackClockLockedRef.current && speechAudioStartTimeRef.current > 0 && intoReplyMs >= 0) {
+            speechAudioStartTimeRef.current = performance.now() - intoReplyMs;
             playbackClockLockedRef.current = true;
           }
           if (t.state === 'STOPPED' || (t.state === 'BUFFERING' && t.bufferedMs === 0)) {
@@ -2671,6 +2677,10 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
             setVisualState('speaking');
             dispatchVoiceEvent({ type: 'assistant_started' });
             const chunkDurationMs = (b64.length * 0.75) / 48; // 24kHz 16-bit mono = 48 bytes per ms
+            if (speechAudioStartTimeRef.current === 0 && pcmPlayerRef.current) {
+              // this reply starts after whatever is still queued from before
+              replyStartPositionMsRef.current = pcmPlayerRef.current.getPlaybackPositionMs() + pcmPlayerRef.current.getBufferedMs();
+            }
             expectedAudioDurationMsRef.current += chunkDurationMs;
             scheduleAgentPcmChunk(b64);
 
