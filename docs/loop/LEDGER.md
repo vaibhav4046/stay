@@ -1,5 +1,5 @@
 # Stay loop ledger
-Updated: 2026-11-02  Branch: hackathon-polish  HEAD: see `git log -1`  (nothing pushed or deployed; origin/master = 63cc399)
+Updated: 2026-11-02 (field-test pass)  Branch: hackathon-polish  HEAD: see `git log -1`  (nothing pushed or deployed; origin/master = 63cc399)
 
 Labels (H8): `synthetic-mic` = a TTS "person" injected as the microphone. `real-mic` = a human speaking. `mocked-model` / `live-model`. Only `real-mic` + `live-model` supports a public latency or quality claim. **Nothing in this ledger is `real-mic`.**
 
@@ -22,9 +22,9 @@ Labels (H8): `synthetic-mic` = a TTS "person" injected as the microphone. `real-
 | T1.6 | HUMAN | | | `/lab/voices` not built. |
 | T1.7 | NOT STARTED | | | My words already feed STT `keyterms_prompt`; TTS pronunciation control not checked. |
 | T2.1 | PASS | the worklet marks the first non-silent sample rendered and the page maps it to the performance clock; older "first sound" figures relabelled packet receipt | `tests/unit/playbackWorklet.test.ts` | The benchmark scripts (`sim-human`, `real-voice-e2e`) now report time to first sample played. `bench:voice` had been timing a playback path Stay no longer uses. |
-| T2.2 | {{T22}} | {{T22N}} | `docs/evidence/loop/T2-bench-2026-11-02.json` | Target: median 900 ms or less, P95 1,500 ms or less, 20 turns or more. |
-| T2.3 | PARTIAL | local duck built and unit tested; barge-in measured: {{T23N}} | `src/lib/voice/localBargeIn.ts`, `tests/unit/localBargeIn.test.ts` | Not built: pause-then-cancel-after-two-words and resume-within-400-ms. Not measured: false barge-ins per minute with `--echo`. |
-| T2.4 | {{T24}} | | | Tuning of `min_turn_silence`/`max_turn_silence` not changed this pass. |
+| T2.2 | NOT MET | median 966 ms, P95 1,847 ms, 24 turns in 3 valid runs (synthetic-mic + live-model, local build 3cc950a, first sound from the audio context) | `docs/evidence/loop/T2-bench-2026-11-02-series2.json`; earlier valid run `…-series1.json` | Target: median 900 ms or less, P95 1,500 ms or less, 20 turns or more. Turn count met; both timings missed (median by 66 ms). Timed separately over 3 turns: the speech service ends the turn a median 585 ms after the speaker stops. Not a real-mic number. |
+| T2.3 | PARTIAL | local duck built and unit tested; barge-in measured: Stay's voice went quiet a median 371 ms after the speaker started over it (3 tries; the speech service noticed at a median 760 ms) | `src/lib/voice/localBargeIn.ts`, `tests/unit/localBargeIn.test.ts` | Not built: pause-then-cancel-after-two-words and resume-within-400-ms. Not measured: false barge-ins per minute with `--echo`. |
+| T2.4 | NOT STARTED | pause test: waited through a 2.3 s pause 3 of 3 times at the current settings | `docs/evidence/loop/T2-bench-2026-11-02-series2.json` | Tuning of `min_turn_silence`/`max_turn_silence` not changed this pass. |
 | T2.5 | NOT STARTED | | | |
 | T2.6 | NOT STARTED | | | |
 | T2.7 | NOT STARTED | | | |
@@ -35,7 +35,7 @@ Labels (H8): `synthetic-mic` = a TTS "person" injected as the microphone. `real-
 | T3.4 | PARTIAL | | `src/lib/pdf/clinicianReport.ts` | "Prepare for a Visit" with a PDF exists from before; not re-verified this pass. |
 | T3.5 | HUMAN / FAIL | | `agent/agent.py` | Uses the old `livekit.agents.pipeline.VoicePipelineAgent` API; the docs in SOURCES.md are for livekit-agents 1.8. Needs a rewrite, the owner's approval to deploy and to buy a number. Cut-list item. |
 | T3.6 | PARTIAL | | | auto language works in the fast path; no new measurement |
-| T4.1 | {{T41}} | | `tests/e2e/fastStart.spec.ts` | Voice services faked: times the app, not AssemblyAI. |
+| T4.1 | PASS | first-time visitor reaches listening in two clicks inside 10 s; a returning one in one click (voice services faked) | `tests/e2e/fastStart.spec.ts` | Voice services faked: times the app, not AssemblyAI. |
 | T4.2 | PARTIAL | | | five sections; numbers tied to evidence files |
 | T4.3 | NOT STARTED | | | The spec wants the orb off by default, no morphing, no face; the app morphs and shows a face. Not changed: **OWNER DECISION**. axe not installed. |
 | T4.4 | PASS (pending your read) | | `README.md`, `HACKATHON_SUBMISSION.md` | What it is, the three-minute path, the diagram, an evidence table, limits and safety; every number links to a file. |
@@ -61,6 +61,23 @@ Regression set at the end of this pass: see `docs/evidence/loop/regression-2026-
 - A regex in a landing test (`/\brated\b/`) had been corrupted into backspace characters in an earlier session, so that check never matched anything. Restored.
 - Test wording updated (H12, said here): `userMemory.test.ts` (the word AGI left the prompt), `core.test.ts` (`UK_CRISIS_RESOURCES` renamed), `core.spec.ts` (two checks on the removed fast-vs-managed table; now assert it stays gone), `speechText.test.ts` (one input changed because "then breathe" now correctly gets a comma). No assertion about safety, consent or honesty was removed.
 - Groq limits this key to 8,000 tokens a minute. That is about four replies a minute for the whole site: judges using it at once will see "I am getting too many requests right now". See the owner requests.
+
+### Field test, 2 Nov 2026 (the owner's recorded call) and what changed
+Source: the owner watched their own recording of a real call to the live site (old build 63cc399). Each complaint, the cause found, and the fix, all on branch `hackathon-polish` (commits 46cfc04, 2548baf, 614353a, 3cc950a). Not pushed, not deployed.
+| What the owner saw | Cause found | Fix | Check |
+|---|---|---|---|
+| "I'm right here with you… I hear you" on every turn | the prompt allowed stock empathy; nothing stopped the same opening twice | stock empathy phrases banned in the prompt; the last three replies' openings are passed in so a reply does not start the same way; anger gets a short plain reply | `serverPrompt.test.ts`, `fieldTest.test.ts` (live-model probe: `scripts/voice-e2e/probe-chat.mjs`) |
+| Asked to open Netflix / close it: Stay talked as if it could | no rule about what Stay cannot do | Stay says plainly it cannot open or close other apps or sites, and offers a timer | `capabilities.ts`, `fieldTest.test.ts` |
+| An unrequested 5-minute timer | the model could call the timer tool on its own | a timer starts only when the person asked (words, or "yes" after an offer); the tool is withheld otherwise, and the page ignores a timer call nobody asked for | `capabilities.ts`, `fastSocket` guard, tests |
+| "What's your main differentiator?" got "I will start the task" | no answer existed for it | direct answers for why Stay, and for which voice is selected and how to change it | `aboutStay.ts`, `aboutStay.test.ts` |
+| "2–3 voices" when calling | two voice sessions could be opened by a double start, and a stale socket could keep speaking | one start at a time, and events from an old socket are ignored | `oneVoice.spec.ts` |
+| "Not listening" in some runs | in my own test rig, a retried session was handed a stopped microphone stream (the rig, not the app) | the rig returns a fresh stream per request; app code unchanged for this | 3 valid consecutive runs after the fix |
+| Layout "left right", controls pushed off screen | the small wave in the mic button grew to ~1,300 px wide while a call was live | the wave is sized from its wrapper | `layoutStability.spec.ts`: overflow 0 px, phone and desktop |
+| The orb jumped 170 px at the first spoken word | layout switch from the big orb to the small one in one frame | the orb glides there over 280 ms (reduced motion: no glide) | `layoutStability.spec.ts`: the orb passes through 10–15 positions; other layout shift 0.0167 phone, 0.0038 desktop (budget 0.02). Chrome scores the glide itself 0.062 phone, 0.021 desktop; the spec says so and does not count it |
+| The landing page said Stay was slower than others | a comparison table and loss charts | removed; no other product is named on the page | `landing.test.ts`, `landing.spec.ts`, `claims-lint` |
+| "Voice is breaking" | two causes seen: the double session above, and a possible slow device | double session fixed. Slow device: a synthetic call at normal, 4× and 6× slower CPU gave 0 playback underruns each (3 turns each; main thread blocked up to 620 ms at 6×) | `docs/evidence/loop/T2-cpu-throttle-2026-11-02.txt` (synthetic-mic, live-model, local build). **Not reproduced by me; a real-microphone call on the owner's machine is still the test that counts.** |
+
+Sound: the test browsers I start are launched with `--mute-audio` and I do not play anything on the owner's speakers.
 
 ## Handoff
 Next gate: T1.2 (picker: the shortlist, hide failed voices), T2.3 (pause then cancel), T2.4 tuning, T1.3 (warm TTS for the next language), T3.1 per-tool tests, then the lab pages for T1.6 and T2.8.

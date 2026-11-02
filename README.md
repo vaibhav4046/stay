@@ -53,7 +53,7 @@ Labels: `live-model` is a real model call. `synthetic-mic` is a text-to-speech v
 | Medication questions, 20 phrasings including misspelled brand names | all 20 get the fixed boundary reply, model not called | unit test | [`docs/evidence/loop/T0.4-after.txt`](docs/evidence/loop/T0.4-after.txt) |
 | TTS voices that open a live session | 18 of 18 | live provider handshake | [`docs/evidence/voices/verify-2026-11-02.json`](docs/evidence/voices/verify-2026-11-02.json) |
 | Speech-to-text and first words on screen, on this build | read from the file by the landing page | synthetic speech, real AssemblyAI | [`docs/evidence/real-provider/measure-0f93339.json`](docs/evidence/real-provider/measure-0f93339.json) |
-| Reply timing, stopping when talked over, waiting through a pause | {{T2}} | synthetic-mic + live-model | [`docs/evidence/loop/T2-bench-2026-11-02.json`](docs/evidence/loop/T2-bench-2026-11-02.json) |
+| Reply timing, stopping when talked over, waiting through a pause | First sound from the speaker a median 966 ms after the simulated speaker stopped (95th percentile 1,847 ms, 24 turns, 3 runs). Waited through a 2.3 s pause 3 of 3 times. Went quiet a median 371 ms after being talked over (3 tries). **My target was 900 ms and 1,500 ms; the timing target is not met.** In 3 separately timed turns the speech service called the end of the turn a median 585 ms after the speaker stopped, which is part of the reply time (`docs/evidence/loop/T2-cpu-throttle-2026-11-02.txt`) | synthetic-mic + live-model | [`docs/evidence/loop/T2-bench-2026-11-02-series2.json`](docs/evidence/loop/T2-bench-2026-11-02-series2.json) |
 
 ## Safety and privacy
 

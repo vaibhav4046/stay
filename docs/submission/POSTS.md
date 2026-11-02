@@ -16,13 +16,15 @@ It's a voice helper for people with ADHD who keep putting things off. Say what y
 https://stay-two-swart.vercel.app
 ```
 
-## X, version B (one measured number) — {{XB_COUNT}} characters
+## X, version B (one measured number) — 243 characters
 
 ```
-{{XB}}
+Stay is a voice helper for people with ADHD who keep putting things off. Say what you are avoiding and it gives you one tiny first step. In my test with a simulated speaker it waited through a 2.3 s pause 3 of 3 times.
+
+https://stay-two-swart.vercel.app
 ```
 
-Source for the number: `docs/evidence/loop/T2-bench-2026-11-02.json` (simulated speaker, live model, one laptop).
+Source for the number: `docs/evidence/loop/T2-bench-2026-11-02-series2.json` (simulated speaker, live model, one laptop).
 
 ## X, reply with the video (optional)
 
@@ -49,8 +51,12 @@ What I tried to get right:
 - It tells you it's an AI. It's not a doctor or a therapist, and it gives no medication advice.
 
 What I checked, and what I didn't:
-{{LI_NUMBERS}}
-I haven't tested it with a person speaking into a microphone yet, so please read the timings as a simulated-speaker test on one laptop. Every number on the site links to the file it came from, including the ones where Stay was slower than other voice apps in my October test.
+- Reply time: a median of 966 ms from the end of the simulated speaker's last word to the first sound out of the speaker (95th percentile 1,847 ms, 24 turns). My target was 900 ms and 1,500 ms. I did not reach it.
+- Patience: 3 of 3 times it waited through a 2.3 second pause without talking over it.
+- Interruptions: its voice went quiet a median of 371 ms after the simulated speaker started talking over it (3 tries).
+- Answers: 59 of 60 typed questions got an on-topic answer from the live model, with no stock replies.
+- Safety: 20 of 20 phrasings of a medication question got the fixed boundary reply without the model being called.
+I haven't tested it with a person speaking into a microphone yet, so please read the timings as a simulated-speaker test on one laptop. Every number on the site links to the file it came from.
 
 It's built on AssemblyAI Universal-3.6 Pro for listening and AssemblyAI TTS-1 for its voice.
 
