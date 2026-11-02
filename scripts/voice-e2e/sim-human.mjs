@@ -254,18 +254,38 @@ SUMMARY engine=${engine} lang=${LANG}: ordinary-turn first audio ${latencies.len
   process.exit(0);
 }
 // ---- scenario 2: a patient pause (must not be talked over) -----------------------------------------------------------------------
-{
-  const tBefore = now();
+async function pauseScenario(pauseMs = 2300) {
   const p1 = await say(speechPcm('I need to, um, send that email to my landlord and, uh...'), 'I need to, um, send that email to my landlord and, uh...');
   const quietStart = now();
-  await sleep(2300); // a real ADHD pause
+  await sleep(pauseMs); // a real ADHD pause
   const plays = await page.evaluate(() => (window.__stayPlays || []).slice());
-  const talkedInto = plays.some((x) => x > p1.tEnd + 100 && x < quietStart + 2300) || ev.some((e) => e.type === 'reply.started' && e.t > p1.tEnd && e.t < quietStart + 2300);
+  const talkedInto = plays.some((x) => x > p1.tEnd + 100 && x < quietStart + pauseMs) || ev.some((e) => e.type === 'reply.started' && e.t > p1.tEnd && e.t < quietStart + pauseMs);
   const p2 = await say(speechPcm('...and I keep thinking about how to start it.'), '...and I keep thinking about how to start it.');
   const f = await firstAudioAfter(p2.tEnd);
   await agentQuiet();
-  console.log(`pause test: Stay ${talkedInto ? 'TALKED INTO the 2.3 s pause' : 'waited through the 2.3 s pause'}; reply to the finished thought after ${f ? f - p2.tEnd + ' ms' : 'NONE'}`);
-  void tBefore;
+  return { talkedInto, replyMs: f ? f - p2.tEnd : null, pauseMs };
+}
+if (flag('--pause-runs')) { // T2.4: the same patient pause many times in one session
+  const N = Number(opt('--pause-runs', 20));
+  const pauses = [1800, 2300, 2500];
+  const rows = [];
+  for (let i = 0; i < N; i++) {
+    const r = await pauseScenario(pauses[i % pauses.length]);
+    rows.push(r);
+    console.log(`pause run ${i + 1}/${N}: ${r.pauseMs} ms pause, Stay ${r.talkedInto ? 'TALKED INTO IT' : 'waited'}; reply to the finished thought ${r.replyMs == null ? 'NONE' : r.replyMs + ' ms'}`);
+    await sleep(2500); // spaced out: the model key allows about 8,000 tokens a minute per model
+  }
+  const answered = rows.filter((r) => r.replyMs != null);
+  const talked = rows.filter((r) => r.talkedInto).length;
+  const med = answered.map((r) => r.replyMs).sort((a, b) => a - b)[Math.floor(answered.length / 2)];
+  console.log(`PAUSE SUMMARY: ${N} runs, pauses of ${[...new Set(pauses)].join(' / ')} ms; Stay talked into the pause ${talked} times; a reply to the finished thought came ${answered.length} times (median ${med ?? 'none'} ms)`);
+  await printPlaybackHealth();
+  await browser.close();
+  process.exit(0);
+}
+{
+  const r = await pauseScenario();
+  console.log(`pause test: Stay ${r.talkedInto ? 'TALKED INTO the 2.3 s pause' : 'waited through the 2.3 s pause'}; reply to the finished thought after ${r.replyMs != null ? r.replyMs + ' ms' : 'NONE'}`);
 }
 
 // ---- scenario 3: barge-in ---------------------------------------------------------------------------------------------------------

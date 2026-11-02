@@ -16,10 +16,10 @@ It's a voice helper for people with ADHD who keep putting things off. Say what y
 https://stay-two-swart.vercel.app
 ```
 
-## X, version B (one measured number) — 243 characters
+## X, version B (one measured number) — 247 characters
 
 ```
-Stay is a voice helper for people with ADHD who keep putting things off. Say what you are avoiding and it gives you one tiny first step. In my test with a simulated speaker it waited through a 2.3 s pause 3 of 3 times.
+Stay is a voice helper for people with ADHD who keep putting things off. Say what you are avoiding and it gives you one tiny first step. In my test with a simulated speaker it waited through 20 of 20 pauses of up to 2.5 s.
 
 https://stay-two-swart.vercel.app
 ```
@@ -52,7 +52,7 @@ What I tried to get right:
 
 What I checked, and what I didn't:
 - Reply time: a median of 966 ms from the end of the simulated speaker's last word to the first sound out of the speaker (95th percentile 1,847 ms, 24 turns). My target was 900 ms and 1,500 ms. I did not reach it.
-- Patience: 3 of 3 times it waited through a 2.3 second pause without talking over it.
+- Patience: it waited through 20 of 20 thinking pauses (1.8 to 2.5 seconds) without talking over me, then answered the finished thought.
 - Interruptions: its voice went quiet a median of 371 ms after the simulated speaker started talking over it (3 tries).
 - Answers: 59 of 60 typed questions got an on-topic answer from the live model, with no stock replies.
 - Safety: 20 of 20 phrasings of a medication question got the fixed boundary reply without the model being called.

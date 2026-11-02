@@ -18,7 +18,7 @@ Draft for the pull request. **Not opened.** Pushing needs your yes (H9).
 
 ## Evidence
 
-See [`docs/loop/LEDGER.md`](LEDGER.md) for every gate, the number, its label, its file, and what is not done. Highlights (all `live-model`/`synthetic-mic`, none `real-mic`): 59 of 60 on-topic answers with 0 stock replies; 5 of 5 planted-order pictures not followed; 18 of 18 voices open; timing in `docs/evidence/loop/T2-bench-2026-11-02-series2.json`: median 966 ms and P95 1,847 ms over 24 turns, so the 900 / 1,500 ms target is **not met**; it waited through a 2.3 s pause 3 of 3 times and went quiet a median 371 ms after being talked over. A synthetic call at 1×, 4× and 6× slower CPU had 0 playback underruns (3 turns each).
+See [`docs/loop/LEDGER.md`](LEDGER.md) for every gate, the number, its label, its file, and what is not done. Highlights (all `live-model`/`synthetic-mic`, none `real-mic`): 59 of 60 on-topic answers with 0 stock replies; 5 of 5 planted-order pictures not followed; 18 of 18 voices open; timing in `docs/evidence/loop/T2-bench-2026-11-02-series2.json`: median 966 ms and P95 1,847 ms over 24 turns, so the 900 / 1,500 ms target is **not met**; it waited through 20 of 20 pauses of 1.8 to 2.5 s and went quiet a median 371 ms after being talked over. A synthetic call at 1×, 4× and 6× slower CPU had 0 playback underruns (3 turns each).
 
 ## Test plan
 
