@@ -34,7 +34,7 @@ test.describe('Landing', () => {
   test('promise, real orb, and no demo surfaces', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText("Start the thing you've been avoiding.");
-    await page.waitForSelector('[data-testid="hero-orb"] canvas');
+    await expect(page.getByTestId('hero-example')).toContainText('An example exchange');
     await expect(page.getByTestId('hero-start')).toBeVisible();
     await expect(page.getByText(/not a diagnosis/i).first()).toBeVisible();
     for (const banned of ['Interactive Preview', 'Try the demo', 'Guided preview', 'example data']) {
@@ -44,44 +44,25 @@ test.describe('Landing', () => {
     expect((await page.request.get('/demo')).status()).toBe(404);
   });
 
-  test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => localStorage.setItem('stay:playful_orb:v1', '1')); // orb morphing is opt-in
+  test('the hero shows one example exchange, labelled as an example, and no dot toy (removed 2 Nov 2026)', async ({ page }) => {
+    await page.goto('/');
+    const ex = page.getByTestId('hero-example');
+    await expect(ex).toContainText('real replies are generated live');
+    await expect(ex.locator('.bubble')).toHaveCount(4);
+    await expect(page.locator('[data-testid="hero-orb"], [data-testid="hero-chips"], [data-testid="hero-face"]')).toHaveCount(0);
+    await expect(page.getByText(/watch the dots/i)).toHaveCount(0);
   });
 
-  test('typing words reshapes the orb: library, offline emoji, and a fallback for anything', async ({ page }) => {
+  // replaces "crisis wording never turns into a playful shape": the shape toy is gone; what matters is that crisis words typed on the
+  // landing page reach the app's crisis check and get help, not a plan
+  test('crisis wording typed on the landing page reaches the crisis help in the app', async ({ page }) => {
+    await onboard(page);
     await page.goto('/');
-    await page.waitForSelector('[data-testid="hero-orb"] canvas');
-    const input = page.getByTestId('hero-input');
-    const cases: Array<[string, RegExp]> = [
-      ['my taxes', /^coin$/],
-      ['I feel overwhelmed', /^tangle$/],
-      ['stuck on the first step', /^stairs$/],
-      ['I have no energy', /^battery$/],
-      ['zebra', /^emoji:/],
-      ['hedgehog', /^emoji:/], // not in any local table: drawn by the shape service
-      ['landlord email', /^envelope$/],
-    ];
-    for (const [text, expected] of cases) {
-      await input.fill(text);
-      await expect.poll(() => shapeOf(page, '[data-testid="hero-orb"] [data-shape]'), { timeout: 8000 }).toMatch(expected);
-    }
-  });
-
-  test('crisis wording never turns into a playful shape', async ({ page }) => {
-    await page.goto('/');
-    await page.getByTestId('hero-input').fill('my taxes');
-    await expect.poll(() => shapeOf(page, '[data-testid="hero-orb"] [data-shape]')).toBe('coin');
     await page.getByTestId('hero-input').fill('I want to take my own life');
-    await expect.poll(() => shapeOf(page, '[data-testid="hero-orb"] [data-shape]'), { timeout: 5000 }).toBe('orb');
-  });
-
-  test('the orb is drawn with dots only (canvas has coloured pixels, no img or svg overlay)', async ({ page }) => {
-    await page.goto('/');
-    await page.waitForSelector('[data-testid="hero-orb"] canvas');
-    await page.waitForTimeout(1200);
-    await expect(page.locator('[data-testid="hero-orb"] img, [data-testid="hero-orb"] svg')).toHaveCount(0);
-    const shot = await page.getByTestId('hero-orb').screenshot();
-    expect(shot.length).toBeGreaterThan(8000); // a blank canvas compresses to almost nothing
+    await page.getByTestId('hero-start').click();
+    await expect(page).toHaveURL(/\/app\/today$/);
+    await expect(page.getByText('116 123').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId('plan-card')).toHaveCount(0);
   });
 });
 
