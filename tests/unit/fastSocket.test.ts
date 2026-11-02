@@ -16,6 +16,7 @@ class FakeWS {
   static instances: FakeWS[] = [];
   static auto = true;
   static coalesce = false; // the server reports two flushes as one FlushDone
+  static beginDelayMs = 0; // a new voice session takes this long to open (the model can finish first)
   static dropCancelAck = false; // a Cancel sent just before the socket is replaced never gets its ack
   readyState = 0;
   sent: Array<string | Uint8Array> = [];
@@ -33,10 +34,12 @@ class FakeWS {
       });
       return;
     }
-    queueMicrotask(() => {
+    const begin = () => {
       this.readyState = 1;
       this.push({ type: 'Begin' });
-    });
+    };
+    if (this.isTts && FakeWS.beginDelayMs > 0) setTimeout(begin, FakeWS.beginDelayMs);
+    else queueMicrotask(begin);
   }
   get isTts() { return this.url.includes('tts'); }
   push(m: object) { this.onmessage?.({ data: JSON.stringify(m) }); }
@@ -87,6 +90,7 @@ beforeEach(() => {
   FakeWS.auto = true;
   FakeWS.coalesce = false;
   FakeWS.dropCancelAck = false;
+  FakeWS.beginDelayMs = 0;
   (globalThis as unknown as { WebSocket: unknown }).WebSocket = FakeWS;
   fetchMock = vi.fn();
   (globalThis as unknown as { fetch: unknown }).fetch = fetchMock;
@@ -603,6 +607,22 @@ describe('FastSocket: a reply is never left on "Speaking"', () => {
     await tick(30);
     expect(types()).toContain('reply.audio');
     expect(types()).toContain('reply.done');
+  });
+
+  it('the model finishing before the new language voice has opened still gets the reply spoken, flushed, and finished once', async () => {
+    fetchMock.mockResolvedValue(sse(text('Hola, vamos paso a paso.')));
+    const { stt } = await open({ autoLanguage: true });
+    FakeWS.beginDelayMs = 80; // the Spanish voice session is slower to open than the (short) model reply
+    stt.push({ type: 'Turn', turn_order: 0, transcript: 'Hola, necesito empezar mi tarea hoy.', end_of_turn: true, language_code: 'es', language_confidence: 0.95 });
+    await new Promise((r) => setTimeout(r, 400));
+    const order = types();
+    expect(order).toContain('reply.audio');
+    expect(order.filter((t) => t === 'reply.done')).toHaveLength(1);
+    expect(order.lastIndexOf('reply.done')).toBeGreaterThan(order.indexOf('reply.started')); // never "done" before it started
+    expect(events.find((e) => e.type === 'transcript.agent')?.text).toBe('Hola, vamos paso a paso.');
+    const spanish = FakeWS.instances.filter((w) => w.isTts)[1];
+    const frames = spanish.sent.filter((d): d is string => typeof d === 'string').map((d) => JSON.parse(d));
+    expect(frames.filter((m) => m.type === 'Flush')).toHaveLength(1);
   });
 
   it('a voice that goes silent after the reply is written still ends the reply', async () => {

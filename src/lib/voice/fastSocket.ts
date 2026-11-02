@@ -1090,11 +1090,11 @@ export class FastSocket {
 
   /** Ends the synthesis for text streamed in with say(..., false). */
   private flushSpeech(gen: number): void {
-    if (!this.unflushed) return;
     if (this.ttsSwitch) {
-      void this.ttsSwitch.then(() => this.flushSpeech(gen));
+      void this.ttsSwitch.then(() => this.flushSpeech(gen)); // after the say() calls that are waiting on the same switch
       return;
     }
+    if (!this.unflushed) return;
     if (gen !== this.genId || this.tts?.readyState !== WebSocket.OPEN) return;
     this.unflushed = false;
     this.sentFlushes++;
@@ -1266,6 +1266,10 @@ export class FastSocket {
       this.say(held.join(' '), gen, false);
       held = [];
     }
+    // The model can finish before the voice has been reopened in the person's language. Speech is queued behind that switch, so
+    // wait for it: otherwise "nothing was said" is decided too early and the reply is announced done before it has started.
+    if (this.ttsSwitch) await this.ttsSwitch;
+    if (gen !== this.genId) return;
     this.flushSpeech(gen); // end of the reply (or before a tool call): the one flush
 
     const call =[...calls.values()].find((c) => c.name);
