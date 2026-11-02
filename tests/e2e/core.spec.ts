@@ -273,17 +273,15 @@ test('one typed task makes exactly one plan request and the card never jumps bac
   expect(planCalls).toHaveLength(1);
 });
 
-test('the landing page shows measured results with their limits, including where Stay is slower than ChatGPT voice and Gemini Live', async ({ page }) => {
+test('the landing page shows measured results with their limits and does not name or chart other products', async ({ page }) => {
   await page.goto('/');
   const sec = page.getByTestId('measured');
   await expect(sec).toContainText('What we tested');
   // the fast-voice-vs-managed-voice table was removed (T0.6): its numbers had no raw data file, so none of it may come back
   await expect(sec).not.toContainText('about 1.3 seconds');
-  await expect(sec.getByTestId('result-reply')).toContainText('Stay is slower here');
-  await expect(sec.getByTestId('vs-products')).toBeVisible();
-  await expect(sec).toContainText(/Stay was not the fastest/i);
-  await expect(sec).toContainText(/not a microphone test/i);
-  await expect(page.getByText(/faster than chatgpt|beats chatgpt|better than google/i)).toHaveCount(0);
+  await expect(sec).toContainText(/simulated speaker/i);
+  await expect(page.locator('body')).not.toContainText(/chatgpt|gemini|slower here|where stay lost/i);
+  await expect(page.getByText(/faster than|beats |better than google/i)).toHaveCount(0);
 });
 
 test('the landing page has the demo video with a captions track, custom controls, and the files are served', async ({ page, request }) => {

@@ -54,7 +54,6 @@ Labels: `live-model` is a real model call. `synthetic-mic` is a text-to-speech v
 | TTS voices that open a live session | 18 of 18 | live provider handshake | [`docs/evidence/voices/verify-2026-11-02.json`](docs/evidence/voices/verify-2026-11-02.json) |
 | Speech-to-text and first words on screen, on this build | read from the file by the landing page | synthetic speech, real AssemblyAI | [`docs/evidence/real-provider/measure-0f93339.json`](docs/evidence/real-provider/measure-0f93339.json) |
 | Reply timing, stopping when talked over, waiting through a pause | {{T2}} | synthetic-mic + live-model | [`docs/evidence/loop/T2-bench-2026-11-02.json`](docs/evidence/loop/T2-bench-2026-11-02.json) |
-| Side by side with ChatGPT voice and Gemini Live (October, an earlier build, not re-run) | Stay was not the fastest; it waited through the pause where they did not | synthetic-mic | [`docs/BENCHMARK_REAL_PRODUCTS_2026-10-19.md`](docs/BENCHMARK_REAL_PRODUCTS_2026-10-19.md), raw reports in [`docs/bench-results/realproducts/`](docs/bench-results/realproducts/) |
 
 ## Safety and privacy
 
@@ -66,7 +65,6 @@ Labels: `live-model` is a real model call. `synthetic-mic` is a text-to-speech v
 ## Limits
 
 - Not tested with a human microphone. The timing numbers above use a simulated speaker.
-- The October comparison with other products is old and small; it is kept because it shows where Stay was slower.
 - AssemblyAI TTS speaks English, Spanish, French, German, Italian and Portuguese. Other languages get a text reply with a note.
 - The phone line is not deployed and the phone agent has no safety checks yet.
 - Per-language error rates are not shown any more: the raw files were not saved.

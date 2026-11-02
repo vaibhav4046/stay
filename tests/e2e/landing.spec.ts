@@ -100,22 +100,17 @@ test.describe('Landing: demo player', () => {
 });
 
 test.describe('Landing: measured results', () => {
-  test('shows Stay slower, ChatGPT voice talking over a pause, and the limits without opening anything', async ({ page }) => {
+  test('shows the measured numbers and the limits, names no other product, and lists the languages', async ({ page }) => {
     await open(page);
     const sec = page.getByTestId('measured');
     await sec.scrollIntoViewIfNeeded();
-    const reply = sec.getByTestId('result-reply');
-    await expect(reply).toContainText('Stay is slower here');
-    await expect(reply).toContainText('1.95 s median');
-    await expect(reply).toContainText('1.65 s median');
-    await expect(reply).toContainText('1.44 s median');
-    await expect(sec.getByTestId('result-pause')).toContainText('Started talking in 2 of 2 runs');
-    await expect(sec.getByTestId('result-behind')).toContainText('18 s');
+    await expect(sec.getByTestId('measured-now')).toContainText('Words wrong');
     await expect(sec.getByTestId('result-limits')).toBeVisible();
-    await expect(sec.getByTestId('result-limits')).toContainText(/not a microphone test/i);
+    await expect(sec.getByTestId('result-limits')).toContainText(/simulated speaker/i);
     await expect(sec.getByTestId('languages')).toContainText('pt');
     expect(await sec.locator('[data-ok="true"]').count()).toBe(23);
     expect(await sec.locator('[data-ok="false"]').count()).toBe(8);
+    await expect(page.locator('body')).not.toContainText(/chatgpt|gemini|slower here|where stay lost/i);
   });
 
   test('the bars animate in when scrolled to, and stay still with reduced motion', async ({ page }) => {

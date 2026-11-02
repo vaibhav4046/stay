@@ -7,7 +7,7 @@ import { CHAPTERS } from '@/components/landing/DemoPlayer';
 import { TRANSCRIPT } from '@/components/landing/transcript';
 import { dotGlyph } from '@/components/landing/personaDots';
 import { PERSONAS } from '@/lib/voice/personas';
-import { LANGS_NO, LANGS_OK, SPAN_CARDS } from '@/components/landing/resultsData';
+import { LANGS_NO, LANGS_OK } from '@/components/landing/resultsData';
 import { weekTally } from '@/lib/coach/weekTally';
 
 const vtt = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'demo', 'stay-demo.vtt'), 'utf8');
@@ -72,11 +72,9 @@ describe('landing: persona dots and results data', () => {
     for (const [code, , cer] of LANGS_OK) expect(doc, code).toContain(`${code} ${cer}%`);
   });
 
-  it('every bar fits its axis, and Stay is shown as the slowest typical reply', () => {
-    for (const card of SPAN_CARDS) for (const r of card.rows) expect(r.max).toBeLessThanOrEqual(card.scale);
-    const reply = SPAN_CARDS.find((c) => c.id === 'reply')!;
-    const med = Object.fromEntries(reply.rows.map((r) => [r.who, r.median]));
-    expect(med.stay).toBeGreaterThan(med.chatgpt!);
-    expect(med.stay).toBeGreaterThan(med.gemini!);
+  it('the landing page names no other product and shows no comparison chart', () => {
+    const dir = path.join(__dirname, '..', '..', 'src');
+    const files = [path.join(dir, 'app', 'page.tsx'), ...fs.readdirSync(path.join(dir, 'components', 'landing')).filter((f) => /.tsx?$/.test(f)).map((f) => path.join(dir, 'components', 'landing', f))];
+    for (const f of files) expect(fs.readFileSync(f, 'utf8'), f).not.toMatch(/chatgpt|gemini|dessa|claude|\bopenai\b/i);
   });
 });

@@ -18,7 +18,7 @@ const COMPARE = [
   { who: 'Goblin Tools', is: 'A free, typed task breaker.', stay: 'Spoken, with a timer and someone beside you while you do it.' },
   { who: 'Tiimo and planners', is: 'A visual day you have to set up and keep up.', stay: 'No setup. You say what is in the way and it gives you the next step.' },
   { who: 'Body-doubling with a person', is: 'A real human, at a time you booked.', stay: 'There at 11pm and on a bad day. Not a replacement for people.' },
-  { who: 'A general voice assistant', is: 'Answers anything.', stay: 'Does one job: getting you started, and it remembers what helped. How it compares on speed, with the numbers where it loses, is in the measured results above.' },
+  { who: 'A general voice assistant', is: 'Answers anything.', stay: 'Does one job: getting you started, and it remembers what helped.' },
 ];
 
 export function Compare() {
