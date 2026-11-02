@@ -10,6 +10,7 @@
 import { toSpeech } from '@/lib/voice/speechText';
 import { isImageDataUrl, looksVisual } from '@/lib/vision/image';
 import { honestFailureMessage } from '@/lib/conversation/response';
+import { mayStartTimer } from '@/lib/conversation/capabilities';
 import { MEDICAL_BOUNDARY_FIXED_MESSAGE } from '@/lib/safety/crisis';
 import { byokHeaders } from '@/lib/byok/config';
 import type { TtsConnection } from '@/lib/voice/tts/types';
@@ -1328,7 +1329,18 @@ export class FastSocket {
     if (gen !== this.genId) return;
     this.flushSpeech(gen); // end of the reply (or before a tool call): the one flush
 
-    const call =[...calls.values()].find((c) => c.name);
+    let call = [...calls.values()].find((c) => c.name);
+    // Defence in depth: the server already withholds the timer unless asked for. If a timer call still arrives for words that did not
+    // ask for one (field test: "open Netflix" started a 5-minute timer), it is not run: Stay offers it instead.
+    if (call && !toolFollowUp && /"action"\s*:\s*"timer_start"/.test(call.args)) {
+      const lastAssistant = [...this.history].reverse().find((m) => m.role === 'assistant' && typeof m.content === 'string');
+      if (!mayStartTimer(asked, [typeof lastAssistant?.content === 'string' ? lastAssistant.content : ''])) {
+        call = undefined;
+        this.llmDone = true;
+        this.say(this.spoken === '' ? 'Want me to start a timer?' : '', gen);
+        return;
+      }
+    }
     if (call) {
       const id = call.id || `call-${Date.now()}`;
       let args: Json = {};

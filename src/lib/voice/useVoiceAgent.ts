@@ -2140,7 +2140,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     }
   }, [playEarcon, sendUserTextMessage]);
 
-  const startVoiceSession = useCallback(async () => {
+  const startVoiceSessionInner = useCallback(async () => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
     }
@@ -2342,6 +2342,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
       socket.onmessage = (event) => {
         if (typeof event.data !== 'string') return;
+        // A session that is no longer the current one (replaced, or closed on purpose) must not speak, show text or move shared state.
+        if (wsRef.current !== socket) {
+          try { socket.close(); } catch { /* already closed */ }
+          return;
+        }
         let msg: Record<string, unknown>;
         try {
           msg = JSON.parse(event.data);
@@ -2930,6 +2935,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       };
 
       socket.onclose = () => {
+        if (wsRef.current !== socket) return; // closed on purpose or replaced: the session that replaced it owns the shared flags
         const unexpected = wsRef.current === socket; // we set wsRef to null before closing on purpose
         sessionReadyRef.current = false;
         setIsConnected(false);
@@ -2951,6 +2957,22 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     stopPlaybackQueue,
     startNativeSpeechRecognition,
   ]);
+
+  /**
+   * Start a voice session, once. A second start while one is connecting or live is ignored: the "connected" flag only turns true
+   * when the session is ready (seconds after the tap), so a second tap, the call ring timer and a retry could each start their own
+   * session, and the first, no longer tracked, kept speaking into the same player. Field test, 2 Nov 2026: two or three voices at once.
+   */
+  const startingRef = useRef(false);
+  const startVoiceSession = useCallback(async () => {
+    if (startingRef.current || wsRef.current) return;
+    startingRef.current = true;
+    try {
+      await startVoiceSessionInner();
+    } finally {
+      startingRef.current = false; // from here on wsRef marks a live or connecting session
+    }
+  }, [startVoiceSessionInner]);
 
   // Restart cleanly (used when something immutable changes mid-session, like the voice).
   useEffect(() => {

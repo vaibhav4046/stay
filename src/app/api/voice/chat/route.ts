@@ -4,6 +4,7 @@ import { detectCrisisSignal, detectMedicationAdviceRequest } from '@/lib/safety/
 import { APP_TOOL, buildServerVoiceSystemPrompt } from '@/lib/voice/agentTool';
 import { carriesAnswer } from '@/lib/conversation/sse';
 import { isOverloaded } from '@/lib/conversation/overload';
+import { mayStartTimer, recentOpeners, unsupportedActionAnswer } from '@/lib/conversation/capabilities';
 import { llmHeaders } from '@/lib/llm/provider';
 import { openLlmStream } from '@/lib/llm/stream';
 import { resolveDeterministicVoice, createDeterministicSseResponse } from '@/lib/voice/deterministicVoiceFallback';
@@ -13,6 +14,14 @@ import { classifyIntent } from '@/lib/conversation/intent';
 import { NOTHING_SHOWN, honestFailureMessage, failureKindFromError } from '@/lib/conversation/response';
 import { readSseText, visionReplyVerdict } from '@/lib/conversation/visionGate';
 import { MAX_IMAGE_CHARS, VISION_SYSTEM, isImageDataUrl, withImage } from '@/lib/vision/image';
+
+/** The app tool's parameters with the timer action taken out of its list of actions. */
+function withoutTimer(parameters: typeof APP_TOOL.parameters) {
+  return {
+    ...parameters,
+    properties: { ...parameters.properties, action: { ...parameters.properties.action, enum: parameters.properties.action.enum.filter((a) => a !== 'timer_start') } },
+  };
+}
 
 const MAX_HISTORY_TURNS = 20;
 const MAX_HISTORY_BYTES = 8_192;
@@ -194,10 +203,17 @@ export async function POST(req: NextRequest) {
   if (about) return createDeterministicSseResponse({ text: about });
 
   // a question about the screen with nothing shared: say so, never guess what might be on it
-  const intent = classifyIntent(lastUser, { hasVisualSource: Boolean(image), hasHistory: clientMessages.length > 1 });
+  const recent = clientMessages.slice(-5, -1).map((m) => m.content || '');
+  const intent = classifyIntent(lastUser, { hasVisualSource: Boolean(image), hasHistory: clientMessages.length > 1, recent });
   if (intent === 'screen_question' && !image) return createDeterministicSseResponse({ text: NOTHING_SHOWN });
+  // asked to open or close something outside Stay: the straight answer, and the one thing Stay can do about it (no model, no invented success)
+  if (intent === 'unsupported_action' && !image) {
+    const said = unsupportedActionAnswer(lastUser, recent);
+    if (said) return createDeterministicSseResponse({ text: said });
+  }
 
-  const serverSystemPrompt = buildServerVoiceSystemPrompt(context, intent, { overloaded: isOverloaded(lastUser) });
+  const openers = recentOpeners(clientMessages.filter((m) => m.role === 'assistant').map((m) => m.content || ''));
+  const serverSystemPrompt = buildServerVoiceSystemPrompt(context, intent, { overloaded: isOverloaded(lastUser), recentOpeners: openers });
   // a turn with a picture: the vision model looks at it, no app tools, and the picture goes nowhere else
   const outboundMessages = [
     { role: 'system' as const, content: image ? `${serverSystemPrompt}
@@ -214,7 +230,8 @@ ${VISION_SYSTEM}` : serverSystemPrompt },
             function: {
               name: APP_TOOL.name,
               description: APP_TOOL.description,
-              parameters: APP_TOOL.parameters,
+              // a timer is offered to the model only when the person asked for one or said yes to Stay's offer of one
+              parameters: mayStartTimer(lastUser, recent) ? APP_TOOL.parameters : withoutTimer(APP_TOOL.parameters),
             },
           },
         ];

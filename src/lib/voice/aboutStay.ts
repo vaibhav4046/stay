@@ -4,10 +4,11 @@
  * Everything said here is true of this app today; change a line only if the app changes.
  */
 
-type Topic = 'can_do' | 'why_stay' | 'who' | 'privacy' | 'cost' | 'talk' | 'vision' | 'memory' | 'human' | 'languages' | 'maker';
+type Topic = 'can_do' | 'why_stay' | 'who' | 'privacy' | 'cost' | 'talk' | 'vision' | 'memory' | 'human' | 'languages' | 'maker' | 'voice_choice';
 
 const PATTERNS: Array<[Topic, RegExp]> = [
-  ['why_stay', /\b(?:why (?:should|would|do) i (?:use|pick|choose|need) (?:you|stay)|(?:rather|instead of|over|better than|vs\.?|versus) (?:use |using )?(?:chat ?gpt|gpt|claude|gemini|copilot|siri|alexa)|why not (?:just )?(?:use )?(?:chat ?gpt|claude|gemini)|what makes you (?:different|special|better)|how are you different|what(?:'s| is) your (?:specialty|speciality|edge|usp))\b/i],
+  ['voice_choice', /\bwhy (?:are|did|do) you (?:pick|picking|picked|choose|choosing|chose|use|using|speak(?:ing)? in|have|sound(?:ing)? like) (?:this|that|a|the|such a) (?:\w+ )?voice\b|\bwho (?:is|picked|chose) (?:this|that|the) voice\b|\bwhat(?:'s| is) (?:this|that|the) voice\b/i],
+  ['why_stay', /\b(?:what(?:'s| is) your (?:main )?(?:differentiator|difference|advantage|unique|usp|point)|differentiator|what makes you (?:different|special|unique)|what(?:'s| is) special about you|why (?:use|pick|choose|need) (?:you|stay)|why (?:should|would|do) i (?:use|pick|choose|need) (?:you|stay)|(?:rather|instead of|over|better than|vs\.?|versus) (?:use |using )?(?:chat ?gpt|gpt|claude|gemini|copilot|siri|alexa)|why not (?:just )?(?:use )?(?:chat ?gpt|claude|gemini)|what makes you (?:different|special|better)|how are you different|what(?:'s| is) your (?:specialty|speciality|edge|usp))\b/i],
   ['can_do', /\b(?:what (?:more )?(?:can|could) you do|what do you do|how can you help|what are you (?:able|good)|what are your (?:features|abilities|skills)|what can i use you for|what(?:'s| is) this (?:app|for))\b/i],
   ['who', /\b(?:who are you|what are you|what is stay|tell me about (?:yourself|stay))\b/i],
   ['privacy', /\b(?:is (?:my|this|the) (?:data|voice|conversation|chat|info)s? (?:private|safe|secure|saved|stored)|do you (?:save|store|record|keep|sell)|who can (?:see|hear|read) (?:this|my|what i))\b/i],
@@ -26,9 +27,10 @@ const ANSWERS: Record<Topic, string[]> = {
     "Mostly I get you started and stay with you. One small step on a task, a timer, a brain dump sorted into a short list, reminders, and a memory of what helps. You can show me your screen or a picture too.",
   ],
   why_stay: [
-    "I'm not trying to be smarter than ChatGPT or Claude. I'm built for one job: getting you started and staying with you. I wait through your pauses, keep your list and timer in one place, and remember what helps you. For everything else, they're great.",
-    "Use whatever helps. What I do differently is stay small: I wait for you to finish thinking, give you one step instead of an essay, and keep your timer, list and history together. I don't claim to beat the big assistants at everything.",
+    "A clock app starts a timer, and ChatGPT's voice will talk about anything. I'm for the moment you're stuck. Tell me what you're avoiding and I give you one tiny first step, start the clock with you, and wait through your pauses. When time's up I check in, and I remember what helped.",
+    "The hard part isn't the timer, it's starting. So I do the starting with you: one tiny step, a clock running while I'm here, no talking over your pauses, a check-in when time's up, and a memory of what worked. Your list and history stay on your device.",
   ],
+  voice_choice: ["That's the voice currently selected, one of AssemblyAI's. You can change it any time: say \"change voice\", or open the voice menu."],
   who: ["I'm Stay, a voice companion for the things you keep putting off. Talk or type, and I'll keep it small."],
   privacy: [
     "Your history, memory and list stay on this device. Your voice goes to AssemblyAI to be heard and answered, and a picture goes to an AI model to be looked at. Stay doesn't save recordings or pictures.",
