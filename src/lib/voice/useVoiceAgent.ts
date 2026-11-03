@@ -478,6 +478,8 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const playbackClockLockedRef = useRef<boolean>(false);
   /** where in the player's timeline (ms of audio rendered since the call began) this reply's first sample plays */
   const replyStartPositionMsRef = useRef<number>(0);
+  /** consecutive playback reports saying the player has stopped, while a finished reply is still shown as speaking */
+  const stoppedReportsRef = useRef<number>(0);
   const replyEpochRef = useRef<number>(0);
   const interruptedAtRef = useRef<number>(0);
   const captionTickerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -2231,6 +2233,26 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           if (t.state === 'STOPPED' || (t.state === 'BUFFERING' && t.bufferedMs === 0)) {
             setAudioEnergy(0.05);
             setAudioBands({ low: 0, mid: 0, high: 0, overall: 0.05 });
+          }
+          // The reply is complete and the player has nothing left to play: the turn is over, whatever the count of expected audio says.
+          // That count also adds late chunks from a cancelled reply, which the player rightly drops, so after an interruption the screen
+          // stayed on "Speaking" for about 13 s of silence (real call, 3 Nov 2026). Two quiet reports in a row (about 100 ms) end it.
+          if (t.state === 'STOPPED' && replyDoneReceivedRef.current && speechAudioStartTimeRef.current > 0 && captionTickerRef.current) {
+            stoppedReportsRef.current += 1;
+            if (stoppedReportsRef.current >= 2) {
+              stoppedReportsRef.current = 0;
+              clearInterval(captionTickerRef.current);
+              captionTickerRef.current = null;
+              const finalText = fullReplyTextRef.current || pendingSpeechTextRef.current;
+              if (finalText) {
+                liveSpokenTextRef.current = finalText;
+                setLiveSpokenText(finalText);
+              }
+              setVisualState((prev) => (prev === 'speaking' ? 'listening' : prev));
+              dispatchVoiceEvent({ type: 'assistant_stopped', reason: 'finished' });
+            }
+          } else {
+            stoppedReportsRef.current = 0;
           }
         },
       });

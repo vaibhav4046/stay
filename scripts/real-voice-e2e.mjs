@@ -89,6 +89,13 @@ const recStart = Date.now(); // the screen recording starts with the page
 // every chat message, the first time its text appears, with the time: the captions of the recording
 await page.addInitScript(() => {
   window.__stayCaps = [];
+  // the call status over time (Ringing, Listening, Speaking, ...), to see how long each lasted against the audio
+  window.__stayStates = [];
+  setInterval(() => {
+    const s = document.querySelector('[data-testid="call-state"]')?.textContent?.trim() || '';
+    const last = window.__stayStates[window.__stayStates.length - 1];
+    if (!last || last.s !== s) window.__stayStates.push({ t: Date.now(), s });
+  }, 50);
   const seen = new Set();
   const scan = () => document.querySelectorAll('[data-testid="chat-user-message"],[data-testid="chat-agent-message"]').forEach((el) => {
     const who = el.getAttribute('data-testid') === 'chat-user-message' ? 'person' : 'stay';
@@ -208,11 +215,14 @@ await page.addInitScript(() => {
   };
 });
 
-const state = () => page.evaluate(() => ({ now: performance.now(), s: document.querySelector('[data-testid="call-state"]')?.textContent ?? '', drive: Number(document.querySelector('[data-testid="signal-wave"]')?.getAttribute('data-drive') ?? 0) }));
+const state = () => page.evaluate(() => ({ now: performance.now(), pb: (window.__stayPlayback || {}).state || '', buffered: Math.round((window.__stayPlayback || {}).bufferedMs || 0), s: document.querySelector('[data-testid="call-state"]')?.textContent ?? '', drive: Number(document.querySelector('[data-testid="signal-wave"]')?.getAttribute('data-drive') ?? 0) }));
+const statusLog = []; // every change of the call status seen while waiting, with wall-clock time
 async function waitFor(pred, timeoutMs, label) {
   const t0 = Date.now();
   for (;;) {
     const s = await state();
+    const key = `${s.s}|${s.pb}`;
+    if (statusLog.at(-1)?.key !== key) statusLog.push({ at: Date.now(), s: s.s, pb: s.pb, buffered: s.buffered, key });
     if (pred(s)) return s;
     if (Date.now() - t0 > timeoutMs) throw new Error(`timeout waiting for ${label} (last state: ${s.s})`);
     await sleep(40);
@@ -394,6 +404,16 @@ try {
 
 const video = await page.video()?.path();
 await ctx.close();
+results.stateLog = statusLog;
+// "Speaking" shown over a player that has stopped is dead air for the person (3 Nov 2026: 12.9 s of it after an interruption)
+let silentSpeakingMaxMs = 0;
+for (let i = 0; i < statusLog.length - 1; i++) {
+  if (statusLog[i].s === 'Speaking' && statusLog[i].pb === 'STOPPED' && i > 0 && statusLog[i - 1].pb && statusLog[i - 1].pb !== 'STOPPED') {
+    silentSpeakingMaxMs = Math.max(silentSpeakingMaxMs, statusLog[i + 1].at - statusLog[i].at);
+  }
+}
+results.silentSpeakingMaxMs = silentSpeakingMaxMs;
+if (silentSpeakingMaxMs > 1500) results.failures.push(`"Speaking" shown for ${silentSpeakingMaxMs} ms after the audio had stopped`);
 await browser.close();
 if (video) {
   try { renameSync(video, `${OUT}/demo-silent.webm`); } catch { /* keep the generated name */ }
