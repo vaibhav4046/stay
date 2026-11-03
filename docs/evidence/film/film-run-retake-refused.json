@@ -1,0 +1,94 @@
+{
+ "at": "2026-11-03T21:54:15.991Z",
+ "failed": "beat 6 (\"Explain how to build a study schedule for finals. Like all of it.\") had no clean reply: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again. Done. I am getting too",
+ "cues": [
+  {
+   "t": 21.12,
+   "end": 28.875458333333334,
+   "who": "person",
+   "text": "I'm Pix. I have zero patience and a thumb that opens Instagram without asking me. So I tested Stay like it owed me money.",
+   "kind": "vo"
+  },
+  {
+   "t": 30.249,
+   "end": 34.289291666666664,
+   "who": "person",
+   "text": "Okay so, this is Stay? Prove you're not just another chatbot. Go.",
+   "kind": "say"
+  },
+  {
+   "t": 35.55,
+   "end": 41.86,
+   "who": "stay",
+   "text": "I’m Stay, a tool that gives quick, practical steps. Ask me anything and I’ll help you start."
+  },
+  {
+   "t": 44.111,
+   "end": 48.244166666666665,
+   "who": "person",
+   "text": "Meh. Why would I use you and not just ask the big AI app? Be honest.",
+   "kind": "say"
+  },
+  {
+   "t": 48.805,
+   "end": 67.49600000000001,
+   "who": "stay",
+   "text": "A clock app starts a timer, and a general voice assistant will talk about anything. I'm for the moment you're stuck. Tell me what you're avoiding and I give you one tiny first step, start the clock with you, and wait through your pauses. When time's up I check in, and I remember what helped."
+  },
+  {
+   "t": 70.814,
+   "end": 75.04004166666665,
+   "who": "person",
+   "text": "I have been on Instagram for two hours and I don't even remember what I looked at.",
+   "kind": "say"
+  },
+  {
+   "t": 78.896,
+   "end": 90.816,
+   "who": "stay",
+   "text": "You spent two hours scrolling without noticing. The next step: close the app now, take a deep breath, and decide one quick task you want to finish. Close Instagram, breathe, pick one quick task."
+  },
+  {
+   "t": 93.246,
+   "end": 96.07883333333334,
+   "who": "person",
+   "text": "Don't give me a lecture. Just tell me what to do right now.",
+   "kind": "say"
+  },
+  {
+   "t": 97.61200000000001,
+   "end": 101.94200000000001,
+   "who": "stay",
+   "text": "Close Instagram, take a deep breath, and pick one quick task."
+  },
+  {
+   "t": 103.903,
+   "end": 107.664625,
+   "who": "person",
+   "text": "Explain how to build a study schedule for finals. Like all of it.",
+   "kind": "say"
+  },
+  {
+   "t": 109.563,
+   "end": 111.885,
+   "who": "person",
+   "text": "Wait wait, stop. Just the first block.",
+   "kind": "say"
+  }
+ ],
+ "titles": [
+  {
+   "t": 21.267,
+   "end": 25.166999999999998,
+   "text": "Meet Pix.",
+   "sub": "Zero patience. Thumb on Instagram."
+  },
+  {
+   "t": 103.042,
+   "end": 107.44200000000001,
+   "text": "Talk over it.",
+   "sub": "It stops."
+  }
+ ],
+ "errors": []
+}
