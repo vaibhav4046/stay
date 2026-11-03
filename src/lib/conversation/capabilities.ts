@@ -70,6 +70,16 @@ export function mayChangeLook(text: string): boolean {
   return LOOK_WORD.test(text);
 }
 
+/**
+ * Whether the words ask Stay to put a thought aside. The park action is offered to the model only then (file-mic run, 3 Nov 2026: a person
+ * thinking out loud about how to start an email got "Parked.").
+ */
+const PARK_WORD = /\b(?:park\s+(?:it|that|this)|parking lot|remind me later|(?:save|keep|put)\s+(?:that|this|it)\s+(?:for later|aside)|note\s+(?:that|this|it)\s+down|write\s+(?:that|this|it)\s+down|come back to\s+(?:that|this|it)\s+later|for later)\b/i;
+
+export function mayPark(text: string): boolean {
+  return PARK_WORD.test(text);
+}
+
 /** The opening words of Stay's recent replies, so the next one does not begin the same way (the "I'm right here with you" loop). */
 export function recentOpeners(assistantReplies: string[], words = 5, count = 3): string[] {
   return assistantReplies

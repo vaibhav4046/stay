@@ -10,7 +10,7 @@
 import { toSpeech } from '@/lib/voice/speechText';
 import { isImageDataUrl, looksVisual } from '@/lib/vision/image';
 import { honestFailureMessage } from '@/lib/conversation/response';
-import { mayChangeLook, mayStartTimer } from '@/lib/conversation/capabilities';
+import { mayChangeLook, mayPark, mayStartTimer } from '@/lib/conversation/capabilities';
 import { MEDICAL_BOUNDARY_FIXED_MESSAGE } from '@/lib/safety/crisis';
 import { byokHeaders } from '@/lib/byok/config';
 import type { TtsConnection } from '@/lib/voice/tts/types';
@@ -1351,7 +1351,7 @@ export class FastSocket {
     }
     // Same for the orb's look (persona run: "show me exactly how..." set the shape to "exactly" and Stay said Done to a question). The call
     // is not run; the model is told so and answers the person's words, without tools.
-    if (call && !toolFollowUp && /"action"\s*:\s*"(?:shape|color)"/.test(call.args) && !mayChangeLook(asked)) {
+    if (call && !toolFollowUp && ((/"action"\s*:\s*"(?:shape|color)"/.test(call.args) && !mayChangeLook(asked)) || (/"action"\s*:\s*"park"/.test(call.args) && !mayPark(asked)))) {
       const id = call.id || `call-${Date.now()}`;
       this.history = [
         ...this.history,

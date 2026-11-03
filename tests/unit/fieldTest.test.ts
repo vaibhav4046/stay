@@ -100,7 +100,7 @@ describe('a timer starts only when asked for', () => {
     await post([{ role: 'user', content: 'I keep avoiding my taxes.' }]);
     const without = (streamMock.openLlmStream.mock.calls[0][1] as { tools: Array<{ function: { parameters: { properties: { action: { enum: string[] } } } } }> }).tools[0].function.parameters.properties.action.enum;
     expect(without).not.toContain('timer_start');
-    expect(without).toContain('park');
+    expect(without).toContain('open'); // other actions stay offered (park itself is offered only when asked, 3 Nov 2026)
 
     streamMock.openLlmStream.mockClear();
     await post([{ role: 'user', content: 'Set a five minute timer.' }]);
@@ -124,7 +124,7 @@ describe('the orb changes look only when asked for', () => {
     const plain = (streamMock.openLlmStream.mock.calls[0][1] as Call).tools[0].function.parameters.properties.action.enum;
     expect(plain).not.toContain('shape');
     expect(plain).not.toContain('color');
-    expect(plain).toContain('park');
+    expect(plain).toContain('open');
 
     streamMock.openLlmStream.mockClear();
     await post([{ role: 'user', content: 'Make the orb a heart.' }]);

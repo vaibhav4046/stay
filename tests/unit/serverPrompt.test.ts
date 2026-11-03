@@ -12,7 +12,8 @@ describe('server voice prompt follows the intent', () => {
 
   it('a plain fact gets just the answer (judge panel, 2 Nov 2026: Stay lost 5 of 6 fact questions to a shorter plain assistant)', () => {
     expect(buildServerVoiceSystemPrompt(undefined, 'question')).toMatch(/A plain fact: one short complete sentence, nothing more/);
-    expect(buildServerVoiceSystemPrompt(undefined, 'question')).toMatch(/A big topic: two or three short spoken points, then ask if they want more/);
+    expect(buildServerVoiceSystemPrompt(undefined, 'question')).toMatch(/A big topic or a plan: give a short first version yourself/); // old vs new, 3 Nov 2026: a plan request got a bulleted list of questions
+    expect(buildServerVoiceSystemPrompt(undefined, 'question')).toContain('Never add "Need anything else?"');
   });
 
   it('a follow-up stays on the last subject', () => {

@@ -5,7 +5,7 @@ import { APP_TOOL, buildServerVoiceSystemPrompt } from '@/lib/voice/agentTool';
 import { carriesAnswer } from '@/lib/conversation/sse';
 import { isOverloaded } from '@/lib/conversation/overload';
 import { isPersistentLowMood } from '@/lib/conversation/lowMood';
-import { mayChangeLook, mayStartTimer, recentOpeners, unsupportedActionAnswer } from '@/lib/conversation/capabilities';
+import { mayChangeLook, mayPark, mayStartTimer, recentOpeners, unsupportedActionAnswer } from '@/lib/conversation/capabilities';
 import { llmHeaders } from '@/lib/llm/provider';
 import { openLlmStream } from '@/lib/llm/stream';
 import { resolveDeterministicVoice, createDeterministicSseResponse } from '@/lib/voice/deterministicVoiceFallback';
@@ -237,7 +237,7 @@ ${VISION_SYSTEM}` : serverSystemPrompt },
               description: APP_TOOL.description,
               // a timer is offered to the model only when the person asked for one or said yes to Stay's offer of one; the orb's shape
               // and colour only when the words ask for a different look
-              parameters: withoutActions(APP_TOOL.parameters, [...(mayStartTimer(lastUser, recent) ? [] : ['timer_start']), ...(mayChangeLook(lastUser) ? [] : ['shape', 'color'])]),
+              parameters: withoutActions(APP_TOOL.parameters, [...(mayStartTimer(lastUser, recent) ? [] : ['timer_start']), ...(mayChangeLook(lastUser) ? [] : ['shape', 'color']), ...(mayPark(lastUser) ? [] : ['park'])]),
             },
           },
         ];
