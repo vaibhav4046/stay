@@ -4,6 +4,7 @@ import { detectCrisisSignal, detectMedicationAdviceRequest } from '@/lib/safety/
 import { APP_TOOL, buildServerVoiceSystemPrompt } from '@/lib/voice/agentTool';
 import { carriesAnswer } from '@/lib/conversation/sse';
 import { isOverloaded } from '@/lib/conversation/overload';
+import { isPersistentLowMood } from '@/lib/conversation/lowMood';
 import { mayChangeLook, mayStartTimer, recentOpeners, unsupportedActionAnswer } from '@/lib/conversation/capabilities';
 import { llmHeaders } from '@/lib/llm/provider';
 import { openLlmStream } from '@/lib/llm/stream';
@@ -217,7 +218,7 @@ export async function POST(req: NextRequest) {
   }
 
   const openers = recentOpeners(clientMessages.filter((m) => m.role === 'assistant').map((m) => m.content || ''));
-  const serverSystemPrompt = buildServerVoiceSystemPrompt(context, intent, { overloaded: isOverloaded(lastUser), recentOpeners: openers });
+  const serverSystemPrompt = buildServerVoiceSystemPrompt(context, intent, { overloaded: isOverloaded(lastUser), recentOpeners: openers, lowMood: isPersistentLowMood(lastUser) });
   // a turn with a picture: the vision model looks at it, no app tools, and the picture goes nowhere else
   const outboundMessages = [
     { role: 'system' as const, content: image ? `${serverSystemPrompt}

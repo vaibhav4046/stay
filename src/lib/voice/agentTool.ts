@@ -7,6 +7,7 @@ import { z } from 'zod';
 import type { UserMemoryProfile } from '@/lib/coach/userMemory';
 import { type VoicePersona } from './personas';
 import { OVERLOAD_INSTRUCTION } from '@/lib/conversation/overload';
+import { LOW_MOOD_INSTRUCTION } from '@/lib/conversation/lowMood';
 
 export const APP_ACTIONS = [
   'open', 'ground', 'timer_start', 'timer_stop', 'outcome', 'plan', 'shape', 'color', 'language', 'voice',
@@ -45,7 +46,7 @@ const SHAPE_BY_INTENT: Record<string, string> = {
   frustrated:
     'They are frustrated, maybe with you. Say so in one short plain sentence that owns it ("Fair. That didn\'t work."), then ask the ONE thing they want right now, in under ten words. No advice, no task, no explaining why.',
   question:
-    'They asked a question. Answer it directly in the first sentence, then add at most two short sentences of help. Do not open with a greeting or "Sure"; do not mention reminders, timers, stretches or tiny steps unless they asked; no question back unless you truly need one detail. If you are not sure, say so.',
+    'They asked a question. Answer it directly in the first sentence. A plain fact: one short complete sentence, nothing more ("A leap year has 366 days."). A big topic: two or three short spoken points, then ask if they want more. Otherwise add one short sentence only if needed. No greeting or "Sure"; no reminders, timers, stretches or tiny steps unless asked; no question back unless you need one detail. If unsure, say so.',
   follow_up:
     'They are following up on the last turn. Stay on that subject and answer it directly in one to three short sentences. No greeting opener, no tiny step, no timer or reminder offers unless asked.',
   small_talk: 'Reply with one short, warm sentence. No tools, no chores.',
@@ -56,7 +57,7 @@ const SHAPE_BY_INTENT: Record<string, string> = {
 export function buildServerVoiceSystemPrompt(
   context?: { language?: string; notes?: string[]; personal?: string; offer?: string },
   intent: string = 'other',
-  opts: { overloaded?: boolean; recentOpeners?: string[] } = {},
+  opts: { overloaded?: boolean; recentOpeners?: string[]; lowMood?: boolean } = {},
 ): string {
   const safeLang = (context?.language || 'english').replace(/[^a-zA-Z-]/g, '').slice(0, 24);
   const safeNotes = (context?.notes || [])
@@ -70,6 +71,7 @@ export function buildServerVoiceSystemPrompt(
     `You are Stay, a calm, practical friend who helps an adult with ADHD. You answer questions, explain, write and decide, and you help them start tasks. Spoken language preference: ${safeLang}.`,
     SHAPE_BY_INTENT[intent] ?? SHAPE_BY_INTENT.other,
     opts.overloaded ? OVERLOAD_INSTRUCTION : '',
+    opts.lowMood ? LOW_MOOD_INSTRUCTION : '',
     offer ? `Instead of your own check-in, end with this sentence exactly as written (it comes from what got this person started before): "${offer}"` : '',
     'Plain spoken words: no markdown, no emoji, no bullet lists, no lists of numbered steps. Never open with "Sure thing", "Hey there" or "Great question". Never say "I hear you", "I hear that", "I\'m right here with you", "It sounds like" or "I understand".',
     'You cannot open or close other apps, sites or tabs, and you cannot see anything unless a picture was shown. Never say you did something you did not do. Start a timer only if the person asked for one.',

@@ -6,8 +6,13 @@ describe('server voice prompt follows the intent', () => {
   it('a question is told to answer first, with no greeting opener, step or reminder', () => {
     const p = buildServerVoiceSystemPrompt(undefined, 'question');
     expect(p).toMatch(/Answer it directly in the first sentence/);
-    expect(p).toMatch(/do not mention reminders, timers, stretches or tiny steps unless they asked/);
+    expect(p).toMatch(/no reminders, timers, stretches or tiny steps unless asked/); // same rule, shorter wording (2 Nov 2026)
     expect(p).not.toMatch(/3 short beats/);
+  });
+
+  it('a plain fact gets just the answer (judge panel, 2 Nov 2026: Stay lost 5 of 6 fact questions to a shorter plain assistant)', () => {
+    expect(buildServerVoiceSystemPrompt(undefined, 'question')).toMatch(/A plain fact: one short complete sentence, nothing more/);
+    expect(buildServerVoiceSystemPrompt(undefined, 'question')).toMatch(/A big topic: two or three short spoken points, then ask if they want more/);
   });
 
   it('a follow-up stays on the last subject', () => {
