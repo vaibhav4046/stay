@@ -71,5 +71,5 @@ I'd like to hear where it breaks.
 ## Before you post
 
 - Open the live site once from a phone and say yes to the microphone, so you know the first thing a visitor sees.
-- Attach `docs/submission/stay-submission.mp4` only if you are happy that it says "simulated speaker" (it does, at the bottom). The composed video is from an earlier build; regenerate it with the three commands in `docs/DEMO_SCRIPT.md` option B if you want it to match this build, or record your own with option A.
+- Attach `docs/submission/stay-submission.mp4` only if you are happy that it says "simulated speaker" (it does, at the bottom). The composed video was re-recorded on 3 Nov 2026 on the current build; regenerate it with the three commands in `docs/DEMO_SCRIPT.md` option B if you want it to match this build, or record your own with option A.
 - Do not add "AGI", "best", "beats", "winner" or "replaces". `node scripts/claims-lint.mjs` checks the repo, not your post.
