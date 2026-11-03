@@ -45,6 +45,8 @@ export interface FastSocketConfig {
   ttsToken: string;
   /** Mints a new TTS token for every later voice session (language switch, reconnect, hourly rotation). */
   freshTtsToken?: () => Promise<string>;
+  /** The few lines from the person's own notes that match what they just said (found on their device, sent as data). */
+  recall?: (text: string) => string[];
   /** Mic format: 24 kHz mono 16-bit little-endian (what pcm-processor.js produces). */
   sampleRate?: number;
   /** How long to wait after a turn that trails off ("and, uh,") before answering. Default 2200 ms. */
@@ -337,7 +339,7 @@ export class FastSocket {
   onerror: (() => void) | null = null;
   onclose: (() => void) | null = null;
 
-  private cfg: Required<Omit<FastSocketConfig, "keyterms" | "ttsConnect" | "endpointingMode" | "freshTtsToken">> & Pick<FastSocketConfig, "keyterms" | "ttsConnect" | "endpointingMode" | "freshTtsToken">;
+  private cfg: Required<Omit<FastSocketConfig, "keyterms" | "ttsConnect" | "endpointingMode" | "freshTtsToken" | "recall">> & Pick<FastSocketConfig, "keyterms" | "ttsConnect" | "endpointingMode" | "freshTtsToken" | "recall">;
   private session: FastSession | null = null;
   private notes: string[] = [];
   private history: ChatMessage[] = [];
@@ -1225,6 +1227,13 @@ export class FastSocket {
     const fresh = this.latestImage && Date.now() - this.latestImage.at < 20_000 ? this.latestImage.data : null;
     const image = toolFollowUp ? null : this.nextImage ?? (fresh && looksVisual(asked) ? fresh : null);
     if (!toolFollowUp) this.nextImage = null;
+    // the few lines of the person's own notes that match this turn (found on their device; the vault is never sent whole)
+    let recalled: string[] = [];
+    try {
+      recalled = !toolFollowUp && asked ? (this.cfg.recall?.(asked) ?? []).slice(0, 3) : [];
+    } catch {
+      recalled = []; // a note lookup must never stop a reply
+    }
 
     let res: Response;
     this.mark('req');
@@ -1240,6 +1249,7 @@ export class FastSocket {
             language: s.ttsLanguage,
             notes: this.notes.slice(-4),
             ...(this.session?.personal ? { personal: this.session.personal } : {}),
+            ...(recalled.length ? { recall: recalled } : {}),
             ...(this.session?.offer ? { offer: this.session.offer } : {}),
           },
         }),

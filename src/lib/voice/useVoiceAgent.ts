@@ -22,6 +22,8 @@ import { verifySpoken, type ToolOutcome } from '@/lib/voice/toolSelfCheck';
 import { useDumpCapture } from '@/lib/voice/useDumpCapture';
 import { loadInstructions, styleBlock } from '@/lib/coach/customInstructions';
 import { learnedOffer, loadLearnings, learningsPromptLine } from '@/lib/coach/learnings';
+import { buildVault, relevantNotes } from '@/lib/export/vault';
+import { getLocalSessions } from '@/lib/storage/repository';
 import { loadActiveSession, saveActiveSession } from '@/lib/coach/activeSession';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
@@ -2349,7 +2351,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
       // 4. Connect: either the managed Voice Agent socket (when explicitly selected in E2E), or fast voice (default)
       const socket: WebSocket = useFast
-        ? (new FastSocket({ sttToken: tokenJson.sttToken || '', ttsToken: tokenJson.ttsToken || '', freshTtsToken: async () => String(((await (await fetch('/api/voice/fast-token', { method: 'POST', headers: byokHeaders() })).json()) as { ttsToken?: string }).ttsToken || ''), keyterms: appKeyterms(), autoLanguage: selectedLanguageRef.current === 'auto', ttsConnect: speech.ref.engine === 'assemblyai' ? undefined : () => createTtsConnection(speech.ref, speech.browserVoiceName)! }) as unknown as WebSocket)
+        ? (new FastSocket({ sttToken: tokenJson.sttToken || '', ttsToken: tokenJson.ttsToken || '', recall: (() => { let files: ReturnType<typeof buildVault> | null = null; return (text: string) => { try { files ??= buildVault({ memory: loadUserMemory(), learnings: loadLearnings(), sessions: getLocalSessions(), list: loadToday().map((i) => ({ text: i.text, bucket: i.bucket, done: i.done })) }); return relevantNotes(text, files); } catch { return []; } }; })(), freshTtsToken: async () => String(((await (await fetch('/api/voice/fast-token', { method: 'POST', headers: byokHeaders() })).json()) as { ttsToken?: string }).ttsToken || ''), keyterms: appKeyterms(), autoLanguage: selectedLanguageRef.current === 'auto', ttsConnect: speech.ref.engine === 'assemblyai' ? undefined : () => createTtsConnection(speech.ref, speech.browserVoiceName)! }) as unknown as WebSocket)
         : new WebSocket(`${tokenJson.wsUrl}?token=${encodeURIComponent(tokenJson.token || '')}`);
       setVoiceEngine(useFast ? 'fast' : 'agent');
       wsRef.current = socket;

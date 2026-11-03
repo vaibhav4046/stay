@@ -42,6 +42,8 @@ const ContextSchema = z
     notes: z.array(z.string().max(300)).max(4).optional(),
     /** what Stay learned about this person and their memory line, from their device (data, clipped again when used) */
     personal: z.string().max(600).optional(),
+    /** up to three lines from the person's own notes that match this turn (found on their device) */
+    recall: z.array(z.string().max(200)).max(3).optional(),
     /** one sentence built on the device from the person's own logged blocks; used as the check-in of a task reply */
     offer: z.string().max(200).optional(),
   })
