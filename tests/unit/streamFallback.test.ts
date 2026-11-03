@@ -21,6 +21,19 @@ describe('openLlmStream model fallback', () => {
     expect(models.at(-1)).toBe('openai/gpt-oss-20b');
   });
 
+  it('tries the next model when one answers with an error (real-model hour: 2 of 189 turns got HTTP 400 and said "could not reach my thinking service")', async () => {
+    vi.stubEnv('GROQ_API_KEY', 'test-key-1234567890');
+    const models: string[] = [];
+    vi.stubGlobal('fetch', vi.fn(async (_url: string, init: { body: string }) => {
+      const model = JSON.parse(init.body).model as string;
+      models.push(model);
+      return model === 'openai/gpt-oss-120b' ? new Response('{"error":{"code":"tool_use_failed"}}', { status: 400 }) : new Response('data: [DONE]\n\n', { status: 200 });
+    }));
+    const r = await openLlmStream(req(), call);
+    expect(r.res).not.toBeNull();
+    expect(models).toEqual(['openai/gpt-oss-120b', 'openai/gpt-oss-20b']);
+  });
+
   it('reports quota when every model is spent', async () => {
     vi.stubEnv('GROQ_API_KEY', 'test-key-1234567890');
     vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status: 429 })));

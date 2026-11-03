@@ -96,7 +96,7 @@ export async function openLlmStream(req: Request, call: LlmStreamCall): Promise<
   // each Groq model has its own per-minute token bucket: when the main one is spent, the next one still answers
   const spares = (process.env.GROQ_FALLBACK_MODELS || process.env.GROQ_FALLBACK_MODEL || DEFAULT_SPARE_MODELS).split(',').map((m) => m.trim()).filter((m) => m && m !== call.serverModel);
   for (const spare of spares) {
-    if (r.res || r.error !== 'quota') break;
+    if (r.res || (r.error !== 'quota' && r.error !== 'other')) break; // out of tokens, or the model answered with an error: the next model takes the turn
     r = await openStream({ ...primary, model: spare }, call, timings);
     note(r);
   }
