@@ -15,28 +15,30 @@
     "What is the capital of Australia?",
     "So I need to, um, send that email and, uh, and I keep thinking about how to start it.",
     "Can you give me a really detailed plan for my whole week, please?",
-    "Wait, stop, just one tiny step, please.",
+    "Wait, stop, just one tiny step please.",
     "Hola, necesito empezar mi declaración de impuestos y no sé por dónde empezar."
   ],
   "staySaid": [
-    "Just so you know, I'm an AI, not a person. Hi. It's late. I'm here. What would help right now?",
-    "That renewal note is hanging. Open your email draft and type one sentence. Ready to start now?",
-    "The capital of Australia is Canberra.",
-    "Step one (2m): Get ready: open or fetch what you need for b….",
-    "Your list is empty, so there is nothing to plan yet. Want to empty your head first, or name one small thing?",
-    "Open the email draft. Just the subject line."
+    "Just so you know, I'm an AI, not a person. Good morning. What would help right now?",
+    "That renewal note's hanging. Open your email draft and type “Hi”. Want to start now?",
+    "Canberra is the capital of Australia.",
+    "Open a new email to your landlord, put the subject line “Lease renewal” and start with “Hi [Name],”. That’ll get the ball rolling.",
+    "Here’s a quick outline: block each day into morning, midday and evening slots, assign one main work task, one personal task and a short break in each block, and",
+    "Open your email app, create a new message to your landlord, and type “Hi [Name],”.",
+    "Abre el portal o la aplicación donde haces la declaración y busca la sección “Iniciar declaración” o “Nuevo expediente”. Ese primer clic ya es el paso inicial."
   ],
   "firstSoundAfterSpeechMs": {
-    "n": 5,
-    "median": 1275,
+    "n": 6,
+    "median": 1434,
     "all": [
-      1054,
-      1195,
-      1275,
-      1363,
-      1885
+      673,
+      1395,
+      1424,
+      1434,
+      1695,
+      2286
     ]
   },
   "talkedIntoThePause": false,
-  "pausedWhenTalkedOverMs": 40
+  "pausedWhenTalkedOverMs": 70
 }

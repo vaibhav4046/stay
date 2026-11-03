@@ -41,7 +41,10 @@ export function isExplicitInterruption(text: string): boolean {
 
 export interface FastSocketConfig {
   sttToken: string;
+  /** Opens the first voice session only: it expires 60 s after it was minted. */
   ttsToken: string;
+  /** Mints a new TTS token for every later voice session (language switch, reconnect, hourly rotation). */
+  freshTtsToken?: () => Promise<string>;
   /** Mic format: 24 kHz mono 16-bit little-endian (what pcm-processor.js produces). */
   sampleRate?: number;
   /** How long to wait after a turn that trails off ("and, uh,") before answering. Default 2200 ms. */
@@ -334,7 +337,7 @@ export class FastSocket {
   onerror: (() => void) | null = null;
   onclose: (() => void) | null = null;
 
-  private cfg: Required<Omit<FastSocketConfig, "keyterms" | "ttsConnect" | "endpointingMode">> & { keyterms?: string[]; ttsConnect?: () => TtsConnection; endpointingMode?: EndpointingMode };
+  private cfg: Required<Omit<FastSocketConfig, "keyterms" | "ttsConnect" | "endpointingMode" | "freshTtsToken">> & Pick<FastSocketConfig, "keyterms" | "ttsConnect" | "endpointingMode" | "freshTtsToken">;
   private session: FastSession | null = null;
   private notes: string[] = [];
   private history: ChatMessage[] = [];
@@ -377,6 +380,7 @@ export class FastSocket {
   private detectedLang = '';
   private ttsNeedsRotation = false;
   private ttsReconnectAttempts = 0;
+  private ttsOpened = false;
   private sttTermResolve: (() => void) | null = null;
   private ttsTermResolve: (() => void) | null = null;
   private ttsAudioStartedAt = 0;
@@ -740,12 +744,18 @@ export class FastSocket {
     });
   }
 
-  private openTts(): Promise<void> {
+  private async openTts(): Promise<void> {
+    // the call-start token is dead 60 s after it was minted (live, 3 Nov 2026: a switch to Spanish 100 s in got "Unauthorized: Signature
+    // has expired" on every retry), so every session after the first opens with a new one
+    const later = this.ttsOpened && !this.cfg.ttsConnect && this.cfg.freshTtsToken;
+    this.ttsOpened = true;
+    const token = later ? await this.cfg.freshTtsToken!().catch(() => this.cfg.ttsToken) : this.cfg.ttsToken;
+    if (this.closed) return;
     return new Promise((resolve, reject) => {
       const s = this.session as FastSession;
       const voiceId = toAssemblyVoiceId(s.voice, s.ttsLanguage);
       const q = new URLSearchParams({
-        token: this.cfg.ttsToken,
+        token,
         model_id: 'assemblyai-tts-1',
         voice_id: voiceId,
         language: s.ttsLanguage,

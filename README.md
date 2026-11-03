@@ -16,7 +16,7 @@ Built on **AssemblyAI Universal-3.6 Pro** (speech to text) and **AssemblyAI TTS-
 2. Ask something real: "What's the difference between a virus and a bacterium?" The first sentence is the answer.
 3. Say: "I need to... um... send that email, and..." and stop for two seconds. Stay waits. Then finish the thought. Interrupt it while it talks: it gets quiet.
 4. Say: "I can't start the email to my landlord." You get a few warm words, one tiny step and a small question.
-5. Tap the **plus** button: share your screen, use the camera or add a picture, then ask "what do I click next?" Stay says what is there. It only looks when you ask, and keeps nothing.
+5. Tap the **plus** button: share your screen, use the camera or add a picture, then ask "what do I click next?" Sharing turns the voice on and Stay takes one look and says what it sees; after that it looks only when you point at something ("what do I click next?"), and it keeps nothing.
 6. Open the landing page and scroll to **Measured, not claimed**. Each number has its source file under it.
 
 ## How it works
@@ -71,6 +71,9 @@ Labels: `live-model` is a real model call. `synthetic-mic` is a text-to-speech v
 - AssemblyAI limits new voice sessions to 5 a minute per account, shared by everyone who uses the site.
 
 ## Run it
+
+Reviewing with an AI coding agent? [`REVIEWERS.md`](REVIEWERS.md) has the verification commands (most need no API keys), the file map and the limits.
+
 
 ```bash
 npm ci
