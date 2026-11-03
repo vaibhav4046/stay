@@ -15,6 +15,7 @@ import { GATED_ACTIONS, mayDoAction } from '@/lib/conversation/actionGates';
 import { MEDICAL_BOUNDARY_FIXED_MESSAGE } from '@/lib/safety/crisis';
 import { byokHeaders } from '@/lib/byok/config';
 import { makeThinkFilter } from '@/lib/voice/thinkFilter';
+import { cleanReply } from '@/lib/voice/replyHygiene';
 import type { TtsConnection } from '@/lib/voice/tts/types';
 
 export type EndpointingMode = 'coaching' | 'reflective' | 'crisis';
@@ -1155,6 +1156,7 @@ export class FastSocket {
       return;
     }
     if (!text || gen !== this.genId) return;
+    text = cleanReply(text); // no quote marks, brackets or stock lines on screen or in the voice
     const voiced = toSpeech(text, this.session?.ttsLanguage); // what the voice is given: no markdown, emoji, quote marks or line breaks; English also gets numbers and units written out
     if (!voiced) return;
     if (this.spoken === '') this.emit({ type: 'reply.started' });
