@@ -334,7 +334,7 @@ describe('FastSocket', () => {
     tts.close();
     await tick(40);
     stt.push({ type: 'Turn', transcript: 'I do not know where to start.', end_of_turn: true, turn_order: 0, turn_is_formatted: true });
-    await tick(80);
+    await new Promise((r) => setTimeout(r, 1000)); // the reply ends 600 ms after its words are shown
     expect(events.find((e) => e.type === 'transcript.agent')?.text).toBe('Open the email and type the first line.');
     expect(types().indexOf('reply.done')).toBeGreaterThan(types().indexOf('transcript.agent')); // the turn ends, the orb can listen again
     expect(types()).not.toContain('reply.audio'); // nothing could be spoken
@@ -342,11 +342,38 @@ describe('FastSocket', () => {
     // the service accepts a new session again: the next reply asks for it at once, and the one after that is spoken
     FakeWS.expiredTokens.delete('tts');
     stt.push({ type: 'Turn', transcript: 'Okay, what next?', end_of_turn: true, turn_order: 1, turn_is_formatted: true });
-    await tick(80);
+    await new Promise((r) => setTimeout(r, 1500));
     stt.push({ type: 'Turn', transcript: 'And after that?', end_of_turn: true, turn_order: 2, turn_is_formatted: true });
-    await tick(80);
+    await new Promise((r) => setTimeout(r, 800));
     expect(types()).toContain('tts.reconnected');
     expect(types()).toContain('reply.audio');
+  });
+
+  it('an Error from the voice service and the close after it are one failure: one new session, not two (pipeline soak: reconnects in pairs, then "unavailable")', async () => {
+    fetchMock.mockResolvedValue(sse(text('Okay.')));
+    const ttsSockets = () => FakeWS.instances.filter((w) => w.isTts);
+    const { tts } = await open();
+    const before = ttsSockets().length;
+    tts.push({ type: 'Error', error_code: 3008, error: 'too many sessions' });
+    tts.close();
+    await new Promise((r) => setTimeout(r, 700));
+    expect(ttsSockets().length).toBe(before + 1);
+    expect(types().filter((t) => t === 'tts.reconnecting')).toHaveLength(1);
+    expect(types()).toContain('tts.reconnected');
+  });
+
+  it('a voice session that was already replaced closing late does not open another one or drop the working voice', async () => {
+    fetchMock.mockResolvedValue(sse(text('Okay.')));
+    const ttsSockets = () => FakeWS.instances.filter((w) => w.isTts);
+    const { tts } = await open();
+    tts.close(); // the voice drops: one reconnect
+    await new Promise((r) => setTimeout(r, 700));
+    const n = ttsSockets().length;
+    expect(n).toBe(2);
+    tts.close(); // the old session reports its close again, late
+    await new Promise((r) => setTimeout(r, 700));
+    expect(ttsSockets().length).toBe(n);
+    expect(types().filter((t) => t === 'tts.reconnecting')).toHaveLength(1);
   });
 
   it('speculates immediately on short greetings like "Hi hello" even without terminal punctuation', async () => {

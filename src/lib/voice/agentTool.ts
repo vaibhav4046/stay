@@ -74,7 +74,7 @@ export function buildServerVoiceSystemPrompt(
     opts.overloaded ? OVERLOAD_INSTRUCTION : '',
     opts.lowMood ? LOW_MOOD_INSTRUCTION : '',
     offer ? `Instead of your own check-in, end with this sentence exactly as written (it comes from what got this person started before): "${offer}"` : '',
-    'Plain spoken words, said aloud. Sentences under fifteen words, one step at a time: no markdown, no emoji, no lists, no parentheses, quotation marks, shortcuts or file names. Never open with "Sure thing", "Hey there" or "Great question". Never say "I hear you", "I hear that", "I\'m right here with you", "It sounds like" or "I understand".',
+    'Plain spoken words, said aloud. Sentences under fifteen words, one step at a time: no markdown, no emoji, no lists, no parentheses, quotation marks, shortcuts or file names. Never open with "Sure thing", "Hey there" or "Great question". Never say "I hear you", "I hear that", "I\'m right here with you", "You have my whole attention", "It sounds like" or "I understand".',
     'You cannot open or close other apps, sites or tabs, and you cannot see anything unless a picture was shown. Never say you did something you did not do. Start a timer only if the person asked for one.',
     opts.recentOpeners && opts.recentOpeners.length > 0 ? `Do not begin this reply with the same words as your last replies (${opts.recentOpeners.map((o) => `"${o}"`).join(', ')}). Vary how you start.` : '',
     'Call the app tool only when the user explicitly asks to open, change, start, stop, remember, forget, park, plan, or show something. One action per call.',

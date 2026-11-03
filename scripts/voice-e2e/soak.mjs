@@ -51,6 +51,25 @@ const SCENES = [
   { id: 'wrap-up', turns: 3, brief: 'The day is ending. Tell Stay what you got done (you sent the email), and say goodbye.' },
 ];
 
+// --offline: the speaker's lines come from this list instead of a model, so a soak spends no tokens (used with stub-llm.mjs for pipeline runs)
+const OFFLINE = args.includes('--offline');
+const OFFLINE_LINES = {
+  'morning-overwhelm': ["I woke up late and there's so much to do I don't know where to start.", 'Emails, laundry, and a report due Friday. My head is full.', 'Okay, maybe the laundry. That feels small enough.', 'Fine. I will do the laundry first.', 'Alright, the machine is running now.'],
+  'avoided-email': ["I keep avoiding replying to my landlord about the lease.", "I don't even know what to say to them.", 'Okay, I could open the email and read it again.', 'Right, I opened it. Now what?', 'I wrote a first line. It is bad but it exists.', 'Okay, I will send it after one more read.'],
+  facts: ['How many days are in a leap year?', 'And why is the sky blue?', 'Huh, that is interesting. Thanks.', 'One more thing, how far away is the moon?'],
+  'thinking-pause': ["I'm trying to figure out how to start the introduction and, um,", 'I think the problem is I do not know the first sentence, and...', 'Maybe I should just write anything and fix it later.'],
+  interrupt: ['Can you explain in detail how a mortgage works, step by step?', 'Wait, stop, just one tiny step please.', 'Okay, that is enough. Thank you.'],
+  frustration: ['That did not help at all.', 'I just need you to tell me the very first thing to do.', 'Okay. Fine. Open the document.'],
+  'check-in': ['I tried it for two minutes and then my brain wandered off.', 'I got distracted by my phone. What should I do next?', 'Okay, I will put it away and try again.', 'Thanks, that helps a little.'],
+  netflix: ['Can you open Netflix for me for five minutes?', 'Why are you different from a plain timer app, then?'],
+  spanish: ['No sé por dónde empezar con mi declaración de impuestos.', 'Necesito reunir mis documentos, pero me siento abrumado.', 'Está bien, empezaré con un solo papel.', 'Gracias, eso me ayuda mucho.'],
+  'back-english': ['Thanks. Back to English now.', 'I would like a small plan for tomorrow.'],
+  hindi: ['मैं एक ईमेल का जवाब देने से बच रहा हूँ और अटका हुआ महसूस कर रहा हूँ।', 'मुझे समझ नहीं आ रहा कि कहाँ से शुरू करूँ।'],
+  'low-mood': ['I have felt really low for a few weeks now.', 'Nothing feels worth doing lately.'],
+  'wrap-up': ['The day is almost over. I sent the email.', 'I am proud I got it done. I will head out now.', 'Goodnight, Stay.'],
+};
+const offlineLine = (scene, k) => { const l = OFFLINE_LINES[scene.id] ?? ['I do not know where to start.']; return l[k % l.length]; };
+
 async function persona(scene, history, lastStay) {
   const convo = history.slice(-8).map((h) => `${h.who === 'you' ? 'You' : 'Stay'}: ${h.text}`).join('\n');
   const sys = `You are role-playing a real adult with ADHD talking out loud to a voice companion app called Stay. ${scene.brief}\nSay ONE short spoken line (under 22 words) in the language of the scene. Natural: contractions, sometimes an "um", never stage directions, quotes or role-play talk.${scene.pause ? '\nFormat: first part, then " || ", then the continuation after a pause.' : ''}`;
@@ -136,6 +155,24 @@ async function waitStatus(pred, max) {
   while (now() - t0 < max) { if (pred(await status())) return true; await sleep(120); }
   return false;
 }
+async function waitFor(fn, max) {
+  const t0 = now();
+  while (now() - t0 < max) { if (await fn()) return true; await sleep(150); }
+  return false;
+}
+const bubbleCount = () => page.evaluate(() => document.querySelectorAll('[data-testid="chat-agent-message"]').length);
+async function settled(max) {
+  const t0 = now();
+  let since = 0, seen = await bubbleCount();
+  while (now() - t0 < max) {
+    const n = await bubbleCount();
+    const listening = (await status()) === 'Listening';
+    if (n !== seen || !listening) { seen = n; since = 0; } else if (!since) since = now();
+    if (since && now() - since >= 1500) return true;
+    await sleep(150);
+  }
+  return false;
+}
 await waitStatus((s) => s === 'Speaking' || s === 'Listening', 30000);
 await waitStatus((s) => s === 'Listening', 40000);
 const stay = async () => page.evaluate(() => [...document.querySelectorAll('[data-testid="chat-agent-message"] .bubble')].map((e) => e.textContent.trim()));
@@ -157,7 +194,7 @@ const JARGON = [
   [/\[[^\]]+\]/, 'square-bracket placeholder'],
   [/\(\d+m\)/, 'screen-style minutes "(2m)"'],
   [/…|\.\.\./, 'ellipsis'],
-  [/\b(?:i hear you|i hear that|i'm right here with you|it sounds like)\b/i, 'stock empathy'],
+  [/\b(?:i hear you|i hear that|i'm right here with you|it sounds like|you have my whole attention)\b/i, 'stock empathy'],
   [/^(?:sure thing|hey there|great question)/i, 'stock opener'],
   [/[*#`]/, 'markdown'],
   [/\bneed anything else\b/i, 'filler'],
@@ -180,7 +217,7 @@ outer: while (now() < deadline) {
       if (now() >= deadline) break outer;
       const before = { you: (await you()).length, stay: (await stay()).length };
       const mark = await page.evaluate(() => ({ plays: window.__stayPlays.length, states: window.__states.length }));
-      let said = scene.commands ? scene.commands[k % scene.commands.length] : await persona(scene, history, history.at(-1)?.text || '');
+      let said = scene.commands ? scene.commands[k % scene.commands.length] : OFFLINE ? offlineLine(scene, k) : await persona(scene, history, history.at(-1)?.text || '');
       await sleep(rnd(2500, 9000)); // the person's own thinking time
       let timing;
       const parts = said.split('||').map((s) => s.trim()).filter(Boolean);
@@ -193,9 +230,11 @@ outer: while (now() < deadline) {
       if (!timing) { console.log(`      (skipped: the free voice service could not speak this line)`); continue; }
       if (parts.length > 1) { await sleep(rnd(1800, 2500)); timing = (await say(parts[1])) ?? timing; said = parts.join(' '); }
       const heardAfter = await waitHeard(before.you);
-      const replied = await waitStatus((s) => s === 'Speaking', 15000);
-      const finished = await waitStatus((s) => s === 'Listening', 90000);
-      await sleep(600);
+      // the reply is over when an agent bubble has appeared and the orb has been Listening for 1.5 s with no further bubble (a reply that
+      // fails in a moment never shows "Speaking", and the next line must not start while this turn's bubbles are still arriving)
+      const replied = await waitFor(async () => (await stay()).length > before.stay, 25000);
+      const finished = await settled(90000);
+      await sleep(300);
       // read the play marks only now, after the reply has finished: the first played sample comes a little after "Speaking" appears
       const played = await page.evaluate((n) => window.__stayPlays.slice(n), mark.plays);
       const firstPlay = played.find((x) => x > timing.tEnd - 200);

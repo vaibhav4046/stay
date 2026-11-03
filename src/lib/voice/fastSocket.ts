@@ -384,6 +384,7 @@ export class FastSocket {
   private keepAliveTimer: ReturnType<typeof setInterval> | undefined;
   private ttsRotationTimer: ReturnType<typeof setTimeout> | undefined;
   private ttsRetryTimer: ReturnType<typeof setTimeout> | undefined;
+  private ttsReconnecting = false; // one reconnect chain at a time
   private ttsSwitch: Promise<void> | null = null;
   private detectedLang = '';
   private ttsNeedsRotation = false;
@@ -606,27 +607,33 @@ export class FastSocket {
     }
   }
 
-  private handleTtsUnexpectedClose(code = 1006): void {
+  private handleTtsUnexpectedClose(code = 1006, detail = ''): void {
     if (this.closed || !this.session) return;
+    // The service's Error message and the close that follows it are one failure, not two: a second chain opened a second session at the
+    // same moment and the service's session limit then refused both (pipeline soak, 3 Nov 2026: reconnects in pairs, then "unavailable").
+    if (this.ttsReconnecting) return;
     this.clearTtsTimers();
     if (this.ttsReconnectAttempts < 3) {
       const attempt = ++this.ttsReconnectAttempts;
       const delayMs = 200 * Math.pow(2, attempt - 1);
-      this.emit({ type: 'tts.reconnecting', attempt, code });
+      this.ttsReconnecting = true;
+      this.emit({ type: 'tts.reconnecting', attempt, code, detail });
       setTimeout(() => {
         if (this.closed) return;
         this.openTts()
           .then(() => {
+            this.ttsReconnecting = false;
             this.ttsReconnectAttempts = 0;
             this.emit({ type: 'tts.reconnected' });
           })
-          .catch(() => {
-            this.handleTtsUnexpectedClose(code);
+          .catch((e: unknown) => {
+            this.ttsReconnecting = false;
+            this.handleTtsUnexpectedClose(code, e instanceof Error ? e.message : detail);
           });
       }, delayMs);
       return;
     }
-    this.emit({ type: 'tts.unavailable', code, message: 'AssemblyAI TTS connection lost after 3 retries; STT remains active.' });
+    this.emit({ type: 'tts.unavailable', code, detail, message: 'AssemblyAI TTS connection lost after 3 retries; STT remains active.' });
     // not for good: the next reply, or this timer, tries again (a refused session or a rate limit passes)
     this.ttsRetryTimer = setTimeout(() => {
       this.ttsRetryTimer = undefined;
@@ -657,7 +664,7 @@ export class FastSocket {
       this.held.push(m);
       return;
     }
-    if ((globalThis as { __stayFastDebug?: boolean }).__stayFastDebug && m.type !== 'reply.audio') console.debug('[fast]', Math.round(performance.now()), m.type, typeof m.text === 'string' ? m.text.slice(0, 60) : m.type === 'tool.call' ? JSON.stringify(m.arguments).slice(0, 80) : '');
+    if ((globalThis as { __stayFastDebug?: boolean }).__stayFastDebug && m.type !== 'reply.audio') console.debug('[fast]', Math.round(performance.now()), m.type, typeof m.text === 'string' ? m.text.slice(0, 60) : typeof m.code === 'number' ? `code=${m.code} ${String(m.detail ?? '').slice(0, 80)}` : m.type === 'tool.call' ? JSON.stringify(m.arguments).slice(0, 80) : '');
     if (!this.closed) this.onmessage?.({ data: JSON.stringify(m) });
   }
 
@@ -838,7 +845,7 @@ export class FastSocket {
         } else if (m.type === 'Error') {
           clearTimeout(beginTimer);
           if (!begun) reject(new Error(String(m.error || 'tts_error')));
-          else this.handleTtsUnexpectedClose(Number(m.error_code ?? 3006));
+          else if (this.tts === ws) this.handleTtsUnexpectedClose(Number(m.error_code ?? 3006), String(m.error ?? ''));
         }
       };
       ws.onerror = () => {
@@ -849,10 +856,14 @@ export class FastSocket {
         clearTimeout(beginTimer);
         this.ttsTermResolve?.();
         this.ttsTermResolve = null;
-        if (!this.closed) {
-          if (!begun) reject(new Error('tts_closed'));
-          else this.handleTtsUnexpectedClose(ev?.code ?? 1006);
+        if (this.closed) return;
+        if (!begun) {
+          reject(new Error('tts_closed'));
+          return;
         }
+        // a session that was already replaced (language switch, reconnect, rotation) closing late says nothing about the current one:
+        // reacting to it opened yet another session and threw away a working voice
+        if (this.tts === ws) this.handleTtsUnexpectedClose(ev?.code ?? 1006);
       };
     });
   }
