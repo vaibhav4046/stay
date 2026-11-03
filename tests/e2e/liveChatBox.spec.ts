@@ -8,7 +8,7 @@ test.describe('Chat-first home: orb, conversation top to bottom, composer', () =
     await page.reload();
 
     const careOption = page.getByTestId('care-self_managing');
-    if (await careOption.isVisible()) {
+    if (await careOption.waitFor({ timeout: 5000 }).then(() => true, () => false)) { // isVisible() does not wait; a slow load skipped onboarding
       await careOption.click();
       await page.getByTestId('onboarding-ack').click();
       await page.getByTestId('onboarding-done').click();
@@ -50,7 +50,7 @@ test.describe('Chat-first home: orb, conversation top to bottom, composer', () =
     await page.goto('/app/today');
 
     const careOption = page.getByTestId('care-self_managing');
-    if (await careOption.isVisible()) {
+    if (await careOption.waitFor({ timeout: 5000 }).then(() => true, () => false)) { // isVisible() does not wait; a slow load skipped onboarding
       await careOption.click();
       await page.getByTestId('onboarding-ack').click();
       await page.getByTestId('onboarding-done').click();
