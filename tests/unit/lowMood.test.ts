@@ -26,6 +26,7 @@ describe('low mood that has lasted (judge panel, 2 Nov 2026)', () => {
     expect(LOW_MOOD_INSTRUCTION).toMatch(/local emergency number/);
     expect(LOW_MOOD_INSTRUCTION).toMatch(/116 123/);
     expect(LOW_MOOD_INSTRUCTION).toMatch(/No diagnosis/);
+    expect(LOW_MOOD_INSTRUCTION).toMatch(/never start with "I hear" or "It sounds like"/); // live, 3 Nov 2026: it opened with "I hear that"
   });
 
   it('is added to the prompt only when asked for', () => {
