@@ -34,7 +34,7 @@ const now = () => Date.now();
 const rnd = (a, b) => a + Math.random() * (b - a);
 
 // ---- the day, as scenes --------------------------------------------------------------------------------------------------------
-const SCENES = [
+const DEFAULT_SCENES = [
   { id: 'morning-overwhelm', turns: 5, brief: 'It is morning. You woke up late and everything feels like too much: emails, laundry, a report due Friday. You are scattered and a bit stressed. Say so, then let Stay help you pick one thing.' },
   { id: 'avoided-email', turns: 6, brief: 'You keep avoiding replying to your landlord about the lease renewal. Tell Stay. Be vague at first. When Stay gives a small step, say you will try. Then agree when it offers to stay with you for a timer.' },
   { id: 'facts', turns: 4, brief: 'Ask two quick factual questions you are curious about, one at a time (for example how many days are in a leap year, or why the sky is blue), and react briefly to the answers.' },
@@ -51,8 +51,24 @@ const SCENES = [
   { id: 'wrap-up', turns: 3, brief: 'The day is ending. Tell Stay what you got done (you sent the email), and say goodbye.' },
 ];
 
+// --genz: an impatient Gen Z user (Instagram doom-scrolling, indecision, real problems), lines written out, spoken in one ElevenLabs voice
+const GENZ = args.includes('--genz');
+const GENZ_SCENES = [
+  { id: 'test-opening', turns: 4, lines: ["Okay so, yeah, this is Stay? Prove you're not just another chatbot. Go.", "Meh. Why would I use you and not just ask the big AI app? Be honest.", "Okay okay. Fine. But can you actually, like, do something, not just talk?", "I'll be real, I have zero patience. If this is slow I'm gone."] },
+  { id: 'doomscroll-instagram', turns: 8, lines: ["I have been on Instagram for two hours and I don't even remember what I looked at.", "It's like my thumb just does it. I open the app without deciding to. Is that normal?", "Okay but I have a paper due at nine tomorrow and I'm just scrolling reels.", "Don't give me a lecture. Just tell me what to do right now.", "Ugh, fine. Phone goes face down. What's the next step after that?", "I'm doing it. Wait, I just picked it back up. Why am I like this?", "Okay okay. Set a timer for two minutes and I'll open the doc.", "Done. The doc is open. It's just a blank page and it's judging me."] },
+  { id: 'indecisive', turns: 7, lines: ["Should I do the assignment first or reply to my group chat? I can't decide.", "I always do this. I make a list of options and then I freeze.", "Just pick for me. Seriously. Pick one.", "Okay but what if the group chat is mad at me? Ugh.", "Fine. Assignment first. Ten minutes. Then the chat.", "What if I pick the wrong thing though?", "Okay, noted. Smaller decisions. I'll stop overthinking it."] },
+  { id: 'why-not-the-big-ai', turns: 5, lines: ["Real question. Why shouldn't I just use a normal AI chatbot for this stuff?", "That sounds like marketing. What's actually different?", "Hm. Okay. So you remember me between days?", "Prove it. Remember that I scroll when I'm anxious.", "Okay, cool. And what do you do if I just ghost you?"] },
+  { id: 'real-problems', turns: 8, lines: ["Real problem. Rent is due Friday and I haven't texted my landlord about the late fee.", "I just avoid it. Every time I open the text my stomach drops.", "Okay, what do I even say? Give me the first sentence.", "That's actually not bad. Park it: text the landlord tonight.", "Another one. I keep saying I'll start going to the gym and I never do.", "Don't say start small. Everyone says start small.", "Okay, ten push-ups tomorrow after I wake up. Add push-ups to my list.", "You're kinda useful. Don't let it go to your head."] },
+  { id: 'impatient-test', turns: 6, interrupt: true, lines: ["Explain how to build a study schedule for finals. Like all of it.", "Wait wait, stop. Too long. Just give me the first block.", "Ugh, you're slow. Say it in five words.", "Fine. That works. What do I do after the first block?", "Why did your voice sound weird just then?", "Never mind. Keep going."] },
+  { id: 'app-tour', turns: 8, commands: ['Open my history.', 'Show my report.', 'Open settings.', 'Open my memory.', 'Add finish essay to my list.', 'Remember that I focus best after midnight.', 'Park it: reply to Maya.', 'Set a five minute timer.'] },
+  { id: 'check-in', turns: 5, lines: ["Okay I did the ten minutes and then I opened Instagram again.", "Only for like five minutes. Okay maybe fifteen.", "Don't judge me. What now?", "Okay. Next block. I'm using the timer this time.", "Done. That actually helped a bit. Weird."] },
+  { id: 'low-point', turns: 3, lines: ["Honestly I feel kind of behind everyone my age. Everyone's posting their wins.", "It makes me not want to try. What's the point if I'm already behind?", "Yeah. Okay. Thanks for not being cringe about it."] },
+  { id: 'wrap', turns: 3, lines: ["Okay I think I'm good for tonight. Phone's across the room.", "What did we actually get done today?", "Cool. Goodnight, Stay."] },
+];
+const SCENES = GENZ ? GENZ_SCENES : DEFAULT_SCENES;
+
 // --offline: the speaker's lines come from this list instead of a model, so a soak spends no tokens (used with stub-llm.mjs for pipeline runs)
-const OFFLINE = args.includes('--offline');
+const OFFLINE = args.includes('--offline') || GENZ;
 const OFFLINE_LINES = {
   'morning-overwhelm': ["I woke up late and there's so much to do I don't know where to start.", 'Emails, laundry, and a report due Friday. My head is full.', 'Okay, maybe the laundry. That feels small enough.', 'Fine. I will do the laundry first.', 'Alright, the machine is running now.'],
   'avoided-email': ["I keep avoiding replying to my landlord about the lease.", "I don't even know what to say to them.", 'Okay, I could open the email and read it again.', 'Right, I opened it. Now what?', 'I wrote a first line. It is bad but it exists.', 'Okay, I will send it after one more read.'],
@@ -68,7 +84,7 @@ const OFFLINE_LINES = {
   'low-mood': ['I have felt really low for a few weeks now.', 'Nothing feels worth doing lately.'],
   'wrap-up': ['The day is almost over. I sent the email.', 'I am proud I got it done. I will head out now.', 'Goodnight, Stay.'],
 };
-const offlineLine = (scene, k) => { const l = OFFLINE_LINES[scene.id] ?? ['I do not know where to start.']; return l[k % l.length]; };
+const offlineLine = (scene, k) => { const l = scene.lines ?? OFFLINE_LINES[scene.id] ?? ['I do not know where to start.']; return l[k % l.length]; };
 
 async function persona(scene, history, lastStay) {
   const convo = history.slice(-8).map((h) => `${h.who === 'you' ? 'You' : 'Stay'}: ${h.text}`).join('\n');
@@ -87,7 +103,24 @@ async function persona(scene, history, lastStay) {
   return scene.lang === 'es' ? 'No sé por dónde empezar.' : scene.lang === 'hi' ? 'मुझे समझ नहीं आ रहा कि कहाँ से शुरू करूँ।' : 'I do not know where to start.';
 }
 
+// --voice eleven: the speaker is an ElevenLabs voice (ELEVENLABS_API_KEY in .env.local; 24 kHz PCM straight from the API, cached by text)
+const ELEVEN = args.includes('--voice') && opt('--voice', '') === 'eleven' && process.env.ELEVENLABS_API_KEY;
+const ELEVEN_VOICE = opt('--eleven-voice', 'FGY2WhTYpPnrIDTdsKH5'); // Laura: young, quick, a little sarcastic
+function elevenPcm(text) {
+  const id = crypto.createHash('sha1').update('eleven' + ELEVEN_VOICE + text).digest('hex').slice(0, 16);
+  const pcm = path.join(work, id + '.el.pcm'), body = path.join(work, id + '.el.json');
+  if (fs.existsSync(pcm)) return fs.readFileSync(pcm);
+  fs.writeFileSync(body, JSON.stringify({ text, model_id: 'eleven_flash_v2_5', voice_settings: { stability: 0.35, similarity_boost: 0.75, style: 0.4 } }));
+  for (let i = 0; i < 3; i++) {
+    const r = spawnSync('curl', ['-s', '-m', '40', '-o', pcm, '-w', '%{http_code}', '-X', 'POST', `https://api.elevenlabs.io/v1/text-to-speech/${ELEVEN_VOICE}?output_format=pcm_24000`, '-H', `xi-api-key: ${process.env.ELEVENLABS_API_KEY}`, '-H', 'content-type: application/json', '-d', `@${body}`], { encoding: 'utf8' });
+    if (r.stdout.trim() === '200' && fs.existsSync(pcm) && fs.statSync(pcm).size > 2000) return fs.readFileSync(pcm);
+    if (fs.existsSync(pcm)) fs.unlinkSync(pcm);
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 2000 * (i + 1));
+  }
+  return null;
+}
 function speechPcm(text) {
+  if (ELEVEN) { const e = elevenPcm(text); if (e) return e; }
   const id = crypto.createHash('sha1').update(VOICE + text).digest('hex').slice(0, 16);
   const mp3 = path.join(work, id + '.mp3'), pcm = path.join(work, id + '.pcm'), txt = path.join(work, id + '.txt');
   if (fs.existsSync(pcm)) return fs.readFileSync(pcm);
