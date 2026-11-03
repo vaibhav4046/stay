@@ -222,7 +222,10 @@ const say = (name) => {
   clipLog.push({ name, at: Date.now() });
   return page.evaluate((b) => window.__say(b), clips[name].b64);
 };
-const results = { gitSha: sha, tier: 'real provider + real browser; synthetic speaker injected as the microphone', base: BASE, steps: [], failures: [] };
+const pageErrors = [];
+page.on('pageerror', (e) => pageErrors.push(String(e).slice(0, 200)));
+page.on('console', (m) => { if (m.type() === 'error') pageErrors.push(m.text().slice(0, 200)); });
+const results = { pageErrors, gitSha: sha, tier: 'real provider + real browser; synthetic speaker injected as the microphone', base: BASE, steps: [], failures: [] };
 const log = (msg) => console.log(msg);
 
 try {
@@ -238,8 +241,12 @@ try {
   await page.getByTestId('call-direct-stay-btn').click();
   await page.waitForTimeout(900);
   await page.screenshot({ path: `${OUT}/02-ringing.png` });
-  const consent = page.getByRole('button', { name: /start talking/i });
-  if (await consent.isVisible({ timeout: 8000 }).catch(() => false)) await consent.click();
+  const consent = page.getByTestId('consent-start-talking'); // by id: a name search also matched other buttons and failed quietly
+  // isVisible() does not wait (its timeout is ignored), so it checked before the sheet appeared and the call was never answered
+  const consentShown = await consent.waitFor({ state: 'visible', timeout: 8000 }).then(() => true, () => false);
+  if (consentShown) await consent.click();
+  results.consent = { shown: consentShown, clicked: consentShown };
+  log(`consent sheet shown: ${consentShown}`);
   await waitFor((s) => s.s !== '' && s.s !== 'Ringing…', 20000, 'the call to connect');
   log('connected; waiting for the greeting to finish');
   await waitFor((s) => s.s === 'Speaking', 15000, 'greeting to start').catch(() => undefined);
