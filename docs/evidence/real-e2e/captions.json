@@ -1,56 +1,382 @@
 {
-  "recStart": 1793583794293,
-  "callEndAt": 1793583830981,
+  "recStart": 1793671029282,
+  "callEndAt": 1793671082414,
+  "happyAt": 1793671112787,
   "caps": [
     {
-      "t": 1793583801295,
+      "t": 1793671036465,
       "who": "stay",
-      "text": "Hi. It is late, so nothing big is needed. What would feel kind to start with? just keep me company, or empty my head, or one small start?"
+      "text": "Just so you"
     },
     {
-      "t": 1793583814429,
+      "t": 1793671036485,
+      "who": "stay",
+      "text": "Just so you know,"
+    },
+    {
+      "t": 1793671037045,
+      "who": "stay",
+      "text": "Just so you know, I'm"
+    },
+    {
+      "t": 1793671037209,
+      "who": "stay",
+      "text": "Just so you know, I'm an"
+    },
+    {
+      "t": 1793671037372,
+      "who": "stay",
+      "text": "Just so you know, I'm an AI,"
+    },
+    {
+      "t": 1793671038089,
+      "who": "stay",
+      "text": "Just so you know, I'm an AI, not"
+    },
+    {
+      "t": 1793671038293,
+      "who": "stay",
+      "text": "Just so you know, I'm an AI, not a"
+    },
+    {
+      "t": 1793671038371,
+      "who": "stay",
+      "text": "Just so you know, I'm an AI, not a person."
+    },
+    {
+      "t": 1793671039166,
+      "who": "stay",
+      "text": "Just so you know, I'm an AI, not a person. Hi."
+    },
+    {
+      "t": 1793671039805,
+      "who": "stay",
+      "text": "Just so you know, I'm an AI, not a person. Hi. It's"
+    },
+    {
+      "t": 1793671040051,
+      "who": "stay",
+      "text": "Just so you know, I'm an AI, not a person. Hi. It's late."
+    },
+    {
+      "t": 1793671040685,
+      "who": "stay",
+      "text": "Just so you know, I'm an AI, not a person. Hi. It's late. I'm"
+    },
+    {
+      "t": 1793671040851,
+      "who": "stay",
+      "text": "Just so you know, I'm an AI, not a person. Hi. It's late. I'm here."
+    },
+    {
+      "t": 1793671041484,
+      "who": "stay",
+      "text": "Just so you know, I'm an AI, not a person. Hi. It's late. I'm here. What"
+    },
+    {
+      "t": 1793671041646,
+      "who": "stay",
+      "text": "Just so you know, I'm an AI, not a person. Hi. It's late. I'm here. What would"
+    },
+    {
+      "t": 1793671041805,
+      "who": "stay",
+      "text": "Just so you know, I'm an AI, not a person. Hi. It's late. I'm here. What would help"
+    },
+    {
+      "t": 1793671042088,
+      "who": "stay",
+      "text": "Just so you know, I'm an AI, not a person. Hi. It's late. I'm here. What would help right"
+    },
+    {
+      "t": 1793671042289,
+      "who": "stay",
+      "text": "Just so you know, I'm an AI, not a person. Hi. It's late. I'm here. What would help right now?"
+    },
+    {
+      "t": 1793671047353,
       "who": "person",
       "text": "I keep putting off replying to my landlord about the renewal."
     },
     {
-      "t": 1793583816104,
+      "t": 1793671048597,
       "who": "stay",
-      "text": "Hey. Pick one sentence to send. Draft “Thanks for the notice; I’ll review and reply by tomorrow.” Then send it. Ready?"
+      "text": "You're putting off"
     },
     {
-      "t": 1793583819635,
-      "who": "person",
-      "text": "Can you break this down into an ultra-micro step?"
+      "t": 1793671048607,
+      "who": "stay",
+      "text": "You're putting"
     },
     {
-      "t": 1793583819836,
+      "t": 1793671048647,
+      "who": "stay",
+      "text": "You're"
+    },
+    {
+      "t": 1793671049348,
+      "who": "stay",
+      "text": "You're putting off the renewal reply. Draft a quick email right now. Want to do that now"
+    },
+    {
+      "t": 1793671052752,
       "who": "person",
       "text": "Wait, stop. Actually, can we just make it smaller?"
     },
     {
-      "t": 1793583820880,
+      "t": 1793671054118,
       "who": "stay",
-      "text": "Sure. Type “Thanks, will reply.” and hit send."
+      "text": "Sure. Write a"
     },
     {
-      "t": 1793583828229,
+      "t": 1793671054146,
+      "who": "stay",
+      "text": "Sure."
+    },
+    {
+      "t": 1793671061054,
+      "who": "stay",
+      "text": "Sure. Write a short line, like: \"Hi, I'm interested in renewing. When can we discuss terms?\" Then hit send."
+    },
+    {
+      "t": 1793671064457,
       "who": "person",
-      "text": "Hola, ahora necesito empezar mi declaración de impuestos, pero no sé por dónde empezar."
+      "text": "Hola."
     },
     {
-      "t": 1793583829845,
+      "t": 1793671068853,
+      "who": "person",
+      "text": "Ahora necesito empezar mi declaración de impuestos, pero no sé por dónde empezar."
+    },
+    {
+      "t": 1793671070935,
       "who": "stay",
-      "text": "Hola. Busca el formulario 1040 en el sitio del IRS. ¿Quieres abrirlo?"
+      "text": "Tu declaración parece grande, pero el"
     },
     {
-      "t": 1793583834542,
+      "t": 1793671070963,
+      "who": "stay",
+      "text": "Tu declaración parece grande,"
+    },
+    {
+      "t": 1793671071482,
+      "who": "stay",
+      "text": "Tu declaración parece grande, pero"
+    },
+    {
+      "t": 1793671071728,
+      "who": "stay",
+      "text": "Tu declaración parece grande, pero el primer"
+    },
+    {
+      "t": 1793671072122,
+      "who": "stay",
+      "text": "Tu declaración parece grande, pero el primer paso"
+    },
+    {
+      "t": 1793671072682,
+      "who": "stay",
+      "text": "Tu declaración parece grande, pero el primer paso es"
+    },
+    {
+      "t": 1793671072845,
+      "who": "stay",
+      "text": "Tu declaración parece grande, pero el primer paso es pequeño:"
+    },
+    {
+      "t": 1793671073682,
+      "who": "stay",
+      "text": "Tu declaración parece grande, pero el primer paso es pequeño: abre"
+    },
+    {
+      "t": 1793671073882,
+      "who": "stay",
+      "text": "Tu declaración parece grande, pero el primer paso es pequeño: abre la"
+    },
+    {
+      "t": 1793671074043,
+      "who": "stay",
+      "text": "Tu declaración parece grande, pero el primer paso es pequeño: abre la carpeta"
+    },
+    {
+      "t": 1793671074802,
+      "who": "stay",
+      "text": "Tu declaración parece grande, pero el primer paso es pequeño: abre la carpeta y"
+    },
+    {
+      "t": 1793671074843,
+      "who": "stay",
+      "text": "Tu declaración parece grande, pero el primer paso es pequeño: abre la carpeta y saca"
+    },
+    {
+      "t": 1793671075162,
+      "who": "stay",
+      "text": "Tu declaración parece grande, pero el primer paso es pequeño: abre la carpeta y saca los"
+    },
+    {
+      "t": 1793671075362,
+      "who": "stay",
+      "text": "Tu declaración parece grande, pero el primer paso es pequeño: abre la carpeta y saca los papeles"
+    },
+    {
+      "t": 1793671075843,
+      "who": "stay",
+      "text": "Tu declaración parece grande, pero el primer paso es pequeño: abre la carpeta y saca los papeles que"
+    },
+    {
+      "t": 1793671075922,
+      "who": "stay",
+      "text": "Tu declaración parece grande, pero el primer paso es pequeño: abre la carpeta y saca los papeles que ya"
+    },
+    {
+      "t": 1793671076083,
+      "who": "stay",
+      "text": "Tu declaración parece grande, pero el primer paso es pequeño: abre la carpeta y saca los papeles que ya tienes."
+    },
+    {
+      "t": 1793671077122,
+      "who": "stay",
+      "text": "Tu declaración parece grande, pero el primer paso es pequeño: abre la carpeta y saca los papeles que ya tienes. Si"
+    },
+    {
+      "t": 1793671077203,
+      "who": "stay",
+      "text": "Tu declaración parece grande, pero el primer paso es pequeño: abre la carpeta y saca los papeles que ya tienes. Si aún"
+    },
+    {
+      "t": 1793671077442,
+      "who": "stay",
+      "text": "Tu declaración parece grande, pero el primer paso es pequeño: abre la carpeta y saca los papeles que ya tienes. Si aún no"
+    },
+    {
+      "t": 1793671077522,
+      "who": "stay",
+      "text": "Tu declaración parece grande, pero el primer paso es pequeño: abre la carpeta y saca los papeles que ya tienes. Si aún no sabes"
+    },
+    {
+      "t": 1793671077842,
+      "who": "stay",
+      "text": "Tu declaración parece grande, pero el primer paso es pequeño: abre la carpeta y saca los papeles que ya tienes. Si aún no sabes qué"
+    },
+    {
+      "t": 1793671077925,
+      "who": "stay",
+      "text": "Tu declaración parece grande, pero el primer paso es pequeño: abre la carpeta y saca los papeles que ya tienes. Si aún no sabes qué falta,"
+    },
+    {
+      "t": 1793671078722,
+      "who": "stay",
+      "text": "Tu declaración parece grande, pero el primer paso es pequeño: abre la carpeta y saca los papeles que ya tienes. Si aún no sabes qué falta, dímelo"
+    },
+    {
+      "t": 1793671079402,
+      "who": "stay",
+      "text": "Tu declaración parece grande, pero el primer paso es pequeño: abre la carpeta y saca los papeles que ya tienes. Si aún no sabes qué falta, dímelo y"
+    },
+    {
+      "t": 1793671079442,
+      "who": "stay",
+      "text": "Tu declaración parece grande, pero el primer paso es pequeño: abre la carpeta y saca los papeles que ya tienes. Si aún no sabes qué falta, dímelo y lo"
+    },
+    {
+      "t": 1793671079562,
+      "who": "stay",
+      "text": "Tu declaración parece grande, pero el primer paso es pequeño: abre la carpeta y saca los papeles que ya tienes. Si aún no sabes qué falta, dímelo y lo dividimos"
+    },
+    {
+      "t": 1793671080122,
+      "who": "stay",
+      "text": "Tu declaración parece grande, pero el primer paso es pequeño: abre la carpeta y saca los papeles que ya tienes. Si aún no sabes qué falta, dímelo y lo dividimos en"
+    },
+    {
+      "t": 1793671080243,
+      "who": "stay",
+      "text": "Tu declaración parece grande, pero el primer paso es pequeño: abre la carpeta y saca los papeles que ya tienes. Si aún no sabes qué falta, dímelo y lo dividimos en pasos"
+    },
+    {
+      "t": 1793671080562,
+      "who": "stay",
+      "text": "Tu declaración parece grande, pero el primer paso es pequeño: abre la carpeta y saca los papeles que ya tienes. Si aún no sabes qué falta, dímelo y lo dividimos en pasos más"
+    },
+    {
+      "t": 1793671080722,
+      "who": "stay",
+      "text": "Tu declaración parece grande, pero el primer paso es pequeño: abre la carpeta y saca los papeles que ya tienes. Si aún no sabes qué falta, dímelo y lo dividimos en pasos más chicos."
+    },
+    {
+      "t": 1793671085990,
       "who": "person",
       "text": "show my history"
     },
     {
-      "t": 1793583839254,
+      "t": 1793671090700,
       "who": "person",
       "text": "open brain dump"
+    },
+    {
+      "t": 1793671099165,
+      "who": "person",
+      "text": "Here's my screen. What do you see?"
+    },
+    {
+      "t": 1793671100813,
+      "who": "stay",
+      "text": "I see a draft email to your landlord about the lease renewal, but the message stops right after \"Hi, I wanted to ask about.\" Just finish that one sentence with the specific detail you need to ask about."
+    },
+    {
+      "t": 1793671101693,
+      "who": "person",
+      "text": "Can you see my screen? What is half finished?"
+    },
+    {
+      "t": 1793671102382,
+      "who": "stay",
+      "text": "I"
+    },
+    {
+      "t": 1793671102622,
+      "who": "stay",
+      "text": "I see"
+    },
+    {
+      "t": 1793671102823,
+      "who": "stay",
+      "text": "I see a"
+    },
+    {
+      "t": 1793671103024,
+      "who": "stay",
+      "text": "I see a draft"
+    },
+    {
+      "t": 1793671103224,
+      "who": "stay",
+      "text": "I see a draft email"
+    },
+    {
+      "t": 1793671109230,
+      "who": "person",
+      "text": "What makes you different from a timer app?"
+    },
+    {
+      "t": 1793671109255,
+      "who": "stay",
+      "text": "I see a draft email to your landlord about the lease renewal, but the message stops right after saying you wanted to ask about something. Just finish that one sentence with the specific detail you need to ask about."
+    },
+    {
+      "t": 1793671111083,
+      "who": "stay",
+      "text": "A clock app starts a timer, and a"
+    },
+    {
+      "t": 1793671111096,
+      "who": "stay",
+      "text": "A clock app starts a timer,"
+    },
+    {
+      "t": 1793671111143,
+      "who": "stay",
+      "text": "A"
     }
   ]
 }

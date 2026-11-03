@@ -1,0 +1,17 @@
+Regression run, 2026-11-03, local production build, with the new demo video and transcript
+Labels: voice services faked in these specs; nothing here is real-mic.
+
+== tsc ==
+tsc exit 0
+== claims ==
+claims-lint: clean
+== vitest ==
+ Test Files  91 passed | 1 skipped (92)
+      Tests  1324 passed | 1 skipped (1325)
+== playwright ==
+  1) [chromium] › tests\e2e\liveChatBox.spec.ts:48:7 › Chat-first home: orb, conversation top to bottom, composer › no horizontal overflow at mobile 375px with chat box 
+  1 failed
+  2 skipped
+  200 passed (7.3m)
+
+The one failure (liveChatBox 375px) passed on rerun: a race in the test (isVisible() does not wait, so a slow load skipped onboarding). Fixed in liveChatBox and liveVoiceSync specs; 9 of 9 passed over 3 repeats.

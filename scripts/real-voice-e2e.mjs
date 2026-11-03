@@ -89,6 +89,13 @@ const recStart = Date.now(); // the screen recording starts with the page
 // every chat message, the first time its text appears, with the time: the captions of the recording
 await page.addInitScript(() => {
   window.__stayCaps = [];
+  // the call status over time (Ringing, Listening, Speaking, ...), to see how long each lasted against the audio
+  window.__stayStates = [];
+  setInterval(() => {
+    const s = document.querySelector('[data-testid="call-state"]')?.textContent?.trim() || '';
+    const last = window.__stayStates[window.__stayStates.length - 1];
+    if (!last || last.s !== s) window.__stayStates.push({ t: Date.now(), s });
+  }, 50);
   const seen = new Set();
   const scan = () => document.querySelectorAll('[data-testid="chat-user-message"],[data-testid="chat-agent-message"]').forEach((el) => {
     const who = el.getAttribute('data-testid') === 'chat-user-message' ? 'person' : 'stay';
@@ -208,11 +215,14 @@ await page.addInitScript(() => {
   };
 });
 
-const state = () => page.evaluate(() => ({ now: performance.now(), s: document.querySelector('[data-testid="call-state"]')?.textContent ?? '', drive: Number(document.querySelector('[data-testid="signal-wave"]')?.getAttribute('data-drive') ?? 0) }));
+const state = () => page.evaluate(() => ({ now: performance.now(), pb: (window.__stayPlayback || {}).state || '', buffered: Math.round((window.__stayPlayback || {}).bufferedMs || 0), s: document.querySelector('[data-testid="call-state"]')?.textContent ?? '', drive: Number(document.querySelector('[data-testid="signal-wave"]')?.getAttribute('data-drive') ?? 0) }));
+const statusLog = []; // every change of the call status seen while waiting, with wall-clock time
 async function waitFor(pred, timeoutMs, label) {
   const t0 = Date.now();
   for (;;) {
     const s = await state();
+    const key = `${s.s}|${s.pb}`;
+    if (statusLog.at(-1)?.key !== key) statusLog.push({ at: Date.now(), s: s.s, pb: s.pb, buffered: s.buffered, key });
     if (pred(s)) return s;
     if (Date.now() - t0 > timeoutMs) throw new Error(`timeout waiting for ${label} (last state: ${s.s})`);
     await sleep(40);
@@ -222,7 +232,10 @@ const say = (name) => {
   clipLog.push({ name, at: Date.now() });
   return page.evaluate((b) => window.__say(b), clips[name].b64);
 };
-const results = { gitSha: sha, tier: 'real provider + real browser; synthetic speaker injected as the microphone', base: BASE, steps: [], failures: [] };
+const pageErrors = [];
+page.on('pageerror', (e) => pageErrors.push(String(e).slice(0, 200)));
+page.on('console', (m) => { if (m.type() === 'error') pageErrors.push(m.text().slice(0, 200)); });
+const results = { pageErrors, gitSha: sha, tier: 'real provider + real browser; synthetic speaker injected as the microphone', base: BASE, steps: [], failures: [] };
 const log = (msg) => console.log(msg);
 
 try {
@@ -238,8 +251,12 @@ try {
   await page.getByTestId('call-direct-stay-btn').click();
   await page.waitForTimeout(900);
   await page.screenshot({ path: `${OUT}/02-ringing.png` });
-  const consent = page.getByRole('button', { name: /start talking/i });
-  if (await consent.isVisible({ timeout: 8000 }).catch(() => false)) await consent.click();
+  const consent = page.getByTestId('consent-start-talking'); // by id: a name search also matched other buttons and failed quietly
+  // isVisible() does not wait (its timeout is ignored), so it checked before the sheet appeared and the call was never answered
+  const consentShown = await consent.waitFor({ state: 'visible', timeout: 8000 }).then(() => true, () => false);
+  if (consentShown) await consent.click();
+  results.consent = { shown: consentShown, clicked: consentShown };
+  log(`consent sheet shown: ${consentShown}`);
   await waitFor((s) => s.s !== '' && s.s !== 'Ringing…', 20000, 'the call to connect');
   log('connected; waiting for the greeting to finish');
   await waitFor((s) => s.s === 'Speaking', 15000, 'greeting to start').catch(() => undefined);
@@ -345,7 +362,7 @@ try {
       await page.getByTestId('share-bar').waitFor();
       await page.waitForFunction(() => document.querySelector('[data-testid="share-preview"]')?.readyState >= 2);
       await typeAndSend('Can you see my screen? What is half finished?', 3500);
-      await typeAndSend('Why should I use you and not ChatGPT?', 3500);
+      await typeAndSend('What makes you different from a timer app?', 3500);
       await page.getByTestId('stop-share').click();
       happyAt = Date.now();
       await page.waitForTimeout(2500);
@@ -387,6 +404,16 @@ try {
 
 const video = await page.video()?.path();
 await ctx.close();
+results.stateLog = statusLog;
+// "Speaking" shown over a player that has stopped is dead air for the person (3 Nov 2026: 12.9 s of it after an interruption)
+let silentSpeakingMaxMs = 0;
+for (let i = 0; i < statusLog.length - 1; i++) {
+  if (statusLog[i].s === 'Speaking' && statusLog[i].pb === 'STOPPED' && i > 0 && statusLog[i - 1].pb && statusLog[i - 1].pb !== 'STOPPED') {
+    silentSpeakingMaxMs = Math.max(silentSpeakingMaxMs, statusLog[i + 1].at - statusLog[i].at);
+  }
+}
+results.silentSpeakingMaxMs = silentSpeakingMaxMs;
+if (silentSpeakingMaxMs > 1500) results.failures.push(`"Speaking" shown for ${silentSpeakingMaxMs} ms after the audio had stopped`);
 await browser.close();
 if (video) {
   try { renameSync(video, `${OUT}/demo-silent.webm`); } catch { /* keep the generated name */ }

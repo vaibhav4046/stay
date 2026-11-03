@@ -39,7 +39,7 @@ Labels (H8): `synthetic-mic` = a TTS "person" injected as the microphone. `real-
 | T4.2 | PARTIAL | | | five sections; numbers tied to evidence files |
 | T4.3 | PARTIAL | axe (WCAG 2.0/2.1 A and AA rules): 0 serious or critical violations on the landing page, onboarding, the first app screen, a call with words on screen, and the menu (390 px wide); nothing scrolls sideways at 320, 375, 768, 1024, 1440 or 1920 px on the landing page or the app; with reduced motion the orb makes 0 animations (the same counter is above 0 with motion allowed); Tab reaches the talk and menu controls without landing on anything hidden | `tests/e2e/accessibility.spec.ts` | Axe found one serious issue (the mic button's accessible name did not contain its visible word); fixed. Axe checks what a machine can; it is not a screen-reader test and not a compliance claim. **Not done: the orb default.** The spec wants the orb off by default, no morphing, no face; the app morphs and shows a face. **OWNER DECISION.** |
 | T4.4 | PASS (pending your read) | | `README.md`, `HACKATHON_SUBMISSION.md` | What it is, the three-minute path, the diagram, an evidence table, limits and safety; every number links to a file. |
-| T4.5 | HUMAN | | `docs/DEMO_SCRIPT.md`, `docs/submission/demo-captions-draft.vtt` | Script and captions written. The composed video is from an earlier build; commands to rebuild it are in the script. |
+| T4.5 | HUMAN | | `docs/DEMO_SCRIPT.md`, `docs/submission/demo-captions-draft.vtt` | Script and captions written. The composed video (Pix, real call, 92 s) was re-recorded on 3 Nov 2026 on the current build; commands to rebuild it are in the script. |
 | T4.6 | HUMAN | | `docs/submission/POSTS.md` | X (280 characters, link counted as 23) and LinkedIn drafts. Nothing posted. |
 | T5.1 | PASS | 20 scenarios fixed | `tests/fixtures/eval/head_to_head.json`, `docs/benchmark/HEAD_TO_HEAD.md` | |
 | T5.2 | PASS (written) | | `docs/benchmark/HEAD_TO_HEAD.md` | Scoring axes and the frame-count timing method are written; nothing scored. |
@@ -88,7 +88,7 @@ Not done, and why:
 - **Pause-first barge-in is slower than its target** (371 ms median, n = 6 over two series; target 300 ms). Lowering the microphone threshold would also duck on Stay's own echo, so I did not.
 - **Turn-taking values were not retuned** (see T2.4).
 - **Warm TTS for the next language (T1.3), per-tool tests (T3.1), backchannels (T2.5), the phone agent (T3.5)** are untouched.
-- **Demo video** is from an older build; the composed one says "simulated speaker". Record a new one with `docs/DEMO_SCRIPT.md` option A.
+- **Demo video:** re-recorded on 3 Nov 2026 on the current build (92 s, real call, simulated speaker, labelled). A version recorded by a person with option A of `docs/DEMO_SCRIPT.md` would still be stronger.
 
 Owner requests (nothing below is done until you say so, per H9):
 1. ~~Push and PR~~ done on your yes: PR #2. You also said to merge it; I do that after its checks pass.
