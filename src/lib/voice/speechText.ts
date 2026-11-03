@@ -171,6 +171,8 @@ export function toSpeech(rawText: string, language = 'english'): string {
   const english = language.toLowerCase() === 'english';
   const cleaned = (english ? text.replace(/~(?=\s?\d)/g, 'about ') : text) // "~5 min" is "about five minutes"; the cleanup below would drop the mark
     .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/\[([^\]]{1,40})\]/g, '$1') // "Hi [Landlord's name]": a placeholder is said as the words inside, never as brackets
+    .replace(/…+/g, '.') // a trailing-off mark is not a sound
     .replace(/^\s*(?:[-*•]|\d+[.)])\s+/gm, '') // list markers
     .replace(/[*_`#>~|]+/g, '')
     .replace(/[\p{Extended_Pictographic}️‍]/gu, '')

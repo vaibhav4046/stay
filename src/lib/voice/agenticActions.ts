@@ -3,6 +3,7 @@
  * built from what happened and `quick: true` lets the fast engine speak it directly instead of asking the model to word it.
  * Actions that change something about the person (style, learning) need an explicit spoken ask, like MEMORY_CUE.
  */
+import { sayStep, wholeWords } from '@/lib/voice/spokenSteps';
 import type { CoachPlanProposal, CoachSessionRecord } from '@/types/domain';
 import type { AppActionArgs } from '@/lib/voice/agentTool';
 import { buildDeterministicCoachPlan } from '@/lib/coach/strategies';
@@ -93,8 +94,7 @@ export function runAgenticAction(args: AppActionArgs, ctx: AgenticCtx): Record<s
       saveSteps(plan);
       const first = plan.steps[0];
       ctx.proposePlan({ ...buildDeterministicCoachPlan({ taskText: task, preferredMinutes: first.minutes }), firstStep: first.text, timerMinutes: first.minutes });
-      const shortText = first.text.length > 45 ? first.text.slice(0, 44).trimEnd() + '…' : first.text;
-      return out(true, `Step one (${first.minutes}m): ${shortText}.`, { steps: plan.steps.map((s) => ({ text: s.text, minutes: s.minutes })) });
+      return out(true, sayStep(0, plan.steps.length, first.minutes, first.text), { steps: plan.steps.map((s) => ({ text: s.text, minutes: s.minutes })) });
     }
 
     case 'step_next': {
@@ -115,7 +115,7 @@ export function runAgenticAction(args: AppActionArgs, ctx: AgenticCtx): Record<s
       const index = p.steps.indexOf(next);
       saveSteps({ ...p, cursor: index });
       ctx.startTimer(next.minutes, next.text);
-      return out(true, `${finishedOne ? 'Good. ' : ''}Step ${index + 1} of ${p.steps.length}, ${next.minutes} minutes: ${next.text}. Timer started.`, { minutes: next.minutes, step: index + 1 });
+      return out(true, `${finishedOne ? 'Good. ' : ''}${sayStep(index, p.steps.length, next.minutes, next.text)} The timer is running.`, { minutes: next.minutes, step: index + 1 });
     }
 
     case 'wrap_up': {
@@ -132,7 +132,7 @@ export function runAgenticAction(args: AppActionArgs, ctx: AgenticCtx): Record<s
       if (writeList(list.map((i) => (i.id === item.id ? { ...i, bucket: 'now' as const, createdAt: now.toISOString() } : i.bucket === 'now' && !i.done ? { ...i, bucket: 'today' as const } : i)))) ctx.todayChanged();
       ctx.proposePlan(plan);
       const step = plan.firstStep.length > 110 ? `${plan.firstStep.slice(0, 109).trimEnd()}…` : plan.firstStep;
-      return out(true, `Picking up ${item.text.length > 40 ? `${item.text.slice(0, 39)}…` : item.text}. First step: ${step}`, { item: item.text });
+      return out(true, `Picking up ${wholeWords(item.text, 40)}. First step: ${step}`, { item: item.text });
     }
 
     case 'style': {

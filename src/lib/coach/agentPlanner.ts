@@ -111,9 +111,9 @@ export function breakDown(task: string, workMinutes = 10, now = new Date()): Ste
     task: t,
     at: now.toISOString(),
     steps: [
-      { text: `Get ready: open or fetch what you need for ${t}`, minutes: 2, done: false },
-      { text: first.length > 110 ? `${first.slice(0, 109).trimEnd()}…` : first, minutes: 5, done: false },
-      { text: `Keep going on ${t}. Rough is fine`, minutes: work, done: false },
+      { text: `Open what you need for ${t}`, minutes: 2, done: false },
+      { text: first, minutes: 5, done: false },
+      { text: `Keep going on ${t}, rough is fine`, minutes: work, done: false },
       { text: 'Stop where you are and write down the next move', minutes: 2, done: false },
     ],
   };
