@@ -1,0 +1,42 @@
+{
+  "label": "file-mic (Chromium capture pipeline) + live-model; no room, no human voice, nothing played aloud",
+  "scriptSeconds": 105,
+  "lines": [
+    "Um, I keep putting off replying to my landlord about the renewal.",
+    "What is the capital of Australia?",
+    "So I need to, um, send that email and, uh",
+    "and I keep thinking about how to start it.",
+    "Can you give me a really detailed plan for my whole week please.",
+    "Wait, stop, just one tiny step please.",
+    "Hola, necesito empezar mi declaración de impuestos y no sé por dónde empezar."
+  ],
+  "heardByStay": [
+    "Um, I keep putting off replying to my landlord about the renewal.",
+    "What is the capital of Australia?",
+    "So I need to, um, send that email and, uh, and I keep thinking about how to start it.",
+    "Can you give me a really detailed plan for my whole week, please?",
+    "Wait, stop, just one tiny step, please.",
+    "Hola, necesito empezar mi declaración de impuestos y no sé por dónde empezar."
+  ],
+  "staySaid": [
+    "Just so you know, I'm an AI, not a person. Hi. It's late. I'm here. What would help right now?",
+    "That renewal note is hanging. Open your email draft and type one sentence. Ready to start now?",
+    "The capital of Australia is Canberra.",
+    "Step one (2m): Get ready: open or fetch what you need for b….",
+    "Your list is empty, so there is nothing to plan yet. Want to empty your head first, or name one small thing?",
+    "Open the email draft. Just the subject line."
+  ],
+  "firstSoundAfterSpeechMs": {
+    "n": 5,
+    "median": 1275,
+    "all": [
+      1054,
+      1195,
+      1275,
+      1363,
+      1885
+    ]
+  },
+  "talkedIntoThePause": false,
+  "pausedWhenTalkedOverMs": 40
+}

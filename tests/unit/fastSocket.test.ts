@@ -387,6 +387,18 @@ describe('FastSocket', () => {
     expect(events.find((e) => e.type === 'transcript.agent')?.text).toContain('check in');
   });
 
+  it('a park nobody asked for is not run: the model answers in words (file-mic run, 3 Nov 2026: "Parked." to a person thinking out loud)', async () => {
+    fetchMock
+      .mockResolvedValueOnce(sse({ choices: [{ delta: { tool_calls: [{ index: 0, id: 'k1', function: { name: 'app', arguments: '{"action":"park","value":"send that email"}' } }] } }] }))
+      .mockResolvedValueOnce(sse(text('Open the email and type the first line.')));
+    const { stt } = await open({ tools: true });
+    stt.push({ type: 'Turn', transcript: 'So I need to send that email and I keep thinking about how to start it.', end_of_turn: true, turn_order: 0 });
+    await tick(30);
+    expect(events.find((e) => e.type === 'tool.call')).toBeUndefined();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(events.find((e) => e.type === 'transcript.agent')?.text).toContain('first line');
+  });
+
   it('an orb-look call the person did ask for still runs', async () => {
     fetchMock.mockResolvedValueOnce(sse({ choices: [{ delta: { tool_calls: [{ index: 0, id: 's2', function: { name: 'app', arguments: '{"action":"shape","value":"heart"}' } }] } }] }));
     const { stt } = await open({ tools: true });
