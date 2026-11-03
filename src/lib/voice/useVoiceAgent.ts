@@ -2349,7 +2349,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
       // 4. Connect: either the managed Voice Agent socket (when explicitly selected in E2E), or fast voice (default)
       const socket: WebSocket = useFast
-        ? (new FastSocket({ sttToken: tokenJson.sttToken || '', ttsToken: tokenJson.ttsToken || '', keyterms: appKeyterms(), autoLanguage: selectedLanguageRef.current === 'auto', ttsConnect: speech.ref.engine === 'assemblyai' ? undefined : () => createTtsConnection(speech.ref, speech.browserVoiceName)! }) as unknown as WebSocket)
+        ? (new FastSocket({ sttToken: tokenJson.sttToken || '', ttsToken: tokenJson.ttsToken || '', freshTtsToken: async () => String(((await (await fetch('/api/voice/fast-token', { method: 'POST', headers: byokHeaders() })).json()) as { ttsToken?: string }).ttsToken || ''), keyterms: appKeyterms(), autoLanguage: selectedLanguageRef.current === 'auto', ttsConnect: speech.ref.engine === 'assemblyai' ? undefined : () => createTtsConnection(speech.ref, speech.browserVoiceName)! }) as unknown as WebSocket)
         : new WebSocket(`${tokenJson.wsUrl}?token=${encodeURIComponent(tokenJson.token || '')}`);
       setVoiceEngine(useFast ? 'fast' : 'agent');
       wsRef.current = socket;

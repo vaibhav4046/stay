@@ -19,6 +19,7 @@ class FakeWS {
   static coalesce = false; // the server reports two flushes as one FlushDone
   static beginDelayMs = 0; // a new voice session takes this long to open (the model can finish first)
   static dropCancelAck = false; // a Cancel sent just before the socket is replaced never gets its ack
+  static expiredTokens = new Set<string>(); // TTS tokens past their 60 s: the server opens, sends an Error and closes, as the live API does
   readyState = 0;
   sent: Array<string | Uint8Array> = [];
   onmessage: ((e: { data: string }) => void) | null = null;
@@ -31,6 +32,14 @@ class FakeWS {
     if (this.isTts && parsed.searchParams.has('voice')) {
       queueMicrotask(() => {
         this.push({ type: 'Error', error_code: 3006, error: 'voice is retired; use voice_id' });
+        this.close();
+      });
+      return;
+    }
+    if (this.isTts && FakeWS.expiredTokens.has(parsed.searchParams.get('token') ?? '')) {
+      queueMicrotask(() => {
+        this.readyState = 1;
+        this.push({ type: 'Error', error_code: 1008, error: 'Unauthorized: Signature has expired', retryable: false });
         this.close();
       });
       return;
@@ -74,8 +83,8 @@ const tick = (n = 6) => new Promise((r) => { let i = 0; const f = () => (++i >= 
 let events: Array<Record<string, unknown>>;
 let openedSockets: FastSocket[] = []; // closed after each test so a late timer of one test never writes into the next
 let fetchMock: ReturnType<typeof vi.fn>;
-async function open(opts: { tools?: boolean; greeting?: string; holdMs?: number; autoLanguage?: boolean; personal?: string } = {}) {
-  const s = new FastSocket({ sttToken: 'stt', ttsToken: 'tts', holdMs: opts.holdMs ?? 60, interruptHoldMs: opts.holdMs ?? 60, warmUp: false, autoLanguage: opts.autoLanguage });
+async function open(opts: { tools?: boolean; greeting?: string; holdMs?: number; autoLanguage?: boolean; personal?: string; freshTtsToken?: () => Promise<string> } = {}) {
+  const s = new FastSocket({ sttToken: 'stt', ttsToken: 'tts', holdMs: opts.holdMs ?? 60, interruptHoldMs: opts.holdMs ?? 60, warmUp: false, autoLanguage: opts.autoLanguage, freshTtsToken: opts.freshTtsToken });
   events = [];
   openedSockets.push(s);
   s.onmessage = (e) => events.push(JSON.parse(e.data));
@@ -94,6 +103,7 @@ beforeEach(() => {
   FakeWS.coalesce = false;
   FakeWS.dropCancelAck = false;
   FakeWS.beginDelayMs = 0;
+  FakeWS.expiredTokens = new Set();
   (globalThis as unknown as { WebSocket: unknown }).WebSocket = FakeWS;
   fetchMock = vi.fn();
   (globalThis as unknown as { fetch: unknown }).fetch = fetchMock;
@@ -634,6 +644,23 @@ describe('FastSocket: auto language follows what the person speaks', () => {
     stt.push(turn(code, conf));
     await tick(30);
     expect(ttsSockets().length).toBe(1);
+  });
+
+  it('a switch more than a minute into the call opens the Spanish voice with a fresh token (the first one has expired)', async () => {
+    // file-mic run, 3 Nov 2026: the switch came 100 s in, the reused call-start token got "Unauthorized: Signature has expired" four
+    // times, and the Spanish reply was never spoken
+    fetchMock.mockResolvedValue(sse(text('Claro, empecemos con un paso pequeño.')));
+    const freshTtsToken = vi.fn(async () => 'tts-fresh');
+    const { stt } = await open({ autoLanguage: true, freshTtsToken });
+    FakeWS.expiredTokens.add('tts');
+    stt.push(turn('es', 0.95));
+    await tick(40);
+    expect(freshTtsToken).toHaveBeenCalledTimes(1);
+    const spanish = ttsSockets()[1];
+    expect(new URL(spanish.url).searchParams.get('token')).toBe('tts-fresh');
+    expect(spanish.sent.some((d) => typeof d === 'string' && d.includes('Generate'))).toBe(true);
+    expect(types()).toContain('reply.audio');
+    expect(types()).not.toContain('tts.unavailable');
   });
 
   it('a one- or two-word turn ("Hola.") never moves the voice, even when confidently Spanish', async () => {
