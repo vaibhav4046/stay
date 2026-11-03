@@ -1,0 +1,64 @@
+  1   0.7m morning-overwhelm  ---  ms 
+      YOU : Ugh, morning is a disaster. I have like twenty things to do. Pick one for me, please.
+      STAY: Pick the thing that will clear space for other tasks—maybe empty your inbox or delete old emails. Open your email, select all messages older than a mo
+  2   1.2m morning-overwhelm -1768 ms 
+      YOU : Okay, deleting old emails sounds doable. I think I can actually pull that off before I crash.
+      STAY: Great, start by opening your email client and searching for messages older than a month. Then select all and hit delete. Good luck!
+  3     2m morning-overwhelm  ---  ms 
+      YOU : Um, where do I even start? Do I just click "select all" and pray I don't delete something important?
+      STAY: First, open your inbox and use the search bar to filter by date—type “before:2024‑01‑01” (or the first day of last month). Review the list quickly for
+  4   2.4m morning-overwhelm -2607 ms 
+      YOU : Okay, I’m searching. Let’s pray I don’t actually send something I need to the trash.
+      STAY: Fair. What’s the one thing you need to keep safe?
+  5   2.9m morning-overwhelm  ---  ms 
+      YOU : Probably that client email? I’ll double-check that one before I actually hit delete.
+      STAY: When the search results appear, scroll to find the client email, click its box to uncheck it, then you can safely select the rest and delete.
+  6   3.6m avoided-email     ---  ms 
+      YOU : Um, anyway, so the lease thing is... still kind of on my mind?
+      STAY: If the lease is still on your mind, open the document or email about it, skim for any deadline, and note that date in a quick note so you can address 
+  7   4.1m avoided-email     ---  ms 
+      YOU : Yeah, I’ll try to look for the date.
+      STAY: Open the lease file, use the search function (Ctrl F) to look for words like “deadline,” “due,” or a specific date, then jot that date onto a sticky n
+  8   4.6m avoided-email     ---  ms 
+      YOU : Fine, I’ll try. Yeah, keep that timer running for me, please.
+      STAY: How many minutes should the timer run while you look for the lease date?
+  9   4.9m avoided-email     ---  ms 
+      YOU : Um, just ten? I’m scared I’ll sit there for an hour.
+      STAY: Done.
+ 10   5.3m avoided-email      -10 ms 
+      YOU : Okay, I’ll actually do it now. Thank you for staying with me.
+      STAY: You’ve got this.
+ 11   5.8m avoided-email    -1433 ms 
+      YOU : Yeah, I’m opening it now. Don’t let me drift off.
+      STAY: Happy to help. Let me know how it goes. Stay focused on scanning the document; if you hit a page without clues, flip to the next one right away.
+ 12   6.5m facts             1799 ms 
+      YOU : Wait, actually, why do leap years have four days instead of three?
+      STAY: A leap year adds one extra day, not four. The extra day keeps the calendar aligned with Earth's orbit because a solar year is about 365. 2425 days, so
+ 13   7.1m facts            -1836 ms 
+      YOU : Wait, one day? I totally mess that up. Thanks for correcting me.
+      STAY: I could not reach my thinking service just now, so I do not have an answer. Try again in a moment, or type it.
+ 14   7.6m facts             ---  ms 
+      YOU : Um, why is the sky actually blue though?
+      STAY: The sky looks blue because short‑wavelength light scatters more than long‑wavelength light. Sunlight hits air molecules, and the blue end of the spect
+ 15   8.2m facts              540 ms 
+      YOU : Oh, right, the blue gets scattered crazy. That actually makes total sense now, thank you.
+      STAY: You're welcome—glad it clicked.
+ 16   8.9m thinking-pause   -6179 ms 
+      YOU : Um, okay, back to my disintro... I just stare at the blank page and and...
+      STAY: Take a breath, then write the title of the intro on the top of the page. After that, jot down one sentence that sums up what the introduction should c
+ 17   9.5m thinking-pause   -6884 ms 
+      YOU : And, wait, just... um, type the title? Okay, I'll do that first.
+      STAY: Title: “Disintro: A Personal Exploration” Great. Now try to add one more line that briefly states the main point or question your introduction will ad
+ 18    10m thinking-pause    ---  ms 
+      YOU : And then I just... um, stare at that one line for like an hour.
+      STAY: Give that line a quick tweak or add a related subpoint. Even a small change can shift the focus and make the rest feel more approachable.
+file:///C:/Users/lalwa/.gemini/antigravity/scratch/stay/scripts/voice-e2e/soak.mjs:81
+  throw new Error('tts failed: ' + text);
+        ^
+
+Error: tts failed: Wait, stop, just one tiny step please.
+    at speechPcm (file:///C:/Users/lalwa/.gemini/antigravity/scratch/stay/scripts/voice-e2e/soak.mjs:81:9)
+    at say (file:///C:/Users/lalwa/.gemini/antigravity/scratch/stay/scripts/voice-e2e/soak.mjs:142:15)
+    at file:///C:/Users/lalwa/.gemini/antigravity/scratch/stay/scripts/voice-e2e/soak.mjs:185:22
+
+Node.js v24.12.0

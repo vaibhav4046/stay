@@ -31,6 +31,10 @@ import { OrbCognitiveGames } from '@/components/OrbCognitiveGames';
 import { Signal, hasWebGL } from '@/components/Signal';
 import { InlineSheetContext, Sheet } from '@/components/Sheet';
 import { HistoryPanel } from '@/components/HistoryPanel';
+import { InlinePage } from '@/components/InlinePage';
+import ReportsPage from '@/app/app/reports/page';
+import SettingsPage from '@/app/app/settings/page';
+import TreatmentPage from '@/app/app/treatment/page';
 import { VoicePicker } from '@/components/VoicePicker';
 import { resolvePersona } from '@/lib/voice/personas';
 import { voiceNeeds } from '@/lib/voice/tts/caps';
@@ -141,7 +145,7 @@ export function StayHome({
   const [lastOutcome, setLastOutcome] = useState<SessionOutcome | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<string | null>(null);
-  const [sheet, setSheet] = useState<null | 'menu' | 'memory' | 'voice' | 'parking' | 'dump' | 'routine' | 'remind' | 'today' | 'history' | 'call' | 'vision'>(null);
+  const [sheet, setSheet] = useState<null | 'menu' | 'memory' | 'voice' | 'parking' | 'dump' | 'routine' | 'remind' | 'today' | 'history' | 'call' | 'vision' | 'page-reports' | 'page-settings' | 'page-treatment'>(null);
   const [routineId, setRoutineId] = useState<string | null>(null);
   const routineByVoice = useRef(false);
   /** a finished routine or a saved brain dump has changed the list: show it in the chat when that panel closes */
@@ -287,6 +291,11 @@ export function StayHome({
       // Today and History are panels in this conversation; every other screen is a page
       if (path === '/app/history') return setSheet('history');
       if (path === '/app/today') return setSheet('today');
+      // during a call these open inside the conversation: leaving this page would end the call (soak, 3 Nov 2026)
+      if (voiceRef.current?.isConnected) {
+        const inline = ({ '/app/reports': 'page-reports', '/app/settings': 'page-settings', '/app/treatment': 'page-treatment' } as const)[path as '/app/reports'];
+        if (inline) return setSheet(inline);
+      }
       say(`Opening ${label}`);
       router.push(path);
     },
@@ -540,7 +549,7 @@ export function StayHome({
       const spent = minutes * 60 - left;
       if (minutes >= 25 && left > 90 && spent - lastNudge.current >= 600 && voiceRef.current.companionMode && voiceRef.current.isConnected) {
         lastNudge.current = spent;
-        voiceRef.current.speakProactively('Say one very short, warm line, under eight words, so the user knows you are still here. Ask nothing.');
+        voiceRef.current.instructProactively('Say one very short, warm line, under eight words, so the user knows you are still here. Ask nothing.');
       }
       if (left === 0) {
         setRunning(false);
@@ -548,13 +557,13 @@ export function StayHome({
         chime();
         emitHost({ type: 'timer-ended' });
         if (proactiveCheckins && plan) {
-          voice.speakProactively(
+          voice.instructProactively(
             `The user's ${minutes}-minute focus timer just ended. Speak first: in under 20 words, warmly ask whether they got started on "${plan.firstStep}". When they answer, call record_session_outcome.`,
           );
         } else {
           // Stay says "when the time is up I'll tell you" for any timer, so it does, plan or no plan (field test: a timer nobody told about)
           setNote(`Time is up: your ${minutes} minutes are done.`);
-          if (!quietMode) voice.speakProactively(`The user's ${minutes}-minute timer just ended. Say in under 10 words that their time is up. Ask nothing.`);
+          if (!quietMode) voice.instructProactively(`The user's ${minutes}-minute timer just ended. Say in under 10 words that their time is up. Ask nothing.`);
         }
       }
     }, 500);
@@ -772,7 +781,7 @@ export function StayHome({
         setNote(`Check-in: ${r.text}`);
         emitHost({ type: 'reminder-due', id: r.id, text: r.text });
         showNotification('Stay', r.text);
-        if (voiceRef.current.isConnected) voiceRef.current.speakProactively(`Gently remind the person: ${r.text}. Under 12 words, warm, no pressure.`);
+        if (voiceRef.current.isConnected) voiceRef.current.instructProactively(`Gently remind the person: ${r.text}. Under 12 words, warm, no pressure.`);
       }
     }, 10_000);
     return () => window.clearInterval(id);
@@ -1282,6 +1291,9 @@ export function StayHome({
               />
             )}
             {sheet === 'history' && <HistoryPanel sessions={sessions} onClose={() => setSheet(null)} onOpenFull={() => router.push('/app/history')} />}
+            {sheet === 'page-reports' && <InlinePage title="Report" testId="inline-reports" onClose={() => setSheet(null)}><ReportsPage /></InlinePage>}
+            {sheet === 'page-settings' && <InlinePage title="Settings" testId="inline-settings" onClose={() => setSheet(null)}><SettingsPage /></InlinePage>}
+            {sheet === 'page-treatment' && <InlinePage title="Check-in" testId="inline-treatment" onClose={() => setSheet(null)}><TreatmentPage /></InlinePage>}
             {sheet === 'call' && <CallLaterPanel onClose={() => setSheet(null)} />}
             {sheet === 'vision' && <ShowStayPanel onShare={(m) => void startSharing(m)} onPicture={() => fileRef.current?.click()} onClose={() => setSheet(null)} />}
           {sheet === 'routine' && (
@@ -1294,7 +1306,7 @@ export function StayHome({
                   routineByVoice.current = false;
                   return;
                 }
-                if (voiceRef.current.isConnected) voiceRef.current.speakProactively(`Read this step aloud in one short sentence: ${line}`);
+                if (voiceRef.current.isConnected) voiceRef.current.instructProactively(`Read this step aloud in one short sentence: ${line}`);
               }}
               onComplete={(r) => {
                 const l = addToday([{ text: r.name, bucket: 'today' }]);

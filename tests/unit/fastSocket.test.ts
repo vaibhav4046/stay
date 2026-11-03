@@ -397,6 +397,22 @@ describe('FastSocket', () => {
     expect(events.find((e) => e.type === 'transcript.agent')?.text).toContain('check in');
   });
 
+  it('when Stay already said it in words, a simple action gets no second reply (soak: "Parking that thought. Got it.Parking that.")', async () => {
+    fetchMock.mockResolvedValueOnce(sse(
+      { choices: [{ delta: { content: 'Parking that thought. Got it.' } }] },
+      { choices: [{ delta: { tool_calls: [{ index: 0, id: 'pk1', function: { name: 'app', arguments: '{"action":"park","value":"call the dentist"}' } }] } }] },
+    ));
+    const { s, stt } = await open({ tools: true });
+    stt.push({ type: 'Turn', transcript: 'park it: call the dentist.', end_of_turn: true, turn_order: 0 });
+    await tick(14);
+    s.send(JSON.stringify({ type: 'tool.result', call_id: 'pk1', result: '{"ok":true}' }));
+    await tick(30);
+    expect(fetchMock).toHaveBeenCalledTimes(1); // no second model call
+    const said = events.filter((e) => e.type === 'transcript.agent').map((e) => e.text);
+    expect(said).toEqual(['Parking that thought. Got it.']);
+    expect(events.at(-1)?.type).toBe('reply.done');
+  });
+
   it('a park nobody asked for is not run: the model answers in words (file-mic run, 3 Nov 2026: "Parked." to a person thinking out loud)', async () => {
     fetchMock
       .mockResolvedValueOnce(sse({ choices: [{ delta: { tool_calls: [{ index: 0, id: 'k1', function: { name: 'app', arguments: '{"action":"park","value":"send that email"}' } }] } }] }))

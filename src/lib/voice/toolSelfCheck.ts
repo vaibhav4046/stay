@@ -21,7 +21,8 @@ export interface Verdict {
 
 export function truthfulLine(o: ToolOutcome): string {
   if (o.result.ok === true) return o.result.say || 'Done.';
-  return o.result.say || (o.result.error ? `That did not work: ${o.result.error.replace(/[.\s]+$/, '')}.` : 'That did not work.');
+  // never the internal error text ("no brain dump is running", "unknown screen"): that is for developers, and was spoken to a person asking about the sky
+  return o.result.say || "I couldn't do that.";
 }
 
 export function verifySpoken(o: ToolOutcome, spoken: string): Verdict {

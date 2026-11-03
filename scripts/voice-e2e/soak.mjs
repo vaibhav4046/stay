@@ -73,12 +73,13 @@ function speechPcm(text) {
   const mp3 = path.join(work, id + '.mp3'), pcm = path.join(work, id + '.pcm'), txt = path.join(work, id + '.txt');
   if (fs.existsSync(pcm)) return fs.readFileSync(pcm);
   fs.writeFileSync(txt, text);
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 6; i++) {
+    if (i) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 2000 * i); // the free voice service fails now and then: wait and retry
     const a = spawnSync('uv', ['run', '--with', 'edge-tts', 'python', path.join(process.cwd(), 'scripts/voice-e2e/tts_voice.py'), mp3, txt, VOICE, '+0%']);
     const b = a.status === 0 ? spawnSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', mp3, '-ar', '24000', '-ac', '1', '-f', 's16le', pcm]) : null;
     if (b && b.status === 0) return fs.readFileSync(pcm);
   }
-  throw new Error('tts failed: ' + text);
+  return null; // the turn is skipped, the soak goes on
 }
 
 // ---- the browser ---------------------------------------------------------------------------------------------------------------
@@ -140,6 +141,7 @@ const you = async () => page.evaluate(() => [...document.querySelectorAll('[data
 
 async function say(text) {
   const pcm = speechPcm(text);
+  if (!pcm) return null;
   const r = await page.evaluate((b) => window.__say(b), pcm.toString('base64'));
   const tStart = now() + r.startsIn * 1000;
   let lastLoud = 0;
@@ -186,7 +188,8 @@ outer: while (now() < deadline) {
         await sleep(1200);
       }
       timing = await say(parts[0]);
-      if (parts.length > 1) { await sleep(rnd(1800, 2500)); timing = await say(parts[1]); said = parts.join(' '); }
+      if (!timing) { console.log(`      (skipped: the free voice service could not speak this line)`); continue; }
+      if (parts.length > 1) { await sleep(rnd(1800, 2500)); timing = (await say(parts[1])) ?? timing; said = parts.join(' '); }
       const heardAfter = await waitHeard(before.you);
       const replied = await waitStatus((s) => s === 'Speaking', 15000);
       const finished = await waitStatus((s) => s === 'Listening', 90000);
@@ -214,6 +217,7 @@ outer: while (now() < deadline) {
       if (wordsOver < 0.6 && scene.lang !== 'hi') flags.push(`heard differently (${Math.round(wordsOver * 100)}%)`);
       const turn = { replyWords, n: turns.length + 1, minute: Math.round((now() - T0) / 6000) / 10, scene: scene.id, said, heard, reply, firstSoundMs, flags };
       turns.push(turn);
+      fs.writeFileSync(`docs/evidence/loop/soak-partial.json`, JSON.stringify({ partial: true, turns }, null, 1));
       history.push({ who: 'you', text: said }, { who: 'stay', text: reply });
       console.log(`${String(turn.n).padStart(3)} ${String(turn.minute).padStart(5)}m ${scene.id.padEnd(16)} ${firstSoundMs == null ? ' --- ' : String(firstSoundMs).padStart(5)} ms ${flags.length ? '⚑ ' + flags.join(', ') : ''}\n      YOU : ${said.slice(0, 110)}\n      STAY: ${reply.slice(0, 150)}`);
     }

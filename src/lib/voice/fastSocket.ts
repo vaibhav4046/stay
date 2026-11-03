@@ -10,7 +10,8 @@
 import { toSpeech } from '@/lib/voice/speechText';
 import { isImageDataUrl, looksVisual } from '@/lib/vision/image';
 import { honestFailureMessage } from '@/lib/conversation/response';
-import { mayChangeLook, mayPark, mayStartTimer } from '@/lib/conversation/capabilities';
+import { mayChangeLook, mayStartTimer } from '@/lib/conversation/capabilities';
+import { GATED_ACTIONS, mayDoAction } from '@/lib/conversation/actionGates';
 import { MEDICAL_BOUNDARY_FIXED_MESSAGE } from '@/lib/safety/crisis';
 import { byokHeaders } from '@/lib/byok/config';
 import type { TtsConnection } from '@/lib/voice/tts/types';
@@ -1371,7 +1372,8 @@ export class FastSocket {
     }
     // Same for the orb's look (persona run: "show me exactly how..." set the shape to "exactly" and Stay said Done to a question). The call
     // is not run; the model is told so and answers the person's words, without tools.
-    if (call && !toolFollowUp && ((/"action"\s*:\s*"(?:shape|color)"/.test(call.args) && !mayChangeLook(asked)) || (/"action"\s*:\s*"park"/.test(call.args) && !mayPark(asked)))) {
+    const calledAction = /"action"\s*:\s*"([a-z_]+)"/.exec(call?.args ?? '')?.[1] ?? '';
+    if (call && !toolFollowUp && ((/^(?:shape|color)$/.test(calledAction) && !mayChangeLook(asked)) || (GATED_ACTIONS.includes(calledAction) && !mayDoAction(calledAction, asked)))) {
       const id = call.id || `call-${Date.now()}`;
       this.history = [
         ...this.history,
@@ -1396,13 +1398,19 @@ export class FastSocket {
       const out = await Promise.race([result, new Promise<string>((r) => setTimeout(() => r('{"ok":false,"error":"the app did not answer"}'), 4000))]);
       if (gen !== this.genId) return;
       this.history = [...this.history, { role: 'tool' as const, tool_call_id: id, content: out.slice(0, 1500) }].slice(-MAX_HISTORY);
-      let parsedOut: { ok?: boolean; say?: string; error?: string } = {};
+      let parsedOut: { ok?: boolean; say?: string; error?: string; quick?: boolean } = {};
       try { parsedOut = JSON.parse(out); } catch {}
       this.lastToolOk = parsedOut.ok !== false;
       this.lastToolSay = typeof parsedOut.say === 'string' ? parsedOut.say : parsedOut.error;
       const quick = quickConfirmation(args.action, out, s.ttsLanguage);
       if (quick) {
         this.llmDone = true;
+        // Soak, 3 Nov 2026: the model said "Parking that thought. Got it." before the call and the fixed "Parked." followed it. A stock
+        // phrase is not added to words already spoken; a line built from what really happened (quick: true) still is.
+        if (this.spoken.trim() && parsedOut.quick !== true) {
+          this.maybeFinish();
+          return;
+        }
         this.say(quick, gen);
         return;
       }

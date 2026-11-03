@@ -13,7 +13,8 @@ export interface CallVoice {
   partialUserTranscript: string;
   isHandsFreePaused: boolean;
   toggleHandsFreeMute: () => void;
-  speakProactively: (instructions: string) => boolean;
+  speakProactively: (words: string) => boolean;
+  instructProactively: (instructions: string) => boolean;
   injectContext: (content: string) => boolean;
   disconnectVoiceSession: () => void;
   audioEnergy: number;
@@ -100,12 +101,12 @@ export function CallStayOverlay({ voice, connected, name, paused = false, onEnd 
         listening: v.visualState === 'listening' && !v.isHandsFreePaused,
       });
       if (action === 'nudge') {
-        v.speakProactively(NUDGE_INSTRUCTIONS[nudges.current]);
+        v.instructProactively(NUDGE_INSTRUCTIONS[nudges.current]);
         nudges.current += 1;
         lastActivity.current = t;
       } else if (action === 'wrap') {
         wrapping.current = true;
-        v.speakProactively(WRAP_INSTRUCTION);
+        v.instructProactively(WRAP_INSTRUCTION);
         window.setTimeout(onEnd, WRAP_GRACE_MS);
       }
     }, 1000);

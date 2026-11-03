@@ -21,6 +21,7 @@ import { runAgenticAction, AGENTIC_ACTIONS, factFromUtterance } from '@/lib/voic
 import { verifySpoken, type ToolOutcome } from '@/lib/voice/toolSelfCheck';
 import { useDumpCapture } from '@/lib/voice/useDumpCapture';
 import { loadInstructions, styleBlock } from '@/lib/coach/customInstructions';
+import { looksLikeInstruction, proactiveFrame, type ProactiveMode } from '@/lib/voice/proactive';
 import { learnedOffer, loadLearnings, learningsPromptLine } from '@/lib/coach/learnings';
 import { buildVault, relevantNotes } from '@/lib/export/vault';
 import { getLocalSessions } from '@/lib/storage/repository';
@@ -3050,27 +3051,22 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   }, [disconnectVoiceSession, startVoiceSession]);
 
   /** Make the agent speak without a user utterance (documented `reply.create` or `reply.say`). */
-  const speakProactively = useCallback(
-    (instructions: string) => {
+  /** `mode` says what the text is: words to say (said exactly) or an instruction for the model (never spoken). See proactive.ts. */
+  const sendProactive = useCallback(
+    (mode: ProactiveMode, text: string) => {
       const ws = wsRef.current;
       if (ws && ws.readyState === WebSocket.OPEN && sessionReadyRef.current) {
-        if (ws instanceof FastSocket) {
-          const isDirectText = !instructions.startsWith('Say ') && !instructions.startsWith('Gently remind ') && !instructions.startsWith('Read this ');
-          if (isDirectText) {
-            ws.send(JSON.stringify({ type: 'reply.say', text: instructions }));
-          } else {
-            ws.send(JSON.stringify({ type: 'reply.create', instructions }));
-          }
-        } else {
-          ws.send(JSON.stringify({ type: 'reply.create', instructions }));
-        }
+        ws.send(JSON.stringify(proactiveFrame(mode, text, ws instanceof FastSocket)));
         return true;
       }
-      speakDeterministicBoundary(instructions);
-      return true;
+      // no live voice: only words to say can be spoken (by the browser); an instruction has nobody to carry it out
+      if (mode === 'say' && !looksLikeInstruction(text)) speakDeterministicBoundary(text);
+      return mode === 'say';
     },
     [speakDeterministicBoundary]
   );
+  const speakProactively = useCallback((words: string) => sendProactive('say', words), [sendProactive]);
+  const instructProactively = useCallback((instructions: string) => sendProactive('instruct', instructions), [sendProactive]);
 
   /** Seed context without triggering a reply (documented `conversation.message`). */
   const injectContext = useCallback((content: string) => {
@@ -3188,6 +3184,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     startVoiceSession,
     disconnectVoiceSession,
     speakProactively,
+    instructProactively,
     injectContext,
     sendUserTextMessage,
     setVisionFrame,

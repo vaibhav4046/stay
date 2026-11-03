@@ -1,0 +1,96 @@
+  1   0.5m morning-overwhelm   101 ms 
+      YOU : Um, there’s so much to do today and I’m already drowning. Help me pick just one thing?
+      STAY: Pick one small task and start it now. Open a document and write the first line.
+  2   1.1m morning-overwhelm  2145 ms 
+      YOU : But which task? The laundry or the report? I literally cannot look at both right now.
+      STAY: Write a quick email to the most urgent contact. It’ll clear a chunk of your list. Want a different suggestion? The most urgent email you need to send 
+  3   1.7m morning-overwhelm  1239 ms 
+      YOU : Okay, fine. I’ll set a timer for fifteen minutes and just outline the report sections.
+      STAY: Got it. Let me know when you’re ready to outline. Done.
+  4   2.6m morning-overwhelm  1381 ms 
+      YOU : Ugh, actually no, forget the outline. I’m just going to put on a load of laundry instead.
+      STAY: Understood. Let me know what you want to tackle next. Great. Put the laundry in the machine and set it to start. Got it. Let me know when you’re ready
+  5   3.1m morning-overwhelm  1040 ms 
+      YOU : Fine, laundry is next. But what do I do with my brain while the machine spins?
+      STAY: Take a deep breath and pause for a few seconds.
+  6   3.6m avoided-email     1451 ms 
+      YOU : Um, okay. But what if I just... avoid replying to the landlord for another hour?
+      STAY: You can wait an hour before replying to the landlord.
+  7   4.2m avoided-email     1046 ms 
+      YOU : You’re just enabling me, Stay. I need you to sit with me for a ten-minute timer while I type it out.
+      STAY: Done.
+  8     5m avoided-email     1430 ms 
+      YOU : Okay, whatever. Just keep talking to me so I don’t zone out.
+      STAY: You’re on a good path. Let’s keep a simple rhythm: I’ll share a quick thought, then you can share yours. That way you stay engaged.
+  9   5.3m avoided-email      630 ms 
+      YOU : Yeah, that sounds fine. Please just keep chatting while the clock runs.
+      STAY: Sure, let’s keep a steady flow of ideas. What’s the first thing that comes to mind right now?
+ 10   5.8m avoided-email      374 ms 
+      YOU : Oh god, it’s just a simple email. Let’s do the first sentence.
+      STAY: Start with a friendly greeting and say you’re ready to help with the email.
+ 11   6.4m avoided-email     2131 ms ⚑ quotation marks
+      YOU : Um, okay. I’ll try typing that first line now, just watch what I do.
+      STAY: The user's 2-minute focus timer just ended. Speak first: in under 20 words, warmly ask whether they got started on "". When they answer, call record_s
+ 12   6.9m facts              983 ms 
+      YOU : Hey, timer’s done! Did you actually get started on that email?
+      STAY: I could not reach my thinking service just now, so I do not have an answer. Try again in a moment, or type it.
+ 13   7.2m facts              -45 ms 
+      YOU : Um, wait, you just froze. Did you get my question?
+      STAY: I didn’t start the email yet. Let’s pick a first line together.
+ 14   7.7m facts             1625 ms ⚑ long reply (73 words)
+      YOU : Okay, good. Actually, wait—um, why is the sky blue?
+      STAY: That did not work: no brain dump is running. I read your question. You want me to confirm I’ve started the email. I haven’t. I did not start the email
+ 15   8.2m facts             3740 ms 
+      YOU : Huh, so blue light scatters more? Cool, random fact.
+      STAY: Yes, blue light scatters more. Here’s another quick fact: the tallest building in the world is the Burj Khalifa. It stands at 828 meters.
+ 16   8.8m thinking-pause    1503 ms ⚑ quotation marks
+      YOU : Okay, but I still can’t start the intro. Can you just... give me the first sentence? So I don’t have to think
+      STAY: The first sentence of your introduction should be: "In today's meeting, we will explore the key strategies that will drive our project's success." You
+ 17   9.6m thinking-pause    2484 ms ⚑ quotation marks, long reply (74 words)
+      YOU : That’s not an intro, that’s a status update. Um... and what do I even say... first
+      STAY: The first sentence of your intro could be: "Today we gather to outline the vision and roadmap for our upcoming project." Begin by stating the purpose:
+ 18  10.6m thinking-pause    4527 ms ⚑ quotation marks
+      YOU : And it sounds like a meeting agenda, not a dissertation. Um, and... why is it always so hard to just
+      STAY: Today we start by sharing the vision that will guide our project. It’s hard because the brain wants to jump to solutions and forget the simple “what w
+ 19  11.4m interrupt         2454 ms ⚑ long sentence (25 words)
+      YOU : Forget the intro, I’m bored. Explain how mortgages work, long and detailed, please.
+      STAY: A mortgage is a loan to buy a house. The borrower pays the bank a down payment and then repays the rest in monthly payments that cover interest and a 
+ 20  12.1m interrupt          845 ms 
+      YOU : Wait, stop, just one tiny step please. How much do I actually pay right now?
+      STAY: I could not reach my thinking service just now, so I do not have an answer. Try again in a moment, or type it. There's nothing to pay in this version.
+ 21  12.7m interrupt         1211 ms 
+      YOU : Um, that makes even less sense now. Just tell me the first tiny piece.
+      STAY: First tiny piece: the down payment. It’s the cash you give up front, usually a percentage of the home price. Start by listing the down payment amount.
+ 22  13.3m frustration       2770 ms 
+      YOU : Stop, this is useless. Just repeat the down payment part until I breathe.
+      STAY: Fair. That didn't work. What do you need next? The down payment is the cash you give up front. It’s usually a percent of the home price, like 20%. You
+ 23  13.8m frustration       1608 ms 
+      YOU : That was literally the most annoying thing ever. Um, just take that last sentence and repeat it slowly.
+      STAY: I’m sorry that was frustrating. What would help right now? Take a breath, then let me know when you’re ready to move on.
+ 24  14.3m frustration        -20 ms 
+      YOU : Ugh, you’re ignoring me. I just want you to say "Take a breath" slowly, please.
+      STAY: Take a breath slowly.
+ 25  14.7m app-commands      2384 ms 
+      YOU : Remember that I focus best in the morning.
+      STAY: Got it, I will remember.
+ 26  14.9m app-commands      1747 ms 
+      YOU : Add buy milk to my list.
+      STAY: Added.
+ 27  15.2m app-commands      2463 ms 
+      YOU : Park it: call the dentist.
+      STAY: Parking that thought. Got it.Parking that.
+ 28  15.5m app-commands      2149 ms 
+      YOU : Open my history.
+      STAY: Done.
+ 29  15.9m app-commands      2785 ms 
+      YOU : Open my memory.
+      STAY: Done.
+ 30  17.6m app-commands      ---  ms ⚑ no reply, never returned to listening, heard differently (0%)
+      YOU : Show my report.
+      STAY: 
+ 31  19.9m app-commands      ---  ms ⚑ no reply, never returned to listening, heard differently (0%)
+      YOU : Open settings.
+      STAY: 
+ 32    22m app-commands      ---  ms ⚑ no reply, never returned to listening, heard differently (0%)
+      YOU : Set a five minute timer.
+      STAY: 
