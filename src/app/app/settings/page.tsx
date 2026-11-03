@@ -3,7 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useStayData } from '@/lib/storage/useStayData';
 import { CARE_OPTIONS } from '@/components/Onboarding';
-import { deleteAllUserData, exportAllUserDataJson, getLocalAuditEvents } from '@/lib/storage/repository';
+import { deleteAllUserData, exportAllUserDataJson, getLocalAuditEvents, getLocalSessions } from '@/lib/storage/repository';
+import { buildEmailSummary, buildVault, mailtoLink, type VaultInput } from '@/lib/export/vault';
+import { buildZip } from '@/lib/export/zip';
+import { loadUserMemory } from '@/lib/coach/userMemory';
+import { loadLearnings } from '@/lib/coach/learnings';
+import { loadToday } from '@/lib/coach/todayList';
 import type { AuditEventRecord } from '@/types/domain';
 import { useAuth } from '@/lib/auth/useAuth';
 import { AuthModal } from '@/components/AuthModal';
@@ -37,6 +42,21 @@ export default function SettingsPage() {
     a.download = `stay-data-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  // everything below is built on this device from this device's data; nothing is uploaded
+  const vaultInput = (): VaultInput => ({ memory: loadUserMemory(), learnings: loadLearnings(), sessions: getLocalSessions(), list: loadToday().map((i) => ({ text: i.text, bucket: i.bucket, done: i.done })) });
+  const exportVault = () => {
+    const zip = buildZip(buildVault(vaultInput()));
+    const url = URL.createObjectURL(new Blob([zip.slice().buffer as ArrayBuffer], { type: "application/zip" }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `stay-vault-${new Date().toISOString().slice(0, 10)}.zip`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+  const emailMe = () => {
+    window.location.href = mailtoLink(buildEmailSummary(vaultInput()));
   };
 
   return (
@@ -142,9 +162,18 @@ export default function SettingsPage() {
         <p className="text-ink-2 mt-2 text-[0.95rem]">
           Stored on this device. Voice audio is streamed to AssemblyAI for live conversation and is not saved by Stay.
         </p>
+        <p className="text-ink-2 mt-2 text-[0.95rem]">
+          <strong>Export to Obsidian</strong> gives you a folder of linked notes (memory, what Stay learned and why, every block, your list). <strong>Email this to me</strong> opens your own mail app with a short summary; Stay sends nothing.
+        </p>
         <div className="mt-4 flex flex-wrap gap-3">
           <button type="button" className="btn btn-secondary" onClick={download} data-testid="export-json">
             Download all my data
+          </button>
+          <button type="button" className="btn btn-secondary" onClick={exportVault} data-testid="export-vault">
+            Export to Obsidian
+          </button>
+          <button type="button" className="btn btn-secondary" onClick={emailMe} data-testid="email-me">
+            Email this to me
           </button>
           {!confirmDelete ? (
             <button type="button" className="btn btn-danger" onClick={() => setConfirmDelete(true)} data-testid="delete-start">

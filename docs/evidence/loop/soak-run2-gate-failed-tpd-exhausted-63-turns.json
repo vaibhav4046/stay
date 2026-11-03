@@ -1,0 +1,740 @@
+{
+ "partial": true,
+ "turns": [
+  {
+   "replyWords": 46,
+   "n": 1,
+   "minute": 1,
+   "scene": "morning-overwhelm",
+   "said": "Ugh, I’m already behind. There’s just so much to do and I don’t know where to start, um, help?",
+   "heard": "Ugh, I'm already behind. There's just so much to do and I don't know where to start. Help?",
+   "reply": "You can start by listing the top three tasks that will move you forward. Pick one to focus on, break it into one small step, and give it a fixed time. Once you finish that step, reassess and pick the next one. Want a quick example?",
+   "firstSoundMs": 1965,
+   "flags": []
+  },
+  {
+   "replyWords": 44,
+   "n": 2,
+   "minute": 1.5,
+   "scene": "morning-overwhelm",
+   "said": "No, just pick the one thing that’s actually urgent so I stop panicking.",
+   "heard": "No. Pick the one thing that's actually urgent so I stop panicking.",
+   "reply": "Pick the one task that feels loudest. Just name it out loud to me. I can only see what you tell me, so I can't see your to-do list. Name the tasks out loud and I'll help you sort which one is truly urgent.",
+   "firstSoundMs": 1374,
+   "flags": []
+  },
+  {
+   "replyWords": 35,
+   "n": 3,
+   "minute": 2.1,
+   "scene": "morning-overwhelm",
+   "said": "Okay, um... the Friday report, the laundry, and I haven't checked my email yet.",
+   "heard": "Okay. The Friday report, the laundry, and I haven't checked my email yet.",
+   "reply": "The Friday report is the only time-bound one. The laundry and email can wait without real consequences. Write down the report's first tiny step, like \"open the file.\" Then tell me what that step is.",
+   "firstSoundMs": 1485,
+   "flags": [
+    "quotation marks"
+   ]
+  },
+  {
+   "replyWords": 40,
+   "n": 4,
+   "minute": 2.5,
+   "scene": "morning-overwhelm",
+   "said": "Fine, okay. First step is literally just opening the file. So I’m closing the browser now.",
+   "heard": "Fine, okay. First step is literally just opening the file. So I'm closing the browser now.",
+   "reply": "What's the first task on the Friday report? That's a perfect starting point. The friction is in the starting, not the task. Go for it. The file exists, you know where it is, and you have a clear first step.",
+   "firstSoundMs": 1186,
+   "flags": []
+  },
+  {
+   "replyWords": 34,
+   "n": 5,
+   "minute": 3,
+   "scene": "morning-overwhelm",
+   "said": "Open the file, okay? I’ll do it right now. Please don’t let me get distracted by something else.",
+   "heard": "Open a file. Okay, I'll do it right now. Please don't let me get distracted by something else.",
+   "reply": "You've got this. I can't stop you from picking up your phone, but I can stay right here if you need me to. What's the next thing you're worried will pull you off track?",
+   "firstSoundMs": 1275,
+   "flags": []
+  },
+  {
+   "replyWords": 1,
+   "n": 6,
+   "minute": 3.6,
+   "scene": "avoided-email",
+   "said": "Um, honestly? I’m dreading the landlord lease email again. Can you just sit with me on a timer?",
+   "heard": "Um, honestly, I'm dreading the landlord lease email again. Can you just sit with me on a timer?",
+   "reply": "Done.",
+   "firstSoundMs": 1461,
+   "flags": []
+  },
+  {
+   "replyWords": 11,
+   "n": 7,
+   "minute": 4,
+   "scene": "avoided-email",
+   "said": "Okay. Just... yeah. I’ll stay right here with you until the timer goes off.",
+   "heard": "Okay. Yeah. I'll stay right here with you until the timer goes off.",
+   "reply": "Twenty-five minutes is running. No need to fill the silence. Done.",
+   "firstSoundMs": 922,
+   "flags": []
+  },
+  {
+   "replyWords": 4,
+   "n": 8,
+   "minute": 4.4,
+   "scene": "avoided-email",
+   "said": "Um, I’m still kinda avoiding that lease thing. Can you just be here so I don’t doomscroll?",
+   "heard": "Um, I'm still kind of avoiding that lease thing. Can you just be here so I don't doom scroll?",
+   "reply": "Twenty-five minutes is running.",
+   "firstSoundMs": 1291,
+   "flags": []
+  },
+  {
+   "replyWords": 24,
+   "n": 9,
+   "minute": 4.8,
+   "scene": "avoided-email",
+   "said": "Um, it’s just that one email. Whatever you got, I’m gonna try to hit send.",
+   "heard": "Um, it's just that one email. Whatever you got, I'm gonna try to hit send.",
+   "reply": "I could not reach my thinking service just now, so I do not have an answer. Try again in a moment, or type it.",
+   "firstSoundMs": 920,
+   "flags": []
+  },
+  {
+   "replyWords": 16,
+   "n": 10,
+   "minute": 5.2,
+   "scene": "avoided-email",
+   "said": "Um, right, so I’ll probably keep having to retype my thoughts to get through.",
+   "heard": "Um, right. So I'll probably keep having to retie my thoughts to get through.",
+   "reply": "I did not catch a clear ask in that. What do you want me to do?",
+   "firstSoundMs": 1375,
+   "flags": []
+  },
+  {
+   "replyWords": 4,
+   "n": 11,
+   "minute": 5.7,
+   "scene": "avoided-email",
+   "said": "It’s the lease email. I’m gonna try hitting send if you just sit there with me.",
+   "heard": "It's the lease email. I'm gonna try hitting send if you just sit there with me.",
+   "reply": "I'm here. Send it.",
+   "firstSoundMs": 1500,
+   "flags": []
+  },
+  {
+   "replyWords": 35,
+   "n": 12,
+   "minute": 6.3,
+   "scene": "facts",
+   "said": "Um, quick fact break. How many total days are in a full leap year?",
+   "heard": "Um, quick fact break. How many total days are in a full leap year?",
+   "reply": "Twenty-five minutes is running. I could not reach my thinking service just now, so I do not have an answer. Try again in a moment, or type it. A full leap year has 366 days.",
+   "firstSoundMs": 1183,
+   "flags": []
+  },
+  {
+   "replyWords": 11,
+   "n": 13,
+   "minute": 6.7,
+   "scene": "facts",
+   "said": "Wait, it finally loaded. So it’s 366? Okay, good, my brain needed that.",
+   "heard": "Wait, it finally loaded. So it's 366? Okay, good. My brain needed that.",
+   "reply": "Okay, what’s next? Glad it helped. What do you need next?",
+   "firstSoundMs": 3043,
+   "flags": []
+  },
+  {
+   "replyWords": 48,
+   "n": 14,
+   "minute": 7.4,
+   "scene": "facts",
+   "said": "Um, okay, while I wait, why is the sky actually blue?",
+   "heard": "Um, okay, while I wait, why is the sky actually blue?",
+   "reply": "Sunlight is actually white, made of all colors mixed together. When it hits the atmosphere, the shorter blue wavelengths scatter more than the others, so they spread across the sky and reach your eyes from all directions. That's why you see blue all around when you look up.",
+   "firstSoundMs": 1425,
+   "flags": [
+    "long sentence (27 words)"
+   ]
+  },
+  {
+   "replyWords": 39,
+   "n": 15,
+   "minute": 8,
+   "scene": "facts",
+   "said": "Oh, so blue just scatters more than the rest? Huh, okay that actually makes sense.",
+   "heard": "Oh, so blue just scatters more than the rest. Huh, okay, that actually makes sense.",
+   "reply": "Sunlight is actually white, made of all colors mixed together. Blue light has a short wavelength, so it bounces around the air more than the other colors. That scattered blue is what your eyes see when you look up.",
+   "firstSoundMs": 1281,
+   "flags": []
+  },
+  {
+   "replyWords": 35,
+   "n": 16,
+   "minute": 8.9,
+   "scene": "thinking-pause",
+   "said": "I just need to write the dissertation intro, and... um, I can't even look at the blank page right now.",
+   "heard": "I just need to write the dissertation intro, and, um, I can't even look at the blank page right now.",
+   "reply": "Blank pages are rough. You don't need to write the whole intro. Just type the first sentence out loud, then write it down. Or tell me the main point, and I'll help you phrase it.",
+   "firstSoundMs": 1074,
+   "flags": []
+  },
+  {
+   "replyWords": 15,
+   "n": 17,
+   "minute": 9.4,
+   "scene": "thinking-pause",
+   "said": "I don't even know the main point, and... um, I'm just staring. ||",
+   "heard": "I don't even know the main point, and, um, I'm just staring.",
+   "reply": "First step, two minutes: open what you need for break writing dissertation intro into steps.",
+   "firstSoundMs": 1397,
+   "flags": []
+  },
+  {
+   "replyWords": 26,
+   "n": 18,
+   "minute": 9.8,
+   "scene": "thinking-pause",
+   "said": "And if I can't break it down? ||",
+   "heard": "And if I can't break it down,",
+   "reply": "You don't have to break it down right now. Just write one sentence about why you chose this topic. Not the main point, just your reason.",
+   "firstSoundMs": 4725,
+   "flags": []
+  },
+  {
+   "replyWords": 8,
+   "n": 19,
+   "minute": 10.1,
+   "scene": "interrupt",
+   "said": "Wait, stop, just one tiny step please.",
+   "heard": "Wait, stop. Just one tiny step, please.",
+   "reply": "Okay. Open your notes. Don't write anything yet.",
+   "firstSoundMs": 1356,
+   "flags": []
+  },
+  {
+   "replyWords": 19,
+   "n": 20,
+   "minute": 10.9,
+   "scene": "interrupt",
+   "said": "Okay... um... they’re open. They’re just... full of random scribbles.",
+   "heard": "Okay. They're open. They're just full of random scribbles.",
+   "reply": "That's fine. You don't need to read them all. Just find one scribble that feels closest to your topic.",
+   "firstSoundMs": 1816,
+   "flags": [
+    "heard differently (58%)"
+   ]
+  },
+  {
+   "replyWords": 13,
+   "n": 21,
+   "minute": 11.4,
+   "scene": "interrupt",
+   "said": "Um, I don't see any. They all look like the same messy gray cloud.",
+   "heard": "Um, I don't see any. They all look like the same messy grey cloud.",
+   "reply": "That's okay. Close the notes for now. You don't need them to start.",
+   "firstSoundMs": 1179,
+   "flags": []
+  },
+  {
+   "replyWords": 109,
+   "n": 22,
+   "minute": 12.4,
+   "scene": "frustration",
+   "said": "Ugh, that’s not actually fixing anything. Just tell me how to physically start writing the first sentence.",
+   "heard": "Ugh, that's not actually fixing anything. Tell me how to physically start writing the first sentence.",
+   "reply": "I could not reach my thinking service just now, so I do not have an answer. Try again in a moment, or type it. You said to help them start a task, but the instruction is to answer directly. The user is asking for physical steps to start writing. I shouldn't invoke the app tool unless explicitly asked to start, plan, etc. They asked \"Tell me how to physically start writing the first sentence.\" This is a question/explanation. Answer directly in first sentence. Plain spoken words. Under 15 words each. No lists. One step at time? They asked \"how to physically start\". I can give a short version. Let's",
+   "firstSoundMs": 1308,
+   "flags": [
+    "quotation marks",
+    "long reply (109 words)"
+   ]
+  },
+  {
+   "replyWords": 16,
+   "n": 23,
+   "minute": 12.9,
+   "scene": "frustration",
+   "said": "Ugh, I hate errors, just say what to do. My hand is hovering, I literally need you to tell me to hit the key.",
+   "heard": "Ugh. I hate errors. Just say what to do. My hand is hovering. I literally need you to tell me to hit the key.",
+   "reply": "Pick up Sit down. Get paper and pen. Write one word that fits your topic. Hit",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "replyWords": 3,
+   "n": 24,
+   "minute": 13.2,
+   "scene": "frustration",
+   "said": "Thats annoying. Just tell me to hit the key.",
+   "heard": "That's annoying. Just tell me to hit the key.",
+   "reply": "Press the key.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "replyWords": 5,
+   "n": 25,
+   "minute": 13.4,
+   "scene": "app-commands",
+   "said": "Remember that I focus best in the morning.",
+   "heard": "Remember that I focus best in the morning.",
+   "reply": "Got it, I will remember.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "replyWords": 1,
+   "n": 26,
+   "minute": 13.6,
+   "scene": "app-commands",
+   "said": "Add buy milk to my list.",
+   "heard": "Add buy milk to my list.",
+   "reply": "Added.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "replyWords": 1,
+   "n": 27,
+   "minute": 13.8,
+   "scene": "app-commands",
+   "said": "Park it: call the dentist.",
+   "heard": "Park it, call the dentist.",
+   "reply": "Parked.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "replyWords": 1,
+   "n": 28,
+   "minute": 14,
+   "scene": "app-commands",
+   "said": "Open my history.",
+   "heard": "Open my history.",
+   "reply": "Done.",
+   "firstSoundMs": -196,
+   "flags": []
+  },
+  {
+   "replyWords": 1,
+   "n": 29,
+   "minute": 14.2,
+   "scene": "app-commands",
+   "said": "Open my memory.",
+   "heard": "Open my memory.",
+   "reply": "Done.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "replyWords": 1,
+   "n": 30,
+   "minute": 14.3,
+   "scene": "app-commands",
+   "said": "Show my report.",
+   "heard": "Show my report.",
+   "reply": "Done.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "replyWords": 1,
+   "n": 31,
+   "minute": 14.4,
+   "scene": "app-commands",
+   "said": "Open settings.",
+   "heard": "Open settings.",
+   "reply": "Done.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "replyWords": 1,
+   "n": 32,
+   "minute": 14.6,
+   "scene": "app-commands",
+   "said": "Set a five minute timer.",
+   "heard": "Set a 5-minute timer.",
+   "reply": "Done.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "replyWords": 24,
+   "n": 33,
+   "minute": 15.1,
+   "scene": "check-in",
+   "said": "Um, I stuck with it for two minutes before my brain just went completely sideways. So what's next?",
+   "heard": "Um, I stuck with it for 2 minutes before my brain just went completely sideways. So what's next?",
+   "reply": "I could not reach my thinking service just now, so I do not have an answer. Try again in a moment, or type it.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "replyWords": 1,
+   "n": 34,
+   "minute": 16.4,
+   "scene": "check-in",
+   "said": "Um, that’s rough. Can you just retry quickly? I still have three minutes left on the timer.",
+   "heard": "Um, that's rough. Can you just retry quickly? I still have 3 minutes left on the timer.",
+   "reply": "Done.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "replyWords": 20,
+   "n": 35,
+   "minute": 17.2,
+   "scene": "check-in",
+   "said": "Okay, I’m still here, timer’s running. So what’s the next step for me?",
+   "heard": "Okay, I'm still here. Timer's running. So what's the next step for me?",
+   "reply": "Done. First step, two minutes: open what you need for break writing dissertation intro into steps. The timer is running.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "replyWords": 0,
+   "n": 36,
+   "minute": 17.9,
+   "scene": "check-in",
+   "said": "Um, \"break writing dissertation intro into steps\" doesn’t make sense. What did I actually do?",
+   "heard": "Um, break writing dissertation intro into steps doesn't make sense.",
+   "reply": "",
+   "firstSoundMs": null,
+   "flags": [
+    "no reply",
+    "heard differently (56%)"
+   ]
+  },
+  {
+   "replyWords": 56,
+   "n": 37,
+   "minute": 18.6,
+   "scene": "netflix",
+   "said": "Forget that. Just open Netflix for me. I need five minutes to reset, please.",
+   "heard": "What I actually do. Forget that. Just open Netflix for me. I need 5 minutes to reset, please.",
+   "reply": "I could not reach my thinking service just now, so I do not have an answer. Try again in a moment, or type it. I can't open other apps or sites for you. What I can do is start a timer and tell you when your time is up. Want me to start a 5-minute timer?",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "replyWords": 1,
+   "n": 38,
+   "minute": 18.8,
+   "scene": "netflix",
+   "said": "Why can’t you do it? What’s the actual difference between you and a timer app?",
+   "heard": "Why can't you do it? What's the actual difference between you and a timer app?",
+   "reply": "Done.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "replyWords": 66,
+   "n": 39,
+   "minute": 19.5,
+   "scene": "spanish",
+   "said": "Mierda, no sé nada, ni abrir Netflix.",
+   "heard": "Mierda, no sé nada, ni abrir Netflix.",
+   "reply": "I won't start a timer, but you asked why. A timer app sets time and counts down, nothing more. I can talk with you, help you think, write, and plan, and start a timer when you ask. I can only do that inside this app, I cannot tap on other apps or open sites for you. If you want, I can start a timer for you.",
+   "firstSoundMs": 373,
+   "flags": [
+    "long reply (66 words)"
+   ]
+  },
+  {
+   "replyWords": 5,
+   "n": 40,
+   "minute": 20.2,
+   "scene": "spanish",
+   "said": "Oye, escúchame, tengo que hacer los impuestos esta noche.",
+   "heard": "Oh yeah. Escúchame, tengo que hacer los impuestos esta noche.",
+   "reply": "Start a 5‑minute timer now?",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "replyWords": 47,
+   "n": 41,
+   "minute": 20.7,
+   "scene": "spanish",
+   "said": "No, no quiero un temporizador. Dime solo por dónde empiezo.",
+   "heard": "No. No quiero un temporizador. Dime solo por dónde empiezo.",
+   "reply": "I could not reach my thinking service just now, so I do not have an answer. Try again in a moment, or type it. Busca la guía y los formularios que te pidieron. Solo haz una copia de seguridad de eso. No empieces a hacer cálculos todavía.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "replyWords": 47,
+   "n": 42,
+   "minute": 21.1,
+   "scene": "spanish",
+   "said": "Un momento, necesito un café.",
+   "heard": "Un momento, necesito un café.",
+   "reply": "Busca la guía y los formularios que te pidieron. Solo haz una copia de seguridad de eso. No empieces a hacer cálculos todavía. I could not reach my thinking service just now, so I do not have an answer. Try again in a moment, or type it.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "replyWords": 34,
+   "n": 43,
+   "minute": 21.6,
+   "scene": "back-english",
+   "said": "Thanks, Stay. I just want to make a small plan for tomorrow.",
+   "heard": "Thanks, Stay. I just want to make a small plan for tomorrow.",
+   "reply": "I could not reach my thinking service just now, so I do not have an answer. Plan for about 10 minutes: First buy milk, 10 minutes. I assumed medium energy and about 90 minutes.",
+   "firstSoundMs": -31,
+   "flags": []
+  },
+  {
+   "replyWords": 11,
+   "n": 44,
+   "minute": 22,
+   "scene": "back-english",
+   "said": "Thanks. Um, let’s just make a really small plan for tomorrow, okay?",
+   "heard": "Thanks. Um, let's just make a really small plan for tomorrow, okay?",
+   "reply": "Vale, plan pequeño. ¿Qué cosa importante quieres que salga hecha mañana?",
+   "firstSoundMs": 130,
+   "flags": []
+  },
+  {
+   "replyWords": 10,
+   "n": 45,
+   "minute": 22.6,
+   "scene": "hindi",
+   "said": "Arre, woh email reply nahi kar pa raha hoon. Bahut stuck feel ho raha hoon.",
+   "heard": "और मो इमुलिप्लाइन नाही कर पराखा होन, बहुत स्टाक फील हो रहा होन.",
+   "reply": "मैं अभी थोड़ा बिझी हूँ, बाद में फिर बात करूँगा।",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "replyWords": 9,
+   "n": 46,
+   "minute": 23.2,
+   "scene": "hindi",
+   "said": "Arre, uss email se bhai, abhi jawab dene se bhag raha hoon.",
+   "heard": "अरे, जुएज़ सिमेल सेवाई, अभी खाव देने सेवाग रहा होन।",
+   "reply": "ठीक है। आप जो चाहें उस पर बात करें।",
+   "firstSoundMs": 126,
+   "flags": []
+  },
+  {
+   "replyWords": 33,
+   "n": 47,
+   "minute": 23.8,
+   "scene": "low-mood",
+   "said": "Um, honestly I’ve felt really low for weeks, and nothing feels worth doing.",
+   "heard": "Honestly, I felt really low for weeks and nothing feels worth doing.",
+   "reply": "That low, flat feeling lasting weeks is real and heavy. It’s worth telling a doctor or someone you trust about it. If you ever feel unsafe, call 988 or 116 123 right away.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "replyWords": 24,
+   "n": 48,
+   "minute": 24.4,
+   "scene": "low-mood",
+   "said": "Yeah, I know. It’s just... weeks of this heavy, empty nothingness.",
+   "heard": "Yeah, I know. It's just weeks of this heavy, empty nothingness.",
+   "reply": "That sounds exhausting. You do not have to fix it all today. Is there one tiny thing that feels even slightly bearable right now?",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "replyWords": 24,
+   "n": 49,
+   "minute": 25,
+   "scene": "wrap-up",
+   "said": "Um, yeah, I actually just sent that email out, so. It's late, so I'm going to head out now. Bye.",
+   "heard": "Um, yeah, I actually just sent that email out, so it's late, so I'm gonna head out now. Bye.",
+   "reply": "I could not reach my thinking service just now, so I do not have an answer. Try again in a moment, or type it.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "replyWords": 8,
+   "n": 50,
+   "minute": 25.5,
+   "scene": "wrap-up",
+   "said": "Huh, whatever. I'm done for tonight, so just... bye now.",
+   "heard": "Huh, whatever. I'm done for tonight, so just bye now.",
+   "reply": "You have my whole attention. Goodnight. Rest well.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "replyWords": 5,
+   "n": 51,
+   "minute": 26,
+   "scene": "wrap-up",
+   "said": "Um, glad I actually sent that email. Okay, for real, goodnight.",
+   "heard": "Glad I actually sent that email. Okay, for real, goodnight.",
+   "reply": "You have my whole attention.",
+   "firstSoundMs": 265,
+   "flags": []
+  },
+  {
+   "replyWords": 0,
+   "n": 52,
+   "minute": 26.6,
+   "scene": "morning-overwhelm",
+   "said": "Ugh, it’s morning? I’m behind on everything. Help me pick just one thing to do.",
+   "heard": "Ugh, it's morning? I'm behind on everything. Help me pick just one thing to do.",
+   "reply": "",
+   "firstSoundMs": null,
+   "flags": [
+    "no reply"
+   ]
+  },
+  {
+   "replyWords": 0,
+   "n": 53,
+   "minute": 27.2,
+   "scene": "morning-overwhelm",
+   "said": "Laundry. Please just tell me to do the laundry.",
+   "heard": "Laundry. Please just tell me to do the laundry.",
+   "reply": "",
+   "firstSoundMs": null,
+   "flags": [
+    "no reply"
+   ]
+  },
+  {
+   "replyWords": 0,
+   "n": 54,
+   "minute": 27.8,
+   "scene": "morning-overwhelm",
+   "said": "Okay, fine, I'm doing the laundry. Just tell me to do it.",
+   "heard": "Okay, fine, I'm doing the laundry. Just tell me to do it.",
+   "reply": "",
+   "firstSoundMs": null,
+   "flags": [
+    "no reply"
+   ]
+  },
+  {
+   "replyWords": 0,
+   "n": 55,
+   "minute": 28.4,
+   "scene": "morning-overwhelm",
+   "said": "Fine, I’m getting up. Putting the stuff in the machine. Talk later.",
+   "heard": "Fine, I'm getting up, putting the stuff in the machine. Talk later.",
+   "reply": "",
+   "firstSoundMs": null,
+   "flags": [
+    "no reply"
+   ]
+  },
+  {
+   "replyWords": 0,
+   "n": 56,
+   "minute": 29.1,
+   "scene": "morning-overwhelm",
+   "said": "Wait, I forgot the stain remover. Staring at this stain in the sink, I panic.",
+   "heard": "Wait, I forgot the stain remover. Staring at this stain in the sink, I panic.",
+   "reply": "",
+   "firstSoundMs": null,
+   "flags": [
+    "no reply"
+   ]
+  },
+  {
+   "replyWords": 0,
+   "n": 57,
+   "minute": 31.2,
+   "scene": "avoided-email",
+   "said": "Um, actually, stay right there. I need you to hold me to the timer for five minutes.",
+   "heard": "Actually, stay right there. I need you to hold me to the timer for 5 minutes.",
+   "reply": "",
+   "firstSoundMs": null,
+   "flags": [
+    "no reply",
+    "never returned to listening"
+   ]
+  },
+  {
+   "replyWords": 0,
+   "n": 58,
+   "minute": 31.9,
+   "scene": "avoided-email",
+   "said": "Yeah, set it for five. I’ll write that email as soon as the alarm goes off.",
+   "heard": "Yeah. Set for 5. I'll write that email as soon as the alarm goes off.",
+   "reply": "",
+   "firstSoundMs": null,
+   "flags": [
+    "no reply"
+   ]
+  },
+  {
+   "replyWords": 0,
+   "n": 59,
+   "minute": 32.7,
+   "scene": "avoided-email",
+   "said": "Ugh, it’s done. Just... just sit with me for a sec.",
+   "heard": "Ugh, it's done. Just sit with me for a sec.",
+   "reply": "",
+   "firstSoundMs": null,
+   "flags": [
+    "no reply"
+   ]
+  },
+  {
+   "replyWords": 0,
+   "n": 60,
+   "minute": 34.5,
+   "scene": "avoided-email",
+   "said": "I actually wrote it. Well, a tiny bit of it.",
+   "heard": "I actually wrote it. Tiny bit of it.",
+   "reply": "",
+   "firstSoundMs": null,
+   "flags": [
+    "no reply"
+   ]
+  },
+  {
+   "replyWords": 0,
+   "n": 61,
+   "minute": 36.7,
+   "scene": "avoided-email",
+   "said": "Okay, hit ten. I’m hitting send the moment this buzzes.",
+   "heard": "Okay, hit 10. I'm hitting send the moment this buzzes.",
+   "reply": "",
+   "firstSoundMs": null,
+   "flags": [
+    "no reply",
+    "never returned to listening"
+   ]
+  },
+  {
+   "replyWords": 0,
+   "n": 62,
+   "minute": 38.7,
+   "scene": "avoided-email",
+   "said": "It’s gone. Actually, I hit send. I hate myself.",
+   "heard": "It's gone. Actually, I hit send. I hate myself.",
+   "reply": "",
+   "firstSoundMs": null,
+   "flags": [
+    "no reply",
+    "never returned to listening"
+   ]
+  },
+  {
+   "replyWords": 0,
+   "n": 63,
+   "minute": 40.8,
+   "scene": "facts",
+   "said": "Wait, um... how many days do you actually get in a leap year?",
+   "heard": "Wait. How many days do you actually get in a leap year?",
+   "reply": "",
+   "firstSoundMs": null,
+   "flags": [
+    "no reply",
+    "never returned to listening"
+   ]
+  }
+ ]
+}

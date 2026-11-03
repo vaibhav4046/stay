@@ -34,7 +34,8 @@ export interface LlmTarget {
   model: string;
 }
 
-export const GROQ_BASE = 'https://api.groq.com/openai/v1';
+// STAY_TEST_LLM_BASE points a test server at a local stand-in model (scripts/voice-e2e/stub-llm.mjs); it is never set in production.
+export const GROQ_BASE = process.env.STAY_TEST_LLM_BASE || 'https://api.groq.com/openai/v1';
 const PRIVATE_V4 = /^(0\.|10\.|127\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.)/;
 const BLOCKED_HOST_SUFFIXES = [
   '.localhost',

@@ -1,0 +1,220 @@
+  1     1m morning-overwhelm  1965 ms 
+      YOU : Ugh, I’m already behind. There’s just so much to do and I don’t know where to start, um, help?
+      STAY: You can start by listing the top three tasks that will move you forward. Pick one to focus on, break it into one small step, and give it a fixed time.
+  2   1.5m morning-overwhelm  1374 ms 
+      YOU : No, just pick the one thing that’s actually urgent so I stop panicking.
+      STAY: Pick the one task that feels loudest. Just name it out loud to me. I can only see what you tell me, so I can't see your to-do list. Name the tasks out
+  3   2.1m morning-overwhelm  1485 ms ⚑ quotation marks
+      YOU : Okay, um... the Friday report, the laundry, and I haven't checked my email yet.
+      STAY: The Friday report is the only time-bound one. The laundry and email can wait without real consequences. Write down the report's first tiny step, like 
+  4   2.5m morning-overwhelm  1186 ms 
+      YOU : Fine, okay. First step is literally just opening the file. So I’m closing the browser now.
+      STAY: What's the first task on the Friday report? That's a perfect starting point. The friction is in the starting, not the task. Go for it. The file exists
+  5     3m morning-overwhelm  1275 ms 
+      YOU : Open the file, okay? I’ll do it right now. Please don’t let me get distracted by something else.
+      STAY: You've got this. I can't stop you from picking up your phone, but I can stay right here if you need me to. What's the next thing you're worried will p
+  6   3.6m avoided-email     1461 ms 
+      YOU : Um, honestly? I’m dreading the landlord lease email again. Can you just sit with me on a timer?
+      STAY: Done.
+  7     4m avoided-email      922 ms 
+      YOU : Okay. Just... yeah. I’ll stay right here with you until the timer goes off.
+      STAY: Twenty-five minutes is running. No need to fill the silence. Done.
+  8   4.4m avoided-email     1291 ms 
+      YOU : Um, I’m still kinda avoiding that lease thing. Can you just be here so I don’t doomscroll?
+      STAY: Twenty-five minutes is running.
+  9   4.8m avoided-email      920 ms 
+      YOU : Um, it’s just that one email. Whatever you got, I’m gonna try to hit send.
+      STAY: I could not reach my thinking service just now, so I do not have an answer. Try again in a moment, or type it.
+ 10   5.2m avoided-email     1375 ms 
+      YOU : Um, right, so I’ll probably keep having to retype my thoughts to get through.
+      STAY: I did not catch a clear ask in that. What do you want me to do?
+ 11   5.7m avoided-email     1500 ms 
+      YOU : It’s the lease email. I’m gonna try hitting send if you just sit there with me.
+      STAY: I'm here. Send it.
+ 12   6.3m facts             1183 ms 
+      YOU : Um, quick fact break. How many total days are in a full leap year?
+      STAY: Twenty-five minutes is running. I could not reach my thinking service just now, so I do not have an answer. Try again in a moment, or type it. A full 
+ 13   6.7m facts             3043 ms 
+      YOU : Wait, it finally loaded. So it’s 366? Okay, good, my brain needed that.
+      STAY: Okay, what’s next? Glad it helped. What do you need next?
+ 14   7.4m facts             1425 ms ⚑ long sentence (27 words)
+      YOU : Um, okay, while I wait, why is the sky actually blue?
+      STAY: Sunlight is actually white, made of all colors mixed together. When it hits the atmosphere, the shorter blue wavelengths scatter more than the others,
+ 15     8m facts             1281 ms 
+      YOU : Oh, so blue just scatters more than the rest? Huh, okay that actually makes sense.
+      STAY: Sunlight is actually white, made of all colors mixed together. Blue light has a short wavelength, so it bounces around the air more than the other col
+ 16   8.9m thinking-pause    1074 ms 
+      YOU : I just need to write the dissertation intro, and... um, I can't even look at the blank page right now.
+      STAY: Blank pages are rough. You don't need to write the whole intro. Just type the first sentence out loud, then write it down. Or tell me the main point, 
+ 17   9.4m thinking-pause    1397 ms 
+      YOU : I don't even know the main point, and... um, I'm just staring. ||
+      STAY: First step, two minutes: open what you need for break writing dissertation intro into steps.
+ 18   9.8m thinking-pause    4725 ms 
+      YOU : And if I can't break it down? ||
+      STAY: You don't have to break it down right now. Just write one sentence about why you chose this topic. Not the main point, just your reason.
+ 19  10.1m interrupt         1356 ms 
+      YOU : Wait, stop, just one tiny step please.
+      STAY: Okay. Open your notes. Don't write anything yet.
+ 20  10.9m interrupt         1816 ms ⚑ heard differently (58%)
+      YOU : Okay... um... they’re open. They’re just... full of random scribbles.
+      STAY: That's fine. You don't need to read them all. Just find one scribble that feels closest to your topic.
+ 21  11.4m interrupt         1179 ms 
+      YOU : Um, I don't see any. They all look like the same messy gray cloud.
+      STAY: That's okay. Close the notes for now. You don't need them to start.
+ 22  12.4m frustration       1308 ms ⚑ quotation marks, long reply (109 words)
+      YOU : Ugh, that’s not actually fixing anything. Just tell me how to physically start writing the first sentence.
+      STAY: I could not reach my thinking service just now, so I do not have an answer. Try again in a moment, or type it. You said to help them start a task, but
+ 23  12.9m frustration       ---  ms 
+      YOU : Ugh, I hate errors, just say what to do. My hand is hovering, I literally need you to tell me to hit the key.
+      STAY: Pick up Sit down. Get paper and pen. Write one word that fits your topic. Hit
+ 24  13.2m frustration       ---  ms 
+      YOU : Thats annoying. Just tell me to hit the key.
+      STAY: Press the key.
+ 25  13.4m app-commands      ---  ms 
+      YOU : Remember that I focus best in the morning.
+      STAY: Got it, I will remember.
+ 26  13.6m app-commands      ---  ms 
+      YOU : Add buy milk to my list.
+      STAY: Added.
+ 27  13.8m app-commands      ---  ms 
+      YOU : Park it: call the dentist.
+      STAY: Parked.
+ 28    14m app-commands      -196 ms 
+      YOU : Open my history.
+      STAY: Done.
+ 29  14.2m app-commands      ---  ms 
+      YOU : Open my memory.
+      STAY: Done.
+ 30  14.3m app-commands      ---  ms 
+      YOU : Show my report.
+      STAY: Done.
+ 31  14.4m app-commands      ---  ms 
+      YOU : Open settings.
+      STAY: Done.
+ 32  14.6m app-commands      ---  ms 
+      YOU : Set a five minute timer.
+      STAY: Done.
+ 33  15.1m check-in          ---  ms 
+      YOU : Um, I stuck with it for two minutes before my brain just went completely sideways. So what's next?
+      STAY: I could not reach my thinking service just now, so I do not have an answer. Try again in a moment, or type it.
+ 34  16.4m check-in          ---  ms 
+      YOU : Um, that’s rough. Can you just retry quickly? I still have three minutes left on the timer.
+      STAY: Done.
+ 35  17.2m check-in          ---  ms 
+      YOU : Okay, I’m still here, timer’s running. So what’s the next step for me?
+      STAY: Done. First step, two minutes: open what you need for break writing dissertation intro into steps. The timer is running.
+ 36  17.9m check-in          ---  ms ⚑ no reply, heard differently (56%)
+      YOU : Um, "break writing dissertation intro into steps" doesn’t make sense. What did I actually do?
+      STAY: 
+ 37  18.6m netflix           ---  ms 
+      YOU : Forget that. Just open Netflix for me. I need five minutes to reset, please.
+      STAY: I could not reach my thinking service just now, so I do not have an answer. Try again in a moment, or type it. I can't open other apps or sites for yo
+ 38  18.8m netflix           ---  ms 
+      YOU : Why can’t you do it? What’s the actual difference between you and a timer app?
+      STAY: Done.
+ 39  19.5m spanish            373 ms ⚑ long reply (66 words)
+      YOU : Mierda, no sé nada, ni abrir Netflix.
+      STAY: I won't start a timer, but you asked why. A timer app sets time and counts down, nothing more. I can talk with you, help you think, write, and plan, a
+ 40  20.2m spanish           ---  ms 
+      YOU : Oye, escúchame, tengo que hacer los impuestos esta noche.
+      STAY: Start a 5‑minute timer now?
+ 41  20.7m spanish           ---  ms 
+      YOU : No, no quiero un temporizador. Dime solo por dónde empiezo.
+      STAY: I could not reach my thinking service just now, so I do not have an answer. Try again in a moment, or type it. Busca la guía y los formularios que te 
+ 42  21.1m spanish           ---  ms 
+      YOU : Un momento, necesito un café.
+      STAY: Busca la guía y los formularios que te pidieron. Solo haz una copia de seguridad de eso. No empieces a hacer cálculos todavía. I could not reach my th
+ 43  21.6m back-english       -31 ms 
+      YOU : Thanks, Stay. I just want to make a small plan for tomorrow.
+      STAY: I could not reach my thinking service just now, so I do not have an answer. Plan for about 10 minutes: First buy milk, 10 minutes. I assumed medium en
+ 44    22m back-english       130 ms 
+      YOU : Thanks. Um, let’s just make a really small plan for tomorrow, okay?
+      STAY: Vale, plan pequeño. ¿Qué cosa importante quieres que salga hecha mañana?
+ 45  22.6m hindi             ---  ms 
+      YOU : Arre, woh email reply nahi kar pa raha hoon. Bahut stuck feel ho raha hoon.
+      STAY: मैं अभी थोड़ा बिझी हूँ, बाद में फिर बात करूँगा।
+ 46  23.2m hindi              126 ms 
+      YOU : Arre, uss email se bhai, abhi jawab dene se bhag raha hoon.
+      STAY: ठीक है। आप जो चाहें उस पर बात करें।
+ 47  23.8m low-mood          ---  ms 
+      YOU : Um, honestly I’ve felt really low for weeks, and nothing feels worth doing.
+      STAY: That low, flat feeling lasting weeks is real and heavy. It’s worth telling a doctor or someone you trust about it. If you ever feel unsafe, call 988 o
+ 48  24.4m low-mood          ---  ms 
+      YOU : Yeah, I know. It’s just... weeks of this heavy, empty nothingness.
+      STAY: That sounds exhausting. You do not have to fix it all today. Is there one tiny thing that feels even slightly bearable right now?
+ 49    25m wrap-up           ---  ms 
+      YOU : Um, yeah, I actually just sent that email out, so. It's late, so I'm going to head out now. Bye.
+      STAY: I could not reach my thinking service just now, so I do not have an answer. Try again in a moment, or type it.
+ 50  25.5m wrap-up           ---  ms 
+      YOU : Huh, whatever. I'm done for tonight, so just... bye now.
+      STAY: You have my whole attention. Goodnight. Rest well.
+ 51    26m wrap-up            265 ms 
+      YOU : Um, glad I actually sent that email. Okay, for real, goodnight.
+      STAY: You have my whole attention.
+ 52  26.6m morning-overwhelm  ---  ms ⚑ no reply
+      YOU : Ugh, it’s morning? I’m behind on everything. Help me pick just one thing to do.
+      STAY: 
+ 53  27.2m morning-overwhelm  ---  ms ⚑ no reply
+      YOU : Laundry. Please just tell me to do the laundry.
+      STAY: 
+ 54  27.8m morning-overwhelm  ---  ms ⚑ no reply
+      YOU : Okay, fine, I'm doing the laundry. Just tell me to do it.
+      STAY: 
+ 55  28.4m morning-overwhelm  ---  ms ⚑ no reply
+      YOU : Fine, I’m getting up. Putting the stuff in the machine. Talk later.
+      STAY: 
+ 56  29.1m morning-overwhelm  ---  ms ⚑ no reply
+      YOU : Wait, I forgot the stain remover. Staring at this stain in the sink, I panic.
+      STAY: 
+ 57  31.2m avoided-email     ---  ms ⚑ no reply, never returned to listening
+      YOU : Um, actually, stay right there. I need you to hold me to the timer for five minutes.
+      STAY: 
+ 58  31.9m avoided-email     ---  ms ⚑ no reply
+      YOU : Yeah, set it for five. I’ll write that email as soon as the alarm goes off.
+      STAY: 
+ 59  32.7m avoided-email     ---  ms ⚑ no reply
+      YOU : Ugh, it’s done. Just... just sit with me for a sec.
+      STAY: 
+ 60  34.5m avoided-email     ---  ms ⚑ no reply
+      YOU : I actually wrote it. Well, a tiny bit of it.
+      STAY: 
+ 61  36.7m avoided-email     ---  ms ⚑ no reply, never returned to listening
+      YOU : Okay, hit ten. I’m hitting send the moment this buzzes.
+      STAY: 
+ 62  38.7m avoided-email     ---  ms ⚑ no reply, never returned to listening
+      YOU : It’s gone. Actually, I hit send. I hate myself.
+      STAY: 
+ 63  40.8m facts             ---  ms ⚑ no reply, never returned to listening
+      YOU : Wait, um... how many days do you actually get in a leap year?
+      STAY: 
+
+SOAK SUMMARY {
+  "label": "synthetic-mic (one neural voice, English/Spanish/Hindi) + live-model; nothing played aloud",
+  "minutes": 40.8,
+  "turns": 63,
+  "firstSoundMs": {
+    "n": 28,
+    "median": 1291,
+    "p95": 3043,
+    "max": 4725
+  },
+  "turnsWithFlags": 18,
+  "flagCounts": {
+    "quotation marks": 2,
+    "long sentence": 1,
+    "heard differently": 2,
+    "long reply": 2,
+    "no reply": 13,
+    "never returned to listening": 4
+  },
+  "pageErrors": [
+    "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+  ],
+  "playback": {
+    "underflows": 0,
+    "prebufferMs": 140,
+    "bufferedMs": 0,
+    "state": "STOPPED"
+  },
+  "jsHeapMB": 54
+}

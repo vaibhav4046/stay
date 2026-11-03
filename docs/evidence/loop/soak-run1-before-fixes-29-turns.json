@@ -1,0 +1,382 @@
+{
+ "partial": true,
+ "turns": [
+  {
+   "replyWords": 16,
+   "n": 1,
+   "minute": 0.5,
+   "scene": "morning-overwhelm",
+   "said": "Um, there’s so much to do today and I’m already drowning. Help me pick just one thing?",
+   "heard": "Um, there's so much to do today and I'm already drowning. pick just one thing?",
+   "reply": "Pick one small task and start it now. Open a document and write the first line.",
+   "firstSoundMs": 101,
+   "flags": []
+  },
+  {
+   "replyWords": 47,
+   "n": 2,
+   "minute": 1.1,
+   "scene": "morning-overwhelm",
+   "said": "But which task? The laundry or the report? I literally cannot look at both right now.",
+   "heard": "But which task? The laundry or the report? I literally cannot look at both right now.",
+   "reply": "Write a quick email to the most urgent contact. It’ll clear a chunk of your list. Want a different suggestion? The most urgent email you need to send today. Want help drafting it? Start the report first; set a timer for fifteen minutes and outline the sections.",
+   "firstSoundMs": 2145,
+   "flags": []
+  },
+  {
+   "replyWords": 11,
+   "n": 3,
+   "minute": 1.7,
+   "scene": "morning-overwhelm",
+   "said": "Okay, fine. I’ll set a timer for fifteen minutes and just outline the report sections.",
+   "heard": "Okay. Fine. I'll set a timer for 15 minutes and just outline the report sections.",
+   "reply": "Got it. Let me know when you’re ready to outline. Done.",
+   "firstSoundMs": 1239,
+   "flags": []
+  },
+  {
+   "replyWords": 36,
+   "n": 4,
+   "minute": 2.6,
+   "scene": "morning-overwhelm",
+   "said": "Ugh, actually no, forget the outline. I’m just going to put on a load of laundry instead.",
+   "heard": "Ugh, actually no, forget the outline. I'm just gonna put on a load of laundry instead.",
+   "reply": "Understood. Let me know what you want to tackle next. Great. Put the laundry in the machine and set it to start. Got it. Let me know when you’re ready to switch back to the report.",
+   "firstSoundMs": 1381,
+   "flags": []
+  },
+  {
+   "replyWords": 10,
+   "n": 5,
+   "minute": 3.1,
+   "scene": "morning-overwhelm",
+   "said": "Fine, laundry is next. But what do I do with my brain while the machine spins?",
+   "heard": "Fine, laundry is next. So what do I do with my brain while the machine spins?",
+   "reply": "Take a deep breath and pause for a few seconds.",
+   "firstSoundMs": 1040,
+   "flags": []
+  },
+  {
+   "replyWords": 10,
+   "n": 6,
+   "minute": 3.6,
+   "scene": "avoided-email",
+   "said": "Um, okay. But what if I just... avoid replying to the landlord for another hour?",
+   "heard": "Um, okay. What if I just avoid replying to the landlord for another hour?",
+   "reply": "You can wait an hour before replying to the landlord.",
+   "firstSoundMs": 1451,
+   "flags": []
+  },
+  {
+   "replyWords": 1,
+   "n": 7,
+   "minute": 4.2,
+   "scene": "avoided-email",
+   "said": "You’re just enabling me, Stay. I need you to sit with me for a ten-minute timer while I type it out.",
+   "heard": "You're just enabling me. Stay. I need you to sit with me for a 10-minute timer while I type it out.",
+   "reply": "Done.",
+   "firstSoundMs": 1046,
+   "flags": []
+  },
+  {
+   "replyWords": 25,
+   "n": 8,
+   "minute": 5,
+   "scene": "avoided-email",
+   "said": "Okay, whatever. Just keep talking to me so I don’t zone out.",
+   "heard": "Okay, whatever. Just keep talking to me so I don't zone out.",
+   "reply": "You’re on a good path. Let’s keep a simple rhythm: I’ll share a quick thought, then you can share yours. That way you stay engaged.",
+   "firstSoundMs": 1430,
+   "flags": []
+  },
+  {
+   "replyWords": 18,
+   "n": 9,
+   "minute": 5.3,
+   "scene": "avoided-email",
+   "said": "Yeah, that sounds fine. Please just keep chatting while the clock runs.",
+   "heard": "Yeah, that sounds fine. Please just keep chatting while the clock runs.",
+   "reply": "Sure, let’s keep a steady flow of ideas. What’s the first thing that comes to mind right now?",
+   "firstSoundMs": 630,
+   "flags": []
+  },
+  {
+   "replyWords": 14,
+   "n": 10,
+   "minute": 5.8,
+   "scene": "avoided-email",
+   "said": "Oh god, it’s just a simple email. Let’s do the first sentence.",
+   "heard": "Oh God, it's just a simple email. Let's do the first sentence.",
+   "reply": "Start with a friendly greeting and say you’re ready to help with the email.",
+   "firstSoundMs": 374,
+   "flags": []
+  },
+  {
+   "replyWords": 26,
+   "n": 11,
+   "minute": 6.4,
+   "scene": "avoided-email",
+   "said": "Um, okay. I’ll try typing that first line now, just watch what I do.",
+   "heard": "Um, okay. I'll try typing that first line now. Just watch what I do.",
+   "reply": "The user's 2-minute focus timer just ended. Speak first: in under 20 words, warmly ask whether they got started on \"\". When they answer, call record_session_outcome.",
+   "firstSoundMs": 2131,
+   "flags": [
+    "quotation marks"
+   ]
+  },
+  {
+   "replyWords": 24,
+   "n": 12,
+   "minute": 6.9,
+   "scene": "facts",
+   "said": "Hey, timer’s done! Did you actually get started on that email?",
+   "heard": "Hey, timer's done. Did you actually get started on that email?",
+   "reply": "I could not reach my thinking service just now, so I do not have an answer. Try again in a moment, or type it.",
+   "firstSoundMs": 983,
+   "flags": []
+  },
+  {
+   "replyWords": 12,
+   "n": 13,
+   "minute": 7.2,
+   "scene": "facts",
+   "said": "Um, wait, you just froze. Did you get my question?",
+   "heard": "Um, wait, you just froze.",
+   "reply": "I didn’t start the email yet. Let’s pick a first line together.",
+   "firstSoundMs": -45,
+   "flags": []
+  },
+  {
+   "replyWords": 73,
+   "n": 14,
+   "minute": 7.7,
+   "scene": "facts",
+   "said": "Okay, good. Actually, wait—um, why is the sky blue?",
+   "heard": "Did you get my question? Okay, good. Actually, wait. Why is the sky blue?",
+   "reply": "That did not work: no brain dump is running. I read your question. You want me to confirm I’ve started the email. I haven’t. I did not start the email yet. I did not start the email yet. That did not work: no brain dump is running. What’s next?Let me know what you’d like to do next. The sky looks blue because sunlight scatters. Shorter wavelengths scatter more, so we see blue light.",
+   "firstSoundMs": 1625,
+   "flags": [
+    "long reply (73 words)"
+   ]
+  },
+  {
+   "replyWords": 24,
+   "n": 15,
+   "minute": 8.2,
+   "scene": "facts",
+   "said": "Huh, so blue light scatters more? Cool, random fact.",
+   "heard": "Huh, so blue light scatters more? Cool, random fact.",
+   "reply": "Yes, blue light scatters more. Here’s another quick fact: the tallest building in the world is the Burj Khalifa. It stands at 828 meters.",
+   "firstSoundMs": 3740,
+   "flags": []
+  },
+  {
+   "replyWords": 38,
+   "n": 16,
+   "minute": 8.8,
+   "scene": "thinking-pause",
+   "said": "Okay, but I still can’t start the intro. Can you just... give me the first sentence? So I don’t have to think",
+   "heard": "Okay, but I still can't start the intro. Can you just give me the first sentence? So I don't have to think.",
+   "reply": "The first sentence of your introduction should be: \"In today's meeting, we will explore the key strategies that will drive our project's success.\" You don’t have to think hard. Just say that sentence. Then you’re ready to go.",
+   "firstSoundMs": 1503,
+   "flags": [
+    "quotation marks"
+   ]
+  },
+  {
+   "replyWords": 74,
+   "n": 17,
+   "minute": 9.6,
+   "scene": "thinking-pause",
+   "said": "That’s not an intro, that’s a status update. Um... and what do I even say... first",
+   "heard": "That's not an intro, that's a status update. And what do I even say? First.",
+   "reply": "The first sentence of your intro could be: \"Today we gather to outline the vision and roadmap for our upcoming project.\" Begin by stating the purpose: \"We’re here to define our project’s vision and next steps.\" Then add the main goal: \"Our goal is to deliver a high‑quality product by Q3.\" Finally invite input: \"Let’s discuss ideas and assign tasks so everyone can contribute. We’re here to define our project’s vision and next steps.",
+   "firstSoundMs": 2484,
+   "flags": [
+    "quotation marks",
+    "long reply (74 words)"
+   ]
+  },
+  {
+   "replyWords": 54,
+   "n": 18,
+   "minute": 10.6,
+   "scene": "thinking-pause",
+   "said": "And it sounds like a meeting agenda, not a dissertation. Um, and... why is it always so hard to just",
+   "heard": "And it sounds like a meeting agenda. Not a dissertation. And why is it always so hard to just",
+   "reply": "Today we start by sharing the vision that will guide our project. It’s hard because the brain wants to jump to solutions and forget the simple “what we’re doing.” Keeping the focus on the big picture helps. Why is it hard to just start? Usually the mind wants to plan first, which delays action.",
+   "firstSoundMs": 4527,
+   "flags": [
+    "quotation marks"
+   ]
+  },
+  {
+   "replyWords": 79,
+   "n": 19,
+   "minute": 11.4,
+   "scene": "interrupt",
+   "said": "Forget the intro, I’m bored. Explain how mortgages work, long and detailed, please.",
+   "heard": "Forget the intro, I'm bored. Explain how mortgages work, long and detailed, please.",
+   "reply": "A mortgage is a loan to buy a house. The borrower pays the bank a down payment and then repays the rest in monthly payments that cover interest and a portion of the principal. The house itself acts as collateral; if the borrower stops paying, the bank can foreclose and sell the property to recover its money. The loan lasts many years, usually 15 or 30, and the interest rate can be fixed or variable. The longer the term",
+   "firstSoundMs": 2454,
+   "flags": [
+    "long sentence (25 words)"
+   ]
+  },
+  {
+   "replyWords": 31,
+   "n": 20,
+   "minute": 12.1,
+   "scene": "interrupt",
+   "said": "Wait, stop, just one tiny step please. How much do I actually pay right now?",
+   "heard": "Wait, stop, just one tiny step, please. How much do I actually pay right now?",
+   "reply": "I could not reach my thinking service just now, so I do not have an answer. Try again in a moment, or type it. There's nothing to pay in this version.",
+   "firstSoundMs": 845,
+   "flags": []
+  },
+  {
+   "replyWords": 27,
+   "n": 21,
+   "minute": 12.7,
+   "scene": "interrupt",
+   "said": "Um, that makes even less sense now. Just tell me the first tiny piece.",
+   "heard": "Um, that makes even less sense now. Just tell me the first tiny piece.",
+   "reply": "First tiny piece: the down payment. It’s the cash you give up front, usually a percentage of the home price. Start by listing the down payment amount.",
+   "firstSoundMs": 1211,
+   "flags": []
+  },
+  {
+   "replyWords": 52,
+   "n": 22,
+   "minute": 13.3,
+   "scene": "frustration",
+   "said": "Stop, this is useless. Just repeat the down payment part until I breathe.",
+   "heard": "Stop, this is useless. Just repeat the down payment part until I breathe.",
+   "reply": "Fair. That didn't work. What do you need next? The down payment is the cash you give up front. It’s usually a percent of the home price, like 20%. You put that money down when you close the loan. Take a breath, then let me know when you’re ready to move on.",
+   "firstSoundMs": 2770,
+   "flags": []
+  },
+  {
+   "replyWords": 23,
+   "n": 23,
+   "minute": 13.8,
+   "scene": "frustration",
+   "said": "That was literally the most annoying thing ever. Um, just take that last sentence and repeat it slowly.",
+   "heard": "That was literally the most annoying thing ever. Just take that last sentence and repeat it slowly.",
+   "reply": "I’m sorry that was frustrating. What would help right now? Take a breath, then let me know when you’re ready to move on.",
+   "firstSoundMs": 1608,
+   "flags": []
+  },
+  {
+   "replyWords": 4,
+   "n": 24,
+   "minute": 14.3,
+   "scene": "frustration",
+   "said": "Ugh, you’re ignoring me. I just want you to say \"Take a breath\" slowly, please.",
+   "heard": "Ugh, you're ignoring me. I just want you to say, take a breath slowly. Please.",
+   "reply": "Take a breath slowly.",
+   "firstSoundMs": -20,
+   "flags": []
+  },
+  {
+   "replyWords": 5,
+   "n": 25,
+   "minute": 14.7,
+   "scene": "app-commands",
+   "said": "Remember that I focus best in the morning.",
+   "heard": "Remember that I focus best in the morning.",
+   "reply": "Got it, I will remember.",
+   "firstSoundMs": 2384,
+   "flags": []
+  },
+  {
+   "replyWords": 1,
+   "n": 26,
+   "minute": 14.9,
+   "scene": "app-commands",
+   "said": "Add buy milk to my list.",
+   "heard": "Add buy milk to my list.",
+   "reply": "Added.",
+   "firstSoundMs": 1747,
+   "flags": []
+  },
+  {
+   "replyWords": 6,
+   "n": 27,
+   "minute": 15.2,
+   "scene": "app-commands",
+   "said": "Park it: call the dentist.",
+   "heard": "Park it, call the dentist.",
+   "reply": "Parking that thought. Got it.Parking that.",
+   "firstSoundMs": 2463,
+   "flags": []
+  },
+  {
+   "replyWords": 1,
+   "n": 28,
+   "minute": 15.5,
+   "scene": "app-commands",
+   "said": "Open my history.",
+   "heard": "Open my history.",
+   "reply": "Done.",
+   "firstSoundMs": 2149,
+   "flags": []
+  },
+  {
+   "replyWords": 1,
+   "n": 29,
+   "minute": 15.9,
+   "scene": "app-commands",
+   "said": "Open my memory.",
+   "heard": "Open my memory.",
+   "reply": "Done.",
+   "firstSoundMs": 2785,
+   "flags": []
+  },
+  {
+   "replyWords": 0,
+   "n": 30,
+   "minute": 17.6,
+   "scene": "app-commands",
+   "said": "Show my report.",
+   "heard": "",
+   "reply": "",
+   "firstSoundMs": null,
+   "flags": [
+    "no reply",
+    "never returned to listening",
+    "heard differently (0%)"
+   ]
+  },
+  {
+   "replyWords": 0,
+   "n": 31,
+   "minute": 19.9,
+   "scene": "app-commands",
+   "said": "Open settings.",
+   "heard": "",
+   "reply": "",
+   "firstSoundMs": null,
+   "flags": [
+    "no reply",
+    "never returned to listening",
+    "heard differently (0%)"
+   ]
+  },
+  {
+   "replyWords": 0,
+   "n": 32,
+   "minute": 22,
+   "scene": "app-commands",
+   "said": "Set a five minute timer.",
+   "heard": "",
+   "reply": "",
+   "firstSoundMs": null,
+   "flags": [
+    "no reply",
+    "never returned to listening",
+    "heard differently (0%)"
+   ]
+  }
+ ]
+}

@@ -227,7 +227,7 @@ describe('self-check: spoken confirmation must match what happened', () => {
     expect(v).toMatchObject({ ok: false, issue: 'wrong_minutes' });
   });
   it('builds the true line from the result alone', () => {
-    expect(truthfulLine({ action: 'x', result: { ok: false, error: 'no such routine.' } })).toBe('That did not work: no such routine.');
+    expect(truthfulLine({ action: 'x', result: { ok: false, error: 'no such routine.' } })).toBe("I couldn't do that."); // the internal error is never said aloud (3 Nov 2026)
     expect(truthfulLine({ action: 'x', result: { ok: true } })).toBe('Done.');
   });
 });

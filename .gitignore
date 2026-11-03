@@ -55,3 +55,4 @@ docs/evidence/real-e2e/*.webm
 # files that browser specs write into the repo root
 /card-*.png
 /elevenlabs-*.png
+docs/evidence/loop/soak-partial.json

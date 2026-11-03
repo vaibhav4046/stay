@@ -10,7 +10,8 @@
 import { toSpeech } from '@/lib/voice/speechText';
 import { isImageDataUrl, looksVisual } from '@/lib/vision/image';
 import { honestFailureMessage } from '@/lib/conversation/response';
-import { mayChangeLook, mayPark, mayStartTimer } from '@/lib/conversation/capabilities';
+import { mayChangeLook, mayStartTimer } from '@/lib/conversation/capabilities';
+import { GATED_ACTIONS, mayDoAction } from '@/lib/conversation/actionGates';
 import { MEDICAL_BOUNDARY_FIXED_MESSAGE } from '@/lib/safety/crisis';
 import { byokHeaders } from '@/lib/byok/config';
 import type { TtsConnection } from '@/lib/voice/tts/types';
@@ -45,6 +46,8 @@ export interface FastSocketConfig {
   ttsToken: string;
   /** Mints a new TTS token for every later voice session (language switch, reconnect, hourly rotation). */
   freshTtsToken?: () => Promise<string>;
+  /** The few lines from the person's own notes that match what they just said (found on their device, sent as data). */
+  recall?: (text: string) => string[];
   /** Mic format: 24 kHz mono 16-bit little-endian (what pcm-processor.js produces). */
   sampleRate?: number;
   /** How long to wait after a turn that trails off ("and, uh,") before answering. Default 2200 ms. */
@@ -285,6 +288,10 @@ const MAX_HISTORY = 14;
 const FIRST_BLOCK_CHARS = 90;
 /** The reply is fully written but the voice has sent no sound and no "done" for this long: end it here, never stay on "Speaking". */
 const REPLY_STALL_MS = 8000;
+/** With no voice connection nothing will confirm the speech, so a reply ends this long after its words were shown. */
+const VOICELESS_FINISH_MS = 600;
+/** After three quick tries the voice connection is tried again this often, for as long as the call lasts. */
+const TTS_RETRY_MS = 15_000;
 /** After a lone greeting or filler turn, how long to wait for the rest of the sentence before answering it. */
 const OPENER_HOLD_MS = 700;
 
@@ -337,7 +344,7 @@ export class FastSocket {
   onerror: (() => void) | null = null;
   onclose: (() => void) | null = null;
 
-  private cfg: Required<Omit<FastSocketConfig, "keyterms" | "ttsConnect" | "endpointingMode" | "freshTtsToken">> & Pick<FastSocketConfig, "keyterms" | "ttsConnect" | "endpointingMode" | "freshTtsToken">;
+  private cfg: Required<Omit<FastSocketConfig, "keyterms" | "ttsConnect" | "endpointingMode" | "freshTtsToken" | "recall">> & Pick<FastSocketConfig, "keyterms" | "ttsConnect" | "endpointingMode" | "freshTtsToken" | "recall">;
   private session: FastSession | null = null;
   private notes: string[] = [];
   private history: ChatMessage[] = [];
@@ -376,6 +383,8 @@ export class FastSocket {
   private captureOnly = false; // brain dump: hear and transcribe, but never answer
   private keepAliveTimer: ReturnType<typeof setInterval> | undefined;
   private ttsRotationTimer: ReturnType<typeof setTimeout> | undefined;
+  private ttsRetryTimer: ReturnType<typeof setTimeout> | undefined;
+  private ttsReconnecting = false; // one reconnect chain at a time
   private ttsSwitch: Promise<void> | null = null;
   private detectedLang = '';
   private ttsNeedsRotation = false;
@@ -544,6 +553,10 @@ export class FastSocket {
       clearTimeout(this.ttsRotationTimer);
       this.ttsRotationTimer = undefined;
     }
+    if (this.ttsRetryTimer) {
+      clearTimeout(this.ttsRetryTimer);
+      this.ttsRetryTimer = undefined;
+    }
   }
 
   private resetKeepAliveTimer(): void {
@@ -594,27 +607,48 @@ export class FastSocket {
     }
   }
 
-  private handleTtsUnexpectedClose(code = 1006): void {
+  private handleTtsUnexpectedClose(code = 1006, detail = ''): void {
     if (this.closed || !this.session) return;
+    // The service's Error message and the close that follows it are one failure, not two: a second chain opened a second session at the
+    // same moment and the service's session limit then refused both (pipeline soak, 3 Nov 2026: reconnects in pairs, then "unavailable").
+    if (this.ttsReconnecting) return;
     this.clearTtsTimers();
     if (this.ttsReconnectAttempts < 3) {
       const attempt = ++this.ttsReconnectAttempts;
       const delayMs = 200 * Math.pow(2, attempt - 1);
-      this.emit({ type: 'tts.reconnecting', attempt, code });
+      this.ttsReconnecting = true;
+      this.emit({ type: 'tts.reconnecting', attempt, code, detail });
       setTimeout(() => {
         if (this.closed) return;
         this.openTts()
           .then(() => {
+            this.ttsReconnecting = false;
             this.ttsReconnectAttempts = 0;
             this.emit({ type: 'tts.reconnected' });
           })
-          .catch(() => {
-            this.handleTtsUnexpectedClose(code);
+          .catch((e: unknown) => {
+            this.ttsReconnecting = false;
+            this.handleTtsUnexpectedClose(code, e instanceof Error ? e.message : detail);
           });
       }, delayMs);
       return;
     }
-    this.emit({ type: 'tts.unavailable', code, message: 'AssemblyAI TTS connection lost after 3 retries; STT remains active.' });
+    this.emit({ type: 'tts.unavailable', code, detail, message: 'AssemblyAI TTS connection lost after 3 retries; STT remains active.' });
+    // not for good: the next reply, or this timer, tries again (a refused session or a rate limit passes)
+    this.ttsRetryTimer = setTimeout(() => {
+      this.ttsRetryTimer = undefined;
+      this.ttsReconnectAttempts = 0;
+      this.handleTtsUnexpectedClose(code);
+    }, TTS_RETRY_MS);
+  }
+
+  /** A reply needs the voice and it is down: skip the wait and try to reconnect now, once. */
+  private retryVoiceNow(): void {
+    if (!this.ttsRetryTimer) return;
+    clearTimeout(this.ttsRetryTimer);
+    this.ttsRetryTimer = undefined;
+    this.ttsReconnectAttempts = 0;
+    this.handleTtsUnexpectedClose();
   }
 
   // ---- internals --------------------------------------------------------------------------------------------------
@@ -630,7 +664,7 @@ export class FastSocket {
       this.held.push(m);
       return;
     }
-    if ((globalThis as { __stayFastDebug?: boolean }).__stayFastDebug && m.type !== 'reply.audio') console.debug('[fast]', Math.round(performance.now()), m.type, typeof m.text === 'string' ? m.text.slice(0, 60) : m.type === 'tool.call' ? JSON.stringify(m.arguments).slice(0, 80) : '');
+    if ((globalThis as { __stayFastDebug?: boolean }).__stayFastDebug && m.type !== 'reply.audio') console.debug('[fast]', Math.round(performance.now()), m.type, typeof m.text === 'string' ? m.text.slice(0, 60) : typeof m.code === 'number' ? `code=${m.code} ${String(m.detail ?? '').slice(0, 80)}` : m.type === 'tool.call' ? JSON.stringify(m.arguments).slice(0, 80) : '');
     if (!this.closed) this.onmessage?.({ data: JSON.stringify(m) });
   }
 
@@ -811,7 +845,7 @@ export class FastSocket {
         } else if (m.type === 'Error') {
           clearTimeout(beginTimer);
           if (!begun) reject(new Error(String(m.error || 'tts_error')));
-          else this.handleTtsUnexpectedClose(Number(m.error_code ?? 3006));
+          else if (this.tts === ws) this.handleTtsUnexpectedClose(Number(m.error_code ?? 3006), String(m.error ?? ''));
         }
       };
       ws.onerror = () => {
@@ -822,10 +856,14 @@ export class FastSocket {
         clearTimeout(beginTimer);
         this.ttsTermResolve?.();
         this.ttsTermResolve = null;
-        if (!this.closed) {
-          if (!begun) reject(new Error('tts_closed'));
-          else this.handleTtsUnexpectedClose(ev?.code ?? 1006);
+        if (this.closed) return;
+        if (!begun) {
+          reject(new Error('tts_closed'));
+          return;
         }
+        // a session that was already replaced (language switch, reconnect, rotation) closing late says nothing about the current one:
+        // reacting to it opened yet another session and threw away a working voice
+        if (this.tts === ws) this.handleTtsUnexpectedClose(ev?.code ?? 1006);
       };
     });
   }
@@ -1115,12 +1153,21 @@ export class FastSocket {
       void this.ttsSwitch.then(() => this.say(text, gen, flush)); // the voice is moving to the person's language: speak once it is open
       return;
     }
-    if (!text || gen !== this.genId || this.tts?.readyState !== WebSocket.OPEN) return;
+    if (!text || gen !== this.genId) return;
     const voiced = toSpeech(text, this.session?.ttsLanguage); // what the voice is given: no markdown, emoji, quote marks or line breaks; English also gets numbers and units written out
     if (!voiced) return;
     if (this.spoken === '') this.emit({ type: 'reply.started' });
     this.emit({ type: 'reply.text', text });
     this.spoken += (this.spoken ? ' ' : '') + text;
+    if (this.tts?.readyState !== WebSocket.OPEN) {
+      // Soak, 3 Nov 2026: after the voice connection dropped, twelve turns were heard and answered by the model, and every answer was
+      // thrown away here: no words, no sound, and the orb listening as if nothing was wrong. The words reach the screen, the turn ends,
+      // and the voice is asked to reconnect now rather than at the next timer.
+      this.mark('novoice');
+      this.retryVoiceNow();
+      if (this.llmDone) this.armReplyWatchdog(VOICELESS_FINISH_MS);
+      return;
+    }
     this.mark('gen');
     this.resetKeepAliveTimer();
     this.tts.send(JSON.stringify({ type: 'Generate', text: flush ? voiced : `${voiced} ` }));
@@ -1150,12 +1197,13 @@ export class FastSocket {
 
   private maybeFinish(): void {
     if (!this.llmDone || this.spoken === '') return;
+    if (this.tts?.readyState !== WebSocket.OPEN) return this.armReplyWatchdog(VOICELESS_FINISH_MS); // no voice: nothing will confirm the speech
     const allDone = this.replyBaseId === null ? this.lastDoneId >= 0 : this.lastDoneId >= this.replyBaseId + this.sentFlushes - 1;
     if (!allDone) return this.armReplyWatchdog();
     this.finishReply();
   }
 
-  private armReplyWatchdog(): void {
+  private armReplyWatchdog(ms = REPLY_STALL_MS): void {
     clearTimeout(this.replyWatchdog);
     if (this.closed) return;
     this.replyWatchdog = setTimeout(() => {
@@ -1163,7 +1211,7 @@ export class FastSocket {
       if (this.closed || !this.llmDone || this.spoken === '') return;
       this.mark('stall');
       this.finishReply();
-    }, REPLY_STALL_MS);
+    }, ms);
   }
 
   private finishReply(): void {
@@ -1225,6 +1273,13 @@ export class FastSocket {
     const fresh = this.latestImage && Date.now() - this.latestImage.at < 20_000 ? this.latestImage.data : null;
     const image = toolFollowUp ? null : this.nextImage ?? (fresh && looksVisual(asked) ? fresh : null);
     if (!toolFollowUp) this.nextImage = null;
+    // the few lines of the person's own notes that match this turn (found on their device; the vault is never sent whole)
+    let recalled: string[] = [];
+    try {
+      recalled = !toolFollowUp && asked ? (this.cfg.recall?.(asked) ?? []).slice(0, 3) : [];
+    } catch {
+      recalled = []; // a note lookup must never stop a reply
+    }
 
     let res: Response;
     this.mark('req');
@@ -1240,6 +1295,7 @@ export class FastSocket {
             language: s.ttsLanguage,
             notes: this.notes.slice(-4),
             ...(this.session?.personal ? { personal: this.session.personal } : {}),
+            ...(recalled.length ? { recall: recalled } : {}),
             ...(this.session?.offer ? { offer: this.session.offer } : {}),
           },
         }),
@@ -1361,7 +1417,8 @@ export class FastSocket {
     }
     // Same for the orb's look (persona run: "show me exactly how..." set the shape to "exactly" and Stay said Done to a question). The call
     // is not run; the model is told so and answers the person's words, without tools.
-    if (call && !toolFollowUp && ((/"action"\s*:\s*"(?:shape|color)"/.test(call.args) && !mayChangeLook(asked)) || (/"action"\s*:\s*"park"/.test(call.args) && !mayPark(asked)))) {
+    const calledAction = /"action"\s*:\s*"([a-z_]+)"/.exec(call?.args ?? '')?.[1] ?? '';
+    if (call && !toolFollowUp && ((/^(?:shape|color)$/.test(calledAction) && !mayChangeLook(asked)) || (GATED_ACTIONS.includes(calledAction) && !mayDoAction(calledAction, asked)))) {
       const id = call.id || `call-${Date.now()}`;
       this.history = [
         ...this.history,
@@ -1386,13 +1443,19 @@ export class FastSocket {
       const out = await Promise.race([result, new Promise<string>((r) => setTimeout(() => r('{"ok":false,"error":"the app did not answer"}'), 4000))]);
       if (gen !== this.genId) return;
       this.history = [...this.history, { role: 'tool' as const, tool_call_id: id, content: out.slice(0, 1500) }].slice(-MAX_HISTORY);
-      let parsedOut: { ok?: boolean; say?: string; error?: string } = {};
+      let parsedOut: { ok?: boolean; say?: string; error?: string; quick?: boolean } = {};
       try { parsedOut = JSON.parse(out); } catch {}
       this.lastToolOk = parsedOut.ok !== false;
       this.lastToolSay = typeof parsedOut.say === 'string' ? parsedOut.say : parsedOut.error;
       const quick = quickConfirmation(args.action, out, s.ttsLanguage);
       if (quick) {
         this.llmDone = true;
+        // Soak, 3 Nov 2026: the model said "Parking that thought. Got it." before the call and the fixed "Parked." followed it. A stock
+        // phrase is not added to words already spoken; a line built from what really happened (quick: true) still is.
+        if (this.spoken.trim() && parsedOut.quick !== true) {
+          this.maybeFinish();
+          return;
+        }
         this.say(quick, gen);
         return;
       }

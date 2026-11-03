@@ -42,6 +42,12 @@ export interface FakeFastVoice {
 export interface InstallFakeFastVoiceOptions {
   /** Override the LLM SSE response text returned by /api/voice/chat */
   chatReplyText?: string | ((lastUserText: string) => string);
+  /** Answer a turn with one app tool call (e.g. { action: 'open', value: 'report' }) instead of words; null for a normal reply. */
+  chatToolCall?: (lastUserText: string, withTools: boolean) => Record<string, unknown> | null;
+  /** Answer every turn the way the server does when the model is out: HTTP 503 with a plain-words message. */
+  chatFails?: { error: string; message: string };
+  /** The voice service works for the greeting, then drops the connection and refuses every new session (the speech-to-text still works). */
+  ttsDown?: boolean;
   /** Delay in ms before TTS Audio frames are sent after Flush */
   ttsAudioDelayMs?: number;
   /** Number of 24kHz audio chunks to stream per Flush ( enables mid-speech barge-in tests ) */
@@ -92,13 +98,31 @@ export async function installFakeFastVoice(
       return;
     }
     let lastUser = '';
+    let withTools = false;
     try {
       const body = JSON.parse(route.request().postData() || '{}') as {
         messages?: Array<{ role: string; content?: string }>;
+        withTools?: boolean;
       };
       lastUser = [...(body.messages || [])].reverse().find((m) => m.role === 'user')?.content || '';
+      withTools = body.withTools === true;
     } catch {
       lastUser = '';
+    }
+    if (options.chatFails) {
+      await route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify(options.chatFails) });
+      return;
+    }
+    const toolCall = options.chatToolCall?.(lastUser, withTools) ?? null;
+    if (toolCall) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream; charset=utf-8',
+        headers: { 'Cache-Control': 'no-store' },
+        body:
+          `data: ${JSON.stringify({ id: 'chatcmpl-fake-tool', object: 'chat.completion.chunk', choices: [{ index: 0, delta: { role: 'assistant', tool_calls: [{ index: 0, id: 'fake-call-1', type: 'function', function: { name: 'app', arguments: JSON.stringify(toolCall) } }] } }] })}\n\n` + `data: [DONE]\n\n`,
+      });
+      return;
     }
     const reply =
       typeof options.chatReplyText === 'function'
@@ -175,10 +199,18 @@ export async function installFakeFastVoice(
     });
   });
 
+  let ttsSessionsSeen = 0;
   await page.routeWebSocket(/tts\.us\.assemblyai\.com/, (ws) => {
     ttsWs = ws;
     ttsConnectedUrl = ws.url();
     const u = new URL(ttsConnectedUrl);
+    if (options.ttsDown) {
+      if (ttsSessionsSeen++ > 0) {
+        ws.close({ code: 1011, reason: 'voice service down' });
+        return;
+      }
+      setTimeout(() => ws.close({ code: 1011, reason: 'voice service down' }), 2500); // the first session dies once the greeting is done
+    }
 
     if (u.searchParams.has('voice')) {
       ws.send(

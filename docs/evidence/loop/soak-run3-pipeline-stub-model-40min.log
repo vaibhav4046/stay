@@ -1,0 +1,437 @@
+  1   0.2m morning-overwhelm  1504 ms 
+      YOU : I woke up late and there's so much to do I don't know where to start.
+      STAY: Good. Stay with it for one more minute, then tell me how it feels.
+  2   0.5m morning-overwhelm  1789 ms 
+      YOU : Emails, laundry, and a report due Friday. My head is full.
+      STAY: Good. Stay with it for one more minute, then tell me how it feels.
+  3   0.7m morning-overwhelm   233 ms 
+      YOU : Okay, maybe the laundry. That feels small enough.
+      STAY: That is a fair question. The short answer is yes.
+  4     1m morning-overwhelm  1658 ms 
+      YOU : Fine. I will do the laundry first.
+      STAY: That sounds heavy. Name the first thing you could touch, and start there.
+  5   1.2m morning-overwhelm  1542 ms 
+      YOU : Alright, the machine is running now.
+      STAY: That sounds heavy. Name the first thing you could touch, and start there.
+  6   1.4m avoided-email     1499 ms 
+      YOU : I keep avoiding replying to my landlord about the lease.
+      STAY: Noted. Let us keep it to one thing at a time.
+  7   1.7m avoided-email     1535 ms 
+      YOU : I don't even know what to say to them.
+      STAY: Take a breath. Then write one sentence, any sentence.
+  8     2m avoided-email     1451 ms 
+      YOU : Okay, I could open the email and read it again.
+      STAY: That is a fair question. The short answer is yes.
+  9   2.5m avoided-email      637 ms 
+      YOU : Right, I opened it. Now what?
+      STAY: Put your phone face down for five minutes. I will be here.
+ 10   2.9m avoided-email     2450 ms 
+      YOU : I wrote a first line. It is bad but it exists.
+      STAY: Open the file and read the first line. Nothing else yet. Open the file and read the first line. Nothing else yet.
+ 11   3.6m avoided-email     1596 ms 
+      YOU : Okay, I will send it after one more read.
+      STAY: Pick one small thing and do only that for two minutes.
+ 12   4.1m facts             1496 ms 
+      YOU : How many days are in a leap year?
+      STAY: That sounds heavy. Name the first thing you could touch, and start there.
+ 13   4.4m facts             1523 ms 
+      YOU : And why is the sky blue?
+      STAY: What is the smallest next step you could take right now?
+ 14     5m facts             2339 ms 
+      YOU : Huh, that is interesting. Thanks.
+      STAY: That is a fair question. The short answer is yes. You do not need a plan. You need a first move. What is one?
+ 15   5.3m facts             -197 ms 
+      YOU : One more thing, how far away is the moon?
+      STAY: You do not need a plan. You need a first move. What is one?
+ 16   5.8m thinking-pause    4698 ms 
+      YOU : I'm trying to figure out how to start the introduction and, um,
+      STAY: Noted. Let us keep it to one thing at a time.
+ 17   6.2m thinking-pause    4830 ms 
+      YOU : I think the problem is I do not know the first sentence, and...
+      STAY: What is the smallest next step you could take right now?
+ 18   6.7m thinking-pause    1738 ms 
+      YOU : Maybe I should just write anything and fix it later.
+      STAY: You do not need a plan. You need a first move. What is one?
+ 19   7.1m interrupt         1452 ms 
+      YOU : Can you explain in detail how a mortgage works, step by step?
+      STAY: Take a breath. Then write one sentence, any sentence.
+ 20   7.7m interrupt         1507 ms 
+      YOU : Wait, stop, just one tiny step please.
+      STAY: Open the file and read the first line. Nothing else yet.
+ 21     8m interrupt          606 ms 
+      YOU : Okay, that is enough. Thank you.
+      STAY: Take a breath. Then write one sentence, any sentence.
+ 22   8.4m frustration       1593 ms 
+      YOU : That did not help at all.
+      STAY: Good. Stay with it for one more minute, then tell me how it feels.
+ 23     9m frustration       1552 ms 
+      YOU : I just need you to tell me the very first thing to do.
+      STAY: Open the file and read the first line. Nothing else yet.
+ 24   9.4m frustration        259 ms 
+      YOU : Okay. Fine. Open the document.
+      STAY: Noted. Let us keep it to one thing at a time.
+ 25   9.6m app-commands       936 ms 
+      YOU : Remember that I focus best in the morning.
+      STAY: Got it, I will remember.
+ 26   9.8m app-commands      1245 ms 
+      YOU : Add buy milk to my list.
+      STAY: Added.
+ 27   9.9m app-commands       996 ms 
+      YOU : Park it: call the dentist.
+      STAY: Parked.
+ 28  10.1m app-commands      1397 ms 
+      YOU : Open my history.
+      STAY: Done.
+ 29  10.3m app-commands      1273 ms 
+      YOU : Open my memory.
+      STAY: Done.
+ 30  10.5m app-commands      1278 ms 
+      YOU : Show my report.
+      STAY: Done.
+ 31  10.7m app-commands       851 ms 
+      YOU : Open settings.
+      STAY: Done.
+ 32  10.9m app-commands       752 ms 
+      YOU : Set a five minute timer.
+      STAY: Done.
+ 33  11.6m check-in          1249 ms 
+      YOU : I tried it for two minutes and then my brain wandered off.
+      STAY: Noted. Let us keep it to one thing at a time.
+ 34  12.1m check-in             1 ms 
+      YOU : I got distracted by my phone. What should I do next?
+      STAY: Put your phone face down for five minutes. I will be here.
+ 35  12.4m check-in          1530 ms 
+      YOU : Okay, I will put it away and try again.
+      STAY: Put your phone face down for five minutes. I will be here.
+ 36  12.8m check-in          1577 ms 
+      YOU : Thanks, that helps a little.
+      STAY: Put your phone face down for five minutes. I will be here.
+ 37  13.2m netflix            944 ms 
+      YOU : Can you open Netflix for me for five minutes?
+      STAY: I can't open other apps or sites for you. What I can do is start a timer and tell you when your time is up. Want me to start a 5-minute timer?
+ 38  13.7m netflix            422 ms 
+      YOU : Why are you different from a plain timer app, then?
+      STAY: Done.
+ 39  14.1m spanish           ---  ms 
+      YOU : No sé por dónde empezar con mi declaración de impuestos.
+      STAY: Muy bien. Ahora respira y escribe una sola frase.
+ 40  14.6m spanish           2461 ms 
+      YOU : Necesito reunir mis documentos, pero me siento abrumado.
+      STAY: Muy bien. Ahora respira y escribe una sola frase. Put your phone face down for five minutes. I will be here.
+ 41  14.9m spanish           2413 ms 
+      YOU : Está bien, empezaré con un solo papel.
+      STAY: It is fine that it was messy. A messy start still counts. Muy bien. Ahora respira y escribe una sola frase.
+ 42  15.3m spanish           1462 ms 
+      YOU : Gracias, eso me ayuda mucho.
+      STAY: Empecemos con un paso pequeño. Abre el documento y lee la primera línea.
+ 43  15.7m back-english      2347 ms 
+      YOU : Thanks. Back to English now.
+      STAY: Open the file and read the first line. Nothing else yet. Stand up, drink some water, then come back and tell me what you see.
+ 44    16m back-english      2092 ms 
+      YOU : I would like a small plan for tomorrow.
+      STAY: Good. Stay with it for one more minute, then tell me how it feels.
+ 45  16.5m hindi             1521 ms 
+      YOU : मैं एक ईमेल का जवाब देने से बच रहा हूँ और अटका हुआ महसूस कर रहा हूँ।
+      STAY: ठीक है। बस एक छोटा सा कदम उठाइए, ईमेल का पहला वाक्य लिखिए।
+ 46    17m hindi             1477 ms 
+      YOU : मुझे समझ नहीं आ रहा कि कहाँ से शुरू करूँ।
+      STAY: ठीक है। बस एक छोटा सा कदम उठाइए, ईमेल का पहला वाक्य लिखिए।
+ 47  17.4m low-mood          1389 ms 
+      YOU : I have felt really low for a few weeks now.
+      STAY: Noted. Let us keep it to one thing at a time.
+ 48  17.8m low-mood          1302 ms 
+      YOU : Nothing feels worth doing lately.
+      STAY: Good. Stay with it for one more minute, then tell me how it feels.
+ 49  18.2m wrap-up           1538 ms 
+      YOU : The day is almost over. I sent the email.
+      STAY: That is a fair question. The short answer is yes.
+ 50  18.6m wrap-up           1636 ms 
+      YOU : I am proud I got it done. I will head out now.
+      STAY: You do not need a plan. You need a first move. What is one?
+ 51  19.3m wrap-up           1722 ms ⚑ heard differently (50%)
+      YOU : Goodnight, Stay.
+      STAY: That sounds heavy. Name the first thing you could touch, and start there.
+ 52  19.6m morning-overwhelm  1462 ms 
+      YOU : I woke up late and there's so much to do I don't know where to start.
+      STAY: Stand up, drink some water, then come back and tell me what you see. Good. Stay with it for one more minute, then tell me how it feels.
+ 53  19.8m morning-overwhelm  1593 ms 
+      YOU : Emails, laundry, and a report due Friday. My head is full.
+      STAY: Good. Stay with it for one more minute, then tell me how it feels.
+ 54  20.1m morning-overwhelm  2630 ms 
+      YOU : Okay, maybe the laundry. That feels small enough.
+      STAY: Pick one small thing and do only that for two minutes.
+ 55  20.3m morning-overwhelm  ---  ms 
+      YOU : Fine. I will do the laundry first.
+      STAY: That sounds heavy. Name the first thing you could touch, and start there.
+ 56  20.5m morning-overwhelm  ---  ms 
+      YOU : Alright, the machine is running now.
+      STAY: That sounds heavy. Name the first thing you could touch, and start there.
+ 57  20.7m avoided-email     ---  ms 
+      YOU : I keep avoiding replying to my landlord about the lease.
+      STAY: Noted. Let us keep it to one thing at a time.
+ 58  20.9m avoided-email     ---  ms 
+      YOU : I don't even know what to say to them.
+      STAY: Take a breath. Then write one sentence, any sentence.
+ 59  21.2m avoided-email     1345 ms 
+      YOU : Okay, I could open the email and read it again.
+      STAY: That is a fair question. The short answer is yes.
+ 60  21.5m avoided-email      719 ms 
+      YOU : Right, I opened it. Now what?
+      STAY: Put your phone face down for five minutes. I will be here.
+ 61  21.7m avoided-email     2829 ms 
+      YOU : I wrote a first line. It is bad but it exists.
+      STAY: Open the file and read the first line. Nothing else yet.
+ 62    22m avoided-email     1579 ms 
+      YOU : Okay, I will send it after one more read.
+      STAY: Pick one small thing and do only that for two minutes.
+ 63  22.2m facts             ---  ms 
+      YOU : How many days are in a leap year?
+      STAY: That sounds heavy. Name the first thing you could touch, and start there.
+ 64  22.4m facts             ---  ms 
+      YOU : And why is the sky blue?
+      STAY: What is the smallest next step you could take right now?
+ 65  22.5m facts             ---  ms 
+      YOU : Huh, that is interesting. Thanks.
+      STAY: Pick one small thing and do only that for two minutes.
+ 66  22.7m facts             ---  ms 
+      YOU : One more thing, how far away is the moon?
+      STAY: Open the file and read the first line. Nothing else yet. You do not need a plan. You need a first move. What is one?
+ 67    23m thinking-pause    4862 ms 
+      YOU : I'm trying to figure out how to start the introduction and, um,
+      STAY: Noted. Let us keep it to one thing at a time.
+ 68  23.4m thinking-pause    4946 ms 
+      YOU : I think the problem is I do not know the first sentence, and...
+      STAY: What is the smallest next step you could take right now?
+ 69  23.7m thinking-pause    1447 ms 
+      YOU : Maybe I should just write anything and fix it later.
+      STAY: You do not need a plan. You need a first move. What is one?
+ 70  23.9m interrupt         ---  ms 
+      YOU : Can you explain in detail how a mortgage works, step by step?
+      STAY: That sounds heavy. Name the first thing you could touch, and start there.
+ 71  24.3m interrupt         1581 ms 
+      YOU : Wait, stop, just one tiny step please.
+      STAY: Open the file and read the first line. Nothing else yet.
+ 72  24.7m interrupt          602 ms 
+      YOU : Okay, that is enough. Thank you.
+      STAY: Take a breath. Then write one sentence, any sentence.
+ 73  24.9m frustration       1475 ms 
+      YOU : That did not help at all.
+      STAY: Good. Stay with it for one more minute, then tell me how it feels.
+ 74  25.2m frustration       1312 ms 
+      YOU : I just need you to tell me the very first thing to do.
+      STAY: Open the file and read the first line. Nothing else yet.
+ 75  25.5m frustration        304 ms 
+      YOU : Okay. Fine. Open the document.
+      STAY: Noted. Let us keep it to one thing at a time.
+ 76  25.7m app-commands      1098 ms 
+      YOU : Remember that I focus best in the morning.
+      STAY: Got it, I will remember.
+ 77  25.9m app-commands      ---  ms 
+      YOU : Add buy milk to my list.
+      STAY: Added.
+ 78  26.1m app-commands      ---  ms 
+      YOU : Park it: call the dentist.
+      STAY: Parked. What is the smallest next step you could take right now?
+ 79  26.3m app-commands      ---  ms 
+      YOU : Open my history.
+      STAY: Done.
+ 80  26.4m app-commands      ---  ms 
+      YOU : Open my memory.
+      STAY: Done.
+ 81  26.6m app-commands      ---  ms 
+      YOU : Show my report.
+      STAY: Done.
+ 82  26.8m app-commands      1031 ms 
+      YOU : Open settings.
+      STAY: Done.
+ 83  26.9m app-commands       917 ms 
+      YOU : Set a five minute timer.
+      STAY: Done.
+ 84  27.1m check-in          1230 ms 
+      YOU : I tried it for two minutes and then my brain wandered off.
+      STAY: Noted. Let us keep it to one thing at a time.
+ 85  27.4m check-in          -134 ms 
+      YOU : I got distracted by my phone. What should I do next?
+      STAY: It is fine that it was messy. A messy start still counts. Put your phone face down for five minutes. I will be here.
+ 86  27.7m check-in          1414 ms 
+      YOU : Okay, I will put it away and try again.
+      STAY: Put your phone face down for five minutes. I will be here.
+ 87  27.9m check-in          ---  ms 
+      YOU : Thanks, that helps a little.
+      STAY: Put your phone face down for five minutes. I will be here.
+ 88  28.3m netflix            600 ms 
+      YOU : Can you open Netflix for me for five minutes?
+      STAY: I can't open other apps or sites for you. What I can do is start a timer and tell you when your time is up. Want me to start a 5-minute timer?
+ 89  28.6m netflix            398 ms 
+      YOU : Why are you different from a plain timer app, then?
+      STAY: Done. You do not need a plan. You need a first move. What is one?
+ 90  28.9m spanish           2134 ms 
+      YOU : No sé por dónde empezar con mi declaración de impuestos.
+      STAY: Muy bien. Ahora respira y escribe una sola frase.
+ 91  29.2m spanish           1157 ms 
+      YOU : Necesito reunir mis documentos, pero me siento abrumado.
+      STAY: Entiendo. Hagamos solo un paso, el más pequeño que se te ocurra.
+ 92  29.4m spanish           2407 ms 
+      YOU : Está bien, empezaré con un solo papel.
+      STAY: It is fine that it was messy. A messy start still counts. Muy bien. Ahora respira y escribe una sola frase.
+ 93  29.7m spanish           ---  ms 
+      YOU : Gracias, eso me ayuda mucho.
+      STAY: Empecemos con un paso pequeño. Abre el documento y lee la primera línea.
+ 94  29.9m back-english      ---  ms 
+      YOU : Thanks. Back to English now.
+      STAY: Open the file and read the first line. Nothing else yet. Stand up, drink some water, then come back and tell me what you see.
+ 95  30.1m back-english      ---  ms 
+      YOU : I would like a small plan for tomorrow.
+      STAY: Good. Stay with it for one more minute, then tell me how it feels.
+ 96  30.3m hindi             ---  ms 
+      YOU : मैं एक ईमेल का जवाब देने से बच रहा हूँ और अटका हुआ महसूस कर रहा हूँ।
+      STAY: ठीक है। बस एक छोटा सा कदम उठाइए, ईमेल का पहला वाक्य लिखिए।
+ 97  30.5m hindi             ---  ms 
+      YOU : मुझे समझ नहीं आ रहा कि कहाँ से शुरू करूँ।
+      STAY: ठीक है। बस एक छोटा सा कदम उठाइए, ईमेल का पहला वाक्य लिखिए।
+ 98  30.7m low-mood          ---  ms 
+      YOU : I have felt really low for a few weeks now.
+      STAY: Noted. Let us keep it to one thing at a time.
+ 99    31m low-mood          1359 ms 
+      YOU : Nothing feels worth doing lately.
+      STAY: Good. Stay with it for one more minute, then tell me how it feels.
+100  31.3m wrap-up            526 ms 
+      YOU : The day is almost over. I sent the email.
+      STAY: Open the file and read the first line. Nothing else yet.
+101  31.6m wrap-up            385 ms 
+      YOU : I am proud I got it done. I will head out now.
+      STAY: Stand up, drink some water, then come back and tell me what you see.
+102  31.8m wrap-up           ---  ms ⚑ heard differently (50%)
+      YOU : Goodnight, Stay.
+      STAY: That sounds heavy. Name the first thing you could touch, and start there.
+103  31.9m morning-overwhelm  ---  ms 
+      YOU : I woke up late and there's so much to do I don't know where to start.
+      STAY: Good. Stay with it for one more minute, then tell me how it feels.
+104  32.2m morning-overwhelm  ---  ms 
+      YOU : Emails, laundry, and a report due Friday. My head is full.
+      STAY: Good. Stay with it for one more minute, then tell me how it feels.
+105  32.4m morning-overwhelm  ---  ms 
+      YOU : Okay, maybe the laundry. That feels small enough.
+      STAY: Pick one small thing and do only that for two minutes.
+106  32.6m morning-overwhelm  ---  ms 
+      YOU : Fine. I will do the laundry first.
+      STAY: That sounds heavy. Name the first thing you could touch, and start there.
+107  32.9m morning-overwhelm  1805 ms 
+      YOU : Alright, the machine is running now.
+      STAY: That sounds heavy. Name the first thing you could touch, and start there.
+108  33.1m avoided-email     1465 ms 
+      YOU : I keep avoiding replying to my landlord about the lease.
+      STAY: Noted. Let us keep it to one thing at a time.
+109  33.5m avoided-email     1607 ms 
+      YOU : I don't even know what to say to them.
+      STAY: Take a breath. Then write one sentence, any sentence.
+110  33.7m avoided-email     1636 ms 
+      YOU : Okay, I could open the email and read it again.
+      STAY: That is a fair question. The short answer is yes.
+111  33.9m avoided-email     ---  ms 
+      YOU : Right, I opened it. Now what?
+      STAY: Put your phone face down for five minutes. I will be here.
+112  34.2m avoided-email     1601 ms 
+      YOU : I wrote a first line. It is bad but it exists.
+      STAY: Noted. Let us keep it to one thing at a time.
+113  34.4m avoided-email     1688 ms 
+      YOU : Okay, I will send it after one more read.
+      STAY: Pick one small thing and do only that for two minutes.
+114  34.7m facts             1386 ms 
+      YOU : How many days are in a leap year?
+      STAY: That sounds heavy. Name the first thing you could touch, and start there.
+115    35m facts             1601 ms 
+      YOU : And why is the sky blue?
+      STAY: What is the smallest next step you could take right now?
+116  35.3m facts              631 ms 
+      YOU : Huh, that is interesting. Thanks.
+      STAY: Open the file and read the first line. Nothing else yet.
+117  35.6m facts             1615 ms 
+      YOU : One more thing, how far away is the moon?
+      STAY: You do not need a plan. You need a first move. What is one?
+118  35.8m thinking-pause    ---  ms 
+      YOU : I'm trying to figure out how to start the introduction and, um,
+      STAY: Noted. Let us keep it to one thing at a time.
+119  36.1m thinking-pause    ---  ms 
+      YOU : I think the problem is I do not know the first sentence, and...
+      STAY: What is the smallest next step you could take right now?
+120  36.3m thinking-pause    ---  ms 
+      YOU : Maybe I should just write anything and fix it later.
+      STAY: You do not need a plan. You need a first move. What is one?
+121  36.6m interrupt         ---  ms 
+      YOU : Can you explain in detail how a mortgage works, step by step?
+      STAY: That sounds heavy. Name the first thing you could touch, and start there.
+122    37m interrupt         1611 ms 
+      YOU : Wait, stop, just one tiny step please.
+      STAY: Open the file and read the first line. Nothing else yet.
+123  37.3m interrupt          656 ms 
+      YOU : Okay, that is enough. Thank you.
+      STAY: Take a breath. Then write one sentence, any sentence.
+124  37.6m frustration       ---  ms 
+      YOU : That did not help at all.
+      STAY: Good. Stay with it for one more minute, then tell me how it feels.
+125  37.8m frustration       ---  ms 
+      YOU : I just need you to tell me the very first thing to do.
+      STAY: Open the file and read the first line. Nothing else yet.
+126    38m frustration       ---  ms 
+      YOU : Okay. Fine. Open the document.
+      STAY: Noted. Let us keep it to one thing at a time.
+127  38.1m app-commands      ---  ms 
+      YOU : Remember that I focus best in the morning.
+      STAY: Got it, I will remember.
+128  38.3m app-commands      1547 ms 
+      YOU : Add buy milk to my list.
+      STAY: Added.
+129  38.4m app-commands       923 ms 
+      YOU : Park it: call the dentist.
+      STAY: Parked.
+130  38.7m app-commands       955 ms 
+      YOU : Open my history.
+      STAY: Done.
+131  38.9m app-commands      1314 ms 
+      YOU : Open my memory.
+      STAY: Done.
+132  39.1m app-commands      1556 ms 
+      YOU : Show my report.
+      STAY: Done.
+133  39.2m app-commands      ---  ms 
+      YOU : Open settings.
+      STAY: Done.
+134  39.4m app-commands      ---  ms 
+      YOU : Set a five minute timer.
+      STAY: Done.
+135  39.7m check-in          ---  ms 
+      YOU : I tried it for two minutes and then my brain wandered off.
+      STAY: Noted. Let us keep it to one thing at a time.
+136  39.9m check-in          ---  ms 
+      YOU : I got distracted by my phone. What should I do next?
+      STAY: Put your phone face down for five minutes. I will be here.
+137  40.1m check-in          ---  ms 
+      YOU : Okay, I will put it away and try again.
+      STAY: Put your phone face down for five minutes. I will be here.
+
+SOAK SUMMARY {
+  "label": "synthetic-mic (one neural voice, English/Spanish/Hindi) + live-model; nothing played aloud",
+  "minutes": 40.1,
+  "turns": 137,
+  "firstSoundMs": {
+    "n": 96,
+    "median": 1475,
+    "p95": 2829,
+    "max": 4946
+  },
+  "turnsWithFlags": 2,
+  "flagCounts": {
+    "heard differently": 2
+  },
+  "pageErrors": [
+    "Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+  ],
+  "playback": {
+    "underflows": 0,
+    "prebufferMs": 150,
+    "bufferedMs": 0,
+    "state": "STOPPED"
+  },
+  "jsHeapMB": 57
+}

@@ -5,7 +5,8 @@ import { APP_TOOL, buildServerVoiceSystemPrompt } from '@/lib/voice/agentTool';
 import { carriesAnswer } from '@/lib/conversation/sse';
 import { isOverloaded } from '@/lib/conversation/overload';
 import { isPersistentLowMood } from '@/lib/conversation/lowMood';
-import { mayChangeLook, mayPark, mayStartTimer, recentOpeners, unsupportedActionAnswer } from '@/lib/conversation/capabilities';
+import { mayChangeLook, mayStartTimer, recentOpeners, unsupportedActionAnswer } from '@/lib/conversation/capabilities';
+import { GATED_ACTIONS, mayDoAction } from '@/lib/conversation/actionGates';
 import { llmHeaders } from '@/lib/llm/provider';
 import { openLlmStream } from '@/lib/llm/stream';
 import { resolveDeterministicVoice, createDeterministicSseResponse } from '@/lib/voice/deterministicVoiceFallback';
@@ -42,6 +43,8 @@ const ContextSchema = z
     notes: z.array(z.string().max(300)).max(4).optional(),
     /** what Stay learned about this person and their memory line, from their device (data, clipped again when used) */
     personal: z.string().max(600).optional(),
+    /** up to three lines from the person's own notes that match this turn (found on their device) */
+    recall: z.array(z.string().max(200)).max(3).optional(),
     /** one sentence built on the device from the person's own logged blocks; used as the check-in of a task reply */
     offer: z.string().max(200).optional(),
   })
@@ -237,7 +240,7 @@ ${VISION_SYSTEM}` : serverSystemPrompt },
               description: APP_TOOL.description,
               // a timer is offered to the model only when the person asked for one or said yes to Stay's offer of one; the orb's shape
               // and colour only when the words ask for a different look
-              parameters: withoutActions(APP_TOOL.parameters, [...(mayStartTimer(lastUser, recent) ? [] : ['timer_start']), ...(mayChangeLook(lastUser) ? [] : ['shape', 'color']), ...(mayPark(lastUser) ? [] : ['park'])]),
+              parameters: withoutActions(APP_TOOL.parameters, [...(mayStartTimer(lastUser, recent) ? [] : ['timer_start']), ...(mayChangeLook(lastUser) ? [] : ['shape', 'color']), ...GATED_ACTIONS.filter((a) => !mayDoAction(a, lastUser))]),
             },
           },
         ];
@@ -259,7 +262,7 @@ ${VISION_SYSTEM}` : serverSystemPrompt },
   if (!r.res) {
     // The model failed. Say so. The only thing that still works without a model is a tool the person plainly asked for
     // (a timer, a parked thought); everything else gets the honest message, never an invented reply.
-    console.warn('[stay] model_failed', { intent, vision: Boolean(image), source: r.source, error: r.error ?? null });
+    console.warn('[stay] model_failed', { intent, vision: Boolean(image), source: r.source, error: r.error ?? null, attempts: r.timing ?? null });
     if (!image) {
       const tool = resolveDeterministicVoice(lastUser).tool;
       if (tool) return createDeterministicSseResponse({ tool });
