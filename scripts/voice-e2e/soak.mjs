@@ -157,6 +157,9 @@ const JARGON = [
   [/^(?:sure thing|hey there|great question)/i, 'stock opener'],
   [/[*#`]/, 'markdown'],
   [/\bneed anything else\b/i, 'filler'],
+  [/[()]/, 'parentheses (an aside, read aloud)'],
+  [/[“”"]/, 'quotation marks'],
+  [/\b(?:ctrl|cmd|alt)[ +-]?[a-z]\b|\.(?:pdf|docx?|xlsx?|csv)\b|https?:\/\//i, 'keyboard shortcut or file syntax'],
 ];
 const words = (s) => s.toLowerCase().replace(/[^\p{L}\p{N}' ]/gu, ' ').split(/\s+/).filter(Boolean);
 const overlap = (said, heard) => { const a = words(said), b = new Set(words(heard)); return a.length ? a.filter((w) => b.has(w)).length / a.length : 1; };
@@ -186,10 +189,12 @@ outer: while (now() < deadline) {
       if (parts.length > 1) { await sleep(rnd(1800, 2500)); timing = await say(parts[1]); said = parts.join(' '); }
       const heardAfter = await waitHeard(before.you);
       const replied = await waitStatus((s) => s === 'Speaking', 15000);
-      const played = await page.evaluate((n) => window.__stayPlays.slice(n), mark.plays);
-      const firstSoundMs = played.length ? Math.round(played[0] - timing.tEnd) : null;
       const finished = await waitStatus((s) => s === 'Listening', 90000);
       await sleep(600);
+      // read the play marks only now, after the reply has finished: the first played sample comes a little after "Speaking" appears
+      const played = await page.evaluate((n) => window.__stayPlays.slice(n), mark.plays);
+      const firstPlay = played.find((x) => x > timing.tEnd - 200);
+      const firstSoundMs = firstPlay ? Math.round(firstPlay - timing.tEnd) : null;
       const stayAll = await stay();
       const reply = stayAll.slice(before.stay).join(' ');
       const heard = (await you()).slice(before.you).join(' ');
@@ -199,11 +204,15 @@ outer: while (now() < deadline) {
       for (let i = 0; i < st.length - 1; i++) if (st[i].s === 'Speaking' && st[i].pb === 'STOPPED' && i > 0 && st[i - 1].pb && st[i - 1].pb !== 'STOPPED') silentSpeaking = Math.max(silentSpeaking, st[i + 1].t - st[i].t);
       const flags = JARGON.filter(([re]) => re.test(reply)).map(([, n]) => n);
       if (!reply) flags.push('no reply');
+      const replyWords = reply.split(/\s+/).filter(Boolean).length;
+      const longest = Math.max(0, ...reply.split(/[.!?]+/).map((s) => s.split(/\s+/).filter(Boolean).length));
+      if (replyWords > 60 && scene.id !== 'interrupt') flags.push(`long reply (${replyWords} words)`);
+      if (longest > 24) flags.push(`long sentence (${longest} words)`);
       if (!finished) flags.push('never returned to listening');
       if (silentSpeaking > 1500) flags.push(`speaking over silence ${silentSpeaking} ms`);
       const wordsOver = overlap(said, heard);
       if (wordsOver < 0.6 && scene.lang !== 'hi') flags.push(`heard differently (${Math.round(wordsOver * 100)}%)`);
-      const turn = { n: turns.length + 1, minute: Math.round((now() - T0) / 6000) / 10, scene: scene.id, said, heard, reply, firstSoundMs, flags };
+      const turn = { replyWords, n: turns.length + 1, minute: Math.round((now() - T0) / 6000) / 10, scene: scene.id, said, heard, reply, firstSoundMs, flags };
       turns.push(turn);
       history.push({ who: 'you', text: said }, { who: 'stay', text: reply });
       console.log(`${String(turn.n).padStart(3)} ${String(turn.minute).padStart(5)}m ${scene.id.padEnd(16)} ${firstSoundMs == null ? ' --- ' : String(firstSoundMs).padStart(5)} ms ${flags.length ? '⚑ ' + flags.join(', ') : ''}\n      YOU : ${said.slice(0, 110)}\n      STAY: ${reply.slice(0, 150)}`);

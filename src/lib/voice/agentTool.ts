@@ -46,7 +46,7 @@ const SHAPE_BY_INTENT: Record<string, string> = {
   frustrated:
     'They are frustrated, maybe with you. Say so in one short plain sentence that owns it ("Fair. That didn\'t work."), then ask the ONE thing they want right now, in under ten words. No advice, no task, no explaining why.',
   question:
-    'They asked a question. Answer it directly in the first sentence. A plain fact: one short complete sentence, nothing more ("A leap year has 366 days."). A big topic or a plan: give a short first version yourself in two or three spoken sentences (never a list of questions back), then ask if they want more. Never add "Need anything else?". Otherwise add one short sentence only if needed. No greeting or "Sure"; no reminders, timers, stretches or tiny steps unless asked; no question back unless you need one detail. If unsure, say so.',
+    'They asked a question. Answer it directly in the first sentence. A plain fact: one short complete sentence, nothing more. A big topic or a plan: give a short first version yourself in two or three sentences, never a list of questions, then ask if they want more. Never add "Need anything else?". No greeting; no reminders, timers, stretches or tiny steps unless asked; no question back unless you need one detail. If unsure, say so.',
   follow_up:
     'They are following up on the last turn. Stay on that subject and answer it directly in one to three short sentences. No greeting opener, no tiny step, no timer or reminder offers unless asked.',
   small_talk: 'Reply with one short, warm sentence. No tools, no chores.',
@@ -74,7 +74,7 @@ export function buildServerVoiceSystemPrompt(
     opts.overloaded ? OVERLOAD_INSTRUCTION : '',
     opts.lowMood ? LOW_MOOD_INSTRUCTION : '',
     offer ? `Instead of your own check-in, end with this sentence exactly as written (it comes from what got this person started before): "${offer}"` : '',
-    'Plain spoken words: no markdown, no emoji, no bullet lists, no lists of numbered steps. Never open with "Sure thing", "Hey there" or "Great question". Never say "I hear you", "I hear that", "I\'m right here with you", "It sounds like" or "I understand".',
+    'Plain spoken words, said aloud. Sentences under fifteen words, one step at a time: no markdown, no emoji, no lists, no parentheses, quotation marks, shortcuts or file names. Never open with "Sure thing", "Hey there" or "Great question". Never say "I hear you", "I hear that", "I\'m right here with you", "It sounds like" or "I understand".',
     'You cannot open or close other apps, sites or tabs, and you cannot see anything unless a picture was shown. Never say you did something you did not do. Start a timer only if the person asked for one.',
     opts.recentOpeners && opts.recentOpeners.length > 0 ? `Do not begin this reply with the same words as your last replies (${opts.recentOpeners.map((o) => `"${o}"`).join(', ')}). Vary how you start.` : '',
     'Call the app tool only when the user explicitly asks to open, change, start, stop, remember, forget, park, plan, or show something. One action per call.',

@@ -28,3 +28,17 @@ describe('steps said out loud', () => {
     expect(toSpeech('Type: "Hi [Landlord\'s name], thanks for the notice."', 'english')).not.toMatch(/[\[\]]/);
   });
 });
+
+describe('asides in parentheses are not read aloud (soak, 3 Nov 2026: "use the search function (Ctrl F) to look for words")', () => {
+  it('drops a short aside and keeps the sentence whole', () => {
+    expect(toSpeech('Use the search bar (Ctrl F) to find the date, then write it down.', 'english')).toBe('Use the search bar to find the date, then write it down.');
+    expect(toSpeech('Type the first day of last month (or any date you like).', 'english')).toBe('Type the first day of last month.');
+  });
+  it('keeps a long parenthetical, which is part of the sentence', () => {
+    const s = 'Start with the form (the one your accountant sent you last week with the blue header and the long number on top).';
+    expect(toSpeech(s, 'english')).toContain('accountant');
+  });
+  it('works in other languages too', () => {
+    expect(toSpeech('Abre el portal (el de Hacienda) y busca la sección.', 'spanish')).toBe('Abre el portal y busca la sección.');
+  });
+});
