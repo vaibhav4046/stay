@@ -73,6 +73,27 @@ const browser = await chromium.launch({
 });
 const ctx = await browser.newContext({ viewport: { width: 1200, height: 900 }, locale: 'en-GB', permissions: ['microphone'] });
 const page = await ctx.newPage();
+// DEBUG=1: the socket's own events, every TTS socket opened/closed and its non-audio frames, in order, to file-mic-debug.log
+const debugLog = [];
+const debugT0 = Date.now();
+if (process.env.DEBUG) {
+  const log = (s) => debugLog.push(`${String(Date.now() - debugT0).padStart(6)} ${s}`);
+  page.on('console', (m) => m.text().startsWith('[fast]') && log(m.text().slice(0, 200)));
+  page.on('websocket', (ws) => {
+    const name = ws.url().includes('tts') ? 'tts' : ws.url().includes('streaming') ? 'stt' : ws.url().split('?')[0];
+    const lang = (ws.url().match(/[?&]language=([^&]+)/) || [])[1];
+    log(`[ws open] ${name}${lang ? ' language=' + lang : ''}`);
+    ws.on('framesent', (f) => { const p = String(f.payload); if (p.startsWith('{') && !p.includes('KeepAlive')) log(`  ${name} -> ${p.slice(0, 140)}`); });
+    let audio = 0;
+    ws.on('framereceived', (f) => {
+      const p = String(f.payload);
+      if (p.includes('"Audio"')) return void (audio++ === 0 && log(`  ${name} <- first Audio`));
+      if (name === 'stt' && p.includes('"Turn"')) return void (p.includes('"end_of_turn":true') && log(`  stt <- end of turn ${p.replace(/"words":\[.*?\],/, '').slice(0, 260)}`));
+      if (p.startsWith('{')) log(`  ${name} <- ${p.slice(0, 140)} (audio frames so far: ${audio})`);
+    });
+    ws.on('close', () => log(`[ws close] ${name} (audio frames: ${audio})`));
+  });
+}
 await page.addInitScript(() => {
   window.__stayFastDebug = true;
   window.__stayPlays = [];
@@ -93,7 +114,13 @@ const data = await page.evaluate(() => ({
   ducks: (window.__stayDucks || []).slice(),
   heard: [...document.querySelectorAll('[data-testid="chat-user-message"] .bubble')].map((e) => e.textContent.trim()),
   said: [...document.querySelectorAll('[data-testid="chat-agent-message"] .bubble')].map((e) => e.textContent.trim()),
+  marks: (window.__stayFastMarks || []).slice(),
 }));
+if (process.env.DEBUG) {
+  const marks = data.marks.map(([n, at]) => `${String(at - debugT0).padStart(6)} mark ${n}`);
+  fs.writeFileSync(path.join(work, 'file-mic-debug.log'), [...debugLog, ...marks].sort().join('\n') + '\n');
+  console.log('debug log:', path.join(work, 'file-mic-debug.log'));
+}
 await browser.close();
 
 // the microphone's loud marks, grouped into spoken lines (a gap of 700 ms or more ends a line)
