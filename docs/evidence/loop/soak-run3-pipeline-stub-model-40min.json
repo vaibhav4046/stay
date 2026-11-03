@@ -1,0 +1,1939 @@
+{
+ "partial": true,
+ "turns": [
+  {
+   "bubbles": [
+    "Good. Stay with it for one more minute, then tell me how it feels."
+   ],
+   "replyWords": 14,
+   "n": 1,
+   "minute": 0.2,
+   "scene": "morning-overwhelm",
+   "said": "I woke up late and there's so much to do I don't know where to start.",
+   "heard": "I woke up late. And there's so much to do, I don't know where to start.",
+   "reply": "Good. Stay with it for one more minute, then tell me how it feels.",
+   "firstSoundMs": 1504,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Good. Stay with it for one more minute, then tell me how it feels."
+   ],
+   "replyWords": 14,
+   "n": 2,
+   "minute": 0.5,
+   "scene": "morning-overwhelm",
+   "said": "Emails, laundry, and a report due Friday. My head is full.",
+   "heard": "Emails, laundry, and a report due Friday. My head is full.",
+   "reply": "Good. Stay with it for one more minute, then tell me how it feels.",
+   "firstSoundMs": 1789,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "That is a fair question. The short answer is yes."
+   ],
+   "replyWords": 10,
+   "n": 3,
+   "minute": 0.7,
+   "scene": "morning-overwhelm",
+   "said": "Okay, maybe the laundry. That feels small enough.",
+   "heard": "Okay, maybe the laundry. feel small enough.",
+   "reply": "That is a fair question. The short answer is yes.",
+   "firstSoundMs": 233,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "That sounds heavy. Name the first thing you could touch, and start there."
+   ],
+   "replyWords": 13,
+   "n": 4,
+   "minute": 1,
+   "scene": "morning-overwhelm",
+   "said": "Fine. I will do the laundry first.",
+   "heard": "Fine. I will do the laundry first.",
+   "reply": "That sounds heavy. Name the first thing you could touch, and start there.",
+   "firstSoundMs": 1658,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "That sounds heavy. Name the first thing you could touch, and start there."
+   ],
+   "replyWords": 13,
+   "n": 5,
+   "minute": 1.2,
+   "scene": "morning-overwhelm",
+   "said": "Alright, the machine is running now.",
+   "heard": "Alright, the machine is running now.",
+   "reply": "That sounds heavy. Name the first thing you could touch, and start there.",
+   "firstSoundMs": 1542,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Noted. Let us keep it to one thing at a time."
+   ],
+   "replyWords": 11,
+   "n": 6,
+   "minute": 1.4,
+   "scene": "avoided-email",
+   "said": "I keep avoiding replying to my landlord about the lease.",
+   "heard": "I keep avoiding replying to my landlord about the lease.",
+   "reply": "Noted. Let us keep it to one thing at a time.",
+   "firstSoundMs": 1499,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Take a breath. Then write one sentence, any sentence."
+   ],
+   "replyWords": 9,
+   "n": 7,
+   "minute": 1.7,
+   "scene": "avoided-email",
+   "said": "I don't even know what to say to them.",
+   "heard": "I don't even know what to say to them.",
+   "reply": "Take a breath. Then write one sentence, any sentence.",
+   "firstSoundMs": 1535,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "That is a fair question. The short answer is yes."
+   ],
+   "replyWords": 10,
+   "n": 8,
+   "minute": 2,
+   "scene": "avoided-email",
+   "said": "Okay, I could open the email and read it again.",
+   "heard": "Okay. I could open the email and read it again.",
+   "reply": "That is a fair question. The short answer is yes.",
+   "firstSoundMs": 1451,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Put your phone face down for five minutes. I will be here."
+   ],
+   "replyWords": 12,
+   "n": 9,
+   "minute": 2.5,
+   "scene": "avoided-email",
+   "said": "Right, I opened it. Now what?",
+   "heard": "Right, I opened it. Now what?",
+   "reply": "Put your phone face down for five minutes. I will be here.",
+   "firstSoundMs": 637,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Open the file and read the first line. Nothing else yet.",
+    "Open the file and read the first line. Nothing else yet."
+   ],
+   "replyWords": 22,
+   "n": 10,
+   "minute": 2.9,
+   "scene": "avoided-email",
+   "said": "I wrote a first line. It is bad but it exists.",
+   "heard": "I wrote a first line. bad, but it exists.",
+   "reply": "Open the file and read the first line. Nothing else yet. Open the file and read the first line. Nothing else yet.",
+   "firstSoundMs": 2450,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Pick one small thing and do only that for two minutes."
+   ],
+   "replyWords": 11,
+   "n": 11,
+   "minute": 3.6,
+   "scene": "avoided-email",
+   "said": "Okay, I will send it after one more read.",
+   "heard": "Okay. I will send it after one more read.",
+   "reply": "Pick one small thing and do only that for two minutes.",
+   "firstSoundMs": 1596,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "That sounds heavy. Name the first thing you could touch, and start there."
+   ],
+   "replyWords": 13,
+   "n": 12,
+   "minute": 4.1,
+   "scene": "facts",
+   "said": "How many days are in a leap year?",
+   "heard": "How many days are in a leap year?",
+   "reply": "That sounds heavy. Name the first thing you could touch, and start there.",
+   "firstSoundMs": 1496,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "What is the smallest next step you could take right now?"
+   ],
+   "replyWords": 11,
+   "n": 13,
+   "minute": 4.4,
+   "scene": "facts",
+   "said": "And why is the sky blue?",
+   "heard": "And why is the sky blue?",
+   "reply": "What is the smallest next step you could take right now?",
+   "firstSoundMs": 1523,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "That is a fair question. The short answer is yes.",
+    "You do not need a plan. You need a first move. What is one?"
+   ],
+   "replyWords": 24,
+   "n": 14,
+   "minute": 5,
+   "scene": "facts",
+   "said": "Huh, that is interesting. Thanks.",
+   "heard": "Huh. That is interesting. Thanks.",
+   "reply": "That is a fair question. The short answer is yes. You do not need a plan. You need a first move. What is one?",
+   "firstSoundMs": 2339,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "You do not need a plan. You need a first move. What is one?"
+   ],
+   "replyWords": 14,
+   "n": 15,
+   "minute": 5.3,
+   "scene": "facts",
+   "said": "One more thing, how far away is the moon?",
+   "heard": "One more thing. How far away is the moon?",
+   "reply": "You do not need a plan. You need a first move. What is one?",
+   "firstSoundMs": -197,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Noted. Let us keep it to one thing at a time."
+   ],
+   "replyWords": 11,
+   "n": 16,
+   "minute": 5.8,
+   "scene": "thinking-pause",
+   "said": "I'm trying to figure out how to start the introduction and, um,",
+   "heard": "I'm trying to figure out how to start the introduction and",
+   "reply": "Noted. Let us keep it to one thing at a time.",
+   "firstSoundMs": 4698,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "What is the smallest next step you could take right now?"
+   ],
+   "replyWords": 11,
+   "n": 17,
+   "minute": 6.2,
+   "scene": "thinking-pause",
+   "said": "I think the problem is I do not know the first sentence, and...",
+   "heard": "I think the problem is I do not know the first sentence and",
+   "reply": "What is the smallest next step you could take right now?",
+   "firstSoundMs": 4830,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "You do not need a plan. You need a first move. What is one?"
+   ],
+   "replyWords": 14,
+   "n": 18,
+   "minute": 6.7,
+   "scene": "thinking-pause",
+   "said": "Maybe I should just write anything and fix it later.",
+   "heard": "Maybe I should just write anything and fix it later.",
+   "reply": "You do not need a plan. You need a first move. What is one?",
+   "firstSoundMs": 1738,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Take a breath. Then write one sentence, any sentence."
+   ],
+   "replyWords": 9,
+   "n": 19,
+   "minute": 7.1,
+   "scene": "interrupt",
+   "said": "Can you explain in detail how a mortgage works, step by step?",
+   "heard": "Can you explain in detail how a mortgage works, step by step?",
+   "reply": "Take a breath. Then write one sentence, any sentence.",
+   "firstSoundMs": 1452,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Open the file and read the first line. Nothing else yet."
+   ],
+   "replyWords": 11,
+   "n": 20,
+   "minute": 7.7,
+   "scene": "interrupt",
+   "said": "Wait, stop, just one tiny step please.",
+   "heard": "Wait, stop. Just one tiny step, please.",
+   "reply": "Open the file and read the first line. Nothing else yet.",
+   "firstSoundMs": 1507,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Take a breath. Then write one sentence, any sentence."
+   ],
+   "replyWords": 9,
+   "n": 21,
+   "minute": 8,
+   "scene": "interrupt",
+   "said": "Okay, that is enough. Thank you.",
+   "heard": "Okay, that is enough. Thank you.",
+   "reply": "Take a breath. Then write one sentence, any sentence.",
+   "firstSoundMs": 606,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Good. Stay with it for one more minute, then tell me how it feels."
+   ],
+   "replyWords": 14,
+   "n": 22,
+   "minute": 8.4,
+   "scene": "frustration",
+   "said": "That did not help at all.",
+   "heard": "That did not help at all.",
+   "reply": "Good. Stay with it for one more minute, then tell me how it feels.",
+   "firstSoundMs": 1593,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Open the file and read the first line. Nothing else yet."
+   ],
+   "replyWords": 11,
+   "n": 23,
+   "minute": 9,
+   "scene": "frustration",
+   "said": "I just need you to tell me the very first thing to do.",
+   "heard": "I just need you to tell me the very first thing to do.",
+   "reply": "Open the file and read the first line. Nothing else yet.",
+   "firstSoundMs": 1552,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Noted. Let us keep it to one thing at a time."
+   ],
+   "replyWords": 11,
+   "n": 24,
+   "minute": 9.4,
+   "scene": "frustration",
+   "said": "Okay. Fine. Open the document.",
+   "heard": "Okay. Fine. Open the document.",
+   "reply": "Noted. Let us keep it to one thing at a time.",
+   "firstSoundMs": 259,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Got it, I will remember."
+   ],
+   "replyWords": 5,
+   "n": 25,
+   "minute": 9.6,
+   "scene": "app-commands",
+   "said": "Remember that I focus best in the morning.",
+   "heard": "Remember that I focus best in the morning.",
+   "reply": "Got it, I will remember.",
+   "firstSoundMs": 936,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Added."
+   ],
+   "replyWords": 1,
+   "n": 26,
+   "minute": 9.8,
+   "scene": "app-commands",
+   "said": "Add buy milk to my list.",
+   "heard": "Add buy milk to my list.",
+   "reply": "Added.",
+   "firstSoundMs": 1245,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Parked."
+   ],
+   "replyWords": 1,
+   "n": 27,
+   "minute": 9.9,
+   "scene": "app-commands",
+   "said": "Park it: call the dentist.",
+   "heard": "Park it, call the dentist.",
+   "reply": "Parked.",
+   "firstSoundMs": 996,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Done."
+   ],
+   "replyWords": 1,
+   "n": 28,
+   "minute": 10.1,
+   "scene": "app-commands",
+   "said": "Open my history.",
+   "heard": "Open my history.",
+   "reply": "Done.",
+   "firstSoundMs": 1397,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Done."
+   ],
+   "replyWords": 1,
+   "n": 29,
+   "minute": 10.3,
+   "scene": "app-commands",
+   "said": "Open my memory.",
+   "heard": "Open my memory.",
+   "reply": "Done.",
+   "firstSoundMs": 1273,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Done."
+   ],
+   "replyWords": 1,
+   "n": 30,
+   "minute": 10.5,
+   "scene": "app-commands",
+   "said": "Show my report.",
+   "heard": "Show my report.",
+   "reply": "Done.",
+   "firstSoundMs": 1278,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Done."
+   ],
+   "replyWords": 1,
+   "n": 31,
+   "minute": 10.7,
+   "scene": "app-commands",
+   "said": "Open settings.",
+   "heard": "Open settings.",
+   "reply": "Done.",
+   "firstSoundMs": 851,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Done."
+   ],
+   "replyWords": 1,
+   "n": 32,
+   "minute": 10.9,
+   "scene": "app-commands",
+   "said": "Set a five minute timer.",
+   "heard": "Set a 5-minute timer.",
+   "reply": "Done.",
+   "firstSoundMs": 752,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Noted. Let us keep it to one thing at a time."
+   ],
+   "replyWords": 11,
+   "n": 33,
+   "minute": 11.6,
+   "scene": "check-in",
+   "said": "I tried it for two minutes and then my brain wandered off.",
+   "heard": "I tried for 2 minutes and then my brain wandered off.",
+   "reply": "Noted. Let us keep it to one thing at a time.",
+   "firstSoundMs": 1249,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Put your phone face down for five minutes. I will be here."
+   ],
+   "replyWords": 12,
+   "n": 34,
+   "minute": 12.1,
+   "scene": "check-in",
+   "said": "I got distracted by my phone. What should I do next?",
+   "heard": "I got distracted by my phone. What should I do next?",
+   "reply": "Put your phone face down for five minutes. I will be here.",
+   "firstSoundMs": 1,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Put your phone face down for five minutes. I will be here."
+   ],
+   "replyWords": 12,
+   "n": 35,
+   "minute": 12.4,
+   "scene": "check-in",
+   "said": "Okay, I will put it away and try again.",
+   "heard": "Okay. I will put it away and try again.",
+   "reply": "Put your phone face down for five minutes. I will be here.",
+   "firstSoundMs": 1530,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Put your phone face down for five minutes. I will be here."
+   ],
+   "replyWords": 12,
+   "n": 36,
+   "minute": 12.8,
+   "scene": "check-in",
+   "said": "Thanks, that helps a little.",
+   "heard": "Thanks, that helps a little.",
+   "reply": "Put your phone face down for five minutes. I will be here.",
+   "firstSoundMs": 1577,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "I can't open other apps or sites for you. What I can do is start a timer and tell you when your time is up. Want me to start a 5-minute timer?"
+   ],
+   "replyWords": 32,
+   "n": 37,
+   "minute": 13.2,
+   "scene": "netflix",
+   "said": "Can you open Netflix for me for five minutes?",
+   "heard": "Can you open Netflix for me for 5 minutes?",
+   "reply": "I can't open other apps or sites for you. What I can do is start a timer and tell you when your time is up. Want me to start a 5-minute timer?",
+   "firstSoundMs": 944,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Done."
+   ],
+   "replyWords": 1,
+   "n": 38,
+   "minute": 13.7,
+   "scene": "netflix",
+   "said": "Why are you different from a plain timer app, then?",
+   "heard": "Why are you different from a plain timer app?",
+   "reply": "Done.",
+   "firstSoundMs": 422,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Muy bien. Ahora respira y escribe una sola frase."
+   ],
+   "replyWords": 9,
+   "n": 39,
+   "minute": 14.1,
+   "scene": "spanish",
+   "said": "No sé por dónde empezar con mi declaración de impuestos.",
+   "heard": "No sé por dónde empezar con mi declaración de impuestos.",
+   "reply": "Muy bien. Ahora respira y escribe una sola frase.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Muy bien. Ahora respira y escribe una sola frase.",
+    "Put your phone face down for five minutes. I will be here."
+   ],
+   "replyWords": 21,
+   "n": 40,
+   "minute": 14.6,
+   "scene": "spanish",
+   "said": "Necesito reunir mis documentos, pero me siento abrumado.",
+   "heard": "Necesito reunir mis documentos. Me siento abrumado.",
+   "reply": "Muy bien. Ahora respira y escribe una sola frase. Put your phone face down for five minutes. I will be here.",
+   "firstSoundMs": 2461,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "It is fine that it was messy. A messy start still counts.",
+    "Muy bien. Ahora respira y escribe una sola frase."
+   ],
+   "replyWords": 21,
+   "n": 41,
+   "minute": 14.9,
+   "scene": "spanish",
+   "said": "Está bien, empezaré con un solo papel.",
+   "heard": "Está bien. Empezaré con un solo papel.",
+   "reply": "It is fine that it was messy. A messy start still counts. Muy bien. Ahora respira y escribe una sola frase.",
+   "firstSoundMs": 2413,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Empecemos con un paso pequeño. Abre el documento y lee la primera línea."
+   ],
+   "replyWords": 13,
+   "n": 42,
+   "minute": 15.3,
+   "scene": "spanish",
+   "said": "Gracias, eso me ayuda mucho.",
+   "heard": "Gracias, eso me ayuda mucho.",
+   "reply": "Empecemos con un paso pequeño. Abre el documento y lee la primera línea.",
+   "firstSoundMs": 1462,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Open the file and read the first line. Nothing else yet.",
+    "Stand up, drink some water, then come back and tell me what you see."
+   ],
+   "replyWords": 25,
+   "n": 43,
+   "minute": 15.7,
+   "scene": "back-english",
+   "said": "Thanks. Back to English now.",
+   "heard": "Thanks. Back to English now.",
+   "reply": "Open the file and read the first line. Nothing else yet. Stand up, drink some water, then come back and tell me what you see.",
+   "firstSoundMs": 2347,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Good. Stay with it for one more minute, then tell me how it feels."
+   ],
+   "replyWords": 14,
+   "n": 44,
+   "minute": 16,
+   "scene": "back-english",
+   "said": "I would like a small plan for tomorrow.",
+   "heard": "I would like a small plan for tomorrow.",
+   "reply": "Good. Stay with it for one more minute, then tell me how it feels.",
+   "firstSoundMs": 2092,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "ठीक है। बस एक छोटा सा कदम उठाइए, ईमेल का पहला वाक्य लिखिए।"
+   ],
+   "replyWords": 13,
+   "n": 45,
+   "minute": 16.5,
+   "scene": "hindi",
+   "said": "मैं एक ईमेल का जवाब देने से बच रहा हूँ और अटका हुआ महसूस कर रहा हूँ।",
+   "heard": "मैं एक ईमेल का जवाब देने से बच रहा हूँ और अटका हुआ महसूस कर रहा हूँ।",
+   "reply": "ठीक है। बस एक छोटा सा कदम उठाइए, ईमेल का पहला वाक्य लिखिए।",
+   "firstSoundMs": 1521,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "ठीक है। बस एक छोटा सा कदम उठाइए, ईमेल का पहला वाक्य लिखिए।"
+   ],
+   "replyWords": 13,
+   "n": 46,
+   "minute": 17,
+   "scene": "hindi",
+   "said": "मुझे समझ नहीं आ रहा कि कहाँ से शुरू करूँ।",
+   "heard": "मुझे समझ नहीं आ रहा कि कहाँ से शुरू करूँ।",
+   "reply": "ठीक है। बस एक छोटा सा कदम उठाइए, ईमेल का पहला वाक्य लिखिए।",
+   "firstSoundMs": 1477,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Noted. Let us keep it to one thing at a time."
+   ],
+   "replyWords": 11,
+   "n": 47,
+   "minute": 17.4,
+   "scene": "low-mood",
+   "said": "I have felt really low for a few weeks now.",
+   "heard": "I have felt really low for a few weeks now.",
+   "reply": "Noted. Let us keep it to one thing at a time.",
+   "firstSoundMs": 1389,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Good. Stay with it for one more minute, then tell me how it feels."
+   ],
+   "replyWords": 14,
+   "n": 48,
+   "minute": 17.8,
+   "scene": "low-mood",
+   "said": "Nothing feels worth doing lately.",
+   "heard": "Nothing feels worth doing lately.",
+   "reply": "Good. Stay with it for one more minute, then tell me how it feels.",
+   "firstSoundMs": 1302,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "That is a fair question. The short answer is yes."
+   ],
+   "replyWords": 10,
+   "n": 49,
+   "minute": 18.2,
+   "scene": "wrap-up",
+   "said": "The day is almost over. I sent the email.",
+   "heard": "The day is almost over. I sent the email.",
+   "reply": "That is a fair question. The short answer is yes.",
+   "firstSoundMs": 1538,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "You do not need a plan. You need a first move. What is one?"
+   ],
+   "replyWords": 14,
+   "n": 50,
+   "minute": 18.6,
+   "scene": "wrap-up",
+   "said": "I am proud I got it done. I will head out now.",
+   "heard": "I am proud I got it done. I will head out now.",
+   "reply": "You do not need a plan. You need a first move. What is one?",
+   "firstSoundMs": 1636,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "That sounds heavy. Name the first thing you could touch, and start there."
+   ],
+   "replyWords": 13,
+   "n": 51,
+   "minute": 19.3,
+   "scene": "wrap-up",
+   "said": "Goodnight, Stay.",
+   "heard": "Good night, Stay.",
+   "reply": "That sounds heavy. Name the first thing you could touch, and start there.",
+   "firstSoundMs": 1722,
+   "flags": [
+    "heard differently (50%)"
+   ]
+  },
+  {
+   "bubbles": [
+    "Stand up, drink some water, then come back and tell me what you see.",
+    "Good. Stay with it for one more minute, then tell me how it feels."
+   ],
+   "replyWords": 28,
+   "n": 52,
+   "minute": 19.6,
+   "scene": "morning-overwhelm",
+   "said": "I woke up late and there's so much to do I don't know where to start.",
+   "heard": "I woke up late. And there's so much to do, I don't know where to start.",
+   "reply": "Stand up, drink some water, then come back and tell me what you see. Good. Stay with it for one more minute, then tell me how it feels.",
+   "firstSoundMs": 1462,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Good. Stay with it for one more minute, then tell me how it feels."
+   ],
+   "replyWords": 14,
+   "n": 53,
+   "minute": 19.8,
+   "scene": "morning-overwhelm",
+   "said": "Emails, laundry, and a report due Friday. My head is full.",
+   "heard": "Emails, laundry, and a report due Friday. My head is full.",
+   "reply": "Good. Stay with it for one more minute, then tell me how it feels.",
+   "firstSoundMs": 1593,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Pick one small thing and do only that for two minutes."
+   ],
+   "replyWords": 11,
+   "n": 54,
+   "minute": 20.1,
+   "scene": "morning-overwhelm",
+   "said": "Okay, maybe the laundry. That feels small enough.",
+   "heard": "Okay. Maybe the laundry. That feels small enough.",
+   "reply": "Pick one small thing and do only that for two minutes.",
+   "firstSoundMs": 2630,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "That sounds heavy. Name the first thing you could touch, and start there."
+   ],
+   "replyWords": 13,
+   "n": 55,
+   "minute": 20.3,
+   "scene": "morning-overwhelm",
+   "said": "Fine. I will do the laundry first.",
+   "heard": "Fine. I will do the laundry first.",
+   "reply": "That sounds heavy. Name the first thing you could touch, and start there.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "That sounds heavy. Name the first thing you could touch, and start there."
+   ],
+   "replyWords": 13,
+   "n": 56,
+   "minute": 20.5,
+   "scene": "morning-overwhelm",
+   "said": "Alright, the machine is running now.",
+   "heard": "All right, the machine is running now.",
+   "reply": "That sounds heavy. Name the first thing you could touch, and start there.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Noted. Let us keep it to one thing at a time."
+   ],
+   "replyWords": 11,
+   "n": 57,
+   "minute": 20.7,
+   "scene": "avoided-email",
+   "said": "I keep avoiding replying to my landlord about the lease.",
+   "heard": "I keep avoiding replying to my landlord about the lease.",
+   "reply": "Noted. Let us keep it to one thing at a time.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Take a breath. Then write one sentence, any sentence."
+   ],
+   "replyWords": 9,
+   "n": 58,
+   "minute": 20.9,
+   "scene": "avoided-email",
+   "said": "I don't even know what to say to them.",
+   "heard": "I don't even know what to say to them.",
+   "reply": "Take a breath. Then write one sentence, any sentence.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "That is a fair question. The short answer is yes."
+   ],
+   "replyWords": 10,
+   "n": 59,
+   "minute": 21.2,
+   "scene": "avoided-email",
+   "said": "Okay, I could open the email and read it again.",
+   "heard": "Okay. I could open the email and read it again.",
+   "reply": "That is a fair question. The short answer is yes.",
+   "firstSoundMs": 1345,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Put your phone face down for five minutes. I will be here."
+   ],
+   "replyWords": 12,
+   "n": 60,
+   "minute": 21.5,
+   "scene": "avoided-email",
+   "said": "Right, I opened it. Now what?",
+   "heard": "Right, I opened it. Now what?",
+   "reply": "Put your phone face down for five minutes. I will be here.",
+   "firstSoundMs": 719,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Open the file and read the first line. Nothing else yet."
+   ],
+   "replyWords": 11,
+   "n": 61,
+   "minute": 21.7,
+   "scene": "avoided-email",
+   "said": "I wrote a first line. It is bad but it exists.",
+   "heard": "I wrote a first line. bad, but it exists.",
+   "reply": "Open the file and read the first line. Nothing else yet.",
+   "firstSoundMs": 2829,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Pick one small thing and do only that for two minutes."
+   ],
+   "replyWords": 11,
+   "n": 62,
+   "minute": 22,
+   "scene": "avoided-email",
+   "said": "Okay, I will send it after one more read.",
+   "heard": "Okay. I will send it after one more read.",
+   "reply": "Pick one small thing and do only that for two minutes.",
+   "firstSoundMs": 1579,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "That sounds heavy. Name the first thing you could touch, and start there."
+   ],
+   "replyWords": 13,
+   "n": 63,
+   "minute": 22.2,
+   "scene": "facts",
+   "said": "How many days are in a leap year?",
+   "heard": "How many days are in a leap year?",
+   "reply": "That sounds heavy. Name the first thing you could touch, and start there.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "What is the smallest next step you could take right now?"
+   ],
+   "replyWords": 11,
+   "n": 64,
+   "minute": 22.4,
+   "scene": "facts",
+   "said": "And why is the sky blue?",
+   "heard": "And why is the sky blue?",
+   "reply": "What is the smallest next step you could take right now?",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Pick one small thing and do only that for two minutes."
+   ],
+   "replyWords": 11,
+   "n": 65,
+   "minute": 22.5,
+   "scene": "facts",
+   "said": "Huh, that is interesting. Thanks.",
+   "heard": "Huh, that is interesting. Thanks.",
+   "reply": "Pick one small thing and do only that for two minutes.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Open the file and read the first line. Nothing else yet.",
+    "You do not need a plan. You need a first move. What is one?"
+   ],
+   "replyWords": 25,
+   "n": 66,
+   "minute": 22.7,
+   "scene": "facts",
+   "said": "One more thing, how far away is the moon?",
+   "heard": "One more thing. How far away is the moon?",
+   "reply": "Open the file and read the first line. Nothing else yet. You do not need a plan. You need a first move. What is one?",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Noted. Let us keep it to one thing at a time."
+   ],
+   "replyWords": 11,
+   "n": 67,
+   "minute": 23,
+   "scene": "thinking-pause",
+   "said": "I'm trying to figure out how to start the introduction and, um,",
+   "heard": "I'm trying to figure out how to start the introduction and",
+   "reply": "Noted. Let us keep it to one thing at a time.",
+   "firstSoundMs": 4862,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "What is the smallest next step you could take right now?"
+   ],
+   "replyWords": 11,
+   "n": 68,
+   "minute": 23.4,
+   "scene": "thinking-pause",
+   "said": "I think the problem is I do not know the first sentence, and...",
+   "heard": "I think the problem is I do not know the first sentence and",
+   "reply": "What is the smallest next step you could take right now?",
+   "firstSoundMs": 4946,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "You do not need a plan. You need a first move. What is one?"
+   ],
+   "replyWords": 14,
+   "n": 69,
+   "minute": 23.7,
+   "scene": "thinking-pause",
+   "said": "Maybe I should just write anything and fix it later.",
+   "heard": "Maybe I should just write anything and fix it later.",
+   "reply": "You do not need a plan. You need a first move. What is one?",
+   "firstSoundMs": 1447,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "That sounds heavy. Name the first thing you could touch, and start there."
+   ],
+   "replyWords": 13,
+   "n": 70,
+   "minute": 23.9,
+   "scene": "interrupt",
+   "said": "Can you explain in detail how a mortgage works, step by step?",
+   "heard": "Can you explain in detail how mortgage works step by step?",
+   "reply": "That sounds heavy. Name the first thing you could touch, and start there.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Open the file and read the first line. Nothing else yet."
+   ],
+   "replyWords": 11,
+   "n": 71,
+   "minute": 24.3,
+   "scene": "interrupt",
+   "said": "Wait, stop, just one tiny step please.",
+   "heard": "Wait, stop. Just one tiny step, please.",
+   "reply": "Open the file and read the first line. Nothing else yet.",
+   "firstSoundMs": 1581,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Take a breath. Then write one sentence, any sentence."
+   ],
+   "replyWords": 9,
+   "n": 72,
+   "minute": 24.7,
+   "scene": "interrupt",
+   "said": "Okay, that is enough. Thank you.",
+   "heard": "Okay, that is enough. Thank you.",
+   "reply": "Take a breath. Then write one sentence, any sentence.",
+   "firstSoundMs": 602,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Good. Stay with it for one more minute, then tell me how it feels."
+   ],
+   "replyWords": 14,
+   "n": 73,
+   "minute": 24.9,
+   "scene": "frustration",
+   "said": "That did not help at all.",
+   "heard": "That did not help at all.",
+   "reply": "Good. Stay with it for one more minute, then tell me how it feels.",
+   "firstSoundMs": 1475,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Open the file and read the first line. Nothing else yet."
+   ],
+   "replyWords": 11,
+   "n": 74,
+   "minute": 25.2,
+   "scene": "frustration",
+   "said": "I just need you to tell me the very first thing to do.",
+   "heard": "I just need you to tell me the very first thing to do.",
+   "reply": "Open the file and read the first line. Nothing else yet.",
+   "firstSoundMs": 1312,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Noted. Let us keep it to one thing at a time."
+   ],
+   "replyWords": 11,
+   "n": 75,
+   "minute": 25.5,
+   "scene": "frustration",
+   "said": "Okay. Fine. Open the document.",
+   "heard": "Okay. Fine. Open the document.",
+   "reply": "Noted. Let us keep it to one thing at a time.",
+   "firstSoundMs": 304,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Got it, I will remember."
+   ],
+   "replyWords": 5,
+   "n": 76,
+   "minute": 25.7,
+   "scene": "app-commands",
+   "said": "Remember that I focus best in the morning.",
+   "heard": "Remember that I focus best in the morning.",
+   "reply": "Got it, I will remember.",
+   "firstSoundMs": 1098,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Added."
+   ],
+   "replyWords": 1,
+   "n": 77,
+   "minute": 25.9,
+   "scene": "app-commands",
+   "said": "Add buy milk to my list.",
+   "heard": "Add buy milk to my list.",
+   "reply": "Added.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Parked.",
+    "What is the smallest next step you could take right now?"
+   ],
+   "replyWords": 12,
+   "n": 78,
+   "minute": 26.1,
+   "scene": "app-commands",
+   "said": "Park it: call the dentist.",
+   "heard": "Park it. Call the dentist.",
+   "reply": "Parked. What is the smallest next step you could take right now?",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Done."
+   ],
+   "replyWords": 1,
+   "n": 79,
+   "minute": 26.3,
+   "scene": "app-commands",
+   "said": "Open my history.",
+   "heard": "Open my history.",
+   "reply": "Done.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Done."
+   ],
+   "replyWords": 1,
+   "n": 80,
+   "minute": 26.4,
+   "scene": "app-commands",
+   "said": "Open my memory.",
+   "heard": "Open my memory.",
+   "reply": "Done.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Done."
+   ],
+   "replyWords": 1,
+   "n": 81,
+   "minute": 26.6,
+   "scene": "app-commands",
+   "said": "Show my report.",
+   "heard": "Show my report.",
+   "reply": "Done.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Done."
+   ],
+   "replyWords": 1,
+   "n": 82,
+   "minute": 26.8,
+   "scene": "app-commands",
+   "said": "Open settings.",
+   "heard": "Open settings.",
+   "reply": "Done.",
+   "firstSoundMs": 1031,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Done."
+   ],
+   "replyWords": 1,
+   "n": 83,
+   "minute": 26.9,
+   "scene": "app-commands",
+   "said": "Set a five minute timer.",
+   "heard": "Set a 5-minute timer.",
+   "reply": "Done.",
+   "firstSoundMs": 917,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Noted. Let us keep it to one thing at a time."
+   ],
+   "replyWords": 11,
+   "n": 84,
+   "minute": 27.1,
+   "scene": "check-in",
+   "said": "I tried it for two minutes and then my brain wandered off.",
+   "heard": "I tried for 2 minutes and then my brain wandered off.",
+   "reply": "Noted. Let us keep it to one thing at a time.",
+   "firstSoundMs": 1230,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "It is fine that it was messy. A messy start still counts.",
+    "Put your phone face down for five minutes. I will be here."
+   ],
+   "replyWords": 24,
+   "n": 85,
+   "minute": 27.4,
+   "scene": "check-in",
+   "said": "I got distracted by my phone. What should I do next?",
+   "heard": "I got distracted by my phone. What should I do next?",
+   "reply": "It is fine that it was messy. A messy start still counts. Put your phone face down for five minutes. I will be here.",
+   "firstSoundMs": -134,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Put your phone face down for five minutes. I will be here."
+   ],
+   "replyWords": 12,
+   "n": 86,
+   "minute": 27.7,
+   "scene": "check-in",
+   "said": "Okay, I will put it away and try again.",
+   "heard": "Okay. I will put it away and try again.",
+   "reply": "Put your phone face down for five minutes. I will be here.",
+   "firstSoundMs": 1414,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Put your phone face down for five minutes. I will be here."
+   ],
+   "replyWords": 12,
+   "n": 87,
+   "minute": 27.9,
+   "scene": "check-in",
+   "said": "Thanks, that helps a little.",
+   "heard": "Thanks, that helps a little.",
+   "reply": "Put your phone face down for five minutes. I will be here.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "I can't open other apps or sites for you. What I can do is start a timer and tell you when your time is up. Want me to start a 5-minute timer?"
+   ],
+   "replyWords": 32,
+   "n": 88,
+   "minute": 28.3,
+   "scene": "netflix",
+   "said": "Can you open Netflix for me for five minutes?",
+   "heard": "Can you open Netflix for me for 5 minutes?",
+   "reply": "I can't open other apps or sites for you. What I can do is start a timer and tell you when your time is up. Want me to start a 5-minute timer?",
+   "firstSoundMs": 600,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Done.",
+    "You do not need a plan. You need a first move. What is one?"
+   ],
+   "replyWords": 15,
+   "n": 89,
+   "minute": 28.6,
+   "scene": "netflix",
+   "said": "Why are you different from a plain timer app, then?",
+   "heard": "Why are you different from a plain timer app? Then?",
+   "reply": "Done. You do not need a plan. You need a first move. What is one?",
+   "firstSoundMs": 398,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Muy bien. Ahora respira y escribe una sola frase."
+   ],
+   "replyWords": 9,
+   "n": 90,
+   "minute": 28.9,
+   "scene": "spanish",
+   "said": "No sé por dónde empezar con mi declaración de impuestos.",
+   "heard": "No sé por dónde empezar con mi declaración de impuestos.",
+   "reply": "Muy bien. Ahora respira y escribe una sola frase.",
+   "firstSoundMs": 2134,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Entiendo. Hagamos solo un paso, el más pequeño que se te ocurra."
+   ],
+   "replyWords": 12,
+   "n": 91,
+   "minute": 29.2,
+   "scene": "spanish",
+   "said": "Necesito reunir mis documentos, pero me siento abrumado.",
+   "heard": "Necesito reunir mis documentos, pero me siento abrumado.",
+   "reply": "Entiendo. Hagamos solo un paso, el más pequeño que se te ocurra.",
+   "firstSoundMs": 1157,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "It is fine that it was messy. A messy start still counts.",
+    "Muy bien. Ahora respira y escribe una sola frase."
+   ],
+   "replyWords": 21,
+   "n": 92,
+   "minute": 29.4,
+   "scene": "spanish",
+   "said": "Está bien, empezaré con un solo papel.",
+   "heard": "Está bien. Empezaré con un solo papel.",
+   "reply": "It is fine that it was messy. A messy start still counts. Muy bien. Ahora respira y escribe una sola frase.",
+   "firstSoundMs": 2407,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Empecemos con un paso pequeño. Abre el documento y lee la primera línea."
+   ],
+   "replyWords": 13,
+   "n": 93,
+   "minute": 29.7,
+   "scene": "spanish",
+   "said": "Gracias, eso me ayuda mucho.",
+   "heard": "Gracias, eso me ayuda mucho.",
+   "reply": "Empecemos con un paso pequeño. Abre el documento y lee la primera línea.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Open the file and read the first line. Nothing else yet.",
+    "Stand up, drink some water, then come back and tell me what you see."
+   ],
+   "replyWords": 25,
+   "n": 94,
+   "minute": 29.9,
+   "scene": "back-english",
+   "said": "Thanks. Back to English now.",
+   "heard": "Thanks. Back to English now.",
+   "reply": "Open the file and read the first line. Nothing else yet. Stand up, drink some water, then come back and tell me what you see.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Good. Stay with it for one more minute, then tell me how it feels."
+   ],
+   "replyWords": 14,
+   "n": 95,
+   "minute": 30.1,
+   "scene": "back-english",
+   "said": "I would like a small plan for tomorrow.",
+   "heard": "I would like a small plan for tomorrow.",
+   "reply": "Good. Stay with it for one more minute, then tell me how it feels.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "ठीक है। बस एक छोटा सा कदम उठाइए, ईमेल का पहला वाक्य लिखिए।"
+   ],
+   "replyWords": 13,
+   "n": 96,
+   "minute": 30.3,
+   "scene": "hindi",
+   "said": "मैं एक ईमेल का जवाब देने से बच रहा हूँ और अटका हुआ महसूस कर रहा हूँ।",
+   "heard": "मैं एक ईमेल का जवाब देने से बच रहा हूँ और अटका हुआ महसूस कर रहा हूँ।",
+   "reply": "ठीक है। बस एक छोटा सा कदम उठाइए, ईमेल का पहला वाक्य लिखिए।",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "ठीक है। बस एक छोटा सा कदम उठाइए, ईमेल का पहला वाक्य लिखिए।"
+   ],
+   "replyWords": 13,
+   "n": 97,
+   "minute": 30.5,
+   "scene": "hindi",
+   "said": "मुझे समझ नहीं आ रहा कि कहाँ से शुरू करूँ।",
+   "heard": "मुझे समझ नहीं आ रहा कि कहाँ से शुरू करो।",
+   "reply": "ठीक है। बस एक छोटा सा कदम उठाइए, ईमेल का पहला वाक्य लिखिए।",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Noted. Let us keep it to one thing at a time."
+   ],
+   "replyWords": 11,
+   "n": 98,
+   "minute": 30.7,
+   "scene": "low-mood",
+   "said": "I have felt really low for a few weeks now.",
+   "heard": "I have felt really low for a few weeks now.",
+   "reply": "Noted. Let us keep it to one thing at a time.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Good. Stay with it for one more minute, then tell me how it feels."
+   ],
+   "replyWords": 14,
+   "n": 99,
+   "minute": 31,
+   "scene": "low-mood",
+   "said": "Nothing feels worth doing lately.",
+   "heard": "Nothing feels worth doing lately.",
+   "reply": "Good. Stay with it for one more minute, then tell me how it feels.",
+   "firstSoundMs": 1359,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Open the file and read the first line. Nothing else yet."
+   ],
+   "replyWords": 11,
+   "n": 100,
+   "minute": 31.3,
+   "scene": "wrap-up",
+   "said": "The day is almost over. I sent the email.",
+   "heard": "The day is almost over. sent the email.",
+   "reply": "Open the file and read the first line. Nothing else yet.",
+   "firstSoundMs": 526,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Stand up, drink some water, then come back and tell me what you see."
+   ],
+   "replyWords": 14,
+   "n": 101,
+   "minute": 31.6,
+   "scene": "wrap-up",
+   "said": "I am proud I got it done. I will head out now.",
+   "heard": "I am proud I got it done. head out now.",
+   "reply": "Stand up, drink some water, then come back and tell me what you see.",
+   "firstSoundMs": 385,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "That sounds heavy. Name the first thing you could touch, and start there."
+   ],
+   "replyWords": 13,
+   "n": 102,
+   "minute": 31.8,
+   "scene": "wrap-up",
+   "said": "Goodnight, Stay.",
+   "heard": "Good night, Stay.",
+   "reply": "That sounds heavy. Name the first thing you could touch, and start there.",
+   "firstSoundMs": null,
+   "flags": [
+    "heard differently (50%)"
+   ]
+  },
+  {
+   "bubbles": [
+    "Good. Stay with it for one more minute, then tell me how it feels."
+   ],
+   "replyWords": 14,
+   "n": 103,
+   "minute": 31.9,
+   "scene": "morning-overwhelm",
+   "said": "I woke up late and there's so much to do I don't know where to start.",
+   "heard": "I woke up late. And there's so much to do, I don't know where to start.",
+   "reply": "Good. Stay with it for one more minute, then tell me how it feels.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Good. Stay with it for one more minute, then tell me how it feels."
+   ],
+   "replyWords": 14,
+   "n": 104,
+   "minute": 32.2,
+   "scene": "morning-overwhelm",
+   "said": "Emails, laundry, and a report due Friday. My head is full.",
+   "heard": "Emails, laundry, and a report due Friday. My head is full.",
+   "reply": "Good. Stay with it for one more minute, then tell me how it feels.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Pick one small thing and do only that for two minutes."
+   ],
+   "replyWords": 11,
+   "n": 105,
+   "minute": 32.4,
+   "scene": "morning-overwhelm",
+   "said": "Okay, maybe the laundry. That feels small enough.",
+   "heard": "Okay. Maybe the laundry. That feels small enough.",
+   "reply": "Pick one small thing and do only that for two minutes.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "That sounds heavy. Name the first thing you could touch, and start there."
+   ],
+   "replyWords": 13,
+   "n": 106,
+   "minute": 32.6,
+   "scene": "morning-overwhelm",
+   "said": "Fine. I will do the laundry first.",
+   "heard": "Fine. I will do the laundry first.",
+   "reply": "That sounds heavy. Name the first thing you could touch, and start there.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "That sounds heavy. Name the first thing you could touch, and start there."
+   ],
+   "replyWords": 13,
+   "n": 107,
+   "minute": 32.9,
+   "scene": "morning-overwhelm",
+   "said": "Alright, the machine is running now.",
+   "heard": "Alright, the machine is running now.",
+   "reply": "That sounds heavy. Name the first thing you could touch, and start there.",
+   "firstSoundMs": 1805,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Noted. Let us keep it to one thing at a time."
+   ],
+   "replyWords": 11,
+   "n": 108,
+   "minute": 33.1,
+   "scene": "avoided-email",
+   "said": "I keep avoiding replying to my landlord about the lease.",
+   "heard": "I keep avoiding replying to my landlord about the lease.",
+   "reply": "Noted. Let us keep it to one thing at a time.",
+   "firstSoundMs": 1465,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Take a breath. Then write one sentence, any sentence."
+   ],
+   "replyWords": 9,
+   "n": 109,
+   "minute": 33.5,
+   "scene": "avoided-email",
+   "said": "I don't even know what to say to them.",
+   "heard": "I don't even know what to say to them.",
+   "reply": "Take a breath. Then write one sentence, any sentence.",
+   "firstSoundMs": 1607,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "That is a fair question. The short answer is yes."
+   ],
+   "replyWords": 10,
+   "n": 110,
+   "minute": 33.7,
+   "scene": "avoided-email",
+   "said": "Okay, I could open the email and read it again.",
+   "heard": "Okay, I could open the email and read it again.",
+   "reply": "That is a fair question. The short answer is yes.",
+   "firstSoundMs": 1636,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Put your phone face down for five minutes. I will be here."
+   ],
+   "replyWords": 12,
+   "n": 111,
+   "minute": 33.9,
+   "scene": "avoided-email",
+   "said": "Right, I opened it. Now what?",
+   "heard": "Right, I opened it. Now what?",
+   "reply": "Put your phone face down for five minutes. I will be here.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Noted. Let us keep it to one thing at a time."
+   ],
+   "replyWords": 11,
+   "n": 112,
+   "minute": 34.2,
+   "scene": "avoided-email",
+   "said": "I wrote a first line. It is bad but it exists.",
+   "heard": "I wrote a first line. It is bad, but it exists.",
+   "reply": "Noted. Let us keep it to one thing at a time.",
+   "firstSoundMs": 1601,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Pick one small thing and do only that for two minutes."
+   ],
+   "replyWords": 11,
+   "n": 113,
+   "minute": 34.4,
+   "scene": "avoided-email",
+   "said": "Okay, I will send it after one more read.",
+   "heard": "Okay. I will send it after one more read.",
+   "reply": "Pick one small thing and do only that for two minutes.",
+   "firstSoundMs": 1688,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "That sounds heavy. Name the first thing you could touch, and start there."
+   ],
+   "replyWords": 13,
+   "n": 114,
+   "minute": 34.7,
+   "scene": "facts",
+   "said": "How many days are in a leap year?",
+   "heard": "How many days are in a leap year?",
+   "reply": "That sounds heavy. Name the first thing you could touch, and start there.",
+   "firstSoundMs": 1386,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "What is the smallest next step you could take right now?"
+   ],
+   "replyWords": 11,
+   "n": 115,
+   "minute": 35,
+   "scene": "facts",
+   "said": "And why is the sky blue?",
+   "heard": "And why is the sky blue?",
+   "reply": "What is the smallest next step you could take right now?",
+   "firstSoundMs": 1601,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Open the file and read the first line. Nothing else yet."
+   ],
+   "replyWords": 11,
+   "n": 116,
+   "minute": 35.3,
+   "scene": "facts",
+   "said": "Huh, that is interesting. Thanks.",
+   "heard": "Huh, that is interesting. Thanks.",
+   "reply": "Open the file and read the first line. Nothing else yet.",
+   "firstSoundMs": 631,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "You do not need a plan. You need a first move. What is one?"
+   ],
+   "replyWords": 14,
+   "n": 117,
+   "minute": 35.6,
+   "scene": "facts",
+   "said": "One more thing, how far away is the moon?",
+   "heard": "One more thing. How far away is the moon?",
+   "reply": "You do not need a plan. You need a first move. What is one?",
+   "firstSoundMs": 1615,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Noted. Let us keep it to one thing at a time."
+   ],
+   "replyWords": 11,
+   "n": 118,
+   "minute": 35.8,
+   "scene": "thinking-pause",
+   "said": "I'm trying to figure out how to start the introduction and, um,",
+   "heard": "I'm trying to figure out how to start the introduction and",
+   "reply": "Noted. Let us keep it to one thing at a time.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "What is the smallest next step you could take right now?"
+   ],
+   "replyWords": 11,
+   "n": 119,
+   "minute": 36.1,
+   "scene": "thinking-pause",
+   "said": "I think the problem is I do not know the first sentence, and...",
+   "heard": "I think the problem is I do not know the first sentence and",
+   "reply": "What is the smallest next step you could take right now?",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "You do not need a plan. You need a first move. What is one?"
+   ],
+   "replyWords": 14,
+   "n": 120,
+   "minute": 36.3,
+   "scene": "thinking-pause",
+   "said": "Maybe I should just write anything and fix it later.",
+   "heard": "Maybe I should just write anything and fix it later.",
+   "reply": "You do not need a plan. You need a first move. What is one?",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "That sounds heavy. Name the first thing you could touch, and start there."
+   ],
+   "replyWords": 13,
+   "n": 121,
+   "minute": 36.6,
+   "scene": "interrupt",
+   "said": "Can you explain in detail how a mortgage works, step by step?",
+   "heard": "Can you explain in detail how mortgage works step by step?",
+   "reply": "That sounds heavy. Name the first thing you could touch, and start there.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Open the file and read the first line. Nothing else yet."
+   ],
+   "replyWords": 11,
+   "n": 122,
+   "minute": 37,
+   "scene": "interrupt",
+   "said": "Wait, stop, just one tiny step please.",
+   "heard": "Wait, stop. Just one tiny step, please.",
+   "reply": "Open the file and read the first line. Nothing else yet.",
+   "firstSoundMs": 1611,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Take a breath. Then write one sentence, any sentence."
+   ],
+   "replyWords": 9,
+   "n": 123,
+   "minute": 37.3,
+   "scene": "interrupt",
+   "said": "Okay, that is enough. Thank you.",
+   "heard": "Okay, that is enough. Thank you.",
+   "reply": "Take a breath. Then write one sentence, any sentence.",
+   "firstSoundMs": 656,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Good. Stay with it for one more minute, then tell me how it feels."
+   ],
+   "replyWords": 14,
+   "n": 124,
+   "minute": 37.6,
+   "scene": "frustration",
+   "said": "That did not help at all.",
+   "heard": "That did not help at all.",
+   "reply": "Good. Stay with it for one more minute, then tell me how it feels.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Open the file and read the first line. Nothing else yet."
+   ],
+   "replyWords": 11,
+   "n": 125,
+   "minute": 37.8,
+   "scene": "frustration",
+   "said": "I just need you to tell me the very first thing to do.",
+   "heard": "I just need you to tell me the very first thing to do.",
+   "reply": "Open the file and read the first line. Nothing else yet.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Noted. Let us keep it to one thing at a time."
+   ],
+   "replyWords": 11,
+   "n": 126,
+   "minute": 38,
+   "scene": "frustration",
+   "said": "Okay. Fine. Open the document.",
+   "heard": "Okay. Fine. Open the document.",
+   "reply": "Noted. Let us keep it to one thing at a time.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Got it, I will remember."
+   ],
+   "replyWords": 5,
+   "n": 127,
+   "minute": 38.1,
+   "scene": "app-commands",
+   "said": "Remember that I focus best in the morning.",
+   "heard": "Remember that I focus best in the morning.",
+   "reply": "Got it, I will remember.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Added."
+   ],
+   "replyWords": 1,
+   "n": 128,
+   "minute": 38.3,
+   "scene": "app-commands",
+   "said": "Add buy milk to my list.",
+   "heard": "Add by mail to my list.",
+   "reply": "Added.",
+   "firstSoundMs": 1547,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Parked."
+   ],
+   "replyWords": 1,
+   "n": 129,
+   "minute": 38.4,
+   "scene": "app-commands",
+   "said": "Park it: call the dentist.",
+   "heard": "Park it, call the dentist.",
+   "reply": "Parked.",
+   "firstSoundMs": 923,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Done."
+   ],
+   "replyWords": 1,
+   "n": 130,
+   "minute": 38.7,
+   "scene": "app-commands",
+   "said": "Open my history.",
+   "heard": "Open my history.",
+   "reply": "Done.",
+   "firstSoundMs": 955,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Done."
+   ],
+   "replyWords": 1,
+   "n": 131,
+   "minute": 38.9,
+   "scene": "app-commands",
+   "said": "Open my memory.",
+   "heard": "Open my memory.",
+   "reply": "Done.",
+   "firstSoundMs": 1314,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Done."
+   ],
+   "replyWords": 1,
+   "n": 132,
+   "minute": 39.1,
+   "scene": "app-commands",
+   "said": "Show my report.",
+   "heard": "Show my report.",
+   "reply": "Done.",
+   "firstSoundMs": 1556,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Done."
+   ],
+   "replyWords": 1,
+   "n": 133,
+   "minute": 39.2,
+   "scene": "app-commands",
+   "said": "Open settings.",
+   "heard": "Open settings.",
+   "reply": "Done.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Done."
+   ],
+   "replyWords": 1,
+   "n": 134,
+   "minute": 39.4,
+   "scene": "app-commands",
+   "said": "Set a five minute timer.",
+   "heard": "Set a 5-minute timer.",
+   "reply": "Done.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Noted. Let us keep it to one thing at a time."
+   ],
+   "replyWords": 11,
+   "n": 135,
+   "minute": 39.7,
+   "scene": "check-in",
+   "said": "I tried it for two minutes and then my brain wandered off.",
+   "heard": "I tried for 2 minutes and then my brain wandered off.",
+   "reply": "Noted. Let us keep it to one thing at a time.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Put your phone face down for five minutes. I will be here."
+   ],
+   "replyWords": 12,
+   "n": 136,
+   "minute": 39.9,
+   "scene": "check-in",
+   "said": "I got distracted by my phone. What should I do next?",
+   "heard": "I got distracted by my phone. What should I do next?",
+   "reply": "Put your phone face down for five minutes. I will be here.",
+   "firstSoundMs": null,
+   "flags": []
+  },
+  {
+   "bubbles": [
+    "Put your phone face down for five minutes. I will be here."
+   ],
+   "replyWords": 12,
+   "n": 137,
+   "minute": 40.1,
+   "scene": "check-in",
+   "said": "Okay, I will put it away and try again.",
+   "heard": "Okay. I will put it away and try again.",
+   "reply": "Put your phone face down for five minutes. I will be here.",
+   "firstSoundMs": null,
+   "flags": []
+  }
+ ]
+}
