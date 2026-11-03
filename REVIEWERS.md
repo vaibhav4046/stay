@@ -53,5 +53,7 @@ in-app recorder for timing a real-microphone call.
   1.0 to 1.3 s; the project's own 900 ms target is not met.
 - No measured comparison with other voice products; the comparisons in `docs/evidence/loop/` are blind, model-judged, text-only A/B runs.
 - AssemblyAI allows 5 new voice sessions a minute per account and Groq's free tier about 8,000 tokens a minute per model, shared by
-  everyone using the live site.
+  everyone using the live site. Groq's free tier also caps each model at 200,000 tokens a day (about 100 to 180 spoken turns), so heavy
+  testing can use the day's room up and the site then says "I am getting too many requests right now". Setting `GROQ_API_KEYS=key1,key2`
+  shares the load across keys (`src/lib/voice/tokenOptimizer.ts`, `tests/unit/keyPool.test.ts`).
 - The phone agent is not deployed and has no number; calls work in the browser (Call Stay).
