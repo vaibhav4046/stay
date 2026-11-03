@@ -2,7 +2,7 @@
 
 ## 1. Purpose of This Repository
 
-**Stay** is a voice-first task-initiation and treatment-adherence companion for adults with ADHD, built for the AssemblyAI Online Hackathon #2 (October 2026).
+**Stay** is a voice companion for adults with ADHD (task starting, answers, patience through pauses), built for AssemblyAI's TTS-1 hackathon week (November 2026). Start with [`REVIEWERS.md`](REVIEWERS.md): how to verify every claim, where the code is, and the honest limits. The live voice path is the fast path in `src/lib/voice/fastSocket.ts` (AssemblyAI streaming STT -> `/api/voice/chat` -> AssemblyAI TTS-1); the managed Voice Agent protocol below is the fallback path.
 
 ## 2. Hard Rules for Any Agent Editing This Repo
 
