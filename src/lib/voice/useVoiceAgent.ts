@@ -6,6 +6,7 @@ import { replyLanguageInstruction } from '@/lib/voice/replyLanguage';
 import { GLANCE_PROMPT, isQuietReply } from '@/lib/vision/image';
 import { answerAboutStay } from '@/lib/voice/aboutStay';
 import { honestFailureMessage } from '@/lib/conversation/response';
+import { stripThink } from '@/lib/voice/thinkFilter';
 import { FastSocket, FAST_TTS_LANGUAGE, toAssemblyVoiceId } from '@/lib/voice/fastSocket';
 import {
   computeProgressiveCaption,
@@ -1538,7 +1539,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           }
         }
       }
-      reply = reply.trim();
+      reply = stripThink(reply);
       if (opts.glance && (!reply || isQuietReply(reply))) return; // nothing to say: stay quiet
       add(reply || 'I could not make that out. Can you show me again?');
     } catch (e) {
