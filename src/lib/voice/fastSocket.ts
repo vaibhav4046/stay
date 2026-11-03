@@ -14,6 +14,7 @@ import { mayChangeLook, mayStartTimer } from '@/lib/conversation/capabilities';
 import { GATED_ACTIONS, mayDoAction } from '@/lib/conversation/actionGates';
 import { MEDICAL_BOUNDARY_FIXED_MESSAGE } from '@/lib/safety/crisis';
 import { byokHeaders } from '@/lib/byok/config';
+import { makeThinkFilter } from '@/lib/voice/thinkFilter';
 import type { TtsConnection } from '@/lib/voice/tts/types';
 
 export type EndpointingMode = 'coaching' | 'reflective' | 'crisis';
@@ -1337,6 +1338,7 @@ export class FastSocket {
     let buf = '';
     let line = '';
     let pendingText = '';
+    const think = makeThinkFilter(); // a model's <think> block is never shown or spoken
     let sawToken = false;
     const calls = new Map<number, { id: string; name: string; args: string }>();
     // Hold the first words until about two sentences have arrived (the model's first ~90 characters take a fraction of a second),
@@ -1370,12 +1372,13 @@ export class FastSocket {
           } catch {
             continue;
           }
-          if (delta?.content) {
+          const shown = delta?.content ? think.push(delta.content) : '';
+          if (shown) {
             if (!sawToken) {
               sawToken = true;
               this.mark('tok1');
             }
-            pendingText += delta.content;
+            pendingText += shown;
             for (let part = takeSpeakable(pendingText); part; part = takeSpeakable(pendingText)) {
               pendingText = part.rest;
               queueSpeech(part.chunk);
@@ -1391,6 +1394,7 @@ export class FastSocket {
       if (gen !== this.genId) return;
     }
     if (gen !== this.genId) return;
+    pendingText += think.end();
     if (pendingText.trim()) queueSpeech(pendingText.trim());
     if (held.length > 0) {
       started = true;

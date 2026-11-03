@@ -376,6 +376,15 @@ describe('FastSocket', () => {
     expect(types().filter((t) => t === 'tts.reconnecting')).toHaveLength(1);
   });
 
+  it('a think block from the model is neither shown nor spoken (real-model soak: the bubble began "<think></think>")', async () => {
+    fetchMock.mockResolvedValueOnce(sse(text('<think>\n\n</think>\n\n'), text('What is the one thing you want the reader to feel?')));
+    const { stt } = await open();
+    stt.push({ type: 'Turn', transcript: 'I do not know the first sentence.', end_of_turn: true, turn_order: 0, turn_is_formatted: true });
+    await tick(60);
+    expect(events.find((e) => e.type === 'transcript.agent')?.text).toBe('What is the one thing you want the reader to feel?');
+    expect(events.filter((e) => e.type === 'reply.text').every((e) => !String(e.text).includes('think'))).toBe(true);
+  });
+
   it('speculates immediately on short greetings like "Hi hello" even without terminal punctuation', async () => {
     fetchMock.mockResolvedValue(sse(text('Hello! What are you working on?')));
     const { stt } = await open();

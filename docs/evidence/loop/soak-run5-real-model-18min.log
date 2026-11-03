@@ -1,0 +1,32 @@
+SOAK SUMMARY {
+  "label": "synthetic-mic (one neural voice, English/Spanish/Hindi) + live-model; nothing played aloud",
+  "minutes": 18.3,
+  "turns": 61,
+  "firstSoundMs": {
+    "n": 60,
+    "median": 1128,
+    "p95": 4506,
+    "max": 4972
+  },
+  "turnsWithFlags": 2,
+  "flagCounts": {
+    "long sentence": 1,
+    "heard differently": 1
+  },
+  "pageErrors": [
+    "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+  ],
+  "playback": {
+    "underflows": 1,
+    "prebufferMs": 232,
+    "bufferedMs": 0,
+    "state": "STOPPED"
+  },
+  "jsHeapMB": 57
+}
+ 19   6.6m interrupt         1305 ms ⚑ long sentence (28 words)
+ 51  15.2m wrap-up           1716 ms ⚑ heard differently (50%)
+reconnecting=1 unavailable=0
+65
+
+[exited with code 0]

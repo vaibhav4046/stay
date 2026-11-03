@@ -1,363 +1,373 @@
 {
   "summary": {
     "label": "synthetic-mic (one neural voice, English/Spanish/Hindi) + live-model; nothing played aloud",
-    "minutes": 22.2,
-    "turns": 85,
+    "minutes": 18.3,
+    "turns": 61,
     "firstSoundMs": {
-      "n": 84,
-      "median": 1443,
-      "p95": 2512,
-      "max": 5015
+      "n": 60,
+      "median": 1128,
+      "p95": 4506,
+      "max": 4972
     },
-    "turnsWithFlags": 1,
+    "turnsWithFlags": 2,
     "flagCounts": {
+      "long sentence": 1,
       "heard differently": 1
     },
-    "pageErrors": [],
+    "pageErrors": [
+      "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+    ],
     "playback": {
-      "underflows": 0,
-      "prebufferMs": 150,
+      "underflows": 1,
+      "prebufferMs": 232,
       "bufferedMs": 0,
       "state": "STOPPED"
     },
-    "jsHeapMB": 50
+    "jsHeapMB": 57
   },
   "turns": [
     {
       "bubbles": [
-        "Good. Stay with it for one more minute, then tell me how it feels."
+        "Take a minute, list the top three things you must do. Write the first one down now."
       ],
-      "replyWords": 14,
+      "replyWords": 17,
       "n": 1,
       "minute": 0.3,
       "scene": "morning-overwhelm",
       "said": "I woke up late and there's so much to do I don't know where to start.",
       "heard": "I woke up late. And there's so much to do, I don't know where to start.",
-      "reply": "Good. Stay with it for one more minute, then tell me how it feels.",
-      "firstSoundMs": 1574,
+      "reply": "Take a minute, list the top three things you must do. Write the first one down now.",
+      "firstSoundMs": 1460,
       "flags": []
     },
     {
       "bubbles": [
-        "Good. Stay with it for one more minute, then tell me how it feels."
+        "Pick one: start the email draft for five minutes. When you finish, move to the next task."
       ],
-      "replyWords": 14,
+      "replyWords": 17,
       "n": 2,
       "minute": 0.6,
       "scene": "morning-overwhelm",
       "said": "Emails, laundry, and a report due Friday. My head is full.",
       "heard": "Emails, laundry, and a report due Friday. My head is full.",
-      "reply": "Good. Stay with it for one more minute, then tell me how it feels.",
-      "firstSoundMs": 1583,
+      "reply": "Pick one: start the email draft for five minutes. When you finish, move to the next task.",
+      "firstSoundMs": 1520,
       "flags": []
     },
     {
       "bubbles": [
-        "That is a fair question. The short answer is yes."
+        "Put the laundry in the washer and set the timer. When it’s done, start the next task.",
+        "Now turn the dryer on. When it finishes, you can tackle the email."
       ],
-      "replyWords": 10,
+      "replyWords": 30,
       "n": 3,
       "minute": 0.9,
       "scene": "morning-overwhelm",
       "said": "Okay, maybe the laundry. That feels small enough.",
-      "heard": "Okay, maybe the laundry. feel small enough.",
-      "reply": "That is a fair question. The short answer is yes.",
-      "firstSoundMs": 292,
+      "heard": "Okay, maybe the laundry. That feels small enough.",
+      "reply": "Put the laundry in the washer and set the timer. When it’s done, start the next task. Now turn the dryer on. When it finishes, you can tackle the email.",
+      "firstSoundMs": 2369,
       "flags": []
     },
     {
       "bubbles": [
-        "That sounds heavy. Name the first thing you could touch, and start there."
+        "Great. Start the washer now. Keep that one step in mind until it’s done. Start the washer now. When it’s done, switch to the dryer."
       ],
-      "replyWords": 13,
+      "replyWords": 25,
       "n": 4,
-      "minute": 1.2,
+      "minute": 1.3,
       "scene": "morning-overwhelm",
       "said": "Fine. I will do the laundry first.",
       "heard": "Fine. I will do the laundry first.",
-      "reply": "That sounds heavy. Name the first thing you could touch, and start there.",
-      "firstSoundMs": 1650,
+      "reply": "Great. Start the washer now. Keep that one step in mind until it’s done. Start the washer now. When it’s done, switch to the dryer.",
+      "firstSoundMs": 1380,
       "flags": []
     },
     {
       "bubbles": [
-        "That sounds heavy. Name the first thing you could touch, and start there."
+        "Now set the dryer to start. When it finishes, you can move on to the email. Set a quick timer for the wash cycle. When it ends, start the dryer."
       ],
-      "replyWords": 13,
+      "replyWords": 30,
       "n": 5,
-      "minute": 1.4,
+      "minute": 1.6,
       "scene": "morning-overwhelm",
       "said": "Alright, the machine is running now.",
-      "heard": "Alright, the machine is running now.",
-      "reply": "That sounds heavy. Name the first thing you could touch, and start there.",
-      "firstSoundMs": 1537,
+      "heard": "All right, the machine is running now.",
+      "reply": "Now set the dryer to start. When it finishes, you can move on to the email. Set a quick timer for the wash cycle. When it ends, start the dryer.",
+      "firstSoundMs": 1128,
       "flags": []
     },
     {
       "bubbles": [
-        "Noted. Let us keep it to one thing at a time."
+        "That lease message is waiting. Draft a short reply now. Ready to type?"
       ],
-      "replyWords": 11,
+      "replyWords": 13,
       "n": 6,
-      "minute": 1.6,
+      "minute": 1.9,
       "scene": "avoided-email",
       "said": "I keep avoiding replying to my landlord about the lease.",
       "heard": "I keep avoiding replying to my landlord about the lease.",
-      "reply": "Noted. Let us keep it to one thing at a time.",
-      "firstSoundMs": 1459,
+      "reply": "That lease message is waiting. Draft a short reply now. Ready to type?",
+      "firstSoundMs": 1514,
       "flags": []
     },
     {
       "bubbles": [
-        "Take a breath. Then write one sentence, any sentence."
+        "Explain you want to discuss the lease terms. Mention a few points you’re unsure about. Then ask for a meeting or clarification. That’s one clear message. Explain you want to discuss lease terms. Draft a quick message saying you’d like to talk about the lease details. Then send it."
       ],
-      "replyWords": 9,
+      "replyWords": 49,
       "n": 7,
-      "minute": 1.8,
+      "minute": 2.3,
       "scene": "avoided-email",
       "said": "I don't even know what to say to them.",
       "heard": "I don't even know what to say to them.",
-      "reply": "Take a breath. Then write one sentence, any sentence.",
-      "firstSoundMs": 1333,
+      "reply": "Explain you want to discuss the lease terms. Mention a few points you’re unsure about. Then ask for a meeting or clarification. That’s one clear message. Explain you want to discuss lease terms. Draft a quick message saying you’d like to talk about the lease details. Then send it.",
+      "firstSoundMs": 1892,
       "flags": []
     },
     {
       "bubbles": [
-        "That is a fair question. The short answer is yes."
+        "Open the email and read it again. When you see the lease, note the parts that confuse you. Then decide what to ask. I can’t open your email right now. Tell me what it says, and I’ll help you craft a reply."
       ],
-      "replyWords": 10,
+      "replyWords": 42,
       "n": 8,
-      "minute": 2.1,
+      "minute": 2.7,
       "scene": "avoided-email",
       "said": "Okay, I could open the email and read it again.",
-      "heard": "Okay, I could open the email and read it again.",
-      "reply": "That is a fair question. The short answer is yes.",
-      "firstSoundMs": 1496,
+      "heard": "Okay. I could open the email and read it again.",
+      "reply": "Open the email and read it again. When you see the lease, note the parts that confuse you. Then decide what to ask. I can’t open your email right now. Tell me what it says, and I’ll help you craft a reply.",
+      "firstSoundMs": 1175,
       "flags": []
     },
     {
       "bubbles": [
-        "Put your phone face down for five minutes. I will be here."
+        "I could not reach my thinking service just now, so I do not have an answer. Try again in a moment, or type it.",
+        "Draft a brief reply: state you’ve read the lease, ask for clarification on the points you’re unsure about, and propose a time to chat. Then send it."
       ],
-      "replyWords": 12,
+      "replyWords": 51,
       "n": 9,
-      "minute": 2.4,
+      "minute": 3.1,
       "scene": "avoided-email",
       "said": "Right, I opened it. Now what?",
       "heard": "Right, I opened it. Now what?",
-      "reply": "Put your phone face down for five minutes. I will be here.",
-      "firstSoundMs": 654,
+      "reply": "I could not reach my thinking service just now, so I do not have an answer. Try again in a moment, or type it. Draft a brief reply: state you’ve read the lease, ask for clarification on the points you’re unsure about, and propose a time to chat. Then send it.",
+      "firstSoundMs": 63,
       "flags": []
     },
     {
       "bubbles": [
-        "Open the file and read the first line. Nothing else yet."
+        "Done.",
+        "I could not reach my thinking service just now, so I do not have an answer. Try again in a moment, or type it.",
+        "Got it. Now add a short sentence asking the landlord to explain that part. That’s the next step."
       ],
-      "replyWords": 11,
+      "replyWords": 43,
       "n": 10,
-      "minute": 2.6,
+      "minute": 3.5,
       "scene": "avoided-email",
       "said": "I wrote a first line. It is bad but it exists.",
       "heard": "I wrote a first line. It is bad, but it exists.",
-      "reply": "Open the file and read the first line. Nothing else yet.",
-      "firstSoundMs": 1073,
+      "reply": "Done. I could not reach my thinking service just now, so I do not have an answer. Try again in a moment, or type it. Got it. Now add a short sentence asking the landlord to explain that part. That’s the next step.",
+      "firstSoundMs": 1990,
       "flags": []
     },
     {
       "bubbles": [
-        "Pick one small thing and do only that for two minutes."
+        "I could not reach my thinking service just now, so I do not have an answer. Try again in a moment, or type it."
       ],
-      "replyWords": 11,
+      "replyWords": 24,
       "n": 11,
-      "minute": 2.8,
+      "minute": 3.7,
       "scene": "avoided-email",
       "said": "Okay, I will send it after one more read.",
       "heard": "Okay. I will send it after one more read.",
-      "reply": "Pick one small thing and do only that for two minutes.",
-      "firstSoundMs": 1593,
+      "reply": "I could not reach my thinking service just now, so I do not have an answer. Try again in a moment, or type it.",
+      "firstSoundMs": 1016,
       "flags": []
     },
     {
       "bubbles": [
-        "That sounds heavy. Name the first thing you could touch, and start there."
+        "366."
       ],
-      "replyWords": 13,
+      "replyWords": 1,
       "n": 12,
-      "minute": 3.1,
+      "minute": 4,
       "scene": "facts",
       "said": "How many days are in a leap year?",
       "heard": "How many days are in a leap year?",
-      "reply": "That sounds heavy. Name the first thing you could touch, and start there.",
-      "firstSoundMs": 1401,
+      "reply": "366.",
+      "firstSoundMs": 879,
       "flags": []
     },
     {
       "bubbles": [
-        "What is the smallest next step you could take right now?"
+        "The sky looks blue because air molecules scatter short‑wavelength light from the sun. That blue light reaches our eyes from all directions."
       ],
-      "replyWords": 11,
+      "replyWords": 22,
       "n": 13,
-      "minute": 3.3,
+      "minute": 4.3,
       "scene": "facts",
       "said": "And why is the sky blue?",
       "heard": "And why is the sky blue?",
-      "reply": "What is the smallest next step you could take right now?",
-      "firstSoundMs": 1489,
+      "reply": "The sky looks blue because air molecules scatter short‑wavelength light from the sun. That blue light reaches our eyes from all directions.",
+      "firstSoundMs": 1835,
       "flags": []
     },
     {
       "bubbles": [
-        "Open the file and read the first line. Nothing else yet."
+        "You’re welcome."
       ],
-      "replyWords": 11,
+      "replyWords": 2,
       "n": 14,
-      "minute": 3.6,
+      "minute": 4.5,
       "scene": "facts",
       "said": "Huh, that is interesting. Thanks.",
       "heard": "Huh, that is interesting. Thanks.",
-      "reply": "Open the file and read the first line. Nothing else yet.",
-      "firstSoundMs": 436,
+      "reply": "You’re welcome.",
+      "firstSoundMs": 163,
       "flags": []
     },
     {
       "bubbles": [
-        "Open the file and read the first line. Nothing else yet.",
-        "You do not need a plan. You need a first move. What is one?"
+        "What would you like to talk about next?",
+        "The moon is about 384,400 kilometers away."
       ],
-      "replyWords": 25,
+      "replyWords": 15,
       "n": 15,
-      "minute": 3.8,
+      "minute": 4.8,
       "scene": "facts",
       "said": "One more thing, how far away is the moon?",
       "heard": "One more thing. How far away is the moon?",
-      "reply": "Open the file and read the first line. Nothing else yet. You do not need a plan. You need a first move. What is one?",
-      "firstSoundMs": 1586,
+      "reply": "What would you like to talk about next? The moon is about 384,400 kilometers away.",
+      "firstSoundMs": 1174,
       "flags": []
     },
     {
       "bubbles": [
-        "Noted. Let us keep it to one thing at a time."
+        "I could not reach my thinking service just now, so I do not have an answer. Try again in a moment, or type it."
       ],
-      "replyWords": 11,
+      "replyWords": 24,
       "n": 16,
-      "minute": 4.1,
+      "minute": 5.2,
       "scene": "thinking-pause",
       "said": "I'm trying to figure out how to start the introduction and, um,",
       "heard": "I'm trying to figure out how to start the introduction and",
-      "reply": "Noted. Let us keep it to one thing at a time.",
-      "firstSoundMs": 4748,
+      "reply": "I could not reach my thinking service just now, so I do not have an answer. Try again in a moment, or type it.",
+      "firstSoundMs": 4506,
       "flags": []
     },
     {
       "bubbles": [
-        "What is the smallest next step you could take right now?"
+        "<think>\n\n</think>\n\nWhat is the one thing you want the reader to feel after reading that first sentence?"
       ],
-      "replyWords": 11,
+      "replyWords": 18,
       "n": 17,
-      "minute": 4.5,
+      "minute": 5.6,
       "scene": "thinking-pause",
       "said": "I think the problem is I do not know the first sentence, and...",
       "heard": "I think the problem is I do not know the first sentence and",
-      "reply": "What is the smallest next step you could take right now?",
-      "firstSoundMs": 4851,
+      "reply": "<think>\n\n</think>\n\nWhat is the one thing you want the reader to feel after reading that first sentence?",
+      "firstSoundMs": 4669,
       "flags": []
     },
     {
       "bubbles": [
-        "You do not need a plan. You need a first move. What is one?"
+        "That is a solid ADHD-friendly move. A messy first draft is fixable; a blank page is not. Write the worst sentence you can think of about the topic. Just get words on the page."
       ],
-      "replyWords": 14,
+      "replyWords": 34,
       "n": 18,
-      "minute": 4.7,
+      "minute": 6,
       "scene": "thinking-pause",
       "said": "Maybe I should just write anything and fix it later.",
       "heard": "Maybe I should just write anything and fix it later.",
-      "reply": "You do not need a plan. You need a first move. What is one?",
-      "firstSoundMs": 1356,
+      "reply": "That is a solid ADHD-friendly move. A messy first draft is fixable; a blank page is not. Write the worst sentence you can think of about the topic. Just get words on the page.",
+      "firstSoundMs": 1521,
       "flags": []
     },
     {
       "bubbles": [
-        "That sounds heavy. Name the first thing you could touch, and start there."
+        "A mortgage is a loan where the house itself is the security, and you pay back the borrowed money plus interest in equal monthly chunks over many years. The bank holds the title until the final payment, then the house is fully yours. Want me to break down how monthly payments are actually calculated?"
       ],
-      "replyWords": 13,
+      "replyWords": 54,
       "n": 19,
-      "minute": 5,
+      "minute": 6.6,
       "scene": "interrupt",
       "said": "Can you explain in detail how a mortgage works, step by step?",
-      "heard": "Can you explain in detail how mortgage works step by step?",
-      "reply": "That sounds heavy. Name the first thing you could touch, and start there.",
-      "firstSoundMs": 1621,
-      "flags": []
+      "heard": "Can you explain in detail how a mortgage works, step by step?",
+      "reply": "A mortgage is a loan where the house itself is the security, and you pay back the borrowed money plus interest in equal monthly chunks over many years. The bank holds the title until the final payment, then the house is fully yours. Want me to break down how monthly payments are actually calculated?",
+      "firstSoundMs": 1305,
+      "flags": [
+        "long sentence (28 words)"
+      ]
     },
     {
       "bubbles": [
-        "Open the file and read the first line. Nothing else yet."
+        "Pick the first thing you want to say about your topic, even if it sounds clunky."
       ],
-      "replyWords": 11,
+      "replyWords": 16,
       "n": 20,
-      "minute": 5.4,
+      "minute": 7,
       "scene": "interrupt",
       "said": "Wait, stop, just one tiny step please.",
       "heard": "Wait, stop. Just one tiny step, please.",
-      "reply": "Open the file and read the first line. Nothing else yet.",
-      "firstSoundMs": 1550,
+      "reply": "Pick the first thing you want to say about your topic, even if it sounds clunky.",
+      "firstSoundMs": 1464,
       "flags": []
     },
     {
       "bubbles": [
-        "Take a breath. Then write one sentence, any sentence."
+        "You are welcome."
       ],
-      "replyWords": 9,
+      "replyWords": 3,
       "n": 21,
-      "minute": 5.8,
+      "minute": 7.2,
       "scene": "interrupt",
       "said": "Okay, that is enough. Thank you.",
       "heard": "Okay, that is enough. Thank you.",
-      "reply": "Take a breath. Then write one sentence, any sentence.",
-      "firstSoundMs": 764,
+      "reply": "You are welcome.",
+      "firstSoundMs": 552,
       "flags": []
     },
     {
       "bubbles": [
-        "Good. Stay with it for one more minute, then tell me how it feels."
+        "I'm sorry I missed what you needed. What would actually help with the intro?"
       ],
       "replyWords": 14,
       "n": 22,
-      "minute": 6,
+      "minute": 7.5,
       "scene": "frustration",
       "said": "That did not help at all.",
       "heard": "That did not help at all.",
-      "reply": "Good. Stay with it for one more minute, then tell me how it feels.",
-      "firstSoundMs": 1709,
+      "reply": "I'm sorry I missed what you needed. What would actually help with the intro?",
+      "firstSoundMs": 1328,
       "flags": []
     },
     {
       "bubbles": [
-        "Open the file and read the first line. Nothing else yet."
+        "Open a blank document and type the title of the piece. That is it."
       ],
-      "replyWords": 11,
+      "replyWords": 14,
       "n": 23,
-      "minute": 6.3,
+      "minute": 7.7,
       "scene": "frustration",
       "said": "I just need you to tell me the very first thing to do.",
       "heard": "I just need you to tell me the very first thing to do.",
-      "reply": "Open the file and read the first line. Nothing else yet.",
-      "firstSoundMs": 1443,
+      "reply": "Open a blank document and type the title of the piece. That is it.",
+      "firstSoundMs": 1310,
       "flags": []
     },
     {
       "bubbles": [
-        "Noted. Let us keep it to one thing at a time."
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
       ],
-      "replyWords": 11,
+      "replyWords": 40,
       "n": 24,
-      "minute": 6.6,
+      "minute": 8,
       "scene": "frustration",
       "said": "Okay. Fine. Open the document.",
       "heard": "Okay. Fine. Open the document.",
-      "reply": "Noted. Let us keep it to one thing at a time.",
-      "firstSoundMs": 289,
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again. I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 4972,
       "flags": []
     },
     {
@@ -366,12 +376,12 @@
       ],
       "replyWords": 5,
       "n": 25,
-      "minute": 6.8,
+      "minute": 8.2,
       "scene": "app-commands",
       "said": "Remember that I focus best in the morning.",
       "heard": "Remember that I focus best in the morning.",
       "reply": "Got it, I will remember.",
-      "firstSoundMs": 1196,
+      "firstSoundMs": 1072,
       "flags": []
     },
     {
@@ -380,12 +390,12 @@
       ],
       "replyWords": 1,
       "n": 26,
-      "minute": 7,
+      "minute": 8.4,
       "scene": "app-commands",
       "said": "Add buy milk to my list.",
       "heard": "Add buy milk to my list.",
       "reply": "Added.",
-      "firstSoundMs": 1237,
+      "firstSoundMs": 1187,
       "flags": []
     },
     {
@@ -394,12 +404,12 @@
       ],
       "replyWords": 1,
       "n": 27,
-      "minute": 7.2,
+      "minute": 8.6,
       "scene": "app-commands",
       "said": "Park it: call the dentist.",
       "heard": "Park it, call the dentist.",
       "reply": "Parked.",
-      "firstSoundMs": 1142,
+      "firstSoundMs": 1121,
       "flags": []
     },
     {
@@ -408,12 +418,12 @@
       ],
       "replyWords": 1,
       "n": 28,
-      "minute": 7.4,
+      "minute": 8.7,
       "scene": "app-commands",
       "said": "Open my history.",
       "heard": "Open my history.",
       "reply": "Done.",
-      "firstSoundMs": 779,
+      "firstSoundMs": 938,
       "flags": []
     },
     {
@@ -422,12 +432,12 @@
       ],
       "replyWords": 1,
       "n": 29,
-      "minute": 7.6,
+      "minute": 8.9,
       "scene": "app-commands",
       "said": "Open my memory.",
       "heard": "Open my memory.",
       "reply": "Done.",
-      "firstSoundMs": 1117,
+      "firstSoundMs": 1391,
       "flags": []
     },
     {
@@ -436,12 +446,12 @@
       ],
       "replyWords": 1,
       "n": 30,
-      "minute": 7.8,
+      "minute": 9.1,
       "scene": "app-commands",
       "said": "Show my report.",
       "heard": "Show my report.",
       "reply": "Done.",
-      "firstSoundMs": 1175,
+      "firstSoundMs": 1366,
       "flags": []
     },
     {
@@ -450,12 +460,12 @@
       ],
       "replyWords": 1,
       "n": 31,
-      "minute": 7.9,
+      "minute": 9.2,
       "scene": "app-commands",
       "said": "Open settings.",
       "heard": "Open settings.",
       "reply": "Done.",
-      "firstSoundMs": 872,
+      "firstSoundMs": 1137,
       "flags": []
     },
     {
@@ -464,68 +474,68 @@
       ],
       "replyWords": 1,
       "n": 32,
-      "minute": 8,
+      "minute": 9.4,
       "scene": "app-commands",
       "said": "Set a five minute timer.",
       "heard": "Set a 5-minute timer.",
       "reply": "Done.",
-      "firstSoundMs": 884,
+      "firstSoundMs": 1072,
       "flags": []
     },
     {
       "bubbles": [
-        "Noted. Let us keep it to one thing at a time."
+        "That happens. Your brain is just doing its thing. Want to try a shorter burst next time?"
       ],
-      "replyWords": 11,
+      "replyWords": 17,
       "n": 33,
-      "minute": 8.3,
+      "minute": 9.7,
       "scene": "check-in",
       "said": "I tried it for two minutes and then my brain wandered off.",
       "heard": "I tried for 2 minutes and then my brain wandered off.",
-      "reply": "Noted. Let us keep it to one thing at a time.",
-      "firstSoundMs": 1578,
+      "reply": "That happens. Your brain is just doing its thing. Want to try a shorter burst next time?",
+      "firstSoundMs": 1410,
       "flags": []
     },
     {
       "bubbles": [
-        "Put your phone face down for five minutes. I will be here."
+        "I could not reach my thinking service just now, so I do not have an answer. Try again in a moment, or type it."
       ],
-      "replyWords": 12,
+      "replyWords": 24,
       "n": 34,
-      "minute": 8.6,
+      "minute": 10,
       "scene": "check-in",
       "said": "I got distracted by my phone. What should I do next?",
       "heard": "I got distracted by my phone. What should I do next?",
-      "reply": "Put your phone face down for five minutes. I will be here.",
-      "firstSoundMs": 5,
+      "reply": "I could not reach my thinking service just now, so I do not have an answer. Try again in a moment, or type it.",
+      "firstSoundMs": -168,
       "flags": []
     },
     {
       "bubbles": [
-        "Put your phone face down for five minutes. I will be here."
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
       ],
-      "replyWords": 12,
+      "replyWords": 20,
       "n": 35,
-      "minute": 8.9,
+      "minute": 10.3,
       "scene": "check-in",
       "said": "Okay, I will put it away and try again.",
       "heard": "Okay. I will put it away and try again.",
-      "reply": "Put your phone face down for five minutes. I will be here.",
-      "firstSoundMs": 1604,
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1053,
       "flags": []
     },
     {
       "bubbles": [
-        "Put your phone face down for five minutes. I will be here."
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
       ],
-      "replyWords": 12,
+      "replyWords": 20,
       "n": 36,
-      "minute": 9.1,
+      "minute": 10.6,
       "scene": "check-in",
       "said": "Thanks, that helps a little.",
       "heard": "Thanks, that helps a little.",
-      "reply": "Put your phone face down for five minutes. I will be here.",
-      "firstSoundMs": 1512,
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1035,
       "flags": []
     },
     {
@@ -534,693 +544,358 @@
       ],
       "replyWords": 32,
       "n": 37,
-      "minute": 9.5,
+      "minute": 10.9,
       "scene": "netflix",
       "said": "Can you open Netflix for me for five minutes?",
       "heard": "Can you open Netflix for me for 5 minutes?",
       "reply": "I can't open other apps or sites for you. What I can do is start a timer and tell you when your time is up. Want me to start a 5-minute timer?",
-      "firstSoundMs": 776,
+      "firstSoundMs": 555,
       "flags": []
     },
     {
       "bubbles": [
         "Done.",
-        "You do not need a plan. You need a first move. What is one?"
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
       ],
-      "replyWords": 15,
+      "replyWords": 21,
       "n": 38,
-      "minute": 9.8,
+      "minute": 11.2,
       "scene": "netflix",
       "said": "Why are you different from a plain timer app, then?",
       "heard": "Why are you different from a plain timer app? Then?",
-      "reply": "Done. You do not need a plan. You need a first move. What is one?",
-      "firstSoundMs": 360,
+      "reply": "Done. I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 183,
       "flags": []
     },
     {
       "bubbles": [
-        "Muy bien. Ahora respira y escribe una sola frase."
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
       ],
-      "replyWords": 9,
+      "replyWords": 20,
       "n": 39,
-      "minute": 10.1,
+      "minute": 11.5,
       "scene": "spanish",
       "said": "No sé por dónde empezar con mi declaración de impuestos.",
       "heard": "No sé por dónde empezar con mi declaración de impuestos.",
-      "reply": "Muy bien. Ahora respira y escribe una sola frase.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
       "firstSoundMs": null,
       "flags": []
     },
     {
       "bubbles": [
-        "Entiendo. Hagamos solo un paso, el más pequeño que se te ocurra."
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
       ],
-      "replyWords": 12,
+      "replyWords": 20,
       "n": 40,
-      "minute": 10.4,
+      "minute": 11.8,
       "scene": "spanish",
       "said": "Necesito reunir mis documentos, pero me siento abrumado.",
       "heard": "Necesito reunir mis documentos, pero me siento abrumado.",
-      "reply": "Entiendo. Hagamos solo un paso, el más pequeño que se te ocurra.",
-      "firstSoundMs": 1169,
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 616,
       "flags": []
     },
     {
       "bubbles": [
-        "It is fine that it was messy. A messy start still counts.",
-        "Muy bien. Ahora respira y escribe una sola frase."
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
       ],
-      "replyWords": 21,
+      "replyWords": 40,
       "n": 41,
-      "minute": 10.6,
+      "minute": 12.2,
       "scene": "spanish",
       "said": "Está bien, empezaré con un solo papel.",
       "heard": "Está bien. Empezaré con un solo papel.",
-      "reply": "It is fine that it was messy. A messy start still counts. Muy bien. Ahora respira y escribe una sola frase.",
-      "firstSoundMs": 2413,
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again. I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 2092,
       "flags": []
     },
     {
       "bubbles": [
-        "Empecemos con un paso pequeño. Abre el documento y lee la primera línea."
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
       ],
-      "replyWords": 13,
+      "replyWords": 20,
       "n": 42,
-      "minute": 10.9,
+      "minute": 12.4,
       "scene": "spanish",
       "said": "Gracias, eso me ayuda mucho.",
       "heard": "Gracias, eso me ayuda mucho.",
-      "reply": "Empecemos con un paso pequeño. Abre el documento y lee la primera línea.",
-      "firstSoundMs": 1622,
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 828,
       "flags": []
     },
     {
       "bubbles": [
-        "Open the file and read the first line. Nothing else yet.",
-        "Stand up, drink some water, then come back and tell me what you see."
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
       ],
-      "replyWords": 25,
+      "replyWords": 40,
       "n": 43,
-      "minute": 11.2,
+      "minute": 12.7,
       "scene": "back-english",
       "said": "Thanks. Back to English now.",
       "heard": "Thanks. Back to English now.",
-      "reply": "Open the file and read the first line. Nothing else yet. Stand up, drink some water, then come back and tell me what you see.",
-      "firstSoundMs": 2512,
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again. I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1881,
       "flags": []
     },
     {
       "bubbles": [
-        "Good. Stay with it for one more minute, then tell me how it feels."
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
       ],
-      "replyWords": 14,
+      "replyWords": 40,
       "n": 44,
-      "minute": 11.5,
+      "minute": 13.2,
       "scene": "back-english",
       "said": "I would like a small plan for tomorrow.",
       "heard": "I would like a small plan for tomorrow.",
-      "reply": "Good. Stay with it for one more minute, then tell me how it feels.",
-      "firstSoundMs": 2140,
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again. I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 2021,
       "flags": []
     },
     {
       "bubbles": [
-        "ठीक है। बस एक छोटा सा कदम उठाइए, ईमेल का पहला वाक्य लिखिए।"
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
       ],
-      "replyWords": 13,
+      "replyWords": 20,
       "n": 45,
-      "minute": 11.8,
+      "minute": 13.5,
       "scene": "hindi",
       "said": "मैं एक ईमेल का जवाब देने से बच रहा हूँ और अटका हुआ महसूस कर रहा हूँ।",
       "heard": "मैं एक ईमेल का जवाब देने से बच रहा हूँ और अटका हुआ महसूस कर रहा हूँ।",
-      "reply": "ठीक है। बस एक छोटा सा कदम उठाइए, ईमेल का पहला वाक्य लिखिए।",
-      "firstSoundMs": 1832,
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1149,
       "flags": []
     },
     {
       "bubbles": [
-        "ठीक है। बस एक छोटा सा कदम उठाइए, ईमेल का पहला वाक्य लिखिए।"
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
       ],
-      "replyWords": 13,
+      "replyWords": 20,
       "n": 46,
-      "minute": 12.2,
+      "minute": 13.8,
       "scene": "hindi",
       "said": "मुझे समझ नहीं आ रहा कि कहाँ से शुरू करूँ।",
       "heard": "मुझे समझ नहीं आ रहा कि कहाँ से शुरू करूँ।",
-      "reply": "ठीक है। बस एक छोटा सा कदम उठाइए, ईमेल का पहला वाक्य लिखिए।",
-      "firstSoundMs": 1536,
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1093,
       "flags": []
     },
     {
       "bubbles": [
-        "Noted. Let us keep it to one thing at a time."
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
       ],
-      "replyWords": 11,
+      "replyWords": 20,
       "n": 47,
-      "minute": 12.4,
+      "minute": 14,
       "scene": "low-mood",
       "said": "I have felt really low for a few weeks now.",
       "heard": "I have felt really low for a few weeks now.",
-      "reply": "Noted. Let us keep it to one thing at a time.",
-      "firstSoundMs": 1294,
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 930,
       "flags": []
     },
     {
       "bubbles": [
-        "Good. Stay with it for one more minute, then tell me how it feels."
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
       ],
-      "replyWords": 14,
+      "replyWords": 20,
       "n": 48,
-      "minute": 12.7,
+      "minute": 14.3,
       "scene": "low-mood",
       "said": "Nothing feels worth doing lately.",
       "heard": "Nothing feels worth doing lately.",
-      "reply": "Good. Stay with it for one more minute, then tell me how it feels.",
-      "firstSoundMs": 1399,
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1060,
       "flags": []
     },
     {
       "bubbles": [
-        "That is a fair question. The short answer is yes."
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
       ],
-      "replyWords": 10,
+      "replyWords": 20,
       "n": 49,
-      "minute": 12.9,
+      "minute": 14.6,
       "scene": "wrap-up",
       "said": "The day is almost over. I sent the email.",
-      "heard": "The day is almost over. I sent the email.",
-      "reply": "That is a fair question. The short answer is yes.",
-      "firstSoundMs": 1438,
+      "heard": "The day is almost over. sent the email.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": -45,
       "flags": []
     },
     {
       "bubbles": [
-        "Good. Stay with it for one more minute, then tell me how it feels."
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
       ],
-      "replyWords": 14,
+      "replyWords": 40,
       "n": 50,
-      "minute": 13.2,
+      "minute": 14.9,
       "scene": "wrap-up",
       "said": "I am proud I got it done. I will head out now.",
-      "heard": "I am proud I got it done. I'll head out now.",
-      "reply": "Good. Stay with it for one more minute, then tell me how it feels.",
-      "firstSoundMs": 201,
+      "heard": "I am proud I got it done. I will head out now.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again. I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": -181,
       "flags": []
     },
     {
       "bubbles": [
-        "That sounds heavy. Name the first thing you could touch, and start there."
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
       ],
-      "replyWords": 13,
+      "replyWords": 20,
       "n": 51,
-      "minute": 13.5,
+      "minute": 15.2,
       "scene": "wrap-up",
       "said": "Goodnight, Stay.",
       "heard": "Good night, Stay.",
-      "reply": "That sounds heavy. Name the first thing you could touch, and start there.",
-      "firstSoundMs": 1688,
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1716,
       "flags": [
         "heard differently (50%)"
       ]
     },
     {
       "bubbles": [
-        "Stand up, drink some water, then come back and tell me what you see.",
-        "Good. Stay with it for one more minute, then tell me how it feels."
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
       ],
-      "replyWords": 28,
+      "replyWords": 40,
       "n": 52,
-      "minute": 13.8,
+      "minute": 15.4,
       "scene": "morning-overwhelm",
       "said": "I woke up late and there's so much to do I don't know where to start.",
       "heard": "I woke up late. And there's so much to do, I don't know where to start.",
-      "reply": "Stand up, drink some water, then come back and tell me what you see. Good. Stay with it for one more minute, then tell me how it feels.",
-      "firstSoundMs": 1557,
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again. I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1024,
       "flags": []
     },
     {
       "bubbles": [
-        "Good. Stay with it for one more minute, then tell me how it feels."
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
       ],
-      "replyWords": 14,
+      "replyWords": 20,
       "n": 53,
-      "minute": 14.1,
+      "minute": 15.8,
       "scene": "morning-overwhelm",
       "said": "Emails, laundry, and a report due Friday. My head is full.",
       "heard": "Emails, laundry, and a report due Friday. My head is full.",
-      "reply": "Good. Stay with it for one more minute, then tell me how it feels.",
-      "firstSoundMs": 1592,
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 958,
       "flags": []
     },
     {
       "bubbles": [
-        "Put your phone face down for five minutes. I will be here."
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
       ],
-      "replyWords": 12,
+      "replyWords": 20,
       "n": 54,
-      "minute": 14.4,
+      "minute": 16.1,
       "scene": "morning-overwhelm",
       "said": "Okay, maybe the laundry. That feels small enough.",
-      "heard": "Okay, maybe the laundry. That feels small enough.",
-      "reply": "Put your phone face down for five minutes. I will be here.",
-      "firstSoundMs": 1636,
+      "heard": "Okay. Maybe the laundry. That feels small enough.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1045,
       "flags": []
     },
     {
       "bubbles": [
-        "That sounds heavy. Name the first thing you could touch, and start there."
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
       ],
-      "replyWords": 13,
+      "replyWords": 40,
       "n": 55,
-      "minute": 14.7,
+      "minute": 16.4,
       "scene": "morning-overwhelm",
       "said": "Fine. I will do the laundry first.",
       "heard": "Fine. I will do the laundry first.",
-      "reply": "That sounds heavy. Name the first thing you could touch, and start there.",
-      "firstSoundMs": 1591,
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again. I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1126,
       "flags": []
     },
     {
       "bubbles": [
-        "That sounds heavy. Name the first thing you could touch, and start there."
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
       ],
-      "replyWords": 13,
+      "replyWords": 20,
       "n": 56,
-      "minute": 14.9,
+      "minute": 16.7,
       "scene": "morning-overwhelm",
       "said": "Alright, the machine is running now.",
-      "heard": "Alright, the machine is running now.",
-      "reply": "That sounds heavy. Name the first thing you could touch, and start there.",
-      "firstSoundMs": 1536,
+      "heard": "All right, the machine is running now.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1058,
       "flags": []
     },
     {
       "bubbles": [
-        "Noted. Let us keep it to one thing at a time."
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
       ],
-      "replyWords": 11,
+      "replyWords": 20,
       "n": 57,
-      "minute": 15.1,
+      "minute": 17,
       "scene": "avoided-email",
       "said": "I keep avoiding replying to my landlord about the lease.",
       "heard": "I keep avoiding replying to my landlord about the lease.",
-      "reply": "Noted. Let us keep it to one thing at a time.",
-      "firstSoundMs": 1291,
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1082,
       "flags": []
     },
     {
       "bubbles": [
-        "Take a breath. Then write one sentence, any sentence."
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
       ],
-      "replyWords": 9,
+      "replyWords": 20,
       "n": 58,
-      "minute": 15.4,
+      "minute": 17.3,
       "scene": "avoided-email",
       "said": "I don't even know what to say to them.",
       "heard": "I don't even know what to say to them.",
-      "reply": "Take a breath. Then write one sentence, any sentence.",
-      "firstSoundMs": 1331,
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1079,
       "flags": []
     },
     {
       "bubbles": [
-        "That is a fair question. The short answer is yes."
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
       ],
-      "replyWords": 10,
+      "replyWords": 20,
       "n": 59,
-      "minute": 15.7,
+      "minute": 17.6,
       "scene": "avoided-email",
       "said": "Okay, I could open the email and read it again.",
-      "heard": "Okay, I could open the email and read it again.",
-      "reply": "That is a fair question. The short answer is yes.",
-      "firstSoundMs": 1508,
+      "heard": "Okay. I could open the email and read it again.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 980,
       "flags": []
     },
     {
       "bubbles": [
-        "Put your phone face down for five minutes. I will be here."
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
       ],
-      "replyWords": 12,
+      "replyWords": 20,
       "n": 60,
-      "minute": 15.9,
+      "minute": 17.9,
       "scene": "avoided-email",
       "said": "Right, I opened it. Now what?",
       "heard": "Right, I opened it. Now what?",
-      "reply": "Put your phone face down for five minutes. I will be here.",
-      "firstSoundMs": 529,
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 102,
       "flags": []
     },
     {
       "bubbles": [
-        "Noted. Let us keep it to one thing at a time."
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+        "That is the hardest part behind you. A bad first line beats a blank page. You can fix the wording later."
       ],
-      "replyWords": 11,
+      "replyWords": 41,
       "n": 61,
-      "minute": 16.2,
+      "minute": 18.3,
       "scene": "avoided-email",
       "said": "I wrote a first line. It is bad but it exists.",
       "heard": "I wrote a first line. It is bad, but it exists.",
-      "reply": "Noted. Let us keep it to one thing at a time.",
-      "firstSoundMs": 1390,
-      "flags": []
-    },
-    {
-      "bubbles": [
-        "Pick one small thing and do only that for two minutes."
-      ],
-      "replyWords": 11,
-      "n": 62,
-      "minute": 16.5,
-      "scene": "avoided-email",
-      "said": "Okay, I will send it after one more read.",
-      "heard": "Okay. I will send it after one more read.",
-      "reply": "Pick one small thing and do only that for two minutes.",
-      "firstSoundMs": 1553,
-      "flags": []
-    },
-    {
-      "bubbles": [
-        "That sounds heavy. Name the first thing you could touch, and start there."
-      ],
-      "replyWords": 13,
-      "n": 63,
-      "minute": 16.8,
-      "scene": "facts",
-      "said": "How many days are in a leap year?",
-      "heard": "How many days are in a leap year?",
-      "reply": "That sounds heavy. Name the first thing you could touch, and start there.",
-      "firstSoundMs": 1096,
-      "flags": []
-    },
-    {
-      "bubbles": [
-        "What is the smallest next step you could take right now?"
-      ],
-      "replyWords": 11,
-      "n": 64,
-      "minute": 17.1,
-      "scene": "facts",
-      "said": "And why is the sky blue?",
-      "heard": "And why is the sky blue?",
-      "reply": "What is the smallest next step you could take right now?",
-      "firstSoundMs": 1597,
-      "flags": []
-    },
-    {
-      "bubbles": [
-        "Good. Stay with it for one more minute, then tell me how it feels.",
-        "Open the file and read the first line. Nothing else yet."
-      ],
-      "replyWords": 25,
-      "n": 65,
-      "minute": 17.3,
-      "scene": "facts",
-      "said": "Huh, that is interesting. Thanks.",
-      "heard": "Huh, that is interesting. Thanks.",
-      "reply": "Good. Stay with it for one more minute, then tell me how it feels. Open the file and read the first line. Nothing else yet.",
-      "firstSoundMs": 366,
-      "flags": []
-    },
-    {
-      "bubbles": [
-        "Open the file and read the first line. Nothing else yet.",
-        "You do not need a plan. You need a first move. What is one?"
-      ],
-      "replyWords": 25,
-      "n": 66,
-      "minute": 17.5,
-      "scene": "facts",
-      "said": "One more thing, how far away is the moon?",
-      "heard": "One more thing. How far away is the moon?",
-      "reply": "Open the file and read the first line. Nothing else yet. You do not need a plan. You need a first move. What is one?",
-      "firstSoundMs": 1685,
-      "flags": []
-    },
-    {
-      "bubbles": [
-        "Noted. Let us keep it to one thing at a time."
-      ],
-      "replyWords": 11,
-      "n": 67,
-      "minute": 17.9,
-      "scene": "thinking-pause",
-      "said": "I'm trying to figure out how to start the introduction and, um,",
-      "heard": "I'm trying to figure out how to start the introduction and",
-      "reply": "Noted. Let us keep it to one thing at a time.",
-      "firstSoundMs": 4876,
-      "flags": []
-    },
-    {
-      "bubbles": [
-        "What is the smallest next step you could take right now?"
-      ],
-      "replyWords": 11,
-      "n": 68,
-      "minute": 18.2,
-      "scene": "thinking-pause",
-      "said": "I think the problem is I do not know the first sentence, and...",
-      "heard": "I think the problem is I do not know the first sentence and",
-      "reply": "What is the smallest next step you could take right now?",
-      "firstSoundMs": 5015,
-      "flags": []
-    },
-    {
-      "bubbles": [
-        "You do not need a plan. You need a first move. What is one?"
-      ],
-      "replyWords": 14,
-      "n": 69,
-      "minute": 18.4,
-      "scene": "thinking-pause",
-      "said": "Maybe I should just write anything and fix it later.",
-      "heard": "Maybe I should just write anything and fix it later.",
-      "reply": "You do not need a plan. You need a first move. What is one?",
-      "firstSoundMs": 1761,
-      "flags": []
-    },
-    {
-      "bubbles": [
-        "Take a breath. Then write one sentence, any sentence."
-      ],
-      "replyWords": 9,
-      "n": 70,
-      "minute": 18.7,
-      "scene": "interrupt",
-      "said": "Can you explain in detail how a mortgage works, step by step?",
-      "heard": "Can you explain in detail how a mortgage works, step by step?",
-      "reply": "Take a breath. Then write one sentence, any sentence.",
-      "firstSoundMs": 1753,
-      "flags": []
-    },
-    {
-      "bubbles": [
-        "Open the file and read the first line. Nothing else yet."
-      ],
-      "replyWords": 11,
-      "n": 71,
-      "minute": 19.2,
-      "scene": "interrupt",
-      "said": "Wait, stop, just one tiny step please.",
-      "heard": "Wait, stop. Just one tiny step, please.",
-      "reply": "Open the file and read the first line. Nothing else yet.",
-      "firstSoundMs": 1611,
-      "flags": []
-    },
-    {
-      "bubbles": [
-        "Take a breath. Then write one sentence, any sentence."
-      ],
-      "replyWords": 9,
-      "n": 72,
-      "minute": 19.5,
-      "scene": "interrupt",
-      "said": "Okay, that is enough. Thank you.",
-      "heard": "Okay, that is enough. Thank you.",
-      "reply": "Take a breath. Then write one sentence, any sentence.",
-      "firstSoundMs": 553,
-      "flags": []
-    },
-    {
-      "bubbles": [
-        "Good. Stay with it for one more minute, then tell me how it feels."
-      ],
-      "replyWords": 14,
-      "n": 73,
-      "minute": 19.7,
-      "scene": "frustration",
-      "said": "That did not help at all.",
-      "heard": "That did not help at all.",
-      "reply": "Good. Stay with it for one more minute, then tell me how it feels.",
-      "firstSoundMs": 1574,
-      "flags": []
-    },
-    {
-      "bubbles": [
-        "Open the file and read the first line. Nothing else yet."
-      ],
-      "replyWords": 11,
-      "n": 74,
-      "minute": 20,
-      "scene": "frustration",
-      "said": "I just need you to tell me the very first thing to do.",
-      "heard": "I just need you to tell me the very first thing to do.",
-      "reply": "Open the file and read the first line. Nothing else yet.",
-      "firstSoundMs": 1239,
-      "flags": []
-    },
-    {
-      "bubbles": [
-        "Noted. Let us keep it to one thing at a time."
-      ],
-      "replyWords": 11,
-      "n": 75,
-      "minute": 20.2,
-      "scene": "frustration",
-      "said": "Okay. Fine. Open the document.",
-      "heard": "Okay. Fine. Open the document.",
-      "reply": "Noted. Let us keep it to one thing at a time.",
-      "firstSoundMs": 2449,
-      "flags": []
-    },
-    {
-      "bubbles": [
-        "Got it, I will remember."
-      ],
-      "replyWords": 5,
-      "n": 76,
-      "minute": 20.5,
-      "scene": "app-commands",
-      "said": "Remember that I focus best in the morning.",
-      "heard": "Remember that I focus best in the morning.",
-      "reply": "Got it, I will remember.",
-      "firstSoundMs": 1247,
-      "flags": []
-    },
-    {
-      "bubbles": [
-        "Added."
-      ],
-      "replyWords": 1,
-      "n": 77,
-      "minute": 20.7,
-      "scene": "app-commands",
-      "said": "Add buy milk to my list.",
-      "heard": "Add buy milk to my list.",
-      "reply": "Added.",
-      "firstSoundMs": 1322,
-      "flags": []
-    },
-    {
-      "bubbles": [
-        "Parked."
-      ],
-      "replyWords": 1,
-      "n": 78,
-      "minute": 20.9,
-      "scene": "app-commands",
-      "said": "Park it: call the dentist.",
-      "heard": "Park it, call the dentist.",
-      "reply": "Parked.",
-      "firstSoundMs": 800,
-      "flags": []
-    },
-    {
-      "bubbles": [
-        "Done."
-      ],
-      "replyWords": 1,
-      "n": 79,
-      "minute": 21,
-      "scene": "app-commands",
-      "said": "Open my history.",
-      "heard": "Open my history.",
-      "reply": "Done.",
-      "firstSoundMs": 837,
-      "flags": []
-    },
-    {
-      "bubbles": [
-        "Done."
-      ],
-      "replyWords": 1,
-      "n": 80,
-      "minute": 21.1,
-      "scene": "app-commands",
-      "said": "Open my memory.",
-      "heard": "Open my memory.",
-      "reply": "Done.",
-      "firstSoundMs": 1097,
-      "flags": []
-    },
-    {
-      "bubbles": [
-        "Done."
-      ],
-      "replyWords": 1,
-      "n": 81,
-      "minute": 21.3,
-      "scene": "app-commands",
-      "said": "Show my report.",
-      "heard": "Show my report.",
-      "reply": "Done.",
-      "firstSoundMs": 918,
-      "flags": []
-    },
-    {
-      "bubbles": [
-        "Done."
-      ],
-      "replyWords": 1,
-      "n": 82,
-      "minute": 21.5,
-      "scene": "app-commands",
-      "said": "Open settings.",
-      "heard": "Open settings.",
-      "reply": "Done.",
-      "firstSoundMs": 1135,
-      "flags": []
-    },
-    {
-      "bubbles": [
-        "Done."
-      ],
-      "replyWords": 1,
-      "n": 83,
-      "minute": 21.7,
-      "scene": "app-commands",
-      "said": "Set a five minute timer.",
-      "heard": "Set a 5-minute timer.",
-      "reply": "Done.",
-      "firstSoundMs": 947,
-      "flags": []
-    },
-    {
-      "bubbles": [
-        "Noted. Let us keep it to one thing at a time."
-      ],
-      "replyWords": 11,
-      "n": 84,
-      "minute": 21.9,
-      "scene": "check-in",
-      "said": "I tried it for two minutes and then my brain wandered off.",
-      "heard": "I tried for 2 minutes and then my brain wandered off.",
-      "reply": "Noted. Let us keep it to one thing at a time.",
-      "firstSoundMs": 1643,
-      "flags": []
-    },
-    {
-      "bubbles": [
-        "It is fine that it was messy. A messy start still counts.",
-        "Put your phone face down for five minutes. I will be here."
-      ],
-      "replyWords": 24,
-      "n": 85,
-      "minute": 22.2,
-      "scene": "check-in",
-      "said": "I got distracted by my phone. What should I do next?",
-      "heard": "I got distracted by my phone. What should I do next?",
-      "reply": "It is fine that it was messy. A messy start still counts. Put your phone face down for five minutes. I will be here.",
-      "firstSoundMs": -20,
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again. That is the hardest part behind you. A bad first line beats a blank page. You can fix the wording later.",
+      "firstSoundMs": 1351,
       "flags": []
     }
   ]
