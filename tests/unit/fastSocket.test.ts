@@ -300,6 +300,55 @@ describe('FastSocket', () => {
     expect(body.messages.at(-1)).toEqual({ role: 'user', content: 'I keep avoiding my taxes.' });
   });
 
+  it('when the model is out of tokens the person hears the plain failure line once, not twice (soak: "...ask again. I am getting too many requests...")', async () => {
+    const MSG = 'I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.';
+    fetchMock.mockImplementation(async () => new Response(JSON.stringify({ error: 'quota', message: MSG }), { status: 503, headers: { 'content-type': 'application/json' } }));
+    const { stt } = await open();
+    stt.push({ type: 'Turn', transcript: 'I do not know where to start.', end_of_turn: false, turn_order: 0 });
+    await tick(8);
+    stt.push({ type: 'Turn', transcript: 'I do not know where to start.', end_of_turn: true, turn_order: 0, turn_is_formatted: true });
+    await tick(40);
+    const said = events.filter((e) => e.type === 'transcript.agent').map((e) => e.text);
+    expect(said).toEqual([MSG]);
+    expect(events.filter((e) => e.type === 'reply.text').map((e) => e.text)).toEqual([MSG]);
+    expect(events.at(-1)?.type).toBe('reply.done');
+  });
+
+  it('failure line once when the final words differ from the early guess', async () => {
+    const MSG = 'I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.';
+    fetchMock.mockImplementation(async () => { await tick(3); return new Response(JSON.stringify({ error: 'quota', message: MSG }), { status: 503, headers: { 'content-type': 'application/json' } }); });
+    const { stt } = await open();
+    stt.push({ type: 'Turn', transcript: 'I do not know where to start.', end_of_turn: false, turn_order: 0 });
+    await tick(2);
+    stt.push({ type: 'Turn', transcript: 'I do not know where to start. Honestly I am stuck.', end_of_turn: true, turn_order: 0, turn_is_formatted: true });
+    await tick(60);
+    const said = events.filter((e) => e.type === 'transcript.agent').map((e) => e.text);
+    console.log('CALLS', fetchMock.mock.calls.length, JSON.stringify(said));
+    expect(said).toEqual([MSG]);
+  });
+
+  it('voice lost: the reply still appears as text and the turn ends, and the voice comes back for the next one (soak: 12 turns of silence after the voice connection dropped)', async () => {
+    fetchMock.mockImplementation(async () => sse(text('Open the email and type the first line.')));
+    const { stt, tts } = await open();
+    FakeWS.expiredTokens.add('tts'); // every new voice session is refused
+    tts.close();
+    await tick(40);
+    stt.push({ type: 'Turn', transcript: 'I do not know where to start.', end_of_turn: true, turn_order: 0, turn_is_formatted: true });
+    await tick(80);
+    expect(events.find((e) => e.type === 'transcript.agent')?.text).toBe('Open the email and type the first line.');
+    expect(types().indexOf('reply.done')).toBeGreaterThan(types().indexOf('transcript.agent')); // the turn ends, the orb can listen again
+    expect(types()).not.toContain('reply.audio'); // nothing could be spoken
+
+    // the service accepts a new session again: the next reply asks for it at once, and the one after that is spoken
+    FakeWS.expiredTokens.delete('tts');
+    stt.push({ type: 'Turn', transcript: 'Okay, what next?', end_of_turn: true, turn_order: 1, turn_is_formatted: true });
+    await tick(80);
+    stt.push({ type: 'Turn', transcript: 'And after that?', end_of_turn: true, turn_order: 2, turn_is_formatted: true });
+    await tick(80);
+    expect(types()).toContain('tts.reconnected');
+    expect(types()).toContain('reply.audio');
+  });
+
   it('speculates immediately on short greetings like "Hi hello" even without terminal punctuation', async () => {
     fetchMock.mockResolvedValue(sse(text('Hello! What are you working on?')));
     const { stt } = await open();

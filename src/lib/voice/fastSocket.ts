@@ -288,6 +288,10 @@ const MAX_HISTORY = 14;
 const FIRST_BLOCK_CHARS = 90;
 /** The reply is fully written but the voice has sent no sound and no "done" for this long: end it here, never stay on "Speaking". */
 const REPLY_STALL_MS = 8000;
+/** With no voice connection nothing will confirm the speech, so a reply ends this long after its words were shown. */
+const VOICELESS_FINISH_MS = 600;
+/** After three quick tries the voice connection is tried again this often, for as long as the call lasts. */
+const TTS_RETRY_MS = 15_000;
 /** After a lone greeting or filler turn, how long to wait for the rest of the sentence before answering it. */
 const OPENER_HOLD_MS = 700;
 
@@ -379,6 +383,7 @@ export class FastSocket {
   private captureOnly = false; // brain dump: hear and transcribe, but never answer
   private keepAliveTimer: ReturnType<typeof setInterval> | undefined;
   private ttsRotationTimer: ReturnType<typeof setTimeout> | undefined;
+  private ttsRetryTimer: ReturnType<typeof setTimeout> | undefined;
   private ttsSwitch: Promise<void> | null = null;
   private detectedLang = '';
   private ttsNeedsRotation = false;
@@ -547,6 +552,10 @@ export class FastSocket {
       clearTimeout(this.ttsRotationTimer);
       this.ttsRotationTimer = undefined;
     }
+    if (this.ttsRetryTimer) {
+      clearTimeout(this.ttsRetryTimer);
+      this.ttsRetryTimer = undefined;
+    }
   }
 
   private resetKeepAliveTimer(): void {
@@ -618,6 +627,21 @@ export class FastSocket {
       return;
     }
     this.emit({ type: 'tts.unavailable', code, message: 'AssemblyAI TTS connection lost after 3 retries; STT remains active.' });
+    // not for good: the next reply, or this timer, tries again (a refused session or a rate limit passes)
+    this.ttsRetryTimer = setTimeout(() => {
+      this.ttsRetryTimer = undefined;
+      this.ttsReconnectAttempts = 0;
+      this.handleTtsUnexpectedClose(code);
+    }, TTS_RETRY_MS);
+  }
+
+  /** A reply needs the voice and it is down: skip the wait and try to reconnect now, once. */
+  private retryVoiceNow(): void {
+    if (!this.ttsRetryTimer) return;
+    clearTimeout(this.ttsRetryTimer);
+    this.ttsRetryTimer = undefined;
+    this.ttsReconnectAttempts = 0;
+    this.handleTtsUnexpectedClose();
   }
 
   // ---- internals --------------------------------------------------------------------------------------------------
@@ -1118,12 +1142,21 @@ export class FastSocket {
       void this.ttsSwitch.then(() => this.say(text, gen, flush)); // the voice is moving to the person's language: speak once it is open
       return;
     }
-    if (!text || gen !== this.genId || this.tts?.readyState !== WebSocket.OPEN) return;
+    if (!text || gen !== this.genId) return;
     const voiced = toSpeech(text, this.session?.ttsLanguage); // what the voice is given: no markdown, emoji, quote marks or line breaks; English also gets numbers and units written out
     if (!voiced) return;
     if (this.spoken === '') this.emit({ type: 'reply.started' });
     this.emit({ type: 'reply.text', text });
     this.spoken += (this.spoken ? ' ' : '') + text;
+    if (this.tts?.readyState !== WebSocket.OPEN) {
+      // Soak, 3 Nov 2026: after the voice connection dropped, twelve turns were heard and answered by the model, and every answer was
+      // thrown away here: no words, no sound, and the orb listening as if nothing was wrong. The words reach the screen, the turn ends,
+      // and the voice is asked to reconnect now rather than at the next timer.
+      this.mark('novoice');
+      this.retryVoiceNow();
+      if (this.llmDone) this.armReplyWatchdog(VOICELESS_FINISH_MS);
+      return;
+    }
     this.mark('gen');
     this.resetKeepAliveTimer();
     this.tts.send(JSON.stringify({ type: 'Generate', text: flush ? voiced : `${voiced} ` }));
@@ -1153,12 +1186,13 @@ export class FastSocket {
 
   private maybeFinish(): void {
     if (!this.llmDone || this.spoken === '') return;
+    if (this.tts?.readyState !== WebSocket.OPEN) return this.armReplyWatchdog(VOICELESS_FINISH_MS); // no voice: nothing will confirm the speech
     const allDone = this.replyBaseId === null ? this.lastDoneId >= 0 : this.lastDoneId >= this.replyBaseId + this.sentFlushes - 1;
     if (!allDone) return this.armReplyWatchdog();
     this.finishReply();
   }
 
-  private armReplyWatchdog(): void {
+  private armReplyWatchdog(ms = REPLY_STALL_MS): void {
     clearTimeout(this.replyWatchdog);
     if (this.closed) return;
     this.replyWatchdog = setTimeout(() => {
@@ -1166,7 +1200,7 @@ export class FastSocket {
       if (this.closed || !this.llmDone || this.spoken === '') return;
       this.mark('stall');
       this.finishReply();
-    }, REPLY_STALL_MS);
+    }, ms);
   }
 
   private finishReply(): void {

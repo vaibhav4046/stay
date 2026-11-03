@@ -88,7 +88,9 @@ const ctx = await browser.newContext({ viewport: { width: 1200, height: 900 }, l
 const page = await ctx.newPage();
 const errors = [];
 page.on('pageerror', (e) => errors.push(String(e).slice(0, 200)));
-page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text().slice(0, 200)); });
+const trace = process.env.SOAK_TRACE ? fs.createWriteStream(process.env.SOAK_TRACE) : null; // SOAK_TRACE=file: every event the voice socket sent the app, in order
+page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text().slice(0, 200)); else if (trace && m.text().startsWith('[fast]')) trace.write(`${Date.now()} ${m.text()}
+`); });
 await page.addInitScript(() => {
   window.__stayFastDebug = true;
   window.__stayPlays = [];
@@ -215,7 +217,7 @@ outer: while (now() < deadline) {
       if (silentSpeaking > 1500) flags.push(`speaking over silence ${silentSpeaking} ms`);
       const wordsOver = overlap(said, heard);
       if (wordsOver < 0.6 && scene.lang !== 'hi') flags.push(`heard differently (${Math.round(wordsOver * 100)}%)`);
-      const turn = { replyWords, n: turns.length + 1, minute: Math.round((now() - T0) / 6000) / 10, scene: scene.id, said, heard, reply, firstSoundMs, flags };
+      const turn = { bubbles: stayAll.slice(before.stay), replyWords, n: turns.length + 1, minute: Math.round((now() - T0) / 6000) / 10, scene: scene.id, said, heard, reply, firstSoundMs, flags };
       turns.push(turn);
       fs.writeFileSync(`docs/evidence/loop/soak-partial.json`, JSON.stringify({ partial: true, turns }, null, 1));
       history.push({ who: 'you', text: said }, { who: 'stay', text: reply });

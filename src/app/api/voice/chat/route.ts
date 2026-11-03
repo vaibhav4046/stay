@@ -262,7 +262,7 @@ ${VISION_SYSTEM}` : serverSystemPrompt },
   if (!r.res) {
     // The model failed. Say so. The only thing that still works without a model is a tool the person plainly asked for
     // (a timer, a parked thought); everything else gets the honest message, never an invented reply.
-    console.warn('[stay] model_failed', { intent, vision: Boolean(image), source: r.source, error: r.error ?? null });
+    console.warn('[stay] model_failed', { intent, vision: Boolean(image), source: r.source, error: r.error ?? null, attempts: r.timing ?? null });
     if (!image) {
       const tool = resolveDeterministicVoice(lastUser).tool;
       if (tool) return createDeterministicSseResponse({ tool });

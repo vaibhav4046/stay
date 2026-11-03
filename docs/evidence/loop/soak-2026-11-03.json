@@ -1,0 +1,57 @@
+{
+  "summary": {
+    "label": "synthetic-mic (one neural voice, English/Spanish/Hindi) + live-model; nothing played aloud",
+    "minutes": 1.1,
+    "turns": 2,
+    "firstSoundMs": {
+      "n": 2,
+      "median": 1789,
+      "p95": 1789,
+      "max": 1789
+    },
+    "turnsWithFlags": 0,
+    "flagCounts": {},
+    "pageErrors": [
+      "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+    ],
+    "playback": {
+      "underflows": 0,
+      "prebufferMs": 200,
+      "bufferedMs": 0,
+      "state": "STOPPED"
+    },
+    "jsHeapMB": 22
+  },
+  "turns": [
+    {
+      "bubbles": [
+        "My thinking service is not set up on this server, so I cannot answer questions here."
+      ],
+      "replyWords": 16,
+      "n": 1,
+      "minute": 0.6,
+      "scene": "morning-overwhelm",
+      "said": "Ugh, already behind and my brain is screaming. Please just pick one thing for me to do first.",
+      "heard": "Ugh, already behind and my brain is screaming. Please just pick one thing for me to do first.",
+      "reply": "My thinking service is not set up on this server, so I cannot answer questions here.",
+      "firstSoundMs": 1018,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "My thinking service is not set up on this server, so I cannot answer questions here.",
+        "My thinking service is not set up on this server, so I cannot answer questions here.",
+        "My thinking service is not set up on this server, so I cannot answer questions here."
+      ],
+      "replyWords": 48,
+      "n": 2,
+      "minute": 1,
+      "scene": "morning-overwhelm",
+      "said": "Wait, what? You can’t even think right now? I’m out of options!",
+      "heard": "Wait, what? You can't even think right now? of options.",
+      "reply": "My thinking service is not set up on this server, so I cannot answer questions here. My thinking service is not set up on this server, so I cannot answer questions here. My thinking service is not set up on this server, so I cannot answer questions here.",
+      "firstSoundMs": 1789,
+      "flags": []
+    }
+  ]
+}
