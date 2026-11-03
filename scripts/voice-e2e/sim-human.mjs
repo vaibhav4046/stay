@@ -10,7 +10,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { chromium } from '@playwright/test';
 
 const args = process.argv.slice(2);
@@ -24,7 +24,10 @@ const LANG_SETUP = { en: { voice: 'en-GB-RyanNeural', locale: 'en-GB' }, es: { v
 const VOICE = opt('--voice', LANG_SETUP[LANG]?.voice || 'en-GB-RyanNeural');
 const TURNS = Number(opt('--turns', 4));
 const USE_LLM = !flag('--no-llm');
-const CPU = Number(opt('--cpu', 1)); // field test 2 Nov 2026 ("voice is breaking"): 4 = a phone-class CPU, 6 = a weak one. Reported as underruns below
+const CPU = Number(opt('--cpu', 1));
+// --real-mic: the speaker's voice is played out loud from this computer's speakers and the app hears it through the real microphone
+// in the real room (owner's yes, 3 Nov 2026). Stay's own voice stays muted. The end of speech is taken from the app's microphone level.
+const REAL_MIC = flag('--real-mic'); // field test 2 Nov 2026 ("voice is breaking"): 4 = a phone-class CPU, 6 = a weak one. Reported as underruns below
 const work = path.join((await import('node:os')).tmpdir(), 'stay-sim-human'); // not under test-results: Playwright empties that folder
 fs.mkdirSync(work, { recursive: true });
 
@@ -78,11 +81,12 @@ async function humanSays(history) {
 
 // ---- browser with an injected microphone --------------------------------------------------------------------------------
 let browser;
-for (let i = 0; ; i++) { try { browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required', '--mute-audio'], timeout: 60000 }); break; } catch (e) { if (i >= 3) throw e; console.log('browser launch timed out, retrying'); } }
+for (let i = 0; ; i++) { try { browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required', '--mute-audio', ...(REAL_MIC ? ['--use-fake-ui-for-media-stream'] : [])], timeout: 60000 }); break; } catch (e) { if (i >= 3) throw e; console.log('browser launch timed out, retrying'); } }
 const ctx = await browser.newContext({ viewport: { width: 1200, height: 900 }, locale: opt('--locale', LANG_SETUP[LANG]?.locale || 'en-GB') });
+if (REAL_MIC) await ctx.grantPermissions(['microphone']);
 const page = await ctx.newPage();
 if (CPU > 1) await (await ctx.newCDPSession(page)).send('Emulation.setCPUThrottlingRate', { rate: CPU });
-await page.addInitScript(({ debug, sttExtra }) => {
+await page.addInitScript(({ debug, sttExtra, realMic }) => {
   window.__stayFastDebug = debug;
   window.__longTasks = [];
   try { new PerformanceObserver((l) => { for (const e of l.getEntries()) window.__longTasks.push(Math.round(e.duration)); }).observe({ type: 'longtask', buffered: true }); } catch { /* not supported */ }
@@ -103,12 +107,12 @@ await page.addInitScript(({ debug, sttExtra }) => {
   window.__leak = (b64, gain) => { const src = ac.createBufferSource(); src.buffer = toBuf(b64); const g = ac.createGain(); g.gain.value = gain; src.connect(g); g.connect(dest); src.start(ac.currentTime + 0.02); };
   // a fresh stream every call, as a real microphone gives: the app stops its tracks when a connection attempt fails and retries, and
   // handing back the same stopped stream made every retried session deaf (found 2 Nov 2026; it was the rig, not the app)
-  navigator.mediaDevices.getUserMedia = async () => { await ac.resume(); return dest.stream.clone(); };
+  if (!realMic) navigator.mediaDevices.getUserMedia = async () => { await ac.resume(); return dest.stream.clone(); };
   // T2.1: the app (with __stayFastDebug on) records the epoch time at which each reply's first sample was actually output by its
   // AudioContext. Stay now plays through an AudioWorklet, so the old hook on AudioBufferSourceNode.start no longer sees its voice.
   window.__stayPlays = [];
   window.__stayPlayStarts = window.__stayPlays;
-}, { debug: engine === 'fast', sttExtra: process.env.STT_EXTRA || '' });
+}, { debug: engine === 'fast', sttExtra: process.env.STT_EXTRA || '', realMic: REAL_MIC });
 
 // ---- timeline from the sockets and the fast-voice debug events ------------------------------------------------------------
 const ev = []; // {t, type, text}
@@ -162,7 +166,28 @@ async function agentQuiet(ms = 1100, max = 25000) {
   return false;
 }
 const humanLines = [];
+function wav(pcm) {
+  const h = Buffer.alloc(44);
+  h.write('RIFF', 0); h.writeUInt32LE(36 + pcm.length, 4); h.write('WAVE', 8); h.write('fmt ', 12); h.writeUInt32LE(16, 16);
+  h.writeUInt16LE(1, 20); h.writeUInt16LE(1, 22); h.writeUInt32LE(24000, 24); h.writeUInt32LE(48000, 28); h.writeUInt16LE(2, 32);
+  h.writeUInt16LE(16, 34); h.write('data', 36); h.writeUInt32LE(pcm.length, 40);
+  return Buffer.concat([h, pcm]);
+}
+/** Plays the clip from the speakers and returns when the app's real microphone last heard it (its own level marks). */
+async function sayAloud(pcm, label) {
+  humanLines.push(label);
+  const file = path.join(work, `aloud-${crypto.createHash('sha1').update(pcm).digest('hex').slice(0, 12)}.wav`);
+  if (!fs.existsSync(file)) fs.writeFileSync(file, wav(pcm));
+  const tStart = now();
+  await new Promise((resolve) => spawn('ffplay', ['-nodisp', '-autoexit', '-loglevel', 'quiet', file], { stdio: 'ignore' }).on('exit', resolve));
+  const tDone = now();
+  await sleep(150); // the last microphone frames arrive
+  const loud = await page.evaluate(([a, b]) => (window.__stayLoud || []).filter((x) => x >= a && x <= b), [tStart, tDone + 200]);
+  const tEnd = loud.length ? loud[loud.length - 1] : tDone; // the app's own record of when the microphone last heard speech
+  return { tStart, tEnd, micHeard: loud.length > 0 };
+}
 async function say(pcm, label = '') { // returns when the human has finished speaking
+  if (REAL_MIC) return sayAloud(pcm, label);
   humanLines.push(label);
   const b64 = pcm.toString('base64');
   const r = await page.evaluate((b) => window.__say(b), b64);
@@ -189,7 +214,7 @@ const overlap = (a, b) => { const A = wordsOf(a), B = wordsOf(b); if (!A.size) r
 const connected = await (async () => { for (let i = 0; i < 200; i++) { if (audioFrames.length) return true; await sleep(100); } return false; })();
 if (!connected) { console.log(`${engine}: never got the greeting audio`); await browser.close(); process.exit(2); }
 await agentQuiet();
-console.log(`engine=${engine}${ECHO ? ' +echo' : ''} voice=${VOICE} noise=on llm-human=${USE_LLM}`);
+console.log(`engine=${engine}${ECHO ? ' +echo' : ''}${REAL_MIC ? ' REAL MICROPHONE (speaker played out loud)' : ''} voice=${VOICE} noise=${REAL_MIC ? 'the real room' : 'on'} llm-human=${USE_LLM}`);
 
 const history = [];
 const latencies = [];

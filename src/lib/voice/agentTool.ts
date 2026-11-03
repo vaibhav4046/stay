@@ -46,7 +46,7 @@ const SHAPE_BY_INTENT: Record<string, string> = {
   frustrated:
     'They are frustrated, maybe with you. Say so in one short plain sentence that owns it ("Fair. That didn\'t work."), then ask the ONE thing they want right now, in under ten words. No advice, no task, no explaining why.',
   question:
-    'They asked a question. Answer it directly in the first sentence. A plain fact: one short complete sentence, nothing more ("A leap year has 366 days."). A big topic: two or three short spoken points, then ask if they want more. Otherwise add one short sentence only if needed. No greeting or "Sure"; no reminders, timers, stretches or tiny steps unless asked; no question back unless you need one detail. If unsure, say so.',
+    'They asked a question. Answer it directly in the first sentence. A plain fact: one short complete sentence, nothing more ("A leap year has 366 days."). A big topic or a plan: give a short first version yourself in two or three spoken sentences (never a list of questions back), then ask if they want more. Never add "Need anything else?". Otherwise add one short sentence only if needed. No greeting or "Sure"; no reminders, timers, stretches or tiny steps unless asked; no question back unless you need one detail. If unsure, say so.',
   follow_up:
     'They are following up on the last turn. Stay on that subject and answer it directly in one to three short sentences. No greeting opener, no tiny step, no timer or reminder offers unless asked.',
   small_talk: 'Reply with one short, warm sentence. No tools, no chores.',
