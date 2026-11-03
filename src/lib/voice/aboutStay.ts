@@ -27,7 +27,7 @@ const ANSWERS: Record<Topic, string[]> = {
     "Mostly I get you started and stay with you. One small step on a task, a timer, a brain dump sorted into a short list, reminders, and a memory of what helps. You can show me your screen or a picture too.",
   ],
   why_stay: [
-    "A clock app starts a timer, and ChatGPT's voice will talk about anything. I'm for the moment you're stuck. Tell me what you're avoiding and I give you one tiny first step, start the clock with you, and wait through your pauses. When time's up I check in, and I remember what helped.",
+    "A clock app starts a timer, and a general voice assistant will talk about anything. I'm for the moment you're stuck. Tell me what you're avoiding and I give you one tiny first step, start the clock with you, and wait through your pauses. When time's up I check in, and I remember what helped.",
     "The hard part isn't the timer, it's starting. So I do the starting with you: one tiny step, a clock running while I'm here, no talking over your pauses, a check-in when time's up, and a memory of what worked. Your list and history stay on your device.",
   ],
   voice_choice: ["That's the voice currently selected, one of AssemblyAI's. You can change it any time: say \"change voice\", or open the voice menu."],

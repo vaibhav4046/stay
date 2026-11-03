@@ -362,7 +362,7 @@ try {
       await page.getByTestId('share-bar').waitFor();
       await page.waitForFunction(() => document.querySelector('[data-testid="share-preview"]')?.readyState >= 2);
       await typeAndSend('Can you see my screen? What is half finished?', 3500);
-      await typeAndSend('Why should I use you and not ChatGPT?', 3500);
+      await typeAndSend('What makes you different from a timer app?', 3500);
       await page.getByTestId('stop-share').click();
       happyAt = Date.now();
       await page.waitForTimeout(2500);
