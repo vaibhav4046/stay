@@ -48,7 +48,9 @@ test.describe('Landing', () => {
     await page.goto('/');
     const ex = page.getByTestId('hero-example');
     await expect(ex).toContainText('real replies are generated live');
-    await expect(ex.locator('.bubble')).toHaveCount(4);
+    // the exchange plays like a call: bubbles arrive one after another (all at once when motion is reduced)
+    await expect.poll(async () => ex.locator('.bubble').count(), { timeout: 8000 }).toBeGreaterThanOrEqual(2);
+    await expect(ex.locator('ol.sr-only li')).toHaveCount(7); // the six lines of the scene and its result, for a screen reader
     await expect(page.locator('[data-testid="hero-orb"], [data-testid="hero-chips"], [data-testid="hero-face"]')).toHaveCount(0);
     await expect(page.getByText(/watch the dots/i)).toHaveCount(0);
   });
@@ -457,5 +459,28 @@ test.describe('Judge feedback: blocks, trust copy, check-in, urgent help', () =>
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow).toBeLessThanOrEqual(1);
     await expect(page.getByTestId('measured').getByText('Words wrong').first()).toBeAttached();
+  });
+});
+
+test.describe('Landing example card', () => {
+  test('reduced motion: the whole exchange is on screen at once and nothing moves', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/');
+    const ex = page.getByTestId('hero-example');
+    await expect(ex.locator('.bubble')).toHaveCount(6);
+    await expect(ex.getByTestId('hero-pause')).toHaveCount(0);
+  });
+
+  test('the scenes can be chosen, the animation can be paused, and the full text is there for a screen reader', async ({ page }) => {
+    await page.goto('/');
+    const ex = page.getByTestId('hero-example');
+    await ex.getByTestId('hero-scene-study').click();
+    await expect(ex.getByTestId('hero-scene-study')).toHaveAttribute('aria-pressed', 'true');
+    await expect(ex.locator('ol.sr-only')).toContainText('Wait wait, stop. Too long. Just give me the first block.');
+    await ex.getByTestId('hero-pause').click();
+    await expect(ex.getByTestId('hero-pause')).toHaveAttribute('aria-pressed', 'true');
+    const before = await ex.locator('.bubble').count();
+    await page.waitForTimeout(1800);
+    expect(await ex.locator('.bubble').count()).toBe(before); // paused: no new bubbles
   });
 });

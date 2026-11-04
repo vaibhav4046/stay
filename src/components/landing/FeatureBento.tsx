@@ -55,7 +55,7 @@ export function FeatureBento() {
   return (
     <div id="features" className="mt-20" data-testid="features">
       <p className="eyebrow">What it does</p>
-      <h3 id="bento-title" className="section-title max-w-[24ch]">A friend on the line, not a form to fill in</h3>
+      <h3 id="bento-title" className="section-title max-w-[24ch]">Talk it out, get the next step</h3>
       <ul className="bento mt-9">
         {cards.map((c) => (
           <li key={c.id} className={`facet bento-card${c.wide ? ' bento-wide' : ''}`} data-testid={`feature-${c.id}`}>

@@ -20,8 +20,9 @@ test.describe('Landing showpieces: motion loop, feature cards, benchmark board',
       const s = getComputedStyle(el);
       return { clip: s.clipPath, blur: s.backdropFilter || (s as unknown as { webkitBackdropFilter?: string }).webkitBackdropFilter };
     });
-    expect(css.clip).toContain('polygon');
-    expect(css.blur).toContain('blur');
+    // one card family: the same plain rounded face as the other cards (no cut corners, no blur)
+    expect(css.clip).toBe('none');
+    expect(css.blur === 'none' || css.blur === undefined || css.blur === '').toBe(true);
   });
 
   test('every number on the board is read from the evidence files, and the waterfall adds up', async ({ page }) => {

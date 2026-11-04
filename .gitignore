@@ -56,3 +56,4 @@ docs/evidence/real-e2e/*.webm
 /card-*.png
 /elevenlabs-*.png
 docs/evidence/loop/soak-partial.json
+.tmp-shots/

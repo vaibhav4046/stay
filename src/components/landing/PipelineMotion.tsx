@@ -47,7 +47,7 @@ export function PipelineMotion() {
             <i />
           </div>
           <h3 className="pipe-name">It answers in a few words</h3>
-          <p className="pipe-copy">One small step, not a lecture. The reply starts speaking before it has finished being written.</p>
+          <p className="pipe-copy">One small step at a time. The reply starts speaking before it has finished being written.</p>
         </li>
         <li className="facet pipe-node" style={css({ '--i': 4 })}>
           <span className="pipe-step">5</span>
