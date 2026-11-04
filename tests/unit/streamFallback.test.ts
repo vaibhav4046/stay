@@ -34,6 +34,55 @@ describe('openLlmStream model fallback', () => {
     expect(models).toEqual(['openai/gpt-oss-120b', 'openai/gpt-oss-20b']);
   });
 
+  it('when every Groq bucket refuses, a configured second provider takes the turn', async () => {
+    vi.stubEnv('GROQ_API_KEY', 'test-key-1234567890');
+    vi.stubEnv('STAY_FALLBACK_LLM_BASE', 'https://fallback.example.com/v1');
+    vi.stubEnv('STAY_FALLBACK_LLM_KEY', 'fallback-key-1234567890');
+    vi.stubEnv('STAY_FALLBACK_LLM_MODEL', 'some-model');
+    const urls: string[] = [];
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+      urls.push(url);
+      return url.includes('fallback.example.com') ? new Response('data: [DONE]\n\n', { status: 200 }) : new Response('{}', { status: 429 });
+    }));
+    const r = await openLlmStream(req(), call);
+    expect(r.res).not.toBeNull();
+    expect(urls.at(-1)).toContain('fallback.example.com');
+    vi.unstubAllEnvs();
+  });
+
+  it('a second provider at a private address is never used', async () => {
+    vi.stubEnv('GROQ_API_KEY', 'test-key-1234567890');
+    vi.stubEnv('STAY_FALLBACK_LLM_BASE', 'http://127.0.0.1:9999/v1');
+    vi.stubEnv('STAY_FALLBACK_LLM_KEY', 'fallback-key-1234567890');
+    vi.stubEnv('STAY_FALLBACK_LLM_MODEL', 'some-model');
+    const urls: string[] = [];
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => { urls.push(url); return new Response('{}', { status: 429 }); }));
+    const r = await openLlmStream(req(), call);
+    expect(r.res).toBeNull();
+    expect(urls.some((u) => u.includes('127.0.0.1'))).toBe(false);
+    vi.unstubAllEnvs();
+  });
+
+  it('with two keys, a spare model is tried on the second key too (gate run: 37% of turns refused while the second key had room)', async () => {
+    vi.resetModules();
+    vi.stubEnv('GROQ_API_KEYS', 'keyAAAA-1234567890,keyBBBB-1234567890');
+    const { openLlmStream: open } = await import('@/lib/llm/stream');
+    const calls: string[] = [];
+    vi.stubGlobal('fetch', vi.fn(async (_url: string, init: { body: string; headers: Record<string, string> }) => {
+      const model = JSON.parse(init.body).model as string;
+      const key = init.headers.Authorization.includes('keyAAAA') ? 'A' : 'B';
+      calls.push(`${model.split('/').pop()}@${key}`);
+      // key A is spent on everything; key B is spent on the main model only
+      return key === 'B' && model !== 'openai/gpt-oss-120b' ? new Response('data: [DONE]\n\n', { status: 200 }) : new Response('{}', { status: 429 });
+    }));
+    const r = await open(req(), call);
+    expect(r.res).not.toBeNull();
+    expect(calls.at(-1)).toMatch(/gpt-oss-20b@B|qwen3.8-27b@B/);
+    expect(calls.filter((c) => c.endsWith('@A')).length).toBeGreaterThan(0);
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
+
   it('reports quota when every model is spent', async () => {
     vi.stubEnv('GROQ_API_KEY', 'test-key-1234567890');
     vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status: 429 })));
