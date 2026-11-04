@@ -100,7 +100,8 @@ describe('a timer starts only when asked for', () => {
     await post([{ role: 'user', content: 'I keep avoiding my taxes.' }]);
     const without = (streamMock.openLlmStream.mock.calls[0][1] as { tools: Array<{ function: { parameters: { properties: { action: { enum: string[] } } } } }> }).tools[0].function.parameters.properties.action.enum;
     expect(without).not.toContain('timer_start');
-    expect(without).toContain('open'); // other actions stay offered (park itself is offered only when asked, 3 Nov 2026)
+    expect(without).toContain('ground'); // actions that carry no side effect stay offered; open, plan, park and the rest are offered only when the words ask (3 and 4 Nov 2026)
+    expect(without).not.toContain('open');
 
     streamMock.openLlmStream.mockClear();
     await post([{ role: 'user', content: 'Set a five minute timer.' }]);

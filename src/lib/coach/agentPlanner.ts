@@ -111,7 +111,8 @@ export function breakDown(task: string, workMinutes = 10, now = new Date()): Ste
     task: t,
     at: now.toISOString(),
     steps: [
-      { text: `Open what you need for ${t}`, minutes: 2, done: false },
+      // "for the email" but "to write paper due at 9": a task said as a verb phrase needs "to" (it was read aloud as "open what you need for write paper")
+      { text: `Open what you need ${/^(?:to\s+)?(?:write|start|finish|do|make|send|reply|read|study|clean|call|email|pay|fix|plan|draft|submit|review|prepare|cook|book|buy|organi[sz]e|tidy|sort|file|print|upload|register|apply|revise|practi[sz]e|pack|wash|take|get|go|set up|sign|renew|check|update|complete|build|learn|text|message|ring)\b/i.test(t) ? `to ${t.replace(/^to\s+/i, '')}` : `for ${t}`}`, minutes: 2, done: false },
       { text: first, minutes: 5, done: false },
       { text: `Keep going on ${t}, rough is fine`, minutes: work, done: false },
       { text: 'Stop where you are and write down the next move', minutes: 2, done: false },

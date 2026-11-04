@@ -47,6 +47,8 @@ const ContextSchema = z
     recall: z.array(z.string().max(200)).max(3).optional(),
     /** one sentence built on the device from the person's own logged blocks; used as the check-in of a task reply */
     offer: z.string().max(200).optional(),
+    /** the hour on the person's own clock (0 to 23), so a reply at 2 a.m. can know it is the middle of the night */
+    localHour: z.number().int().min(0).max(23).optional(),
   })
   .optional();
 

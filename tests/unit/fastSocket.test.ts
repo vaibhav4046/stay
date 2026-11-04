@@ -84,7 +84,7 @@ let events: Array<Record<string, unknown>>;
 let openedSockets: FastSocket[] = []; // closed after each test so a late timer of one test never writes into the next
 let fetchMock: ReturnType<typeof vi.fn>;
 async function open(opts: { tools?: boolean; greeting?: string; holdMs?: number; autoLanguage?: boolean; personal?: string; freshTtsToken?: () => Promise<string> } = {}) {
-  const s = new FastSocket({ sttToken: 'stt', ttsToken: 'tts', holdMs: opts.holdMs ?? 60, interruptHoldMs: opts.holdMs ?? 60, warmUp: false, autoLanguage: opts.autoLanguage, freshTtsToken: opts.freshTtsToken });
+  const s = new FastSocket({ sttToken: 'stt', ttsToken: 'tts', holdMs: opts.holdMs ?? 60, interruptHoldMs: opts.holdMs ?? 60, proactiveQuietMs: 60, proactiveGiveUpMs: 700, warmUp: false, autoLanguage: opts.autoLanguage, freshTtsToken: opts.freshTtsToken });
   events = [];
   openedSockets.push(s);
   s.onmessage = (e) => events.push(JSON.parse(e.data));
@@ -399,6 +399,43 @@ describe('FastSocket', () => {
     const sent = JSON.parse(fetchMock.mock.calls[1][1].body as string).messages as Array<{ role: string; content: string }>;
     expect(sent.some((m) => m.role === 'assistant' && /too many requests/.test(m.content))).toBe(false);
     expect(events.filter((e) => e.type === 'transcript.agent').map((e) => e.text)).toEqual([MSG, 'Open the document and write one line.']); // still shown and spoken
+  });
+
+  it('a timer check-in waits while the person is mid-sentence and speaks only after they have been answered (owner: "the voice is breaking and in between the conversation started block timing")', async () => {
+    fetchMock.mockResolvedValue(sse(text('Open the document and write one line.')));
+    const { s, stt } = await open();
+    stt.push({ type: 'Turn', transcript: 'So the thing is, I', end_of_turn: false, turn_order: 0 }); // they are still talking
+    await tick(8);
+    s.send(JSON.stringify({ type: 'reply.say', text: 'Two minutes are up. How did it go?', when: 'idle' }));
+    await new Promise((r) => setTimeout(r, 250));
+    expect(events.filter((e) => e.type === 'transcript.agent')).toHaveLength(0); // it did not talk over them
+    stt.push({ type: 'Turn', transcript: 'So the thing is, I keep stalling.', end_of_turn: true, turn_order: 0, turn_is_formatted: true });
+    await new Promise((r) => setTimeout(r, 350));
+    const said = events.filter((e) => e.type === 'transcript.agent').map((e) => e.text);
+    expect(said[0]).toBe('Open the document and write one line.'); // the reply to them came first, whole
+  });
+
+  it('a timer check-in on a quiet call is spoken, after a short quiet', async () => {
+    const { s } = await open();
+    s.send(JSON.stringify({ type: 'reply.say', text: 'Two minutes are up. How did it go?', when: 'idle' }));
+    await new Promise((r) => setTimeout(r, 400));
+    expect(events.find((e) => e.type === 'transcript.agent')?.text).toBe('Two minutes are up. How did it go?');
+  });
+
+  it('a check-in that cannot find a quiet moment is dropped as stale, never spoken late over the conversation', async () => {
+    const { s, stt } = await open();
+    stt.push({ type: 'Turn', transcript: 'and then I', end_of_turn: false, turn_order: 0 });
+    await tick(8);
+    s.send(JSON.stringify({ type: 'reply.say', text: 'Two minutes are up.', when: 'idle' }));
+    await new Promise((r) => setTimeout(r, 1100)); // longer than the give-up time while they are still mid-sentence
+    expect(events.filter((e) => e.type === 'transcript.agent')).toHaveLength(0);
+  });
+
+  it('words the app forces on the voice (no "when") are still spoken at once', async () => {
+    const { s } = await open();
+    s.send(JSON.stringify({ type: 'reply.say', text: 'Okay, I will do that.' }));
+    await tick(20);
+    expect(events.find((e) => e.type === 'transcript.agent')?.text).toBe('Okay, I will do that.');
   });
 
   it('speculates immediately on short greetings like "Hi hello" even without terminal punctuation', async () => {

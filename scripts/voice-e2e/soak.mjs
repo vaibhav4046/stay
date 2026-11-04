@@ -168,6 +168,18 @@ await page.addInitScript(() => {
     return { startsIn: at - ac.currentTime, dur: buf.duration };
   };
   navigator.mediaDevices.getUserMedia = async () => { await ac.resume(); return dest.stream.clone(); };
+  // what appears on screen by itself: anything to do with plans, timers, blocks or check-ins, with the time it appeared
+  window.__ui = [];
+  const watch = () => new MutationObserver((muts) => {
+    for (const m of muts) for (const n of m.addedNodes) {
+      if (n.nodeType !== 1) continue;
+      for (const e of [n, ...(n.querySelectorAll ? n.querySelectorAll('[data-testid]') : [])]) {
+        const id = e.getAttribute && e.getAttribute('data-testid');
+        if (id && /plan|timer|block|focus|checkin|nudge|session|inline|treatment|countdown/.test(id)) window.__ui.push({ t: Date.now(), id });
+      }
+    }
+  }).observe(document, { childList: true, subtree: true });
+  watch();
   window.__states = [];
   setInterval(() => {
     const st = document.querySelector('[data-testid="call-state"]')?.textContent?.trim() || document.querySelector('[data-testid="orb-status"]')?.textContent?.trim() || '';
@@ -176,6 +188,33 @@ await page.addInitScript(() => {
     if (!last || last.s !== st || last.pb !== pb) window.__states.push({ t: Date.now(), s: st, pb });
   }, 50);
 });
+const CAPTURE = opt('--capture-audio', '');
+if (CAPTURE) {
+  await page.addInitScript(() => {
+    window.__aud = { list: [] };
+    const orig = AudioNode.prototype.connect;
+    const recs = new WeakMap();
+    AudioNode.prototype.connect = function (d, ...rest) {
+      const r = orig.call(this, d, ...rest);
+      try {
+        if (d && d === this.context.destination && this.context !== window.__micCtx) {
+          let md = recs.get(this.context);
+          if (!md) {
+            md = this.context.createMediaStreamDestination();
+            recs.set(this.context, md);
+            const rec = new MediaRecorder(md.stream, { mimeType: 'audio/webm;codecs=opus', audioBitsPerSecond: 128000 });
+            const entry = { chunks: [], startedAt: Date.now(), rec };
+            rec.ondataavailable = (e) => e.data.size && entry.chunks.push(e.data);
+            rec.start(250);
+            window.__aud.list.push(entry);
+          }
+          orig.call(this, md);
+        }
+      } catch { /* recording only */ }
+      return r;
+    };
+  });
+}
 await page.goto(BASE + '/app/today');
 await page.evaluate(() => { localStorage.clear(); localStorage.setItem('stay_fast_voice', '1'); localStorage.setItem('stay:mic_consented:v1', '1'); });
 await page.reload();
@@ -282,6 +321,9 @@ outer: while (now() < deadline) {
       let silentSpeaking = 0;
       for (let i = 0; i < st.length - 1; i++) if (st[i].s === 'Speaking' && st[i].pb === 'STOPPED' && i > 0 && st[i - 1].pb && st[i - 1].pb !== 'STOPPED') silentSpeaking = Math.max(silentSpeaking, st[i + 1].t - st[i].t);
       const flags = JARGON.filter(([re]) => re.test(reply)).map(([, n]) => n);
+      const ui = (await page.evaluate(() => window.__ui.splice(0))).map((x) => x.id);
+      const askedForIt = /timer|plan|break (?:it )?down|block|minute|start|history|report|settings|memory|check-in|checkin/i.test(said);
+      if (ui.length && !askedForIt) flags.push(`unrequested on screen: ${[...new Set(ui)].join(', ')}`);
       if (!reply) flags.push('no reply');
       const replyWords = reply.split(/\s+/).filter(Boolean).length;
       const longest = Math.max(0, ...reply.split(/[.!?]+/).map((s) => s.split(/\s+/).filter(Boolean).length));
@@ -291,7 +333,7 @@ outer: while (now() < deadline) {
       if (silentSpeaking > 1500) flags.push(`speaking over silence ${silentSpeaking} ms`);
       const wordsOver = overlap(said, heard);
       if (wordsOver < 0.6 && scene.lang !== 'hi') flags.push(`heard differently (${Math.round(wordsOver * 100)}%)`);
-      const turn = { bubbles: stayAll.slice(before.stay), replyWords, n: turns.length + 1, minute: Math.round((now() - T0) / 6000) / 10, scene: scene.id, said, heard, reply, firstSoundMs, flags };
+      const turn = { ui, bubbles: stayAll.slice(before.stay), replyWords, n: turns.length + 1, minute: Math.round((now() - T0) / 6000) / 10, scene: scene.id, said, heard, reply, firstSoundMs, flags };
       turns.push(turn);
       fs.writeFileSync(`docs/evidence/loop/soak-partial.json`, JSON.stringify({ partial: true, turns }, null, 1));
       history.push({ who: 'you', text: said }, { who: 'stay', text: reply });
@@ -307,6 +349,23 @@ async function waitHeard(n) {
 }
 
 const health = await page.evaluate(() => ({ playback: window.__stayPlayback || null, mem: performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1e6) : null }));
+if (CAPTURE) {
+  fs.mkdirSync(CAPTURE, { recursive: true });
+  const rec = await page.evaluate(async () => {
+    const out = [];
+    for (const e of window.__aud.list) {
+      try { e.rec.stop(); } catch { /* already stopped */ }
+      await new Promise((r) => setTimeout(r, 300));
+      const buf = new Uint8Array(await new Blob(e.chunks, { type: 'audio/webm' }).arrayBuffer());
+      let bin = '';
+      for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+      out.push({ startedAt: e.startedAt, b64: btoa(bin) });
+    }
+    return out;
+  });
+  rec.forEach((e, i) => fs.writeFileSync(path.join(CAPTURE, `stay-${i}.webm`), Buffer.from(e.b64, 'base64')));
+  console.log(`captured ${rec.length} audio part(s) of Stay's voice in ${CAPTURE}`);
+}
 await browser.close();
 const lat = turns.map((t) => t.firstSoundMs).filter((x) => x != null).sort((a, b) => a - b);
 const q = (p) => (lat.length ? lat[Math.min(lat.length - 1, Math.floor(lat.length * p))] : null);

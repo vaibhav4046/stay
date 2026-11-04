@@ -54,6 +54,10 @@ export interface FastSocketConfig {
   sampleRate?: number;
   /** How long to wait after a turn that trails off ("and, uh,") before answering. Default 2200 ms. */
   holdMs?: number;
+  /** how long the call must have been quiet before the app may speak first (a timer check-in, a nudge); default 2500 ms */
+  proactiveQuietMs?: number;
+  /** how long an app-started turn waits for a quiet moment before it is dropped as stale; default 25 s */
+  proactiveGiveUpMs?: number;
   /** Auto-detect mode: move the TTS session to the language the person switches to (when AssemblyAI TTS speaks it). */
   autoLanguage?: boolean;
   /** After an interruption, a short fragment ("Wait, stop.") is held this long in case the sentence continues. Default 900 ms. */
@@ -280,6 +284,9 @@ export function quickConfirmation(action: unknown, resultJson: string, ttsLangua
   return (QUICK_PHRASE[ttsLanguage] ?? QUICK_PHRASE.english)[kind];
 }
 
+/** What counts as the call being in use: someone spoke, or a reply began or ended. */
+const ACTIVITY_EVENTS = new Set(['input.speech.started', 'input.speech.stopped', 'transcript.user', 'transcript.agent', 'reply.started', 'reply.done']);
+
 /** What a prepared-but-not-yet-confirmed reply must not show the app. */
 const GATED_EVENTS = new Set(['reply.started', 'reply.text', 'reply.audio', 'transcript.agent', 'reply.done', 'tool.call']);
 
@@ -353,6 +360,9 @@ export class FastSocket {
   private stt: WebSocket | null = null;
   private tts: WebSocket | TtsConnection | null = null;
   private inUserTurn = false;
+  private lastActivityAt = 0; // the last time anyone spoke or a reply started or ended
+  private idleRun: (() => void) | null = null; // an app-started turn waiting for a quiet moment (only the newest is kept)
+  private idleTimer: ReturnType<typeof setTimeout> | undefined;
   private lastTurnOrder = -1;
   private genId = 0;
   private abort: AbortController | null = null;
@@ -404,7 +414,7 @@ export class FastSocket {
   private replyWatchdog: ReturnType<typeof setTimeout> | undefined;
 
   constructor(cfg: FastSocketConfig) {
-    this.cfg = { sampleRate: 16000, holdMs: 2200, interruptHoldMs: 900, warmUp: true, autoLanguage: false, ...cfg };
+    this.cfg = { sampleRate: 16000, holdMs: 2200, interruptHoldMs: 900, warmUp: true, autoLanguage: false, proactiveQuietMs: 2500, proactiveGiveUpMs: 25_000, ...cfg };
     queueMicrotask(() => {
       this.readyState = FastSocket.OPEN;
       this.onopen?.();
@@ -501,12 +511,19 @@ export class FastSocket {
       case 'capture.mode':
         this.captureOnly = m.on === true;
         break;
-      case 'reply.say':
-        if (typeof m.text === 'string' && m.text.trim()) this.speakOnly(m.text.trim().slice(0, 600)); // exact words, no model
+      case 'reply.say': {
+        const words = typeof m.text === 'string' ? m.text.trim().slice(0, 600) : '';
+        if (!words) break;
+        if (m.when === 'idle') this.whenIdle(() => this.speakOnly(words)); // exact words, no model
+        else this.speakOnly(words);
         break;
-      case 'reply.create':
-        void this.generate(typeof m.instructions === 'string' ? m.instructions : undefined);
+      }
+      case 'reply.create': {
+        const instructions = typeof m.instructions === 'string' ? m.instructions : undefined;
+        if (m.when === 'idle') this.whenIdle(() => void this.generate(instructions));
+        else void this.generate(instructions);
         break;
+      }
       case 'tool.result': {
         const w = this.toolWaiters.get(String(m.call_id));
         if (w) {
@@ -547,6 +564,8 @@ export class FastSocket {
   }
 
   private clearTtsTimers(): void {
+    this.idleRun = null; // an app-started turn that was waiting is dropped with the rest
+    if (this.idleTimer) clearTimeout(this.idleTimer);
     if (this.keepAliveTimer) {
       clearInterval(this.keepAliveTimer);
       this.keepAliveTimer = undefined;
@@ -662,6 +681,7 @@ export class FastSocket {
   }
 
   private emit(m: Json): void {
+    if (ACTIVITY_EVENTS.has(String(m.type))) this.lastActivityAt = Date.now();
     if (this.gated && GATED_EVENTS.has(String(m.type))) {
       this.held.push(m);
       return;
@@ -1245,6 +1265,36 @@ export class FastSocket {
     }
   }
 
+  /**
+   * A turn the app starts (a timer ending, a reminder, a nudge) waits for a quiet moment: Stay is not speaking, the person is not talking
+   * or about to answer, and the call has been quiet for a while. Reported by the owner after real use, 4 Nov 2026: "the voice is breaking
+   * and in between the conversation started block timing". Before this, such a turn spoke the instant it fired, cutting off Stay's reply
+   * or talking over the person. If the conversation has not paused for 25 s the turn is dropped: it is stale, and the timer is on screen.
+   */
+  private whenIdle(run: () => void): void {
+    const quietMs = this.cfg.proactiveQuietMs ?? 2500;
+    const giveUpMs = this.cfg.proactiveGiveUpMs ?? 25_000;
+    const queuedAt = Date.now();
+    this.idleRun = run;
+    if (this.idleTimer) clearTimeout(this.idleTimer);
+    const tick = () => {
+      if (this.closed || !this.idleRun) return;
+      const busy = this.agentSpeaking || this.inUserTurn || Boolean(this.carry) || this.spoken !== '' || this.spec !== null;
+      if (!busy && Date.now() - this.lastActivityAt >= quietMs) {
+        const go = this.idleRun;
+        this.idleRun = null;
+        go();
+        return;
+      }
+      if (Date.now() - queuedAt > giveUpMs) {
+        this.idleRun = null; // the conversation went on: this is stale
+        return;
+      }
+      this.idleTimer = setTimeout(tick, 250);
+    };
+    tick();
+  }
+
   private speakOnly(text: string): void {
     const gen = ++this.genId;
     this.llmDone = true;
@@ -1298,6 +1348,7 @@ export class FastSocket {
           ...(image ? { image } : {}),
           context: {
             language: s.ttsLanguage,
+            localHour: new Date().getHours(),
             notes: this.notes.slice(-4),
             ...(this.session?.personal ? { personal: this.session.personal } : {}),
             ...(recalled.length ? { recall: recalled } : {}),

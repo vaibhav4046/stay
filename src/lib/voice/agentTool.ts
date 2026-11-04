@@ -55,7 +55,7 @@ const SHAPE_BY_INTENT: Record<string, string> = {
 };
 
 export function buildServerVoiceSystemPrompt(
-  context?: { language?: string; notes?: string[]; personal?: string; offer?: string; recall?: string[] },
+  context?: { language?: string; notes?: string[]; personal?: string; offer?: string; recall?: string[]; localHour?: number },
   intent: string = 'other',
   opts: { overloaded?: boolean; recentOpeners?: string[]; lowMood?: boolean } = {},
 ): string {
@@ -73,6 +73,10 @@ export function buildServerVoiceSystemPrompt(
     SHAPE_BY_INTENT[intent] ?? SHAPE_BY_INTENT.other,
     opts.overloaded ? OVERLOAD_INSTRUCTION : '',
     opts.lowMood ? LOW_MOOD_INSTRUCTION : '',
+    // seen in a side-by-side text test, 4 Nov 2026: a general assistant used the person's clock ("it's almost 2 a.m."); at night this is said once, then they get what they asked for
+    typeof context?.localHour === 'number' && (context.localHour >= 23 || context.localHour < 5)
+      ? 'It is the middle of the night for them. If what they are doing can wait, say once that sleep can come first, then still help with exactly what they asked.'
+      : '',
     offer ? `Instead of your own check-in, end with this sentence exactly as written (it comes from what got this person started before): "${offer}"` : '',
     'Plain spoken words, said aloud. Sentences under fifteen words, one step at a time: no markdown, no emoji, no lists, no parentheses, quotation marks, shortcuts or file names. Never open with "Sure thing", "Hey there" or "Great question". Never say "I hear you", "I hear that", "I\'m right here with you", "You have my whole attention", "It sounds like" or "I understand".',
     'You cannot open or close other apps, sites or tabs, and you cannot see anything unless a picture was shown. Never say you did something you did not do. Start a timer only if the person asked for one.',
