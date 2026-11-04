@@ -8,7 +8,6 @@ import { LANGS_NO, LANGS_OK } from './resultsData';
 function Languages() {
   return (
     <div className="lp-langs" data-testid="languages">
-      <p className="lp-lang-head">Heard correctly ({LANGS_OK.length})</p>
       <ul className="lp-lang-grid" aria-label="Languages heard correctly">
         {LANGS_OK.map(([code, name]) => (
           <li key={code} className="lp-lang" data-ok="true">
@@ -16,17 +15,9 @@ function Languages() {
           </li>
         ))}
       </ul>
-      <p className="lp-lang-head">Not heard reliably ({LANGS_NO.length})</p>
-      <ul className="lp-lang-grid" aria-label="Languages not heard reliably">
-        {LANGS_NO.map(([code, name]) => (
-          <li key={code} className="lp-lang" data-ok="false">
-            {name}
-          </li>
-        ))}
-      </ul>
       <p className="lp-limits">
-        For these eight, Stay switches to your browser&apos;s own speech recognition, so how well it listens depends on your browser. Stay&apos;s
-        voice, from AssemblyAI, speaks six languages: English, Spanish, French, German, Italian and Portuguese.
+        Languages not listed were not heard reliably in this test. Stay&apos;s voice, from AssemblyAI, speaks six: English, Spanish, French,
+        German, Italian and Portuguese.
       </p>
     </div>
   );
@@ -57,7 +48,7 @@ export function Results() {
       <div className="lp-rhead lp-rhead-gap">
         <h3 className="sub-title">Languages checked in a live test</h3>
         <p className="lp-night-copy">
-          On 18 October 2026 we played one spoken sentence in each language into a live session and checked what came back. The first group was understood on auto-detect; the second was misheard. Beyond the six it speaks, the rest were seen working, not promised.
+          On 18 October 2026 we played one spoken sentence in each language into a live session and checked what came back. The languages below came back right on auto-detect. Beyond the six it speaks, they were seen working, not promised.
         </p>
       </div>
       <Languages />

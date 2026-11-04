@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 type Line = { who: 'you' | 'stay'; text: string };
 
@@ -69,36 +69,43 @@ export const OUTCOME: Record<string, { title: string; detail: string }> = {
   study: { title: 'First block · 30 min', detail: 'Study for the first exam for 30 minutes right after breakfast tomorrow.' },
 };
 
-const LEAD = { you: 650, stay: 700 }; // the speaking wave or the thinking dots before the words
-const PER_WORD = { you: 130, stay: 70 }; // words arrive as they are heard / as they are spoken
-const GAP = 450;
-const SOLVE_MS = 1000; // the ring turns while it is being worked out, then it is a tick
-const HOLD = 3200;
+// Pace. Real speech runs near 150 words a minute; the words here arrive a little quicker than that so the card does not drag, with the
+// pauses a voice makes at a comma and at the end of a sentence. Every word fades in.
+const LEAD = { you: 600, stay: 850 }; // the voice wave before the words / the thinking dots before Stay's words
+const PER_WORD = { you: 170, stay: 200 };
+const PAUSE_SENTENCE = 300;
+const PAUSE_CLAUSE = 150;
+const GAP = 650;
+const HOLD = 3800;
+const SOLVE_MS = 1100; // the ring turns while it is being worked out, then it is a tick
+const INTRO_MS = 1800; // once, when the card first plays: a big face settles into the header
+const FACE_BIG_MS = 900;
 const TICK = 60;
 const MAX_VISIBLE = 4;
+
+/** The moment each word appears, in ms from the first word. */
+export function wordOffsets(text: string, who: 'you' | 'stay'): number[] {
+  let t = 0;
+  return text.split(' ').map((w) => {
+    const at = t;
+    t += PER_WORD[who] + (/[.?!]["”’)]?$/.test(w) ? PAUSE_SENTENCE : /[,;:]$/.test(w) ? PAUSE_CLAUSE : 0);
+    return at;
+  });
+}
 
 /** When each line starts, when its words start, when it ends, and how long the whole scene runs. */
 export function plan(lines: Line[]) {
   let t = 0;
   const steps = lines.map((l) => {
-    const words = l.text.split(' ').length;
+    const offsets = wordOffsets(l.text, l.who);
     const start = t;
     const textStart = start + LEAD[l.who];
-    const end = textStart + words * PER_WORD[l.who];
+    const end = textStart + offsets[offsets.length - 1] + PER_WORD[l.who];
     t = end + GAP;
-    return { start, textStart, end, words };
+    return { start, textStart, end, offsets };
   });
-  const outcomeAt = (steps[steps.length - 1]?.end ?? 0) + 500; // the solved card appears after the last reply
+  const outcomeAt = (steps[steps.length - 1]?.end ?? 0) + 600; // the solved card appears after the last reply
   return { steps, outcomeAt, total: outcomeAt + SOLVE_MS + HOLD };
-}
-
-/** The voice, before the words: a ring that turns around a small wave. */
-function Orb() {
-  return (
-    <span className="hx-orb" aria-hidden="true">
-      <span className="hx-wave hx-wave-sm"><i /><i /><i /></span>
-    </span>
-  );
 }
 
 function Wave() {
@@ -119,18 +126,32 @@ function Dots() {
 
 export function HeroExample() {
   const [scene, setScene] = useState(0);
-  const [elapsed, setElapsed] = useState(0);
+  const [elapsed, setElapsed] = useState(-INTRO_MS); // below zero only the first time: the face settles in, then the call begins
   const [paused, setPaused] = useState(false);
   const [reduced, setReduced] = useState(false);
   const [onScreen, setOnScreen] = useState(true);
+  const [shift, setShift] = useState<{ dx: number; dy: number } | null>(null);
   const ref = useRef<HTMLElement>(null);
+  const slotRef = useRef<HTMLSpanElement>(null);
+  const threadRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
     setReduced(mq.matches);
+    if (mq.matches) setElapsed((e) => Math.max(0, e));
     const on = () => setReduced(mq.matches);
     mq.addEventListener?.('change', on);
     return () => mq.removeEventListener?.('change', on);
+  }, []);
+
+  // where the big face starts: the middle of the thread, measured once
+  useLayoutEffect(() => {
+    const slot = slotRef.current;
+    const thread = threadRef.current;
+    if (!slot || !thread) return;
+    const a = slot.getBoundingClientRect();
+    const t = thread.getBoundingClientRect();
+    setShift({ dx: t.left + t.width / 2 - (a.left + a.width / 2), dy: t.top + 110 - (a.top + a.height / 2) });
   }, []);
 
   useEffect(() => {
@@ -160,7 +181,7 @@ export function HeroExample() {
 
   const pick = (i: number) => {
     setScene(i);
-    setElapsed(0);
+    setElapsed((e) => (e < 0 ? e : 0)); // a choice made during the opening does not skip it
   };
 
   // what is on screen now: every line that has started (all of them when motion is reduced), the last few
@@ -169,39 +190,43 @@ export function HeroExample() {
     .filter(({ step }) => reduced || elapsed >= step.start)
     .slice(reduced ? 0 : -MAX_VISIBLE);
   const live = reduced ? null : shown.find(({ step }) => elapsed >= step.start && elapsed < step.end);
-  const status = reduced || paused ? (paused ? 'Paused' : 'Example') : live ? (live.line.who === 'you' ? 'Listening' : 'Stay is speaking') : 'Listening';
+  const speaking = live?.line.who === 'stay' && elapsed >= live.step.textStart;
+  const status = paused ? 'Paused' : reduced ? 'Example' : elapsed < 0 ? 'Stay' : live ? (live.line.who === 'you' ? 'Listening' : 'Speaking') : 'Listening';
+  const big = !reduced && shift !== null && elapsed < -INTRO_MS + FACE_BIG_MS;
+  const faceStyle = big && shift ? { transform: `translate(${shift.dx}px, ${shift.dy}px) scale(3.4)` } : undefined;
 
   return (
-    <figure ref={ref} className="lp-hero-example card p-5 sm:p-6" data-testid="hero-example" aria-labelledby="hero-example-caption">
+    <figure ref={ref} className="lp-hero-example card hx-card p-5 sm:p-6" data-testid="hero-example" aria-labelledby="hero-example-caption">
       <figcaption id="hero-example-caption" className="meta mb-3">
         An example exchange <span aria-hidden="true">·</span> word for word from real test calls with a synthetic speaker; real replies are generated live
       </figcaption>
 
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Example conversations">
-          {SCENES.map((s, i) => (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => pick(i)}
-              aria-pressed={i === scene}
-              data-testid={`hero-scene-${s.id}`}
-              className={`hx-chip ${i === scene ? 'hx-chip-on' : ''}`}
-            >
-              {s.chip}
-            </button>
-          ))}
-        </div>
+      <div className="hx-bar">
+        <span className="hx-face-slot" ref={slotRef} aria-hidden="true">
+          <span className="hx-face" data-mode={speaking ? 'speaking' : 'idle'} data-big={big ? 'true' : 'false'} style={faceStyle} />
+        </span>
+        <span className="hx-status" aria-hidden="true" data-testid="hero-status">{status}</span>
         {!reduced && (
-          <button type="button" onClick={() => setPaused((p) => !p)} aria-pressed={paused} className="hx-chip" data-testid="hero-pause">
+          <button type="button" onClick={() => setPaused((p) => !p)} aria-pressed={paused} className="hx-chip hx-pause" data-testid="hero-pause">
             {paused ? 'Play' : 'Pause'}
           </button>
         )}
       </div>
 
-      <p className="hx-status meta mb-2" aria-hidden="true" data-testid="hero-status">
-        <span className={`hx-live ${paused || reduced ? '' : 'hx-live-on'}`} /> {status}
-      </p>
+      <div className="hx-chips" role="group" aria-label="Example conversations">
+        {SCENES.map((s, i) => (
+          <button
+            key={s.id}
+            type="button"
+            onClick={() => pick(i)}
+            aria-pressed={i === scene}
+            data-testid={`hero-scene-${s.id}`}
+            className={`hx-chip ${i === scene ? 'hx-chip-on' : ''}`}
+          >
+            {s.chip}
+          </button>
+        ))}
+      </div>
 
       {/* the whole exchange for people who read it with a screen reader; the animation below repeats it */}
       <ol className="sr-only">
@@ -211,18 +236,22 @@ export function HeroExample() {
         <li>Result: {outcome.title}, {outcome.detail}</li>
       </ol>
 
-      <div className="hx-thread flex flex-col gap-3" aria-hidden="true">
+      <div className="hx-thread" ref={threadRef} aria-hidden="true">
         {shown.map(({ line, i, step }) => {
-          const heard = reduced || elapsed >= step.textStart;
           const words = line.text.split(' ');
-          const n = reduced ? words.length : Math.min(words.length, Math.floor((elapsed - step.textStart) / PER_WORD[line.who]) + 1);
-          const speaking = !reduced && elapsed < step.end;
+          const heard = reduced || elapsed >= step.textStart;
+          const n = reduced ? words.length : step.offsets.filter((o) => o <= elapsed - step.textStart).length;
+          const talking = !reduced && elapsed < step.end;
           return (
-            <div key={`${scene}-${i}`} className={`hx-pop flex flex-col ${line.who === 'you' ? 'items-end' : 'items-start'}`}>
-              <span className="mb-1 px-1 text-[0.78rem] font-medium text-ink-2">{line.who === 'you' ? 'You' : 'Stay'}</span>
-              <p className={`bubble ${line.who === 'you' ? 'bubble-user' : 'bubble-agent'} max-w-[34ch] px-4 py-2.5 text-[1rem] leading-[1.5] ${heard && line.who === 'you' && !reduced ? 'hx-grow' : ''}`}>
-                {heard ? words.slice(0, Math.max(1, n)).join(' ') : line.who === 'you' ? <Orb /> : <Dots />}
-                {heard && speaking && <> <Wave /></>}
+            <div key={`${scene}-${i}`} className={`hx-row hx-pop ${line.who === 'you' ? 'hx-row-you' : 'hx-row-stay'}`}>
+              <span className="hx-who">{line.who === 'you' ? 'You' : 'Stay'}</span>
+              <p className={`bubble hx-bubble ${line.who === 'you' ? 'hx-bubble-you' : 'hx-bubble-stay'}`}>
+                {heard
+                  ? words.slice(0, Math.max(1, n)).map((w, k) => (
+                      <span key={k} className={reduced ? undefined : 'hx-word'}>{w}{' '}</span>
+                    ))
+                  : line.who === 'you' ? <Wave /> : <Dots />}
+                {heard && talking && line.who === 'you' && <Wave />}
               </p>
             </div>
           );
