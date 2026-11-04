@@ -50,7 +50,7 @@ test.describe('Landing: the film', () => {
 
   test('nothing of the film is downloaded until it is on screen (it is below the fold, and a phone should not pay for it on load)', async ({ page }) => {
     const film: string[] = [];
-    page.on('request', (r) => { if (/stay-pix-film-web\.mp4/.test(r.url())) film.push(r.url()); });
+    page.on('request', (r) => { if (/stay-story-film-web\.mp4/.test(r.url())) film.push(r.url()); });
     await page.goto('/', { waitUntil: 'load' });
     await page.waitForTimeout(1500);
     expect(film).toHaveLength(0);

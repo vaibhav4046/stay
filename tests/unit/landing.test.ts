@@ -9,7 +9,7 @@ import { PERSONAS } from '@/lib/voice/personas';
 import { LANGS_NO, LANGS_OK } from '@/components/landing/resultsData';
 import { weekTally } from '@/lib/coach/weekTally';
 
-const vtt = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'demo', 'stay-pix-film-v2.vtt'), 'utf8');
+const vtt = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'demo', 'stay-story-film.vtt'), 'utf8');
 const cues = [...vtt.matchAll(/(\d\d):(\d\d):(\d\d\.\d{3}) --> [^\n]*\n([^\n]+)/g)].map((m) => ({
   start: Number(m[1]) * 3600 + Number(m[2]) * 60 + Number(m[3]),
   text: m[4].trim(),

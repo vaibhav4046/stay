@@ -282,9 +282,9 @@ test('the landing page has the film with a captions track and a sound button, an
   await page.goto('/');
   const video = page.getByTestId('demo-video').locator('video');
   await expect(video.locator('track[kind="captions"]')).toHaveCount(1);
-  await expect(video).toHaveAttribute('poster', '/demo/stay-pix-film-v2-poster.jpg');
+  await expect(video).toHaveAttribute('poster', '/demo/stay-story-film-poster.jpg');
   await expect(page.getByTestId('film-sound')).toBeVisible();
-  for (const path of ['/demo/stay-pix-film-web.mp4', '/demo/stay-pix-film-v2.vtt', '/demo/stay-pix-film-v2-poster.jpg']) {
+  for (const path of ['/demo/stay-story-film-web.mp4', '/demo/stay-story-film.vtt', '/demo/stay-story-film-poster.jpg']) {
     const res = await request.head(path);
     expect(res.ok(), path).toBe(true);
   }

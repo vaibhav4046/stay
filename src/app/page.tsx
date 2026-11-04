@@ -29,9 +29,9 @@ export default function Home() {
 
         <section id="watch" data-landing-section="2" className="lp-night lp-band" aria-labelledby="watch-title" data-testid="demo-video">
           <div className="lp-wrap">
-            <h2 id="watch-title" className="section-title lp-night-title max-w-[26ch]">A paper due at nine. A thumb stuck on Instagram.</h2>
+            <h2 id="watch-title" className="section-title lp-night-title max-w-[26ch]">A paper due at nine. A thumb stuck on the feed.</h2>
             <p className="lp-night-copy mt-3 max-w-[62ch]">
-              Two and a half minutes, one real call. Pix is an invented character with a synthetic voice (ElevenLabs). Stay&apos;s replies and its voice (AssemblyAI) are the real thing, recorded in the real app. It plays on its own; press Sound to hear it.
+              Two minutes forty-nine seconds, a short story built around one real call. Pix is an invented character with a synthetic voice (ElevenLabs). Stay&apos;s replies and its voice (AssemblyAI) are the real thing, recorded in the real app. It plays on its own; press Sound to hear it.
             </p>
           </div>
           <FilmStage />

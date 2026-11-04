@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react';
  * One button turns the sound on (browsers only allow sound after a tap); one turns the captions on or off. No scrubber, no chapters.
  * With "reduce motion" set it does not start by itself: the first frame waits with a play button.
  */
-export const FILM = { mp4: '/demo/stay-pix-film-web.mp4', vtt: '/demo/stay-pix-film-v2.vtt', poster: '/demo/stay-pix-film-v2-poster.jpg' } as const;
+export const FILM = { mp4: '/demo/stay-story-film-web.mp4', vtt: '/demo/stay-story-film.vtt', poster: '/demo/stay-story-film-poster.jpg' } as const;
 
 export function FilmStage() {
   const video = useRef<HTMLVideoElement>(null);

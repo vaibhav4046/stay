@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Stay story: captions and end card</title>
+<style>
+  :root { --stay: #8ec9ff; --ink: #f5f9ff; --panel: rgba(8, 14, 30, 0.8); }
+  html, body { margin: 0; background: transparent; }
+  body { width: 1920px; height: 1080px; position: relative; overflow: hidden; font-family: Rubik, 'Segoe UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  #cap { position: absolute; left: 100px; top: 690px; width: 1720px; height: 240px; display: flex; align-items: flex-end; justify-content: center; opacity: 0; }
+  #panel { display: flex; align-items: center; gap: 26px; max-width: 1560px; padding: 22px 40px 24px 28px; background: var(--panel); border: 1.5px solid rgba(255,255,255,0.18); border-radius: 34px; box-shadow: 0 10px 40px rgba(0,0,0,0.35); margin-bottom: 14px; }
+  #dot { flex: none; width: 46px; height: 46px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #d9efff, #5ab0ff 55%, #2b6fd0); box-shadow: 0 0 0 5px rgba(142,201,255,0.18), 0 0 26px rgba(90,176,255,0.55); position: relative; }
+  #dot::after { content: ''; position: absolute; inset: -9px; border-radius: 50%; border: 3px dotted rgba(142,201,255,0.85); }
+  #who { position: absolute; left: 0; top: 0; }
+  #txt { font-size: 46px; line-height: 1.3; font-weight: 500; color: var(--ink); max-width: 1380px; text-wrap: pretty; letter-spacing: 0.1px; }
+  #txt span { display: inline-block; white-space: pre; opacity: 0; }
+  #end { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 42%, #0d1a33 0%, #05070d 62%); opacity: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: var(--ink); }
+  #end .mark { width: 120px; height: 120px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #d9efff, #5ab0ff 55%, #2b6fd0); box-shadow: 0 0 80px rgba(90,176,255,0.5); position: relative; margin-bottom: 52px; }
+  #end .mark::after { content: ''; position: absolute; inset: -22px; border-radius: 50%; border: 6px dotted rgba(142,201,255,0.8); }
+  #end h1 { margin: 0; font-size: 150px; font-weight: 700; letter-spacing: -2px; }
+  #end h2 { margin: 18px 0 0; font-size: 62px; font-weight: 500; color: #dcebff; }
+  #end .url { margin-top: 44px; font-size: 48px; font-weight: 500; color: var(--stay); }
+  #end .made { margin-top: 34px; font-size: 34px; color: #cfdcf0; }
+  #end .cred { position: absolute; bottom: 70px; left: 0; right: 0; font-size: 26px; color: #a9b8d0; }
+  #end > * { opacity: 0; }
+</style></head>
+<body>
+<div id="cap"><div id="panel"><div id="dot"></div><div id="txt"></div></div></div>
+<div id="end"><div class="mark"></div><h1>Stay.</h1><h2>Start the thing you&rsquo;ve been avoiding.</h2><div class="url">stay-two-swart.vercel.app</div><div class="made">Made for the AssemblyAI hackathon</div><div class="cred">Pix&rsquo;s voice, effects and music are synthetic (ElevenLabs). Stay&rsquo;s replies and voice are real (AssemblyAI).</div></div>
+<script>
+// pages: [{ t0, t1, words: [{ w, t }] }] in film seconds. window.cap(t) draws the caption layer and returns a key of what is on screen (equal keys = equal pixels).
+const cap = document.getElementById('cap'), txt = document.getElementById('txt'), dot = document.getElementById('dot');
+let PAGES = [], cur = -1;
+window.setPages = (p) => { PAGES = p; cur = -1; };
+const clamp = (v) => Math.max(0, Math.min(1, v));
+window.cap = (t) => {
+  const i = PAGES.findIndex((p) => t >= p.t0 && t < p.t1);
+  if (i < 0) { cap.style.opacity = 0; return 'none'; }
+  const p = PAGES[i];
+  if (i !== cur) { cur = i; txt.innerHTML = ''; p.words.forEach((w, k) => { const s = document.createElement('span'); s.textContent = w.w + (k < p.words.length - 1 ? ' ' : ''); txt.appendChild(s); }); }
+  const a = Math.min(clamp((t - p.t0) / 0.2), clamp((p.t1 - t) / 0.3)), ops = [];
+  [...txt.children].forEach((s, k) => { const o = clamp((t - p.words[k].t) / 0.16); const r = Math.round(o * 8) / 8; ops.push(r); s.style.opacity = r; s.style.transform = `translateY(${((1 - r) * 8).toFixed(1)}px)`; });
+  cap.style.opacity = Math.round(a * 16) / 16; cap.style.transform = `translateY(${((1 - a) * 12).toFixed(0)}px)`;
+  const speaking = p.words.some((w, k) => t >= w.t && t < w.t + 0.35); dot.style.transform = speaking ? 'scale(1.08)' : 'scale(1)';
+  return i + ':' + ops.join(',') + ':' + Math.round(a * 16) + ':' + speaking;
+};
+window.endcard = (t) => { // t seconds since the card started
+  const e = document.getElementById('end'); cap.style.opacity = 0; e.style.opacity = 1;
+  const kids = [...e.children], at = [0.2, 0.9, 1.5, 2.3, 3.0, 3.6];
+  kids.forEach((k, i) => { const o = Math.round(clamp((t - at[i]) / 0.5) * 12) / 12; k.style.opacity = o; k.style.transform = k.classList.contains('cred') ? '' : `translateY(${((1 - o) * 14).toFixed(0)}px)`; });
+  return kids.map((k) => k.style.opacity).join(',');
+};
+</script></body></html>
