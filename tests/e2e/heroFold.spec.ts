@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 
-// The hero is a dual-screen foldable that plays the recorded call (HeroExample.tsx, FoldFrame.tsx, fold.css).
+// The hero is a book-style foldable (one inner display, two halves that meet at the spine) that plays the recorded call, in a real CSS 3D scene
+// (HeroExample.tsx, FoldFrame.tsx, foldGeometry.ts, fold.css). The device floats a few degrees, so sizes are checked with a little room.
 
 const open = async (page: Page) => {
   await page.goto('/', { waitUntil: 'networkidle' });
@@ -12,9 +13,10 @@ const rect = (page: Page, selector: string) =>
     return { x: r.x, y: r.y, w: r.width, h: r.height, right: r.right, bottom: r.bottom };
   });
 const overflowX = (page: Page) => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+const tilt = (page: Page) => page.locator('.fd').evaluate((el) => Number((el as HTMLElement).style.getPropertyValue('--tilt-ry') || 0));
 
 test.describe('Landing hero: the foldable', () => {
-  test('1280 x 800: the headline, the sentence and the round mic are on the first screen, with the device beside them and straight', async ({ page }) => {
+  test('1280 x 800: the headline, the sentence and the round mic are on the first screen, with the device beside them', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await open(page);
     for (const sel of ['h1', '.lp-composer', '[data-testid=hero-start]']) {
@@ -30,23 +32,22 @@ test.describe('Landing hero: the foldable', () => {
     expect(device.w).toBeLessThanOrEqual(680);
     const a = await rect(page, '.fd-a .fd-screen');
     const b = await rect(page, '.fd-b .fd-screen');
-    expect(Math.abs(a.w - 290)).toBeLessThanOrEqual(4);
-    expect(Math.abs(a.h - 420)).toBeLessThanOrEqual(4);
-    expect(b.x).toBeGreaterThan(a.right); // the hinge is between them
-    expect(Math.abs(a.y - b.y)).toBeLessThanOrEqual(1); // straight, not tilted
-    expect(await page.locator('.fd-stage').evaluate((el) => getComputedStyle(el).transform)).toBe('none');
+    expect(Math.abs(a.w - 292)).toBeLessThanOrEqual(16); // about 290 x 420 each
+    expect(Math.abs(a.h - 420)).toBeLessThanOrEqual(24);
+    expect(b.x).toBeGreaterThan(a.x + a.w * 0.8); // the second half is to the right of the first, meeting it at the spine
+    expect(Math.abs(((a.w * 2) / a.h) - 4 / 3)).toBeLessThan(0.3); // one display, about 4:3 when open
     expect(await overflowX(page)).toBeLessThanOrEqual(0);
   });
 
-  test('phone: the foldable is stacked, hinge horizontal, first screen on top, the same width, and inside the viewport', async ({ page }) => {
+  test('phone: the foldable is stacked, spine horizontal, first half on top, the same width, and inside the viewport', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await open(page);
     const a = await rect(page, '.fd-a .fd-screen');
     const b = await rect(page, '.fd-b .fd-screen');
     const device = await rect(page, '.fd');
-    expect(b.y).toBeGreaterThan(a.bottom);
-    expect(Math.abs(a.w - b.w)).toBeLessThanOrEqual(1);
-    expect(Math.abs(a.x - b.x)).toBeLessThanOrEqual(1);
+    expect(b.y).toBeGreaterThan(a.y + a.h * 0.8);
+    expect(Math.abs(a.w - b.w)).toBeLessThanOrEqual(10);
+    expect(Math.abs(a.x - b.x)).toBeLessThanOrEqual(10);
     expect(device.x).toBeGreaterThanOrEqual(0);
     expect(device.right).toBeLessThanOrEqual(390);
     expect(await overflowX(page)).toBeLessThanOrEqual(0);
@@ -56,7 +57,7 @@ test.describe('Landing hero: the foldable', () => {
     await expect(page.getByTestId('hero-pause')).toBeVisible();
   });
 
-  test('the second screen takes the second half of the call and the solved step lands last on it; the text is real, in reading order', async ({ page }) => {
+  test('the second half takes the second half of the call and the solved step lands last on it; the text is real, in reading order', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await open(page);
     const onA = await page.locator('.fd-a .bubble').allTextContents();
@@ -76,7 +77,7 @@ test.describe('Landing hero: the foldable', () => {
     await expect(page.locator('.fd .bubble')).toHaveCount(4);
   });
 
-  test('choosing a scene folds the second screen shut and open again, animating only transform, opacity and filter', async ({ page }) => {
+  test('choosing a scene folds the second half shut and open again, animating only transform, opacity and filter', async ({ page }) => {
     await open(page);
     const fd = page.locator('.fd');
     await expect(fd).toHaveAttribute('data-phase', 'play');
@@ -85,21 +86,23 @@ test.describe('Landing hero: the foldable', () => {
     const props = await page.evaluate(() =>
       document
         .getAnimations()
-        .filter((a) => /^fd-(b|a|content|glass|glow)/.test((a as CSSAnimation).animationName ?? ''))
+        .filter((a) => /^fd-/.test((a as CSSAnimation).animationName ?? ''))
         .flatMap((a) => (a.effect as KeyframeEffect).getKeyframes().flatMap((k) => Object.keys(k)))
     );
     const allowed = new Set(['transform', 'opacity', 'filter', 'offset', 'easing', 'composite', 'computedOffset']);
     expect(props.length).toBeGreaterThan(0);
     expect(props.filter((p) => !allowed.has(p))).toEqual([]);
-    expect(await page.locator('.fd-b').evaluate((el) => getComputedStyle(el).transformOrigin)).not.toBe('50% 50%'); // it turns about the hinge
+    expect(await page.locator('.fd-b').evaluate((el) => getComputedStyle(el).transformOrigin)).not.toBe('50% 50%'); // it turns about the spine
     await expect(fd).toHaveAttribute('data-phase', 'opening', { timeout: 3000 });
     await expect(fd).toHaveAttribute('data-phase', 'play', { timeout: 3000 });
     await expect(page.getByTestId('hero-scene-rent')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('.fd-a .bubble').first()).toBeVisible();
   });
 
-  test('pausing stops the fold where it is, and the grain overlay is only off while a fold is actually running', async ({ page }) => {
+  test('pausing stops the fold where it is; the grain overlay is off only while the device is playing', async ({ page }) => {
     await open(page);
+    const grain = () => page.evaluate(() => getComputedStyle(document.body, '::after').display);
+    expect(await grain()).toBe('none'); // playing on screen: the full-screen blend is off (it halves the frame rate of anything big that moves)
     await page.getByTestId('hero-scene-study').click();
     const fd = page.locator('.fd');
     await expect(fd).toHaveAttribute('data-phase', 'closing');
@@ -107,6 +110,34 @@ test.describe('Landing hero: the foldable', () => {
     await expect(fd).toHaveAttribute('data-halt', 'true');
     await page.waitForTimeout(1400);
     await expect(fd).toHaveAttribute('data-phase', 'closing'); // still shut, not moved on
-    expect(await page.evaluate(() => getComputedStyle(document.body, '::after').display)).not.toBe('none');
+    expect(await grain()).not.toBe('none'); // paused: the grain is back
+  });
+
+  test('a real 3D scene: perspective on the stage, preserve-3d down the rig, an edge of strips, and the device leans toward the pointer (clamped)', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await open(page);
+    expect(await page.locator('.fd-stage').evaluate((el) => getComputedStyle(el).perspective)).not.toBe('none');
+    for (const sel of ['.fd-tilt', '.fd-float', '.fd-half.fd-a', '.fd-half.fd-b']) {
+      expect(await page.locator(sel).evaluate((el) => getComputedStyle(el).transformStyle), sel).toBe('preserve-3d');
+    }
+    expect(await page.locator('.fd-only-wide .fd-facet').count()).toBeGreaterThan(20);
+    await page.mouse.move(1270, 790);
+    await expect.poll(() => tilt(page)).toBeGreaterThan(1);
+    expect(Math.abs(await tilt(page))).toBeLessThanOrEqual(8);
+    const rx = await page.locator('.fd').evaluate((el) => Number((el as HTMLElement).style.getPropertyValue('--tilt-rx')));
+    expect(Math.abs(rx)).toBeLessThanOrEqual(8);
+    await page.mouse.move(2, 5);
+    await expect.poll(() => tilt(page)).toBeLessThan(-1);
+  });
+
+  test('reduced motion: flat and still: no 3D parts, no float, no lean', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await open(page);
+    await page.mouse.move(1270, 790);
+    await page.waitForTimeout(300);
+    expect(await page.locator('.fd').evaluate((el) => (el as HTMLElement).style.getPropertyValue('--tilt-ry'))).toBe('');
+    expect(await page.locator('.fd-only-wide .fd-facet').first().evaluate((el) => getComputedStyle(el).display)).toBe('none');
+    expect(await page.locator('.fd-float').evaluate((el) => getComputedStyle(el).animationName)).toBe('none');
   });
 });

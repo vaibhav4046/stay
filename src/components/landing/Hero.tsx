@@ -35,7 +35,7 @@ export function Hero() {
     <section className="lp-hero lp-wrap" aria-labelledby="hero-title">
       <div className="lp-hero-copy">
         <h1 id="hero-title" className="hero-title max-w-[17ch]">Start the thing you&apos;ve been avoiding.</h1>
-        <p className="mt-5 max-w-[46ch] text-[1.12rem] leading-relaxed text-ink-2">
+        <p className="mt-5 max-w-[46ch] text-pretty text-[1.12rem] leading-relaxed text-ink-2">
           Say what you&apos;re putting off. Stay finds a <span className="whitespace-nowrap">two-minute</span> first step and stays while you do it.
         </p>
 
