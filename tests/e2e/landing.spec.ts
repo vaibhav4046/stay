@@ -90,7 +90,7 @@ test.describe('Landing: measured results', () => {
     await expect(sec.getByTestId('result-limits')).toContainText(/simulated speaker/i);
     await expect(sec.getByTestId('languages')).toContainText('Portuguese');
     expect(await sec.locator('[data-ok="true"]').count()).toBe(23);
-    expect(await sec.locator('[data-ok="false"]').count()).toBe(8);
+    expect(await sec.locator('[data-ok="false"]').count()).toBe(0); // the languages that were not heard reliably are not listed
     await expect(page.locator('body')).not.toContainText(/chatgpt|gemini|slower here|where stay lost/i);
   });
 
