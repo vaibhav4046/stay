@@ -57,3 +57,5 @@ docs/evidence/real-e2e/*.webm
 /elevenlabs-*.png
 docs/evidence/loop/soak-partial.json
 .tmp-shots/
+
+.next-server.log
