@@ -154,20 +154,26 @@ test.describe('Scorecard regressions (each asserts the real behaviour, not a toa
     await expect(page.getByTestId('pdf-success-status')).toContainText('stay-summary-');
   });
 
-  test('running focus session displays active timer warning banner', async ({ page }) => {
+  test('a running focus block shows the clock and Stop, and no extra notice about other tabs', async ({ page }) => {
     await onboard(page);
     await startBlock(page, 'Read one paragraph');
-    await expect(page.getByTestId('active-timer-tab-warning')).toBeVisible();
+    await expect(page.getByTestId('timer-card')).toBeVisible();
+    await expect(page.getByTestId('stop-timer')).toBeVisible();
+    await expect(page.getByTestId('active-timer-tab-warning')).toHaveCount(0);
   });
 
-  test('"More" sheet presents structured sections for overwhelmed users', async ({ page }) => {
+  test('"More" sheet is a short, grouped list for overwhelmed users', async ({ page }) => {
     await onboard(page);
     await page.getByTestId('menu-button').click();
-    await expect(page.locator('text=Calm & Focus')).toBeVisible();
-    await expect(page.locator('text=Voice & Audio')).toBeVisible();
-    await expect(page.locator('text=Workspace & History')).toBeVisible();
-    await expect(page.getByTestId('parking-open')).toBeVisible();
-    await expect(page.getByTestId('companion-toggle')).toBeVisible();
-    await expect(page.getByTestId('remind-open')).toBeVisible();
+    const menu = page.getByRole('dialog', { name: 'More' });
+    await expect(menu.getByText('Calm and focus', { exact: true })).toBeVisible();
+    await expect(menu.getByText('Voice', { exact: true })).toBeVisible();
+    for (const id of ['menu-ground', 'menu-dump', 'menu-today', 'menu-routines', 'menu-voice', 'menu-quiet']) {
+      await expect(page.getByTestId(id), id).toBeVisible();
+    }
+    // moved out: parked thoughts, check-ins and history open when asked, and the all-day switch is in the voice sheet (see core.spec.ts)
+    for (const gone of ['parking-open', 'remind-open', 'companion-toggle', 'menu-history', 'menu-vision', 'menu-call-later']) {
+      await expect(page.getByTestId(gone), gone).toHaveCount(0);
+    }
   });
 });

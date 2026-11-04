@@ -9,7 +9,7 @@ export function ShowStayPanel({ onShare, onPicture, onClose }: { onShare: (mode:
   const camera = canUseCamera();
   return (
     <Sheet title="Show Stay" onClose={onClose}>
-      <p className="text-ink-2">Let Stay see what you are working on, so it can help with the real thing, not a description of it.</p>
+      <p className="text-ink-2">Let Stay see what you are working on, so it can help with the real thing.</p>
       <div className="mt-4 grid gap-2 sm:grid-cols-3">
         <button type="button" className="btn btn-secondary flex-col !items-start gap-0.5 !py-3 text-left" disabled={!screen} onClick={() => onShare('screen')} data-testid="share-screen">
           <span className="font-semibold">Share my screen</span>

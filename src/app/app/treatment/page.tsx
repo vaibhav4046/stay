@@ -5,6 +5,7 @@ import { useStayData } from '@/lib/storage/useStayData';
 import { TreatmentCheckinForm } from '@/components/TreatmentCheckinForm';
 import { computeAdherenceSummary } from '@/lib/coach/patterns';
 import { PageSkeleton } from '@/components/PageSkeleton';
+import { PageHeading } from '@/components/PageHeading';
 
 export default function TreatmentPage() {
   const { profile, checkins, loaded, addCheckin } = useStayData('app');
@@ -19,7 +20,7 @@ export default function TreatmentPage() {
         <div className="mb-6 rounded-2xl border border-primary/20 bg-primary/5 p-4 flex flex-wrap items-center justify-between gap-3" data-testid="onboarding-guide-banner">
           <div>
             <p className="font-semibold text-sm text-ink">Welcome to Stay</p>
-            <p className="text-xs text-ink-2 mt-0.5">Complete the quick 2-question setup on Today to personalize check-ins and voice coaching.</p>
+            <p className="text-xs text-ink-2 mt-0.5">Answer two quick questions on Today so Stay can fit its check-ins to you.</p>
           </div>
           <Link href="/app/today" className="btn btn-primary text-xs py-2 px-3">
             Start setup
@@ -27,16 +28,16 @@ export default function TreatmentPage() {
         </div>
       )}
 
+      <PageHeading className="mb-5">Check-in</PageHeading>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div>
-          <h1 className="section-title mb-5">Check-in</h1>
           <TreatmentCheckinForm
             onSubmit={addCheckin}
             showTreatment={profile.careContext === 'medicated'}
             initialCheckin={todayCheckin}
           />
         </div>
-        <section className="card p-5 sm:p-6 h-fit lg:mt-[3.25rem]" aria-labelledby="adh-title">
+        <section className="card p-5 sm:p-6 h-fit" aria-labelledby="adh-title">
           <h2 id="adh-title" className="card-title">Last 14 days</h2>
           {summary.totalCheckins === 0 ? (
             <p className="text-ink-2 mt-2">No check-ins yet.</p>

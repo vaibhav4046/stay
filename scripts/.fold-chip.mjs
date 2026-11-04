@@ -1,0 +1,10 @@
+import { chromium } from '@playwright/test';
+const browser = await chromium.launch({ args: ['--mute-audio'] });
+const ctx = await browser.newContext({ viewport: { width: 390, height: 1400 }, reducedMotion: 'reduce', deviceScaleFactor: 2 });
+const page = await ctx.newPage();
+await page.goto('http://localhost:3120/', { waitUntil: 'networkidle' });
+await page.waitForTimeout(800);
+console.log(await page.evaluate(() => [...document.querySelectorAll('.fd-chip')].map((c) => { const s = getComputedStyle(c); const r = c.getBoundingClientRect(); return `${c.textContent}: color ${s.color} opacity ${s.opacity} y${Math.round(r.y)} anim ${s.animationName}`; })));
+const el = page.locator('.fd-controls');
+await el.screenshot({ path: 'C:/Users/lalwa/AppData/Local/Temp/claude/D--/697552a1-f809-44de-a453-57c714bd21a7/scratchpad/fold/chips2.png' });
+await browser.close();

@@ -1,0 +1,169 @@
+{
+ "at": "2026-11-04T03:11:33.814Z",
+ "failed": null,
+ "cues": [
+  {
+   "t": 21.787,
+   "end": 28.474333333333334,
+   "who": "person",
+   "text": "I'm Pix. I have a paper due at nine tomorrow, and my thumb is stuck on Instagram. Let's see if Stay can actually get me started.",
+   "kind": "vo"
+  },
+  {
+   "t": 29.826,
+   "end": 33.03033333333333,
+   "who": "person",
+   "text": "I have a paper due at nine tomorrow and I'm just scrolling reels.",
+   "kind": "say"
+  },
+  {
+   "t": 34.729,
+   "end": 41.039,
+   "who": "stay",
+   "text": "Sleep will help you think clearer. When you wake, open the paper and write the introduction outline."
+  },
+  {
+   "t": 43.203,
+   "end": 46.035833333333336,
+   "who": "person",
+   "text": "Don't give me a lecture. Just tell me what to do right now.",
+   "kind": "say"
+  },
+  {
+   "t": 46.937,
+   "end": 51.597,
+   "who": "stay",
+   "text": "Open the document and type a single sentence about your main argument."
+  },
+  {
+   "t": 53.689,
+   "end": 55.593041666666664,
+   "who": "person",
+   "text": "Okay. Set a one minute timer.",
+   "kind": "say"
+  },
+  {
+   "t": 56.682,
+   "end": 57.712,
+   "who": "stay",
+   "text": "Done."
+  },
+  {
+   "t": 59.925,
+   "end": 62.94358333333333,
+   "who": "person",
+   "text": "Why would I use this and not just ask a regular chatbot?",
+   "kind": "say"
+  },
+  {
+   "t": 63.25699999999999,
+   "end": 82.107,
+   "who": "stay",
+   "text": "A clock app starts a timer, and a general voice assistant will talk about anything. I'm for the moment you're stuck. Tell me what you're avoiding and I give you one tiny first step, start the clock with you, and wait through your pauses. When time's up I check in, and I remember what helped."
+  },
+  {
+   "t": 84.44,
+   "end": 86.483375,
+   "who": "person",
+   "text": "Remember that I scroll when I'm anxious.",
+   "kind": "say"
+  },
+  {
+   "t": 87.17299999999999,
+   "end": 89.523,
+   "who": "stay",
+   "text": "Got it, I will remember."
+  },
+  {
+   "t": 90.974,
+   "end": 94.03904166666668,
+   "who": "person",
+   "text": "Okay. Document open. One sentence. Two.",
+   "kind": "vo"
+  },
+  {
+   "t": 116.20299999999999,
+   "end": 123.833,
+   "who": "stay",
+   "text": "Did you start the timer and get the paper open? If so, let me know so I can record your progress."
+  },
+  {
+   "t": 125.795,
+   "end": 127.28108333333334,
+   "who": "person",
+   "text": "Yeah. I wrote two lines.",
+   "kind": "say"
+  },
+  {
+   "t": 128.736,
+   "end": 132.40599999999998,
+   "who": "stay",
+   "text": "Nice work. Write one more sentence to keep momentum."
+  },
+  {
+   "t": 134.533,
+   "end": 135.64754166666665,
+   "who": "person",
+   "text": "Show my report.",
+   "kind": "say"
+  },
+  {
+   "t": 137.10399999999998,
+   "end": 138.134,
+   "who": "stay",
+   "text": "Done."
+  },
+  {
+   "t": 143.924,
+   "end": 153.02620833333333,
+   "who": "person",
+   "text": "It kept it short. It started the clock when I asked. It came back when time was up. And it remembers me. That's the difference. Now I'm going to finish this paper.",
+   "kind": "vo"
+  }
+ ],
+ "titles": [
+  {
+   "t": 21.934,
+   "end": 25.834,
+   "text": "Pix has a paper due at nine.",
+   "sub": "And a thumb stuck on Instagram."
+  },
+  {
+   "t": 42.138999999999996,
+   "end": 46.539,
+   "text": "No lecture.",
+   "sub": "One small step."
+  },
+  {
+   "t": 52.696999999999996,
+   "end": 57.097,
+   "text": "It starts the clock.",
+   "sub": "You asked, so it did."
+  },
+  {
+   "t": 58.812,
+   "end": 63.212,
+   "text": "Why not a regular chatbot?",
+   "sub": "It acts, it waits, it comes back."
+  },
+  {
+   "t": 83.207,
+   "end": 87.607,
+   "text": "It remembers.",
+   "sub": "Only what you ask it to."
+  },
+  {
+   "t": 94.34,
+   "end": 98.74000000000001,
+   "text": "It comes back.",
+   "sub": "When the time is up."
+  },
+  {
+   "t": 133.507,
+   "end": 137.90699999999998,
+   "text": "It kept the score.",
+   "sub": "The block is logged."
+  }
+ ],
+ "errors": []
+}

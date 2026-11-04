@@ -39,7 +39,7 @@ interface McpTool {
 const MCP_TOOLS: McpTool[] = [
   {
     name: 'break_down_task',
-    description: 'Deconstructs an overwhelming task into a microscopic, non-threatening 2-minute first step for an ADHD user.',
+    description: 'Gives one small first step, about two minutes long, for a task the person keeps avoiding.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -47,7 +47,7 @@ const MCP_TOOLS: McpTool[] = [
         strategy: {
           type: 'string',
           enum: ['task_shrinking', 'implementation_intention', 'reframing', 'timeboxing'],
-          description: 'The preferred psychological coaching strategy.',
+          description: 'Which strategy to use.',
         },
       },
       required: ['taskText'],
@@ -55,7 +55,7 @@ const MCP_TOOLS: McpTool[] = [
   },
   {
     name: 'triage_brain_dump',
-    description: 'Takes unstructured messy thoughts and categorizes them into Now (1 item), Today (few), and Later.',
+    description: 'Sorts messy thoughts into one thing to start now, a few for today, and the rest for later.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -66,11 +66,11 @@ const MCP_TOOLS: McpTool[] = [
   },
   {
     name: 'ground_nervous_system',
-    description: 'Provides a short somatic nervous-system regulation cue (breathing or 5-4-3-2-1 sensory orientation).',
+    description: 'Gives a short breathing or 5-4-3-2-1 grounding exercise.',
     inputSchema: {
       type: 'object',
       properties: {
-        intensity: { type: 'string', enum: ['mild', 'moderate', 'acute'], description: 'Level of freeze/overwhelm.' },
+        intensity: { type: 'string', enum: ['mild', 'moderate', 'acute'], description: 'How overwhelmed the person is.' },
       },
     },
   },
@@ -148,7 +148,7 @@ export async function POST(req: NextRequest) {
                     firstStep: step,
                     strategyUsed: strategy,
                     suggestedMinutes: 2,
-                    whyThisFits: 'Shrinks the opening move into a concrete 2-minute physical step to lower initiation friction.',
+                    whyThisFits: 'A 2-minute first step is easier to start than the whole task.',
                   }),
                 },
               ],

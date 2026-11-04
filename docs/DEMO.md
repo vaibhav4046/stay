@@ -28,7 +28,7 @@
   - Stay stops talking when you speak over it (stop time is measured in the test lab, not claimed here).
   - Status transitions to `Interrupted`.
   - Stay acknowledges: *"Water first. Grab the glass."*
-  - Click the **Transport Badge** to reveal the diagnostics sheet: `streaming.assemblyai.com`, `universal-3-6-pro`, `tts.us.assemblyai.com`, `assemblyai-tts-1`.
+  - Open **More, Voice and language**, scroll to **Voice connection** and click the badge to reveal the diagnostics sheet: `streaming.assemblyai.com`, `universal-3-6-pro`, `tts.us.assemblyai.com`, `assemblyai-tts-1`.
 
 ### 0:40 – 1:00 | Multilingual Code-Switching & Accent Switching
 - **Action:** Open Voice and language and pick another voice (Adrienne, British; Andrew, Indian English; and Constanza, Mexican Spanish, are all AssemblyAI voices; Kavya, female Indian English, uses Azure or the device and is labelled that way), or speak Hinglish:

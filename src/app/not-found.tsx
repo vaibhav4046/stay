@@ -8,12 +8,11 @@ export default function NotFound() {
         <div className="flex justify-center pb-2">
           <StayWordmark />
         </div>
-        <p className="eyebrow !mb-0">404 · Nothing here</p>
         <h1 className="section-title text-xl sm:text-2xl font-semibold">
-          Lost your way?
+          Page not found
         </h1>
         <p className="text-sm text-ink-2 leading-relaxed">
-          The page or step you were looking for doesn&apos;t exist. Let&apos;s get you back to your workspace.
+          There is nothing at this address. Open Stay to carry on.
         </p>
         <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
           <Link href="/app/today" className="btn btn-primary flex-1">

@@ -29,38 +29,38 @@ export interface StrategyDefinition {
 export const BARRIER_DEFINITIONS: Record<BarrierType, BarrierDefinition> = {
   overwhelm: {
     key: 'overwhelm',
-    label: 'Too big / overwhelming',
-    shortPrompt: 'There are too many moving parts to hold in working memory.',
+    label: 'Too big',
+    shortPrompt: 'There are too many parts to hold in your head at once.',
     defaultStrategy: 'task_shrinking',
   },
   unclear_next_step: {
     key: 'unclear_next_step',
     label: 'Unclear first step',
-    shortPrompt: 'The goal is clear, but the physical first move is blurry.',
+    shortPrompt: 'You know the goal, but not what to do first.',
     defaultStrategy: 'implementation_intention',
   },
   perfectionism_or_fear: {
     key: 'perfectionism_or_fear',
     label: 'Worry about getting it wrong',
-    shortPrompt: 'High stakes, fear of judgment, or pressure to make it polished.',
+    shortPrompt: 'The stakes feel high, or it has to come out polished.',
     defaultStrategy: 'reframing',
   },
   boredom_or_distraction: {
     key: 'boredom_or_distraction',
-    label: 'Boredom / under-stimulation',
-    shortPrompt: 'Repetitive admin that feels tedious or pulls attention elsewhere.',
+    label: 'Boredom',
+    shortPrompt: 'It is dull, repetitive work, and something else keeps pulling at you.',
     defaultStrategy: 'timeboxing',
   },
   low_energy: {
     key: 'low_energy',
-    label: 'Low mental or physical energy',
-    shortPrompt: 'Fatigue or late-day executive depletion.',
+    label: 'Low energy',
+    shortPrompt: 'You are tired, in body or in head.',
     defaultStrategy: 'task_shrinking',
   },
   other: {
     key: 'other',
-    label: 'Something else / just stuck',
-    shortPrompt: 'General task friction without one obvious cause.',
+    label: 'Something else',
+    shortPrompt: 'It is hard to start, and there is no one clear reason.',
     defaultStrategy: 'task_shrinking',
   },
 };
@@ -70,7 +70,7 @@ export const STRATEGY_DEFINITIONS: Record<StrategyKey, StrategyDefinition> = {
     key: 'task_shrinking',
     label: 'Make it tiny',
     evidenceBasis: 'CBT behavioral activation & executive-function task decomposition',
-    shortDescription: 'Cut the task down to a physical setup move that takes under two minutes.',
+    shortDescription: 'A step this small is easier to start than the whole task.',
     howItWorks: 'Removes working-memory load by separating opening the work from finishing it.',
     defaultTimerMinutes: 5,
   },
@@ -78,7 +78,7 @@ export const STRATEGY_DEFINITIONS: Record<StrategyKey, StrategyDefinition> = {
     key: 'implementation_intention',
     label: 'If-then step',
     evidenceBasis: 'Gollwitzer implementation intentions & ADHD CBT skills modules',
-    shortDescription: 'Pair an immediate physical cue with one specific action.',
+    shortDescription: 'Deciding now what you will do when the timer starts leaves less to decide later.',
     howItWorks: 'Replaces open-ended deciding with a pre-committed trigger ("When timer starts, I will...").',
     defaultTimerMinutes: 10,
   },
@@ -86,7 +86,7 @@ export const STRATEGY_DEFINITIONS: Record<StrategyKey, StrategyDefinition> = {
     key: 'reframing',
     label: 'Permission for a rough draft',
     evidenceBasis: 'CBT cognitive restructuring for ADHD perfectionism & avoidance',
-    shortDescription: 'Lower the bar explicitly to a messy, private first pass.',
+    shortDescription: 'A rough first version is allowed. It only has to exist.',
     howItWorks: 'Disarms all-or-nothing paralysis by making a flawed version the official target.',
     defaultTimerMinutes: 10,
   },
@@ -94,7 +94,7 @@ export const STRATEGY_DEFINITIONS: Record<StrategyKey, StrategyDefinition> = {
     key: 'timeboxing',
     label: 'A short block with a clean exit',
     evidenceBasis: 'Structured time-horizon bounding in adult ADHD coaching',
-    shortDescription: 'Work for a fixed 5–10 minute window with full permission to stop at the bell.',
+    shortDescription: 'A short block with a clear end is easier to begin than an open-ended one.',
     howItWorks: 'Replaces an infinite horizon with a short, visible finish line.',
     defaultTimerMinutes: 10,
   },
@@ -149,7 +149,7 @@ export function chooseBestStrategy(params: {
       const def = STRATEGY_DEFINITIONS[best.strategyKey];
       return {
         strategyKey: best.strategyKey,
-        personalizedReason: `Selected ${def.label} because you started in ${best.startedCount} of ${best.attempts} logged sessions using it.`,
+        personalizedReason: `I picked "${def.label}" because you started in ${best.startedCount} of ${best.attempts} logged sessions that used it.`,
       };
     }
   }
@@ -181,6 +181,57 @@ export function deJargonChaoticTask(raw: string): string {
     .trim() || trimmed;
 }
 
+const RECIPIENT = /\b(landlord|landlady|boss|manager|client|professor|tutor|teacher|supervisor|doctor|dentist|vet|plumber|electrician|gp|mum|mom|dad|friend|sister|brother|neighbou?r|bank|council|pharmacy|school)\b/i;
+const WRITTEN_WORDS = /\b(?:emails?|repl(?:y|ies)|messages?|texts?|write to|letter)\b/i;
+const CALL_TASK = /\b(?:call|phone|ring|book|rebook|cancel|arrange)\b/i;
+const MESSAGE_TASK = /\b(?:emails?|repl(?:y|ies)|messages?|texts?|write to|landlord|client|professor|manager|gp)\b/i;
+const DOC_TASK = /\b(report|essay|slides|presentation|proposal|application|cv|resume|cover letter|thesis|assignment|docs?|documents?)s?\b/i;
+const ADMIN_TASK = /\b(?:forms?|tax(?:es)?|invoices?|bills?|bank|portal|appointment|insurance|expenses?)\b/i;
+const SPACE_TASK = /\b(?:clean|tidy|tidying|desk|kitchen|laundry|room|dishes|pack)(?:s|ing|ed)?\b/i;
+
+/** Who a message is for, said the way Stay would say it ("your landlord"), or null when the sentence does not say. */
+function recipientOf(text: string): string | null {
+  const who = RECIPIENT.exec(text)?.[1]?.toLowerCase();
+  if (!who) return null;
+  if (who === 'gp') return 'your GP';
+  return ['bank', 'council', 'pharmacy', 'school'].includes(who) ? `the ${who}` : `your ${who}`;
+}
+
+/** The document a task is about ("the report", "your CV"). Never the person's whole sentence. */
+function documentOf(text: string): string {
+  const doc = DOC_TASK.exec(text)?.[1]?.toLowerCase();
+  if (!doc || doc.startsWith('doc')) return 'the document';
+  if (doc === 'cv') return 'your CV';
+  if (doc === 'resume' || doc === 'cover letter') return `your ${doc}`;
+  return `the ${doc}`;
+}
+
+/** The paperwork a task is about ("the form", "your tax paperwork"). */
+function paperworkOf(text: string): string {
+  if (/\b(?:tax(?:es)?|vat|hmrc|irs)\b/i.test(text)) return 'your tax paperwork';
+  if (/\binsurance\b/i.test(text)) return 'your insurance paperwork';
+  if (/\bbank\b/i.test(text)) return 'your bank site';
+  if (/\bappointment\b/i.test(text)) return 'the booking page';
+  if (/\binvoices?\b/i.test(text)) return 'the invoice';
+  if (/\bbills?\b/i.test(text)) return 'the bill';
+  if (/\bexpenses?\b/i.test(text)) return 'the expenses';
+  if (/\bportal\b/i.test(text)) return 'the portal';
+  return 'the form';
+}
+
+function tidyStep(text: string): string {
+  if (/\bdishes\b/i.test(text)) return 'Put five dishes next to the sink.';
+  if (/\blaundry\b/i.test(text)) return 'Put five things in the laundry basket.';
+  if (/\bpack/i.test(text)) return 'Put five things you need to pack in one pile.';
+  const place = /\bdesk\b/i.test(text) ? 'the desk' : /\bkitchen\b/i.test(text) ? 'the kitchen' : /\broom\b/i.test(text) ? 'the room' : null;
+  return place ? `Pick up five things from ${place} and put them in one pile.` : 'Pick up five things that are out of place and put them in one pile.';
+}
+
+/**
+ * One small first step for a task. The step names the thing it is about ("the landlord", "the report") when the sentence says what that
+ * is, and otherwise says "this". It never pastes the person's own sentence: that can be long, half a thought, or in another language,
+ * and a step that quotes it is read aloud cut off in the middle.
+ */
 export function buildDeterministicFirstStep(
   taskText: string,
   strategyKey: StrategyKey
@@ -188,57 +239,47 @@ export function buildDeterministicFirstStep(
   const cleaned = deJargonChaoticTask(taskText);
   const lang = detectTaskLanguage(cleaned);
 
-  if (lang === 'hi') {
-    return `"${cleaned}" के लिए बस पहला छोटा कदम उठाएं: संबंधित ऐप या सामग्री खोलें और केवल 2 मिनट का सेटअप करें।`;
-  }
-  if (lang === 'es') {
-    return `Abre la herramienta o archivo para "${cleaned}" y haz solo los primeros 90 segundos de preparación.`;
-  }
-  if (lang === 'fr') {
-    return `Ouvre l'outil ou le document pour "${cleaned}" et fais uniquement les 90 premières secondes de préparation.`;
-  }
-  if (lang === 'de') {
-    return `Öffne das Dokument oder die App für "${cleaned}" und mach nur die ersten 90 Sekunden Vorbereitung.`;
-  }
+  if (lang === 'hi') return 'जिस ऐप या फ़ाइल की ज़रूरत है उसे खोलें। बस 2 मिनट का छोटा कदम लें।';
+  if (lang === 'es') return 'Abre lo que necesites para esto y haz solo los primeros 90 segundos de preparación.';
+  if (lang === 'fr') return 'Ouvre ce dont tu as besoin pour ça et fais uniquement les 90 premières secondes de préparation.';
+  if (lang === 'de') return 'Öffne, was du dafür brauchst, und mach nur die ersten 90 Sekunden Vorbereitung.';
 
-  const lower = cleaned.toLowerCase();
-  const isMessageTask = /(email|reply|message|text|write to|landlord|client|professor|manager|gp)/i.test(lower);
-  const isDocTask = /(report|essay|slides|presentation|doc|proposal|application|cv|resume)/i.test(lower);
-  const isAdminTask = /(form|tax|invoice|bill|bank|portal|appointment|insurance|expense)/i.test(lower);
-  const isSpaceTask = /(clean|tidy|desk|kitchen|laundry|room|dishes|pack)/i.test(lower);
+  const isCall = CALL_TASK.test(cleaned) && !WRITTEN_WORDS.test(cleaned);
+  const isMessage = !isCall && MESSAGE_TASK.test(cleaned);
+  const isDoc = !isCall && DOC_TASK.test(cleaned);
+  const isAdmin = !isCall && ADMIN_TASK.test(cleaned);
+  const isSpace = !isCall && SPACE_TASK.test(cleaned);
+  const to = recipientOf(cleaned);
+  const doc = documentOf(cleaned);
+  const paperwork = paperworkOf(cleaned);
 
   if (strategyKey === 'task_shrinking') {
-    if (isMessageTask) {
-      return `Open the message thread for "${cleaned}" and type one rough sentence in the draft box without sending it.`;
-    }
-    if (isDocTask) {
-      return `Open the document for "${cleaned}", write a working title at the top, and list three bullet fragments.`;
-    }
-    if (isAdminTask) {
-      return `Open the webpage or folder for "${cleaned}" and place the first required document or reference number on screen.`;
-    }
-    if (isSpaceTask) {
-      return `Pick up just five visible items related to "${cleaned}" and put them in one pile.`;
-    }
-    return `Open the exact tool or surface you need for "${cleaned}" and do the first 90 seconds of setup only.`;
+    if (isCall) return `Find the number${to ? ` for ${to}` : ''} and put it on screen. You do not have to dial yet.`;
+    if (isMessage) return `Open a blank message${to ? ` to ${to}` : ''} and type one rough sentence. Do not send it.`;
+    if (isDoc) return `Open ${doc}, type a working title, and list three rough bullets.`;
+    if (isAdmin) return `Open ${paperwork} and put the first document or reference number it needs on screen.`;
+    if (isSpace) return tidyStep(cleaned);
+    return 'Open whatever you need for this and do only the first 90 seconds of setup.';
   }
 
   if (strategyKey === 'implementation_intention') {
-    if (isMessageTask) {
-      return `When the timer starts, I will open the reply window for "${cleaned}" and write the first line: "Hi — quick update on this:"`;
-    }
-    return `When the timer starts, I will put everything else out of sight, open "${cleaned}", and complete the first visible field or bullet.`;
+    if (isCall) return 'When the timer starts, I will find the number and put it on screen.';
+    if (isMessage) return 'When the timer starts, I will open a reply and type only the greeting.';
+    if (isDoc) return `When the timer starts, I will close everything else, open ${doc}, and write the title.`;
+    if (isAdmin) return `When the timer starts, I will close everything else, open ${paperwork}, and do the first thing it asks.`;
+    return 'When the timer starts, I will close everything else, open what I need for this, and do the first small bit.';
   }
 
   if (strategyKey === 'reframing') {
-    if (isMessageTask) {
-      return `Write a deliberately clumsy, private 2-sentence draft for "${cleaned}" that nobody sees yet—you only need raw words on screen.`;
-    }
-    return `Create a "version 0" scratch pass of "${cleaned}" where spelling, polish, and completeness do not count for the next 10 minutes.`;
+    if (isCall) return `Write down the one thing you need to say${to ? ` to ${to}` : ''}. Nobody hears it yet.`;
+    if (isMessage) return `Write two rough sentences ${to ? `to ${to}` : 'of the message'}. Nobody sees them yet.`;
+    if (isDoc) return `Make a rough first version of ${doc}. Spelling and polish do not count.`;
+    return 'Do a rough first pass at this. It does not have to be good or finished.';
   }
 
   // timeboxing
-  return `Work on "${cleaned}" for one bounded timer block only. You have full permission to stop the moment the timer rings.`;
+  const thing = isCall ? (to ? `the call to ${to}` : 'the call') : isMessage ? (to ? `the message to ${to}` : 'the message') : isDoc ? doc : isAdmin ? paperwork : 'this';
+  return `Work on ${thing} until the timer rings. You can stop the moment it does.`;
 }
 
 export function buildDeterministicCoachPlan(params: {
@@ -308,30 +349,26 @@ export function buildDeterministicCoachPlan(params: {
     personalizedReason ||
     strategy.shortDescription;
 
-  // ADHD 3-Beat Spoken Response Rhythm (Ack <= 6 words, Tiny Action <= 15 words, Question <= 8 words)
-  const ack = "I'm right here with you."; // 5 words
-  // Bound firstStep spoken action to <= 15 words
-  const actionWords = firstStep.split(/\s+/).slice(0, 15).join(' ');
-  const question = `Ready to set ${timerMinutes} minutes?`; // 6 words
-
-  let spokenResponse = `${ack} ${actionWords} ${question}`;
-  let checkinPrompt = `Your ${timerMinutes}-minute block is complete. Did you get started on "${firstStep}"?`;
+  // The spoken reply is the step and one question about the timer. The step is short and never quotes the person's sentence, so it is
+  // spoken whole. No opener: a stock "I'm right here with you" before every step read as canned.
+  let spokenResponse = `${firstStep} Want a ${timerMinutes}-minute timer?`;
+  let checkinPrompt = `Your ${timerMinutes}-minute block is up. Did you get started?`;
 
   if (lang === 'hi') {
-    spokenResponse = `मैं आपके साथ हूँ। ${firstStep.split(/\s+/).slice(0, 15).join(' ')} क्या पाँच मिनट शुरू करें?`;
-    whyThisFits = 'जब शुरुआत करना भारी लगे, तो काम को बहुत छोटा करने से सारा मानसिक तनाव दूर हो जाता है।';
+    spokenResponse = `${firstStep} क्या ${timerMinutes} मिनट का टाइमर लगाऊँ?`;
+    whyThisFits = 'बहुत छोटा पहला कदम शुरू करना आसान होता है।';
     checkinPrompt = `आपका ${timerMinutes} मिनट का ब्लॉक पूरा हुआ। क्या आप शुरू कर पाए?`;
   } else if (lang === 'es') {
-    spokenResponse = `Estoy aquí contigo. ${firstStep.split(/\s+/).slice(0, 15).join(' ')} ¿Hacemos un bloque de ${timerMinutes} minutos?`;
-    whyThisFits = 'Hacer el primer paso diminuto elimina toda la presión inicial de golpe.';
+    spokenResponse = `${firstStep} ¿Pongo un temporizador de ${timerMinutes} minutos?`;
+    whyThisFits = 'Un primer paso diminuto es más fácil de empezar.';
     checkinPrompt = `Tu bloque de ${timerMinutes} minutos terminó. ¿Pudiste empezar?`;
   } else if (lang === 'fr') {
-    spokenResponse = `Je suis avec toi. ${firstStep.split(/\s+/).slice(0, 15).join(' ')} On lance ${timerMinutes} minutes ?`;
-    whyThisFits = 'Réduire la première étape à un geste minuscule élimine immédiatement toute pression.';
+    spokenResponse = `${firstStep} Je lance un minuteur de ${timerMinutes} minutes ?`;
+    whyThisFits = 'Une toute petite première étape est plus facile à commencer.';
     checkinPrompt = `Ton bloc de ${timerMinutes} minutes est terminé. As-tu pu démarrer ?`;
   } else if (lang === 'de') {
-    spokenResponse = `Ich bin bei dir. ${firstStep.split(/\s+/).slice(0, 15).join(' ')} Starten wir ${timerMinutes} Minuten?`;
-    whyThisFits = 'Ein winziger erster Schritt nimmt sofort den gesamten Druck weg.';
+    spokenResponse = `${firstStep} Soll ich einen ${timerMinutes}-Minuten-Timer stellen?`;
+    whyThisFits = 'Ein winziger erster Schritt ist leichter zu beginnen.';
     checkinPrompt = `Dein ${timerMinutes}-Minuten-Block ist beendet. Konntest du starten?`;
   }
 

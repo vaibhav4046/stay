@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
+import { askStay } from './helpers/askStay';
 
 const SHOTS = 'docs/evidence/chat-first';
 
@@ -100,18 +101,82 @@ test.describe('Chat-first home: the conversation builds the screen', () => {
     await expect(page.getByTestId('today-card')).toContainText(/start here/i);
   });
 
-  test('the menu keeps everything reachable without talking', async ({ page }) => {
+  test('the menu is six actions, and each one works without talking', async ({ page }) => {
     await openHome(page);
+    const menu = page.getByRole('dialog', { name: 'More' });
+    await page.getByTestId('menu-button').click();
+    await expect(menu.locator('button.btn-secondary')).toHaveCount(6);
+    // the top nav already has History and Settings, so the menu does not repeat them
+    await expect(menu.getByRole('button', { name: /^(History|Settings)/ })).toHaveCount(0);
+    await page.keyboard.press('Escape');
+
     for (const [id, title] of [
-      ['menu-history', 'History'],
       ['menu-dump', 'Brain dump'],
       ['menu-routines', 'Routines'],
-      ['parking-open', 'Parked thoughts'],
-      ['menu-call-later', 'Call me later'],
     ] as const) {
       await page.getByTestId('menu-button').click();
       await page.getByTestId(id).click();
       await expect(panel(page), id).toHaveAttribute('data-panel', title);
+    }
+    await page.getByTestId('menu-button').click();
+    await page.getByTestId('menu-today').click();
+    await expect(page.getByTestId('today-card')).toBeVisible();
+
+    await page.getByTestId('menu-button').click();
+    await page.getByTestId('menu-ground').click();
+    await expect(page.locator('#grounding-title')).toBeVisible();
+    await page.getByRole('button', { name: 'Close grounding panel' }).click();
+
+    await page.getByTestId('menu-button').click();
+    await page.getByTestId('menu-voice').click();
+    await expect(page.getByTestId('voice-picker')).toBeVisible();
+    await page.keyboard.press('Escape');
+
+    await page.getByTestId('menu-button').click();
+    await page.getByTestId('menu-quiet').click();
+    await page.getByTestId('menu-button').click();
+    await expect(page.getByTestId('menu-quiet')).toHaveText('Turn voice on');
+  });
+
+  test('the menu reads cleanly on a phone: left-aligned, sentence-case labels, no wrapping, no overflow', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 800 });
+    await openHome(page);
+    await page.getByTestId('menu-button').click();
+    const menu = page.getByRole('dialog', { name: 'More' });
+    const items = menu.locator('button.btn-secondary');
+    await expect(items).toHaveCount(6);
+    for (const item of await items.all()) {
+      const label = (await item.innerText()).trim();
+      expect(await item.evaluate((el) => getComputedStyle(el).justifyContent), label).toBe('flex-start');
+      // one line: the .btn minimum height is 44px, a second line of text would push it past 52
+      expect((await item.boundingBox())!.height, label).toBeLessThan(52);
+    }
+    for (const label of ['Calm and focus', 'Voice']) {
+      const group = menu.getByText(label, { exact: true });
+      await expect(group).toBeVisible();
+      expect(await group.evaluate((el) => getComputedStyle(el).textTransform), label).toBe('none');
+    }
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
+    expect(overflow).toBe(false);
+  });
+
+  test('what is not in the menu is one ask away: history, memory, parked thoughts, check-ins, call me later', async ({ page }) => {
+    await openHome(page);
+    // the footer line of the menu names the ways to ask
+    await page.getByTestId('menu-button').click();
+    await expect(page.getByTestId('menu-asks')).toContainText('show my memory');
+    await expect(page.getByTestId('menu-asks')).toContainText('show parked thoughts');
+    await page.keyboard.press('Escape');
+
+    for (const [text, call, title] of [
+      ['show my history', { action: 'open', value: 'history' }, 'History'],
+      ['show my memory', { action: 'open', value: 'memory' }, 'What Stay remembers'],
+      ['show parked thoughts', { action: 'park_show' }, 'Parked thoughts'],
+      ['show my reminders', { action: 'open', value: 'reminders' }, 'Check-ins'],
+      ['have Stay call me later', { action: 'open', value: 'call me later' }, 'Call me later'],
+    ] as const) {
+      await askStay(page, text, call);
+      await expect(panel(page), text).toHaveAttribute('data-panel', title);
     }
   });
 

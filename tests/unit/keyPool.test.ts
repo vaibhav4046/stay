@@ -33,4 +33,16 @@ describe('Groq key pool', () => {
   it('no keys at all gives null', () => {
     expect(new CompliantKeyRotationPool('groq', [undefined, '']).getNextHealthyKey()).toBeNull();
   });
+
+  it('in order: the first key is used until it is spent, then the next, and a refilled key is used again at once', () => {
+    const pool = new CompliantKeyRotationPool('groq', ['k1,k2,k3'], { ordered: true });
+    expect([pool.getNextHealthyKey(), pool.getNextHealthyKey()]).toEqual(['k1', 'k1']);
+    pool.reportRateLimitOrError('k1', 60_000);
+    expect([pool.getNextHealthyKey(), pool.getNextHealthyKey()]).toEqual(['k2', 'k2']);
+    pool.reportRateLimitOrError('k2', 60_000);
+    expect(pool.getNextHealthyKey()).toBe('k3');
+    pool.reportRateLimitOrError('k3', 60_000);
+    pool.reportRateLimitOrError('k1', 0); // k1 has refilled
+    expect(pool.getNextHealthyKey()).toBe('k1');
+  });
 });

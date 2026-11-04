@@ -1,7 +1,7 @@
 import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
 import { CRISIS_RESOURCES } from '@/lib/safety/crisis';
 
-export const metadata = { title: 'Terms and safety — Stay' };
+export const metadata = { title: 'Terms and safety | Stay' };
 
 export default function TermsPage() {
   return (
@@ -14,10 +14,10 @@ export default function TermsPage() {
           <p><strong className="text-ink">No medication advice.</strong> Stay can record whether you took prescribed treatment and notes you want to share. It will never suggest starting, stopping, changing or comparing medication or doses.</p>
           <p><strong className="text-ink">Evidence.</strong> Stay&apos;s strategies are drawn from CBT-based ADHD skills programmes. Stay itself has not been tested in a clinical trial. Your strategy stats are personal self-tracking, shown with exact counts.</p>
           <p><strong className="text-ink">Not for emergencies.</strong> If anything you say or type suggests you may be unsafe, Stay stops coaching and shows these services:</p>
-          <ul className="space-y-2">
+          <ul>
             {CRISIS_RESOURCES.map((r) => (
               <li key={r.name}>
-                <a className="text-accent font-medium" href={r.href}>{r.name}: {r.contact}</a>
+                <a className="inline-flex min-h-11 items-center font-medium text-accent" href={r.href}>{r.name}: {r.contact}</a>
               </li>
             ))}
           </ul>

@@ -115,7 +115,7 @@ export function RoutineSheet({ initialId, onClose, onSpeak, onComplete }: { init
     return (
       <Sheet title="New routine" onClose={onClose}>
         <div className="mb-3 flex items-center justify-between">
-          <span className="text-xs text-ink-3">Design custom multi-step focus sequences</span>
+          <span className="text-xs text-ink-3">Your own steps, each with its own timer.</span>
           <button
             type="button"
             onClick={loadExample}
@@ -162,7 +162,7 @@ export function RoutineSheet({ initialId, onClose, onSpeak, onComplete }: { init
 
         {error && (
           <div
-            className="mt-3 rounded-xl border border-red-500/30 bg-red-500/10 p-2.5 text-xs text-red-600 dark:text-red-400 font-medium"
+            className="mt-3 rounded-xl border border-danger/30 bg-danger/10 p-2.5 text-xs text-danger font-medium"
             data-testid="routine-error"
             role="alert"
           >

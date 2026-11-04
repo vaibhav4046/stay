@@ -21,7 +21,7 @@ Rules for either version:
 | 0:38 to 0:48 | Ask for too much, then cut in. | "Can you give me a really detailed plan for my whole week?" Then while it talks: "Wait, stop." | The voice gets quiet at once and stops. | Interrupted. It stopped. |
 | 0:48 to 0:58 | Say one hard thing. | "I can't start the email to my landlord." | Three short beats: a few warm words, one tiny step, a small question. Not a lecture. | One small first step |
 | 0:58 to 1:15 | Tap the plus button, choose **Share screen**, pick a window with a half-written email. | "What do I click next?" | Stay says what is actually on the screen. It only looked because you asked. | It looks only when you ask |
-| 1:15 to 1:25 | Open the landing page, scroll to **Measured, not claimed**. Point at a number and its source line. | "Every number on this page links to a file." | The source path under the chart. The chart says the speaker was simulated. | Every number links to a file |
+| 1:15 to 1:25 | Open the landing page, scroll to **What we measured**. Point at a number and its source line. | "Every number on this page links to a file." | The source path under the chart. The chart says the speaker was simulated. | Every number links to a file |
 | 1:25 to 1:30 | End card. | "Stay. Not a doctor or therapist. No medication advice." | The URL. | stay-two-swart.vercel.app |
 
 ## What not to say

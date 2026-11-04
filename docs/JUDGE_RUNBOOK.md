@@ -30,4 +30,5 @@
 - **Unit, Contract & DSP Suite:** `npx vitest run` (`docs/evidence/phase0-vitest.txt`)
 - **AudioWorklet Ring Buffer Benchmark:** `npx tsx scripts/voice-lab/benchmark-after.ts` (`docs/evidence/unit/dsp-worklet-bench.json`, `docs/voice/VOICE_PROOF.md`)
 - **Deterministic Safety & Parser Checks:** `npx tsx scripts/voice-lab/run-swarm-120.ts` (`docs/evidence/unit/safety-command-checks.json`)
-- **Claims & Evidence Verifier:** `node scripts/check-claims.mjs`
+- **Claims & Evidence Verifier:** `node scripts/check-claims.mjs` (fails on banned claims, evidence links that point nowhere, evidence stamped with a commit that is not among the last 50, and a landing page that shows an older speech measurement than the newest one; prints a note for evidence measured with uncommitted changes). `node scripts/claims-lint.mjs` checks every number on the landing page against a file in `docs/evidence`.
+- **Refreshing the real AssemblyAI evidence** (needs `ASSEMBLYAI_API_KEY`; AssemblyAI allows 5 new sessions a minute, so run these one at a time with a minute between them): `node scripts/smoke-assemblyai.mjs`, `node scripts/measure-tts-chunking.mjs`, `node scripts/measure-voice.mjs` (about 10 minutes), `node scripts/verify-voices.mjs`. After a new `measure-voice` run, point the import in `src/components/landing/currentMeasured.ts` at the new file.

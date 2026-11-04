@@ -110,7 +110,7 @@ export function runAgenticAction(args: AppActionArgs, ctx: AgenticCtx): Record<s
       const next = p.steps.find((s) => !s.done);
       if (!next) {
         saveSteps(null);
-        return out(true, 'That was the last step. Nicely done.');
+        return out(true, 'That was the last step.');
       }
       const index = p.steps.indexOf(next);
       saveSteps({ ...p, cursor: index });
@@ -161,7 +161,7 @@ export function runAgenticAction(args: AppActionArgs, ctx: AgenticCtx): Record<s
       const text = when.text.replace(/\b\d+\s*(?:min(?:ute)?s?|h(?:ours?)?)\b/i, '').trim() || 'Check in';
       const { reminder } = addReminder(mins, text, now.getTime());
       ctx.remindersChanged();
-      return out(true, `Okay, I will check in at ${hhmm(reminder.dueAt)}${text === 'Check in' ? '' : ` about ${text.slice(0, 40)}`}, gently.`, { minutes: Math.round(mins), total: loadReminders().length });
+      return out(true, `Okay, I will check in at ${hhmm(reminder.dueAt)}${text === 'Check in' ? '' : ` about ${text.slice(0, 40)}`}.`, { minutes: Math.round(mins), total: loadReminders().length });
     }
 
     default:

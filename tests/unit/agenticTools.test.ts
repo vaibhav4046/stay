@@ -85,7 +85,7 @@ describe('spoken list corrections', () => {
     const r = applyListEdit('that one is done', NOW);
     expect(r.ok).toBe(true);
     expect(loadToday(NOW).find((i) => i.text.includes('bins'))?.done).toBe(true);
-    expect(r.say).toMatch(/win/);
+    expect(r.say).toMatch(/done/);
   });
   it('making something the start demotes the old one: only one "now"', () => {
     applyListEdit('start with the landlord', NOW);

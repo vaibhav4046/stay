@@ -90,9 +90,9 @@ export function formatThreeBeatReply(rawText: string, profile: PacingProfile = '
 
   if (sentences.length === 0) {
     return {
-      ack: 'I hear you.',
-      action: 'Let us take one small breath together.',
-      fullSpokenText: 'I hear you. Let us take one small breath together.',
+      ack: '',
+      action: 'Take one slow breath.',
+      fullSpokenText: 'Take one slow breath.',
     };
   }
 
@@ -112,17 +112,17 @@ export function formatThreeBeatReply(rawText: string, profile: PacingProfile = '
     if (single.endsWith('?')) {
       const q = trimWords(single, 8);
       return {
-        ack: 'I am here.',
+        ack: '',
         action: 'Let us start.',
         question: q,
-        fullSpokenText: `I am here. Let us start. ${q}`,
+        fullSpokenText: `Let us start. ${q}`,
       };
     }
     const act = trimWords(single, 15);
     return {
-      ack: 'I hear you.',
+      ack: '',
       action: act,
-      fullSpokenText: `I hear you. ${act}`,
+      fullSpokenText: act,
     };
   }
 

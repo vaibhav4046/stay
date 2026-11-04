@@ -62,8 +62,14 @@ export function KeysSection() {
   const preset = cfg.provider === 'groq' || cfg.provider === 'mistral' || cfg.provider === 'openai' ? PRESETS[cfg.provider] : null;
 
   return (
-    <section className="card p-5 sm:p-6" aria-labelledby="keys-title" data-testid="keys-section">
-      <h2 id="keys-title" className="card-title">Your own keys</h2>
+    <details className="card group p-5 sm:p-6" data-testid="keys-section">
+      <summary className="card-title flex min-h-11 cursor-pointer select-none items-center justify-between">
+        Advanced
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-ink-2 transition-transform group-open:rotate-180" aria-hidden="true">
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </summary>
+      <h2 id="keys-title" className="card-title mt-4">Your own keys</h2>
       <p className="text-ink-2 mt-2 text-[0.95rem]">
         Stay works with its shared defaults. If they run out, or you want your own model, add your own keys. They stay in this browser, travel with each request through Stay&apos;s server to the provider you pick, and are never saved or logged by Stay.
       </p>
@@ -117,6 +123,6 @@ export function KeysSection() {
       <div className="mt-6">
         <button type="button" className="btn btn-ghost" onClick={() => { clearByok(); setCfg(EMPTY_BYOK); setLlmStatus(null); setAaiStatus(null); }} data-testid="keys-clear">Remove my keys from this browser</button>
       </div>
-    </section>
+    </details>
   );
 }

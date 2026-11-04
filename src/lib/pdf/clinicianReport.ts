@@ -59,7 +59,7 @@ export function generateClinicianReportPdf(params: {
     doc.setFontSize(8);
     doc.setTextColor(116, 122, 117);
     doc.text(
-      'Generated locally by Stay. User-owned self-tracking summary for clinical discussion only — not diagnostic or medical advice.',
+      'Generated on this device by Stay. A self-tracking summary for discussion with a clinician. It is not diagnostic or medical advice.',
       left,
       285
     );
@@ -77,7 +77,7 @@ export function generateClinicianReportPdf(params: {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(15);
   doc.setTextColor(33, 36, 34);
-  doc.text('STAY — Patient Self-Tracked Appointment Summary', left, y);
+  doc.text('Stay: self-tracked appointment summary', left, y);
   y += 6;
 
   doc.setFont('helvetica', 'normal');
@@ -102,7 +102,7 @@ export function generateClinicianReportPdf(params: {
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(154, 99, 24);
     doc.text(
-      'SAMPLE DATA PREVIEW — Synthetic demonstration records, not a real patient or clinical record.',
+      'Sample data preview. Synthetic demonstration records. This is not a real patient or clinical record.',
       left,
       y
     );

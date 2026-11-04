@@ -7,7 +7,6 @@ export interface TaskRealityCalculation {
   perceivedMinutes: number;
   microEntrySeconds: number;
   recommendedSprintMinutes: number;
-  inertiaBreakRate: number;
   neuroInsight: string;
   spokenSummary: string;
 }
@@ -41,46 +40,40 @@ export interface TaskPathResult {
 }
 
 /**
- * Calculates realistic initiation duration vs perceived ADHD time blindness.
- * Grounded in Russell Barkley's temporal myopia model & Safren's CBT behavioral activation.
+ * A rough size for a task: how long it may feel, how long the first move takes, and one block length to try. These are fixed guesses by
+ * kind of task, not measurements, and the replies never present them as facts about the person.
  */
 export function calculateTaskReality(taskText: string): TaskRealityCalculation {
   const clean = deJargonChaoticTask(taskText);
   const lower = clean.toLowerCase();
   const barrier = inferBarrierFromTask(clean);
 
-  // Perceived time calculation: ADHD prefrontal dopamine deficits inflate task estimation
+  // Rough guesses by kind of task
   let perceivedMinutes = 90;
   let microEntrySeconds = 60;
   let recommendedSprintMinutes = 10;
-  let inertiaBreakRate = 82; // 82% of started tasks continue beyond micro-step
 
   if (/(tax|taxes|invoice|finances|spreadsheet|admin|paperwork|budget)/i.test(lower)) {
     perceivedMinutes = 180;
     microEntrySeconds = 45;
     recommendedSprintMinutes = 10;
-    inertiaBreakRate = 86;
   } else if (/(clean|tidy|room|kitchen|closet|garage|laundry|dishes)/i.test(lower)) {
     perceivedMinutes = 120;
     microEntrySeconds = 60;
     recommendedSprintMinutes = 5;
-    inertiaBreakRate = 89;
   } else if (/(write|writing|essay|thesis|study|exam|code|presentation|deck|draft|abstract|proposal|paper|report|article|blog)/i.test(lower)) {
     perceivedMinutes = 240;
     microEntrySeconds = 90;
     recommendedSprintMinutes = 15;
-    inertiaBreakRate = 78;
   } else if (/(email|reply|call|text|apologize|boss|client|landlord)/i.test(lower)) {
     perceivedMinutes = 45;
     microEntrySeconds = 30;
     recommendedSprintMinutes = 5;
-    inertiaBreakRate = 91;
   }
 
-  const barrierDef = BARRIER_DEFINITIONS[barrier];
-  const neuroInsight = `ADHD brains perceive tasks through a binary temporal lens ('Now' vs 'Not Now'). Your brain forecasts ${perceivedMinutes} min of friction, but breaking inertia only requires ${microEntrySeconds} seconds. Once physical momentum starts, ${inertiaBreakRate}% of users stay with it.`;
+  const neuroInsight = `Big tasks tend to feel longer than their first move. This one starts with about ${microEntrySeconds} seconds of setup.`;
 
-  const spokenSummary = `Your brain perceives ${perceivedMinutes} minutes of dread, but it only takes ${microEntrySeconds} seconds to break the initial friction. Let's do a gentle ${recommendedSprintMinutes}-minute sprint.`;
+  const spokenSummary = `The first move takes about ${microEntrySeconds} seconds. Try one ${recommendedSprintMinutes}-minute block, and you can stop when it ends.`;
 
   return {
     taskText: clean,
@@ -88,14 +81,13 @@ export function calculateTaskReality(taskText: string): TaskRealityCalculation {
     perceivedMinutes,
     microEntrySeconds,
     recommendedSprintMinutes,
-    inertiaBreakRate,
     neuroInsight,
     spokenSummary,
   };
 }
 
 /**
- * Brainstorms 3 zero-friction starter angles to bypass executive freeze.
+ * Three small ways in, picked by kind of task.
  */
 export function brainstormStarterAngles(taskText: string): TaskBrainstormResult {
   const clean = deJargonChaoticTask(taskText);
@@ -111,101 +103,101 @@ export function brainstormStarterAngles(taskText: string): TaskBrainstormResult 
     angles = [
       {
         id: 'ugly-draft',
-        name: 'The "Garbage First Pass"',
-        prompt: `Open a blank page and write 3 terrible, messy bullet points that only you will ever see. Zero grammar, zero formatting.`,
+        name: 'A rough first pass',
+        prompt: 'Open a blank page and write three messy bullet points that only you will see. Grammar does not matter.',
         timeSeconds: 60,
-        rationale: 'Disarms perfectionism by officially mandating a flawed draft.',
+        rationale: 'A rough draft is allowed, so there is nothing to get wrong.',
       },
       {
         id: 'last-sentence-first',
-        name: 'The Reverse Finish Line',
-        prompt: `Write just the very last line or conclusion: "In conclusion, this project is done because..."`,
+        name: 'Write the ending first',
+        prompt: 'Write only the last line, the one that says it is done.',
         timeSeconds: 45,
-        rationale: 'Clarifies the destination so working memory has a clear anchor.',
+        rationale: 'Knowing where it ends makes the first line easier to find.',
       },
       {
         id: 'voice-braindump',
-        name: 'The 60-Second Verbal Dump',
-        prompt: `Say 3 sentences out loud to Stay explaining what you want to convey, then paste the transcript.`,
+        name: 'Say it out loud',
+        prompt: 'Say three sentences out loud to Stay about what you want to get across, then copy what it heard.',
         timeSeconds: 60,
-        rationale: 'Verbal processing bypasses fine-motor keyboard resistance.',
+        rationale: 'Talking is often easier to start than typing.',
       },
     ];
   } else if (isPhysicalOrSpace) {
     angles = [
       {
         id: 'five-items-only',
-        name: 'The 5-Item Rule',
-        prompt: `Pick up exactly five visible items and put them in their general place. When you hit five, you are free to stop.`,
+        name: 'Five things',
+        prompt: 'Pick up five things and put them roughly where they go. At five, you can stop.',
         timeSeconds: 60,
-        rationale: 'Replaces an infinite spatial field with an unambiguous numeric ceiling.',
+        rationale: 'A count gives the job an end.',
       },
       {
         id: 'single-surface-anchor',
-        name: 'The "Single Surface" Boundary',
-        prompt: `Clear only a 1-foot square on your desk or counter. Ignore everything outside that boundary.`,
+        name: 'One surface',
+        prompt: 'Clear one patch of desk or counter, about a foot square. Ignore everything outside it.',
         timeSeconds: 90,
-        rationale: 'Visual bounding calms sensory overwhelm.',
+        rationale: 'A small patch is easier to look at than the whole room.',
       },
       {
         id: 'soundtrack-sprint',
-        name: 'One Song Sprint',
-        prompt: `Put on one favorite high-tempo instrumental track and move things until the song ends.`,
+        name: 'One song',
+        prompt: 'Put on one song you like and tidy until it ends.',
         timeSeconds: 180,
-        rationale: 'Rhythmic auditory cue provides artificial dopamine pacing.',
+        rationale: 'A song has a built-in end.',
       },
     ];
   } else if (isAdminOrFin) {
     angles = [
       {
         id: 'open-and-stare',
-        name: 'The "Open Tab Only" Move',
-        prompt: `Navigate to the login portal or folder for "${clean}", log in, and then take your hands off the keyboard.`,
+        name: 'Just open it',
+        prompt: 'Open the site or folder you need, log in, then take your hands off the keyboard.',
         timeSeconds: 45,
-        rationale: 'Separates login authentication friction from actual work.',
+        rationale: 'Logging in is a step of its own. Do it first, by itself.',
       },
       {
         id: 'one-field-rule',
-        name: 'The One-Field Rule',
-        prompt: `Fill in only the date and your name or reference number. Leave the rest blank for now.`,
+        name: 'One field',
+        prompt: 'Fill in only the date and your name or reference number. Leave the rest blank for now.',
         timeSeconds: 60,
-        rationale: 'Creates an open cognitive loop that makes finishing feel natural.',
+        rationale: 'A form that is already started is easier to finish.',
       },
       {
         id: 'screenshot-recon',
-        name: 'Visual Reconnaissance',
-        prompt: `Take a screenshot of the form or bill and glance at the first question only.`,
+        name: 'Take a screenshot',
+        prompt: 'Take a screenshot of the form or bill and read only the first question.',
         timeSeconds: 30,
-        rationale: 'A low-threat first step takes the dread out of admin tasks.',
+        rationale: 'Looking at one question is less than facing the whole form.',
       },
     ];
   } else {
     angles = [
       {
         id: 'two-minute-rule',
-        name: 'The 90-Second Micro Move',
-        prompt: `Open the exact app or workspace for "${clean}" and perform just the first 90 seconds of physical setup.`,
+        name: 'Ninety seconds of setup',
+        prompt: 'Open the app or file you need and do only the first 90 seconds of setup.',
         timeSeconds: 90,
-        rationale: 'Physical action triggers dopamine release before mental motivation.',
+        rationale: 'Doing something small often comes before feeling like it.',
       },
       {
         id: 'what-hurts-most',
-        name: 'Identify the Friction Point',
-        prompt: `Tell Stay in 1 sentence: what is the single most annoying part of this task?`,
+        name: 'Name the worst part',
+        prompt: 'Tell Stay in one sentence what the most annoying part of this is.',
         timeSeconds: 45,
-        rationale: 'Naming the friction externalizes working memory.',
+        rationale: 'Saying it out loud gets it out of your head.',
       },
       {
         id: 'timebox-bound',
-        name: 'The 5-Minute Free Pass',
-        prompt: `Start a 5-minute timer. Work on any piece of it with guaranteed permission to stop when the bell rings.`,
+        name: 'Five minutes, then stop',
+        prompt: 'Start a five-minute timer. Work on any piece of it, and stop when it rings.',
         timeSeconds: 300,
-        rationale: 'Bounded time horizon protects against hyperfocus traps.',
+        rationale: 'A short block with a clear end is easier to begin.',
       },
     ];
   }
 
-  const spokenSummary = `I came up with 3 easy entry angles for "${clean}": 1) ${angles[0].name}, 2) ${angles[1].name}, or 3) ${angles[2].name}. Which one feels lightest?`;
+  const spokenSummary = `Three ways in: 1) ${angles[0].name}, 2) ${angles[1].name}, or 3) ${angles[2].name}. Which one feels lightest?`;
 
   return {
     taskText: clean,
@@ -215,7 +207,7 @@ export function brainstormStarterAngles(taskText: string): TaskBrainstormResult 
 }
 
 /**
- * Synthesizes a structured 3-phase execution path for complex bureaucratic, study, or admin tasks.
+ * A path in three parts for a bigger task: get ready, work, stop cleanly.
  */
 export function synthesizeTaskPath(taskText: string): TaskPathResult {
   const clean = deJargonChaoticTask(taskText);
@@ -224,27 +216,27 @@ export function synthesizeTaskPath(taskText: string): TaskPathResult {
   const phases: TaskPathPhase[] = [
     {
       phase: 1,
-      name: 'Desk Zero & Gathering',
+      name: 'Get ready',
       durationMinutes: 2,
-      action: `Open only the single necessary browser tab or folder for "${clean}". Minimize all distracting windows and fetch water.`,
+      action: 'Open only the one tab or folder you need. Close the rest and fetch some water.',
     },
     {
       phase: 2,
-      name: 'Focused Sprint Block',
+      name: 'Work',
       durationMinutes: calculation.recommendedSprintMinutes,
-      action: `Work exclusively on the primary deliverable for ${calculation.recommendedSprintMinutes} minutes with Stay keeping time.`,
+      action: `Work on the main thing for ${calculation.recommendedSprintMinutes} minutes. Stay keeps time.`,
     },
     {
       phase: 3,
-      name: 'Clean Exit & Outcome Record',
+      name: 'Stop cleanly',
       durationMinutes: 1,
-      action: `Save progress, log session outcome in Stay, and take a guilt-free 5-minute cognitive recharge.`,
+      action: 'Save what you have, log how it went in Stay, and take a five-minute break.',
     },
   ];
 
   const totalSprintMinutes = phases.reduce((acc, p) => acc + p.durationMinutes, 0);
 
-  const spokenSummary = `Here is your frictionless 3-phase path: 2 min to gather tools, ${calculation.recommendedSprintMinutes} min of pure focus, and 1 min to close out. Total ${totalSprintMinutes} minutes.`;
+  const spokenSummary = `Here is a path in three parts: 2 minutes to get ready, ${calculation.recommendedSprintMinutes} minutes of work, and 1 minute to stop cleanly. About ${totalSprintMinutes} minutes in all.`;
 
   return {
     taskText: clean,

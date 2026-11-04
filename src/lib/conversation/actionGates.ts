@@ -42,7 +42,32 @@ const ASK: Record<string, RegExp> = {
 
 export const GATED_ACTIONS = Object.keys(ASK);
 
-export function mayDoAction(action: string, text: string): boolean {
+/** Other ordinary ways of asking for the same things (a review, 4 Nov 2026, found these were refused). */
+const ALSO: Record<string, RegExp> = {
+  step_next: /^\W*(?:(?:okay|ok|alright|yeah)[, ]+)?(?:done|finished|next)\W*$|\bwhat(?:'s| is| do i do)? next\b/i,
+  timer_stop: /\bturn (?:the |my )?(?:timer|clock|countdown|block) off\b|^\W*(?:stop|cancel)(?: it| that)?\W*$/i,
+  quiet: /\bshut up\b/i,
+  break_down: /\bmake (?:it|this|that) smaller\b|\bchunk\b|\bdesglos\w*|\ben pasos\b|\bpaso a paso\b|\b(?:in|into) (?:small|tiny) (?:bits|bites)\b/i,
+  plan_day: /\b(?:plan|organi[sz]e)\b[^.?!]{0,12}\b(?:day|today|tomorrow|week)\b/i,
+  remind: /\btell me when\b|\bcheck on me\b/i,
+  resume: /\bcontinue\b|\blet(?:'s| us) continue\b/i,
+  wrap_up: /\b(?:done|finished) for (?:the day|today|tonight)\b|\bhow did i do today\b/i,
+  list_add: /\badd\b[^.?!]{0,60}\b(?:shopping|groceries|grocery)\b/i,
+  open: /\bi want to see\b|\bwhere (?:is|are) my\b/i,
+};
+
+/** A bare yes, ok or please: it asks for whatever Stay's own last line offered. */
+const ASSENT = /^\W*(?:yes|yeah|yep|yup|sure|ok|okay|please|do it|go ahead|sounds good)\b[\W\w]{0,12}$/i;
+/** Never started by a bare yes: these change or remove what the person keeps. */
+const NEVER_BY_YES = new Set(['delete_data', 'export_data', 'memory_forget', 'memory_add']);
+
+/** \`lastAssistant\`: Stay's line just before these words, so "yes please" to "Want me to break this into steps?" counts as asking. */
+export function mayDoAction(action: string, text: string, lastAssistant = ''): boolean {
   const re = ASK[action];
-  return re ? re.test(text.replace(/[’‘]/g, "'")) : true;
+  if (!re) return true;
+  const t = text.replace(/[’‘]/g, "'");
+  if (re.test(t) || ALSO[action]?.test(t)) return true;
+  if (NEVER_BY_YES.has(action) || !ASSENT.test(t.trim())) return false;
+  const offer = lastAssistant.replace(/[’‘]/g, "'");
+  return offer.includes('?') && (re.test(offer) || Boolean(ALSO[action]?.test(offer)));
 }

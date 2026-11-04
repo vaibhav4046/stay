@@ -20,7 +20,7 @@ export function ReminderSheet({ onClose, onChanged }: { onClose: () => void; onC
   };
   return (
     <Sheet title="Check-ins" onClose={onClose}>
-      <p className="meta">Stay will nudge you, softly, when the time is up. Say &ldquo;check in with me in 20 minutes&rdquo; any time.</p>
+      <p className="meta">Stay checks in with you when the time is up. Say &ldquo;check in with me in 20 minutes&rdquo; any time.</p>
       <label className="mt-3 block">
         <span className="label">What for (optional)</span>
         <input className="field mt-1 w-full" value={text} maxLength={100} onChange={(e) => setText(e.target.value)} placeholder="Is the laundry on?" data-testid="reminder-text" />

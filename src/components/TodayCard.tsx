@@ -1,11 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { openToday, winsToday, type TodayItem } from '@/lib/coach/todayList';
 
 /** The short list for today: open items first (the one to start on top), tick to finish, and a quiet count of wins. */
 export function TodayCard({ items, onToggle, onStart, onOpenDump, onMove, onClose }: { items: TodayItem[]; onToggle: (id: string) => void; onStart: (item: TodayItem) => void; onOpenDump: () => void; onMove: (id: string) => void; onClose?: () => void }) {
   const [showLater, setShowLater] = useState(false);
+  useEffect(() => {
+    if (!onClose) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
   const open = openToday(items);
   const wins = winsToday(items);
   const laterItems = items.filter((i) => !i.done && i.bucket === 'later');

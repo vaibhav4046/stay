@@ -1,0 +1,11 @@
+{
+  "gitSha": "e9a92e6",
+  "tier": "browser (headless Chromium, software rendering, this machine)",
+  "measured": {
+    "frames": 180,
+    "avgFps": 60,
+    "p95FrameMs": 16.8,
+    "maxFrameMs": 33.3
+  },
+  "note": "frame intervals of requestAnimationFrame over 3 s with the Signal wave running on /app/today; not a device benchmark"
+}

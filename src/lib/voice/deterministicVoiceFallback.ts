@@ -55,7 +55,7 @@ export function resolveDeterministicVoice(userText: string): DeterministicVoiceR
   // 2. Emotional Support / RSD Spiral Protection
   for (const re of RSD_TRIGGERS) {
     if (re.test(trimmed)) {
-      return { text: 'I hear you, that is hard.' };
+      return { text: 'That is hard. Nothing has to happen right now.' };
     }
   }
 
@@ -65,7 +65,7 @@ export function resolveDeterministicVoice(userText: string): DeterministicVoiceR
     /\b(?:how\s+are\s+you|how\s+are\s+you\s+doing|how's\s+it\s+going|what's\s+up|good\s+(?:morning|afternoon|evening))\b/i.test(trimmed);
   const isChoreTask = /\b(?:work|clean|email|write|read|study|tax|dishes|doc|report|homework|laundry|tidy|pay|call|send|finish|start|draft)\b/i.test(trimmed);
   if (isGreeting && !isChoreTask) {
-    return { text: "Hey there! Doing well. How are you feeling right now? If you want to start a step or see me morph into a rocket or star, I'm right here with you." };
+    return { text: 'Hi. How are you feeling right now? If you want to start something, tell me what it is.' };
   }
 
   // 2c. Direct Shape Morphing Commands ("rocket", "make a rocket", "turn into a rocket", "show me a star")

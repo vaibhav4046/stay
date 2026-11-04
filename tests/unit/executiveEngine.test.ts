@@ -13,8 +13,8 @@ describe('ADHD Executive Engine (Calculation, Prediction, Brainstorm, Synthesis)
       expect(result.perceivedMinutes).toBeGreaterThanOrEqual(120);
       expect(result.microEntrySeconds).toBeLessThanOrEqual(60);
       expect(result.recommendedSprintMinutes).toBe(10);
-      expect(result.inertiaBreakRate).toBeGreaterThan(80);
-      expect(result.spokenSummary).toContain('minutes of dread');
+      expect(result.spokenSummary).toContain('first move takes about 45 seconds');
+      expect(JSON.stringify(result)).not.toMatch(/dread|dopamine|% of users|inertiaBreakRate/i); // no invented rate, no pseudo-science
     });
 
     it('calculates reality for physical cleaning tasks', () => {
@@ -22,7 +22,6 @@ describe('ADHD Executive Engine (Calculation, Prediction, Brainstorm, Synthesis)
       expect(result.perceivedMinutes).toBe(120);
       expect(result.microEntrySeconds).toBe(60);
       expect(result.recommendedSprintMinutes).toBe(5);
-      expect(result.inertiaBreakRate).toBe(89);
     });
 
     it('calculates reality for open-ended writing and essay tasks', () => {
@@ -30,7 +29,6 @@ describe('ADHD Executive Engine (Calculation, Prediction, Brainstorm, Synthesis)
       expect(result.perceivedMinutes).toBe(240);
       expect(result.microEntrySeconds).toBe(90);
       expect(result.recommendedSprintMinutes).toBe(15);
-      expect(result.inertiaBreakRate).toBe(78);
     });
 
     it('calculates reality for interpersonal and email communication tasks', () => {
@@ -38,7 +36,6 @@ describe('ADHD Executive Engine (Calculation, Prediction, Brainstorm, Synthesis)
       expect(result.perceivedMinutes).toBe(45);
       expect(result.microEntrySeconds).toBe(30);
       expect(result.recommendedSprintMinutes).toBe(5);
-      expect(result.inertiaBreakRate).toBe(91);
     });
   });
 
@@ -46,31 +43,31 @@ describe('ADHD Executive Engine (Calculation, Prediction, Brainstorm, Synthesis)
     it('generates 3 concrete low-friction angles for writing tasks', () => {
       const result = brainstormStarterAngles('Write conference proposal abstract');
       expect(result.angles).toHaveLength(3);
-      expect(result.angles[0].name).toBe('The "Garbage First Pass"');
-      expect(result.angles[1].name).toBe('The Reverse Finish Line');
-      expect(result.angles[2].name).toBe('The 60-Second Verbal Dump');
+      expect(result.angles[0].name).toBe('A rough first pass');
+      expect(result.angles[1].name).toBe('Write the ending first');
+      expect(result.angles[2].name).toBe('Say it out loud');
       result.angles.forEach((angle) => {
         expect(angle.prompt.length).toBeGreaterThan(15);
         expect(angle.timeSeconds).toBeLessThanOrEqual(120);
         expect(angle.rationale.length).toBeGreaterThan(10);
       });
-      expect(result.spokenSummary).toContain('3 easy entry angles');
+      expect(result.spokenSummary).toContain('Three ways in');
     });
 
     it('generates 3 bounded angles for physical tasks', () => {
       const result = brainstormStarterAngles('Clean out the garage');
       expect(result.angles).toHaveLength(3);
-      expect(result.angles[0].name).toBe('The 5-Item Rule');
-      expect(result.angles[1].name).toBe('The "Single Surface" Boundary');
-      expect(result.angles[2].name).toBe('One Song Sprint');
+      expect(result.angles[0].name).toBe('Five things');
+      expect(result.angles[1].name).toBe('One surface');
+      expect(result.angles[2].name).toBe('One song');
     });
 
     it('generates 3 low-threat angles for bureaucratic/financial admin', () => {
       const result = brainstormStarterAngles('Pay overdue council tax bill');
       expect(result.angles).toHaveLength(3);
-      expect(result.angles[0].name).toBe('The "Open Tab Only" Move');
-      expect(result.angles[1].name).toBe('The One-Field Rule');
-      expect(result.angles[2].name).toBe('Visual Reconnaissance');
+      expect(result.angles[0].name).toBe('Just open it');
+      expect(result.angles[1].name).toBe('One field');
+      expect(result.angles[2].name).toBe('Take a screenshot');
     });
   });
 
@@ -78,11 +75,11 @@ describe('ADHD Executive Engine (Calculation, Prediction, Brainstorm, Synthesis)
     it('synthesizes a 3-phase path with realistic time horizons', () => {
       const result = synthesizeTaskPath('Submit passport renewal application');
       expect(result.phases).toHaveLength(3);
-      expect(result.phases[0].name).toBe('Desk Zero & Gathering');
-      expect(result.phases[1].name).toBe('Focused Sprint Block');
-      expect(result.phases[2].name).toBe('Clean Exit & Outcome Record');
+      expect(result.phases[0].name).toBe('Get ready');
+      expect(result.phases[1].name).toBe('Work');
+      expect(result.phases[2].name).toBe('Stop cleanly');
       expect(result.totalSprintMinutes).toBeGreaterThanOrEqual(8);
-      expect(result.spokenSummary).toContain('3-phase path');
+      expect(result.spokenSummary).toContain('three parts');
     });
   });
 

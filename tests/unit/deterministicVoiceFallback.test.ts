@@ -14,7 +14,7 @@ describe('resolveDeterministicVoice', () => {
 
   it('provides compassionate non-judgmental listening for RSD spirals', () => {
     const res = resolveDeterministicVoice("I'm sobbing on the floor, I missed the deadline and I'm a failure.");
-    expect(res.text).toBe('I hear you, that is hard.');
+    expect(res.text).toBe('That is hard. Nothing has to happen right now.');
     expect(res.tool).toBeUndefined();
   });
 

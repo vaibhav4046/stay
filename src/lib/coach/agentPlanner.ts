@@ -5,6 +5,7 @@
  */
 import type { CoachSessionRecord } from '@/types/domain';
 import { buildDeterministicFirstStep } from '@/lib/coach/strategies';
+import { wholeWords } from '@/lib/voice/spokenSteps';
 import { openToday, type TodayItem } from '@/lib/coach/todayList';
 import { localDay, localDayOf } from '@/lib/coach/time';
 
@@ -104,7 +105,7 @@ export const STEPS_KEY = 'stay_steps_v1';
 
 /** Four plain steps, each with its own timer: get ready, the tiny first move, one working block, a clean stop. */
 export function breakDown(task: string, workMinutes = 10, now = new Date()): StepPlan {
-  const t = task.replace(/\s+/g, ' ').trim().slice(0, 80);
+  const t = wholeWords(task, 80); // cut between words, never in the middle of one
   const first = buildDeterministicFirstStep(t, 'task_shrinking');
   const work = Math.max(5, Math.min(25, Math.round(workMinutes)));
   return {

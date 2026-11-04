@@ -8,17 +8,17 @@ export function DotIcon({ shape, size = 44 }: { shape: string; size?: number }) 
   if (!g) return null;
   return (
     <svg viewBox="0 0 100 100" width={size} height={size} className="lp-glyph" aria-hidden="true" focusable="false">
-      <path d={g.a} stroke={g.colors[0]} />
-      <path d={g.b} stroke={g.colors[1]} />
+      <path d={g.a} />
+      <path d={g.b} />
     </svg>
   );
 }
 
 const COMPARE = [
-  { who: 'Goblin Tools', is: 'A free, typed task breaker.', stay: 'Spoken, with a timer and someone beside you while you do it.' },
-  { who: 'Tiimo and planners', is: 'A visual day you have to set up and keep up.', stay: 'No setup. You say what is in the way and it gives you the next step.' },
-  { who: 'Body-doubling with a person', is: 'A real human, at a time you booked.', stay: 'There at 11pm and on a bad day. Not a replacement for people.' },
-  { who: 'A general voice assistant', is: 'Answers anything.', stay: 'Does one job: getting you started, and it remembers what helped.' },
+  { who: 'A typed task breaker', is: 'A list to read, then start by yourself.', stay: 'Spoken, with a timer running while you work and a check-in at the end.' },
+  { who: 'A planner or calendar app', is: 'A visual day you have to set up and keep up.', stay: 'No setup. You say what is in the way and it gives you the next step.' },
+  { who: 'Body-doubling with a person', is: 'A real human, at a time you booked.', stay: 'Available at 11pm and on a bad day. It does not replace people.' },
+  { who: 'A general voice assistant', is: 'Answers anything.', stay: 'Built around getting you started. It also answers questions, and it remembers what helped.' },
 ];
 
 export function Compare() {
@@ -61,7 +61,7 @@ export function Compare() {
 const PROMISES = [
   { shape: 'house', title: 'Your history stays on your device', body: 'Sessions and memory are stored in your browser. Download or delete all of it in Settings, in one tap.' },
   { shape: 'shield', title: 'No medication advice', body: 'Ask about a dose and Stay says it cannot help and points you to your prescriber or pharmacist.' },
-  { shape: 'person', title: 'Not a diagnosis, not a clinician', body: 'Stay is a self-help companion. It never diagnoses and does not replace treatment.' },
+  { shape: 'person', title: 'Stay does not diagnose', body: 'Stay is a self-help companion. It never diagnoses, and it does not replace treatment or a clinician.' },
   { shape: 'heart', title: 'If you are in danger, it stops coaching', body: 'Crisis wording pauses everything and shows emergency and helpline numbers for where you are (UK, US or Canada), and findahelpline.com for anywhere else.' },
 ];
 
@@ -83,7 +83,7 @@ export function Promises() {
 
 const NOT_FOR = [
   'Anyone in crisis. Press Urgent help for numbers in your country, or call your local emergency number. Stay is not a crisis service.',
-  'Anyone who wants a calendar or a full planner. Use Tiimo for that.',
+  'Anyone who wants a calendar or a full planner. A planner is the right tool for that.',
   'Anyone who wants advice about medication. Stay will always send you to a prescriber.',
   'Anyone who needs proof it works. It has not been trialled. See above.',
 ];

@@ -94,7 +94,7 @@ test('Capture complete browser visual verification suite', async ({ page }) => {
 
   // Close sheet and verify armed receipt on Today screen
   await page.keyboard.press('Escape');
-  await expect(page.getByText(/Audrey armed — ready to speak/)).toBeVisible();
+  await expect(page.getByText(/Audrey ready to speak/)).toBeVisible();
 
   // Screenshot 6: Armed voice receipt confirmation on Today screen
   const shot6 = '06-voice-armed-today-receipt.png';

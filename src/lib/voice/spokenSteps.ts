@@ -17,7 +17,7 @@ export function wholeWords(text: string, max = 90): string {
   if (t.length <= max) return t;
   const cut = t.slice(0, max);
   const at = cut.lastIndexOf(' ');
-  return (at > 20 ? cut.slice(0, at) : cut).replace(/[,;:\-–—\s]+$/, '');
+  return (at > Math.min(20, Math.floor(max / 2)) ? cut.slice(0, at) : cut).replace(/[,;:\-–—\s]+$/, '');
 }
 
 const ORDINAL = ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'];

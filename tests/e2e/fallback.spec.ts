@@ -36,7 +36,11 @@ test.describe('Explicit Managed-Agent Fallback Transport (fallback.spec.ts)', ()
     await expect(page.getByTestId('orb-status')).toHaveText('Listening', { timeout: 10000 });
     expect(fakeVoice.ready()).toBe(true);
 
-    // Transport badge must honestly disclose Backup voice when running on the managed-agent socket
+    // The connection badge lives in the voice sheet (More, Voice and language), not on the home screen.
+    // It must honestly disclose Backup voice when running on the managed-agent socket.
+    await expect(page.getByTestId('transport-badge')).toHaveCount(0);
+    await page.getByTestId('menu-button').click();
+    await page.getByRole('button', { name: 'Voice and language' }).click();
     const badge = page.getByTestId('transport-badge');
     await expect(badge).toBeVisible();
     await expect(badge).toContainText(/Backup voice/i);

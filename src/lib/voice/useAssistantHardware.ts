@@ -67,13 +67,9 @@ export function useAssistantHardware({
     if (!('mediaSession' in navigator)) return;
 
     navigator.mediaSession.metadata = new MediaMetadata({
-      title: isConnected
-        ? isHandsFreePaused
-          ? 'Stay — Listening Paused'
-          : 'Stay — voice companion'
-        : 'Stay — ADHD Voice Companion',
-      artist: 'Stay ADHD System',
-      album: 'Living 24/7 Companion',
+      title: isConnected ? (isHandsFreePaused ? 'Listening paused' : 'Listening') : 'Stay',
+      artist: 'Stay',
+      album: 'Voice companion',
       artwork: [
         { src: '/favicon.ico', sizes: '96x96', type: 'image/x-icon' },
       ],
@@ -143,9 +139,12 @@ export function useAssistantHardware({
   // 4. Keyboard Shortcuts for Quick Assistant Control
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      const el = document.activeElement as HTMLElement | null;
+      // Space and "g" belong to a focused control, a text field or an open dialog (QA review, 4 Nov 2026: Space on the More button opened
+      // the microphone sheet); with a modifier key they are the browser's own shortcuts
       if (
-        document.activeElement?.tagName === 'INPUT' ||
-        document.activeElement?.tagName === 'TEXTAREA'
+        el?.tagName === 'INPUT' || el?.tagName === 'TEXTAREA' || el?.tagName === 'SELECT' || el?.tagName === 'BUTTON' || el?.tagName === 'A' ||
+        el?.isContentEditable || el?.closest('[role="dialog"], [role="button"], [role="menu"]') || e.ctrlKey || e.metaKey || e.altKey
       ) {
         return;
       }

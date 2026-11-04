@@ -1,9 +1,9 @@
 {
-  "gitSha": "771b9ba5982081f3197170d9cdf1c30e034a1ad8",
+  "gitSha": "bdcd654921791f4a2dbd88ad40f6c08afb70cd13",
   "dirty": true,
   "tier": "unit",
   "scenarioId": "dsp-worklet-jitter-matrix",
-  "timestamp": "2026-11-01T06:09:40.799Z",
+  "timestamp": "2026-11-04T05:38:40.464Z",
   "environment": {
     "platform": "win32",
     "arch": "x64",
@@ -22,7 +22,7 @@
       "fadeTransitions": 2,
       "measuredGapMs": 0,
       "staleSamplesAfterCancel": 0,
-      "enqueueToFirstRenderMs": 96
+      "enqueueToFirstRenderMs": 197.33
     },
     {
       "jitterConditionMs": 20,
@@ -34,7 +34,7 @@
       "fadeTransitions": 2,
       "measuredGapMs": 0,
       "staleSamplesAfterCancel": 0,
-      "enqueueToFirstRenderMs": 96
+      "enqueueToFirstRenderMs": 197.33
     },
     {
       "jitterConditionMs": 40,
@@ -46,7 +46,7 @@
       "fadeTransitions": 2,
       "measuredGapMs": 0,
       "staleSamplesAfterCancel": 0,
-      "enqueueToFirstRenderMs": 96
+      "enqueueToFirstRenderMs": 197.33
     },
     {
       "jitterConditionMs": 60,
@@ -58,7 +58,7 @@
       "fadeTransitions": 2,
       "measuredGapMs": 0,
       "staleSamplesAfterCancel": 0,
-      "enqueueToFirstRenderMs": 96
+      "enqueueToFirstRenderMs": 197.33
     },
     {
       "jitterConditionMs": 80,
@@ -70,55 +70,55 @@
       "fadeTransitions": 2,
       "measuredGapMs": 0,
       "staleSamplesAfterCancel": 0,
-      "enqueueToFirstRenderMs": 96
+      "enqueueToFirstRenderMs": 197.33
     },
     {
       "jitterConditionMs": 100,
       "chunkDurationMs": 100,
       "totalChunks": 20,
-      "renderedNonZeroSamples": 47998,
-      "underflows": 2,
+      "renderedNonZeroSamples": 48000,
+      "underflows": 0,
       "overflows": 0,
-      "fadeTransitions": 6,
-      "measuredGapMs": 201.42,
+      "fadeTransitions": 2,
+      "measuredGapMs": 0,
       "staleSamplesAfterCancel": 0,
-      "enqueueToFirstRenderMs": 96
+      "enqueueToFirstRenderMs": 202.67
     },
     {
       "jitterConditionMs": 120,
       "chunkDurationMs": 100,
       "totalChunks": 20,
-      "renderedNonZeroSamples": 47995,
-      "underflows": 1,
+      "renderedNonZeroSamples": 48000,
+      "underflows": 0,
       "overflows": 0,
-      "fadeTransitions": 4,
-      "measuredGapMs": 28.21,
+      "fadeTransitions": 2,
+      "measuredGapMs": 0,
       "staleSamplesAfterCancel": 0,
-      "enqueueToFirstRenderMs": 96
+      "enqueueToFirstRenderMs": 224
     },
     {
       "jitterConditionMs": 200,
       "chunkDurationMs": 100,
       "totalChunks": 20,
-      "renderedNonZeroSamples": 47995,
-      "underflows": 1,
+      "renderedNonZeroSamples": 48000,
+      "underflows": 0,
       "overflows": 0,
-      "fadeTransitions": 4,
-      "measuredGapMs": 108.21,
+      "fadeTransitions": 2,
+      "measuredGapMs": 0,
       "staleSamplesAfterCancel": 0,
-      "enqueueToFirstRenderMs": 96
+      "enqueueToFirstRenderMs": 304
     },
     {
       "jitterConditionMs": 400,
       "chunkDurationMs": 100,
       "totalChunks": 20,
-      "renderedNonZeroSamples": 47998,
-      "underflows": 2,
+      "renderedNonZeroSamples": 48000,
+      "underflows": 0,
       "overflows": 0,
-      "fadeTransitions": 6,
-      "measuredGapMs": 500.08,
+      "fadeTransitions": 2,
+      "measuredGapMs": 0,
       "staleSamplesAfterCancel": 0,
-      "enqueueToFirstRenderMs": 96
+      "enqueueToFirstRenderMs": 501.33
     }
   ]
 }

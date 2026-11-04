@@ -20,8 +20,29 @@ describe('actions that change something happen only when the words ask for them'
     ['step_next', "what's next"], ['step_next', "I'm done, next step"], ['resume', 'pick it up again'], ['wrap_up', 'what did we actually get done today'],
     ['open', 'show my report'], ['open', 'take me to my check-in'], ['plan', 'help me start the email'], ['memory_show', 'what do you remember about me'],
     ['list_show', 'show my list'], ['game', 'let us play a game'], ['voice', 'change your voice'],
+    // found by a review, 4 Nov 2026: ordinary ways of asking that the first wording missed
+    ['step_next', 'done'], ['step_next', 'okay done'], ['step_next', 'finished'], ['step_next', 'next'], ['step_next', 'what do I do next'],
+    ['timer_stop', 'turn the timer off'], ['timer_stop', 'cancel it'], ['timer_stop', 'stop'],
+    ['quiet', 'shut up'], ['break_down', 'make it smaller'], ['break_down', 'chunk it'], ['break_down', 'desglosa esto en pasos'],
+    ['plan_day', 'organise my day'], ['plan_day', 'plan out my day'], ['plan_day', 'plan my whole day'],
+    ['remind', 'tell me when five minutes pass'], ['remind', 'check on me in ten minutes'],
+    ['resume', 'continue'], ['resume', 'let us continue'], ['wrap_up', 'I am done for the day'], ['wrap_up', 'how did I do today'],
+    ['list_add', 'add milk to my shopping'], ['open', 'I want to see my list'], ['open', 'where is my plan'],
   ];
   it.each(yes)('%s: asked by "%s"', (action, text) => expect(mayDoAction(action, text), `${action}: ${text}`).toBe(true));
+
+  // a bare yes to Stay's own offer asks for what Stay offered (the timer already worked this way; the other actions did not)
+  it.each([
+    ['break_down', 'Want me to break this into steps?', 'yes please'],
+    ['plan', 'Want to start with the first step?', 'yeah'],
+    ['plan_day', 'Should I plan your day?', 'sure'],
+    ['wrap_up', 'Want me to wrap up the day?', 'ok'],
+  ])('%s: "%s" then "%s"', (action, offer, reply) => expect(mayDoAction(action, reply, offer)).toBe(true));
+  it('a bare yes after a line that offered something else, or no question, asks for nothing', () => {
+    expect(mayDoAction('break_down', 'yes', 'Want me to start a timer?')).toBe(false);
+    expect(mayDoAction('break_down', 'yes', 'I will break this into steps.')).toBe(false);
+    expect(mayDoAction('delete_data', 'yes', 'Want me to delete all my data?')).toBe(false); // never by a bare yes
+  });
 
   const no: Array<[string, string]> = [
     ['dump_end', 'Did you get my question? Okay, good. Actually, wait, why is the sky blue?'],

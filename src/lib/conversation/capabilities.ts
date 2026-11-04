@@ -15,11 +15,11 @@ const CLOSE_EXTERNAL = new RegExp(`\\b${CLOSE_VERB}\\b[^.?!]{0,30}\\b${EXTERNAL}
 const CLOSE_PRONOUN = /\b(?:close|shut|quit|exit|kill|turn off)\s+(?:it|that|this|them)\b/i;
 const EXTERNAL_RE = new RegExp(`\\b${EXTERNAL}\\b`, 'i');
 
-const NUMBER_WORDS: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, ten: 10, fifteen: 15, twenty: 20, thirty: 30 };
+const NUMBER_WORDS: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, ten: 10, fifteen: 15, twenty: 20, thirty: 30, un: 1, uno: 1, dos: 2, tres: 3, cinco: 5, diez: 10, quince: 15, veinte: 20, treinta: 30, deux: 2, trois: 3, cinq: 5, dix: 10, quinze: 15, vingt: 20, trente: 30, zwei: 2, drei: 3, fünf: 5, zehn: 10, fünfzehn: 15, zwanzig: 20, dreißig: 30 };
 
 /** "five minutes", "10 min" -> 5, 10 */
 export function minutesIn(text: string): number | null {
-  const m = /\b(\d{1,3}|one|two|three|four|five|ten|fifteen|twenty|thirty)[- ]?(?:min(?:ute)?s?)\b/i.exec(text);
+  const m = /(?<![\p{L}\d])(\d{1,3}|one|two|three|four|five|ten|fifteen|twenty|thirty|un|uno|dos|tres|cinco|diez|quince|veinte|treinta|deux|trois|cinq|dix|quinze|vingt|trente|zwei|drei|fünf|zehn|fünfzehn|zwanzig|dreißig)[- ]?(?:min(?:ut[eo]s?|uten)?s?)(?![\p{L}\d])/iu.exec(text);
   if (!m) return null;
   const n = /^\d+$/.test(m[1]) ? Number(m[1]) : NUMBER_WORDS[m[1].toLowerCase()];
   return n >= 1 && n <= 180 ? n : null;
@@ -44,8 +44,8 @@ export function unsupportedActionAnswer(text: string, recent: string[] = []): st
   return null;
 }
 
-const TIMER_WORD = /\b(?:timers?|countdown|stopwatch|pomodoro|focus (?:block|session)|time me)\b/i;
-const START_VERB = /\b(?:start|set|begin|run|give me|let's|let us|for|do)\b/i;
+const TIMER_WORD = /\b(?:timers?|countdown|stopwatch|pomodoro|focus (?:block|session)|time me|(?:start|set|run|begin) (?:the |a |my )?clock|temporizador|minuteur|minuterie|zeitmesser|cron[oó]metro)\b/i;
+const START_VERB = /\b(?:start|set|begin|run|give me|gimme|let's|let us|for|do|ponme|pon|mets|stell|laga)\b/i;
 const YES = /^(?:yes|yeah|yep|sure|okay|ok|do it|go ahead|please)\b/i;
 
 /**

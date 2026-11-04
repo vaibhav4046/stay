@@ -1,10 +1,13 @@
-// evidence: docs/evidence/real-provider/measure-0f93339.json
+// evidence: docs/evidence/real-provider/measure-bdcd654.json
 // evidence: docs/evidence/real-e2e/run-ba6a337.json
+// evidence: docs/evidence/loop/soak-run6-hour-elevenlabs-genz.json
 import { CURRENT } from './currentMeasured';
 import { LIVE } from './liveRun';
+import { SOAK } from './soakMeasured';
 
 const css = (v: Record<string, string | number>) => v as React.CSSProperties;
 const sec = (ms: number) => `${(ms / 1000).toFixed(2)} s`;
+const n = (x: number) => x.toLocaleString('en-US');
 const nice = (k: string) =>
   k.replace(/^english-/, 'English, ').replace('names-without-keyterms', 'Hard names, no hints').replace('names-with-keyterms', 'Hard names, with hints');
 const SCALE_MAX = 0.15; // bars run to 15% of words wrong
@@ -27,8 +30,7 @@ export function BenchmarkBoard() {
   return (
     <div id="benchmarks" data-testid="benchmarks">
       <div>
-        <p className="eyebrow lp-eyebrow-night">Benchmarks</p>
-        <h2 id="bench-title" className="section-title lp-night-title max-w-[28ch]">Measured, not claimed</h2>
+        <h2 id="bench-title" className="section-title lp-night-title max-w-[28ch]">What we measured</h2>
         <p className="lp-night-copy mt-3 max-w-[64ch]">
           Real AssemblyAI speech-to-text and voice. The speakers are synthetic voices, the machine is one laptop, and nobody has tested a human microphone yet. The limits are under each chart.
         </p>
@@ -52,6 +54,11 @@ export function BenchmarkBoard() {
             <p className="bench-note">
               <strong className="tnum">{LIVE.firstSound} ms</strong> from the end of your speech to the first piece of Stay&rsquo;s voice reaching the browser (packet arrival, before it is played), in one recorded call
               {LIVE.toSpeaking !== null && <> (the screen showed &ldquo;Speaking&rdquo; at {LIVE.toSpeaking} ms)</>}. Source: <code>{LIVE.file}</code>.
+            </p>
+            <p className="bench-note" data-testid="bench-soak">
+              That is a single call. Over a longer test, {Math.round(SOAK.longest.minutes)} minutes of back-and-forth with a synthetic speaker and the live model ({SOAK.longest.timed} timed turns), the first sound was played a median{' '}
+              <strong className="tnum">{n(SOAK.longest.median)} ms</strong> after the speaker stopped, and 1 turn in 20 took longer than <strong className="tnum">{n(SOAK.longest.p95)} ms</strong> (slowest {n(SOAK.longest.max)} ms).
+              Across {SOAK.runs} such runs of {SOAK.turns[0]} to {SOAK.turns[1]} turns the median was {n(SOAK.median[0])} to {n(SOAK.median[1])} ms and the 95th percentile {n(SOAK.p95[0])} to {n(SOAK.p95[1])} ms. Source: <code>{SOAK.longest.file}</code> and the other soak files in <code>docs/evidence/loop</code>.
             </p>
           </article>
 

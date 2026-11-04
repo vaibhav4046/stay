@@ -204,6 +204,20 @@ describe('the chat route: what happens on each path (mocked model)', () => {
     expect(await readText(res)).toBe(honestFailureMessage('unavailable'));
   });
 
+  it('a first answer that is empty or broken is asked again once on the next model, and the second answer is what the person hears', async () => {
+    const empty = ['data: ' + JSON.stringify({ choices: [{ delta: {}, finish_reason: 'stop' }] }), '', 'data: [DONE]', '', ''].join('\n');
+    const brokenTool = ['event: error', 'data: {"error":{"code":"tool_use_failed"}}', '', ''].join('\n');
+    for (const first of [empty, brokenTool]) {
+      streamMock.openLlmStream.mockReset();
+      streamMock.openLlmStream
+        .mockResolvedValueOnce({ res: new Response(first, { headers: { 'content-type': 'text/event-stream' } }), source: 'server' })
+        .mockResolvedValueOnce({ res: sse('Here is your report.'), source: 'server' });
+      const res = await post({ messages: [{ role: 'user', content: 'Show my report.' }] });
+      expect(await readText(res)).toBe('Here is your report.');
+      expect(streamMock.openLlmStream).toHaveBeenCalledTimes(2);
+    }
+  });
+
   it('words that arrive split across reads still count as an answer', () => {
     expect(carriesAnswer(['data: {"choices":[{"delta":{"content":"Hello"}}]}'])).toBe(true);
     expect(carriesAnswer(['data: {"choices":[{"delta":{"content":""}}]}', ': keep-alive', 'data: [DONE]'])).toBe(false);

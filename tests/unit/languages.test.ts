@@ -77,15 +77,16 @@ describe('Stay 32-Language Universal Voice Engine & Detection', () => {
       barrierType: 'overwhelm',
     });
     const hiReply = buildLocalizedStayResponse('मुझे ध्यान केंद्रित करने में मदद करो', 'hi-IN', mockPlan);
-    expect(hiReply).toContain('नमस्ते');
-    expect(hiReply).toContain('मैं यहीं आपके साथ हूँ');
+    expect(hiReply).toContain('60 सेकंड');
+    expect(hiReply).not.toContain('नमस्ते'); // no stock greeting before the step
 
     const koReply = buildLocalizedStayResponse('집중할 수 있게 도와줘', 'ko-KR', mockPlan);
-    expect(koReply).toContain('안녕하세요');
+    expect(koReply).toContain('60초');
     expect(koReply).toContain('함께할게요');
 
     const esReply = buildLocalizedStayResponse('Ayúdame a concentrarme', 'es-ES', mockPlan);
-    expect(esReply).toContain('Estoy aquí contigo');
+    expect(esReply).toContain('Me quedo contigo');
+    expect(esReply).not.toMatch(/Te entiendo|¡Hola!/);
   });
 
   it('accurately classifies characteristic Western and Latin scripts', () => {

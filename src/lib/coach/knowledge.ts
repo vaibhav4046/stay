@@ -29,10 +29,10 @@ export const CLINICAL_INTERVENTIONS: ClinicalIntervention[] = [
     targetMechanism: 'De-saturates working memory by collapsing multi-step complexity into a single physical movement.',
     defaultMinutes: 5,
     interventionPrompt: (task) =>
-      `This feels like a mountain because your working memory is trying to hold the whole project at once. We're only doing the first 90 seconds.`,
+      `It is hard to hold the whole project in your head at once. We are only doing the first 90 seconds.`,
     shrunkFirstStepGenerator: (task) =>
-      `Open "${task.replace(/[."']/g, '')}" and write just the title or one messy opening bullet point.`,
-    backchannelCues: ['I hear you.', 'Totally normal.', 'One tiny piece first.', 'Deep breath.'],
+      `Open what you need and write just a title or one messy bullet.`,
+    backchannelCues: ['That is a lot.', 'One tiny piece first.', 'One breath.'],
   },
   {
     id: 'cbt-reframe-perfectionism',
@@ -45,8 +45,8 @@ export const CLINICAL_INTERVENTIONS: ClinicalIntervention[] = [
     interventionPrompt: (task) =>
       `You are protecting yourself from getting it wrong. You have full permission to make this draft completely unpolished. Nobody sees it but you.`,
     shrunkFirstStepGenerator: (task) =>
-      `Draft one deliberately rough sentence for "${task.replace(/[."']/g, '')}" without editing or backspacing.`,
-    backchannelCues: ['No need to get it perfect.', 'Rough draft only.', 'I understand.', 'You can edit later.'],
+      `Write one rough sentence without editing or backspacing.`,
+    backchannelCues: ['No need to get it perfect.', 'Rough draft only.', 'You can edit later.'],
   },
   {
     id: 'cbt-intent-unclear',
@@ -59,8 +59,8 @@ export const CLINICAL_INTERVENTIONS: ClinicalIntervention[] = [
     interventionPrompt: (task) =>
       `When the next move is foggy, the brain stalls. Let's bind an exact trigger to an immediate physical reaction.`,
     shrunkFirstStepGenerator: (task) =>
-      `Locate the single file or tab for "${task.replace(/[."']/g, '')}" and leave it open in full screen.`,
-    backchannelCues: ['Got it.', 'Let\'s clarify the very next move.', 'Makes complete sense.'],
+      `Find the one file or tab you need and leave it open full screen.`,
+    backchannelCues: ['Got it.', 'Let\'s find the very next move.', 'One move at a time.'],
   },
   {
     id: 'cbt-timebox-boredom',
@@ -71,9 +71,9 @@ export const CLINICAL_INTERVENTIONS: ClinicalIntervention[] = [
     targetMechanism: 'Provides an artificial finish line to generate urgency and kickstart dopaminergic engagement.',
     defaultMinutes: 10,
     interventionPrompt: (task) =>
-      `Routine tasks have zero dopamine. We aren't finishing this today; we're running a strict 5-minute sprint against the clock, then stopping.`,
+      `Dull tasks are hard to start. We are not finishing this today. We are doing a short block, then stopping.`,
     shrunkFirstStepGenerator: (task) =>
-      `Set a timer and work on "${task.replace(/[."']/g, '')}" until the bell rings, with full permission to walk away immediately.`,
+      `Set a timer and work on it until the bell rings. You can walk away when it does.`,
     backchannelCues: ['Just 5 minutes.', 'Sprint pace.', 'You can stop when the bell rings.'],
   },
   {
@@ -87,8 +87,8 @@ export const CLINICAL_INTERVENTIONS: ClinicalIntervention[] = [
     interventionPrompt: (task) =>
       `Your nervous system is drained. Before touching the task, let your shoulders drop and exhale completely.`,
     shrunkFirstStepGenerator: (task) =>
-      `Take one sip of water and place your hands flat on the desk for "${task.replace(/[."']/g, '')}".`,
-    backchannelCues: ['Take your time.', 'Shoulders down.', 'I\'m right here.', 'Exhale.'],
+      `Take one sip of water and put your hands flat on the desk.`,
+    backchannelCues: ['Take your time.', 'Shoulders down.', 'Breathe out.'],
   },
 ];
 
@@ -108,12 +108,12 @@ const BARRIER_TRIGGERS: Array<{ barrier: BarrierType; regex: RegExp; backchannel
   {
     barrier: 'overwhelm',
     regex: /\b(overwhelm|too much|drowning|massive|huge pile|can'?t handle|so many things|head is spinning|swamped)\b/i,
-    backchannel: 'I hear how heavy that feels. Let\'s make it tiny.',
+    backchannel: 'That feels heavy. Let\'s make it tiny.',
   },
   {
     barrier: 'perfectionism_or_fear',
     regex: /\b(scared|afraid|mess up|judge|wrong|stupid|fail|rejection|embarrass|anxious|nervous|ruin)\b/i,
-    backchannel: 'No judgment here. You have permission to write a messy draft.',
+    backchannel: 'A messy draft is fine here.',
   },
   {
     barrier: 'unclear_next_step',
@@ -123,12 +123,12 @@ const BARRIER_TRIGGERS: Array<{ barrier: BarrierType; regex: RegExp; backchannel
   {
     barrier: 'boredom_or_distraction',
     regex: /\b(bored|boring|distracted|dull|tedious|can'?t focus|mind wandering|scrolling|procrastinating)\b/i,
-    backchannel: 'Routine stuff has zero dopamine. We\'ll do a fast 5-minute sprint.',
+    backchannel: 'Dull jobs are hard to start. We\'ll do a fast 5-minute block.',
   },
   {
     barrier: 'low_energy',
     regex: /\b(exhausted|tired|drained|no energy|fatigued|burnout|burned out|sleepy|zombie)\b/i,
-    backchannel: 'Low battery mode. We will barely move the needle, no pressure.',
+    backchannel: 'Low battery. We will keep it very small.',
   },
 ];
 
@@ -161,7 +161,7 @@ export function extractCleanTaskFromBrainDump(rawText: string): string {
 export function analyzeStreamingUtterance(text: string): RealtimeStreamingAnalysis {
   const clean = text.trim();
   let detectedBarrier: BarrierType = 'overwhelm';
-  let backchannel = "I'm right here with you. Don't worry about organizing your thoughts—just brain-dump.";
+  let backchannel = "Say it in any order. It does not have to be tidy.";
   let confidence = 0.55;
 
   for (const item of BARRIER_TRIGGERS) {

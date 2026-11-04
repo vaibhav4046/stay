@@ -17,6 +17,6 @@ Generic AI-startup landing pages: gradient text, glass cards everywhere, identic
 
 ## Design principles
 1. One card family. Every card shares face, border, radius and hover; motion differs only where the content differs.
-2. Motion explains: a voice wave when someone speaks, thinking dots before Stay answers, words arriving as they are spoken. Ease-out, under 300 ms for UI, transform and opacity only, and a still page under reduced motion.
+2. Motion explains: a voice wave when someone speaks, thinking dots before Stay answers, words arriving as they are spoken. Ease-out, under 300 ms for UI, transform and opacity only, and a still page under reduced motion. The one longer move is the hero fold (about 1.2 s, ease in and out, transform, opacity and a blur) that carries the recorded call from one scene to the next.
 3. Say the limit next to the number.
 4. Dark theme only; text contrast at least 4.5:1.

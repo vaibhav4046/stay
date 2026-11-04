@@ -149,6 +149,9 @@ export function getClientIp(req: NextRequest): string {
   return req.headers.get('x-real-ip')?.trim() || '127.0.0.1';
 }
 
+/** Most keys any limit table may hold. Random session ids must not grow the tables without end (review, 4 Nov 2026). */
+const MAX_WINDOW_KEYS = 20_000;
+
 function checkWindow(
   store: Map<string, WindowEntry>,
   key: string,
@@ -156,6 +159,10 @@ function checkWindow(
   windowMs: number,
   now: number
 ): { allowed: boolean; retryAfterSec: number } {
+  if (store.size > MAX_WINDOW_KEYS) {
+    for (const [k, v] of store) if (!v.timestamps.some((t) => now - t < windowMs)) store.delete(k);
+    if (store.size > MAX_WINDOW_KEYS) store.clear(); // every key is recent: a flood, so start the count again rather than run out of memory
+  }
   const existing = store.get(key) ?? { timestamps: [] };
   existing.timestamps = existing.timestamps.filter((t) => now - t < windowMs);
   if (existing.timestamps.length >= limit) {

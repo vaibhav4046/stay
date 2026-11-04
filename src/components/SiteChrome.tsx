@@ -9,26 +9,46 @@ const ANCHORS = [
   { href: '#trust', label: 'Trust' },
 ];
 
-/** `anchors` adds in-page links on the landing page; privacy and terms keep the plain header. */
+/**
+ * `anchors` adds in-page links and the floating pill on the landing page. Privacy and terms use the same bar as the app
+ * (`glass-bar`), so moving between them and the app does not change the header.
+ */
 export function SiteHeader({ anchors = false }: { anchors?: boolean }) {
+  const home = (
+    <Link href="/" aria-label="Stay home" className="inline-flex min-h-11 items-center">
+      <StayWordmark />
+    </Link>
+  );
+  const nav = (
+    <nav className="flex items-center gap-0.5 sm:gap-2" aria-label="Main">
+      {anchors &&
+        ANCHORS.map((a) => (
+          <a key={a.href} href={a.href} className="btn btn-ghost nav-lg" data-testid="header-anchor">
+            {a.label}
+          </a>
+        ))}
+      <Link href="/privacy" className="btn btn-ghost nav-sm">Privacy</Link>
+      <UrgentHelpButton />
+      <Link href="/app/today" className="btn btn-primary !px-3 sm:!px-5">Open Stay</Link>
+    </nav>
+  );
+
+  if (!anchors) {
+    return (
+      <header className="glass-bar sticky top-0 z-40">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-5 sm:px-8">
+          {home}
+          {nav}
+        </div>
+      </header>
+    );
+  }
   return (
     <div className="sticky top-0 z-40 px-2 pt-2 sm:px-4 sm:pt-3">
-    <header className="glass-nav mx-auto flex max-w-6xl items-center justify-between gap-2 py-1.5 pl-4 pr-1.5 sm:pl-6">
-      <Link href="/" aria-label="Stay home">
-        <StayWordmark />
-      </Link>
-      <nav className="flex items-center gap-0.5 sm:gap-2" aria-label="Main">
-        {anchors &&
-          ANCHORS.map((a) => (
-            <a key={a.href} href={a.href} className="btn btn-ghost nav-lg" data-testid="header-anchor">
-              {a.label}
-            </a>
-          ))}
-        <Link href="/privacy" className="btn btn-ghost nav-sm">Privacy</Link>
-        <UrgentHelpButton />
-        <Link href="/app/today" className="btn btn-primary !px-3 sm:!px-5">Open Stay</Link>
-      </nav>
-    </header>
+      <header className="glass-nav mx-auto flex max-w-6xl items-center justify-between gap-2 py-1.5 pl-4 pr-1.5 sm:pl-6">
+        {home}
+        {nav}
+      </header>
     </div>
   );
 }
@@ -44,17 +64,17 @@ export function SiteFooter() {
             medication advice. In an emergency call your local emergency number (999 in the UK, 911 in the US and Canada).
           </p>
         </div>
-        <nav className="flex flex-col gap-2 text-[0.9rem]" aria-label="Product">
-          <p className="eyebrow">Stay</p>
-          <Link href="/app/today" className="text-ink-2 hover:text-ink">Open Stay</Link>
-          <Link href="/app/history" className="text-ink-2 hover:text-ink">History</Link>
-          <Link href="/app/reports" className="text-ink-2 hover:text-ink">Appointment report</Link>
+        <nav className="flex flex-col text-[0.9rem]" aria-label="Product">
+          <p className="mb-1 font-medium text-ink">Stay</p>
+          <Link href="/app/today" className="inline-flex min-h-11 items-center text-ink-2 hover:text-ink">Open Stay</Link>
+          <Link href="/app/history" className="inline-flex min-h-11 items-center text-ink-2 hover:text-ink">History</Link>
+          <Link href="/app/reports" className="inline-flex min-h-11 items-center text-ink-2 hover:text-ink">Appointment report</Link>
         </nav>
-        <nav className="flex flex-col gap-2 text-[0.9rem]" aria-label="Legal">
-          <p className="eyebrow">Trust</p>
-          <Link href="/privacy" className="text-ink-2 hover:text-ink">Privacy</Link>
-          <Link href="/terms" className="text-ink-2 hover:text-ink">Terms and safety</Link>
-          <a href="https://github.com/vaibhav4046/stay" rel="noopener noreferrer" className="text-ink-2 hover:text-ink">Source code</a>
+        <nav className="flex flex-col text-[0.9rem]" aria-label="Legal">
+          <p className="mb-1 font-medium text-ink">About</p>
+          <Link href="/privacy" className="inline-flex min-h-11 items-center text-ink-2 hover:text-ink">Privacy</Link>
+          <Link href="/terms" className="inline-flex min-h-11 items-center text-ink-2 hover:text-ink">Terms and safety</Link>
+          <a href="https://github.com/vaibhav4046/stay" rel="noopener noreferrer" className="inline-flex min-h-11 items-center text-ink-2 hover:text-ink">Source code</a>
         </nav>
       </div>
     </footer>

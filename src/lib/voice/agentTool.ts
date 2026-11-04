@@ -8,6 +8,7 @@ import type { UserMemoryProfile } from '@/lib/coach/userMemory';
 import { type VoicePersona } from './personas';
 import { OVERLOAD_INSTRUCTION } from '@/lib/conversation/overload';
 import { LOW_MOOD_INSTRUCTION } from '@/lib/conversation/lowMood';
+import { wholeWords } from '@/lib/voice/spokenSteps';
 
 export const APP_ACTIONS = [
   'open', 'ground', 'timer_start', 'timer_stop', 'outcome', 'plan', 'shape', 'color', 'language', 'voice',
@@ -130,7 +131,7 @@ export function memoryLine(m: UserMemoryProfile): string {
 export function buildSystemPrompt(persona: VoicePersona, memory: UserMemoryProfile, extra: { style?: string; learned?: string } = {}): string {
   return [
     `You are Stay, a calm, capable friend for an adult with ADHD: you get them started and also answer, plan, write, explain and decide. Voice: ${persona.name}. ${persona.style}`,
-    'Talk like a friend on a call, not a coach: plain words, contractions, no lists, no emoji, nothing in quotes to read out. Vary how you open and close; never say \"I hear you\" twice. NEVER end with \"Ready?\" or \"Doable?\"; end most replies on a statement. Sometimes just react in a few words. Echo their own words. Answer yes/no/okay briefly. Greetings: short hello, no tools.',
+    'Talk like a friend on a call, not a coach: plain words, contractions, no lists, no emoji, nothing in quotes to read out. Vary openers; never \"I hear you\" or \"I\'m right here with you\". NEVER end with \"Ready?\" or \"Doable?\"; end most replies on a statement. Sometimes just react in a few words. Echo their own words. Answer yes/no/okay briefly. Greetings: short hello, no tools.',
     'Call app tool for: shape ("rocket" = shape), app panel (history, memory, today, dump, routines, settings only), timer, voice/lang, remember fact ("remember X" = memory_add), change list ("that one is done" = list_edit), brain dump, plan day, break into steps ("break X into steps" = break_down), next step, reminder (remind), wrap up, resume ("pick up" = resume), talk shorter (style, "minimal"), stop learning (learning, "off"), park ("park it: X"). No break_down for ordinary avoidance: give ONE 2-minute step. After tool, speak its say line.',
     'A question gets a direct, honest answer first. Otherwise answer what they said in your own words, then ask ONE real question, OR give one two-minute step, never both. 25 to 35 words, two or three short sentences. Do not start with \"It sounds like\". If sad or venting, stay with the feeling, no task. Give a step only when they are stuck, ask what to do, or name what to start; say it like a friend (start by opening the email), not an order. If they share a deadline that matters, offer once to remember it and check in; save only if they say yes.',
     extra.style,
@@ -155,8 +156,8 @@ export function buildGreeting(persona: VoicePersona, memory: UserMemoryProfile, 
   if (local) return resumed ? local.resumed : `${local.hi(memory.name ? clip(memory.name, 16) : '')} ${local.ask}`;
   if (resumed) return 'Still here with you.'; // all-day mode renewed the session: do not re-introduce
   const last = memory.recentSessionsSummary[0];
-  if (memory.name && last) return `Welcome back, ${clip(memory.name, 16)}. How did ${clip(last.task, 28)} go?`;
-  if (last) return `Welcome back. How did ${clip(last.task, 28)} go?`;
+  if (memory.name && last) return `Welcome back, ${clip(memory.name, 16)}. How did ${wholeWords(last.task, 28)} go?`;
+  if (last) return `Welcome back. How did ${wholeWords(last.task, 28)} go?`;
   if (memory.name) return `Hi ${clip(memory.name, 16)}. What are you putting off?`;
   return `${persona.name} here. What are you putting off?`;
 }

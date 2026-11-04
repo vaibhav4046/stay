@@ -9,6 +9,8 @@ type Topic = 'can_do' | 'why_stay' | 'who' | 'privacy' | 'cost' | 'talk' | 'visi
 const PATTERNS: Array<[Topic, RegExp]> = [
   ['voice_choice', /\bwhy (?:are|did|do) you (?:pick|picking|picked|choose|choosing|chose|use|using|speak(?:ing)? in|have|sound(?:ing)? like) (?:this|that|a|the|such a) (?:\w+ )?voice\b|\bwho (?:is|picked|chose) (?:this|that|the) voice\b|\bwhat(?:'s| is) (?:this|that|the) voice\b/i],
   ['why_stay', /\b(?:what(?:'s| is) your (?:main )?(?:differentiator|difference|advantage|unique|usp|point)|differentiator|what makes you (?:different|special|unique)|what(?:'s| is) special about you|why (?:use|pick|choose|need) (?:you|stay)|why (?:should|would|do) i (?:use|pick|choose|need) (?:you|stay)|(?:rather|instead of|over|better than|vs\.?|versus) (?:use |using )?(?:chat ?gpt|gpt|claude|gemini|copilot|siri|alexa)|why not (?:just )?(?:use )?(?:chat ?gpt|claude|gemini)|what makes you (?:different|special|better)|how are you different|what(?:'s| is) your (?:specialty|speciality|edge|usp))\b/i],
+  // asked the way people say it out loud (the film, 4 Nov 2026: "Why would I use this and not just ask a regular chatbot?" went to the model)
+  ['why_stay', /\bwhy (?:would|should|do) i (?:use|need) (?:this|it)\b|\b(?:not|instead of|rather than|over) (?:just )?(?:ask(?:ing)?|us(?:e|ing) )?(?:a |an |the )?(?:regular |normal |big |general |other )?(?:chat ?bot|ai app|ai assistant|voice assistant|assistant)\b/i],
   ['can_do', /\b(?:what (?:more )?(?:can|could) you do|what do you do|how can you help|what are you (?:able|good)|what are your (?:features|abilities|skills)|what can i use you for|what(?:'s| is) this (?:app|for))\b/i],
   ['who', /\b(?:who are you|what are you|what is stay|tell me about (?:yourself|stay))\b/i],
   ['privacy', /\b(?:is (?:my|this|the) (?:data|voice|conversation|chat|info)s? (?:private|safe|secure|saved|stored)|do you (?:save|store|record|keep|sell)|who can (?:see|hear|read) (?:this|my|what i))\b/i],
@@ -23,17 +25,17 @@ const PATTERNS: Array<[Topic, RegExp]> = [
 
 const ANSWERS: Record<Topic, string[]> = {
   can_do: [
-    "I help you start things. Past getting tasks started, I run a timer beside you, sort a messy brain dump into a short list, keep your list and remind you. You can also show me your screen or a photo, and I'll look at it with you.",
+    "I help you start things, like the task you keep putting off. I also run a timer beside you, sort a messy brain dump into a short list, keep your list and remind you. You can show me your screen or a photo, and I'll look at it with you.",
     "Mostly I get you started and stay with you. One small step on a task, a timer, a brain dump sorted into a short list, reminders, and a memory of what helps. You can show me your screen or a picture too.",
   ],
   why_stay: [
-    "A clock app starts a timer, and a general voice assistant will talk about anything. I'm for the moment you're stuck. Tell me what you're avoiding and I give you one tiny first step, start the clock with you, and wait through your pauses. When time's up I check in, and I remember what helped.",
-    "The hard part isn't the timer, it's starting. So I do the starting with you: one tiny step, a clock running while I'm here, no talking over your pauses, a check-in when time's up, and a memory of what worked. Your list and history stay on your device.",
+    "I'm for the moment you're stuck. Tell me what you're avoiding and I give you one tiny first step, start the clock with you, and wait through your pauses. When time's up I check in, and I remember what helped.",
+    "Starting is the hard part, so I start with you: one tiny step, a clock running while I'm here, no talking over your pauses, a check-in when time's up, and a memory of what worked. Your list and history stay on your device.",
   ],
   voice_choice: ["That's the voice currently selected, one of AssemblyAI's. You can change it any time: say \"change voice\", or open the voice menu."],
   who: ["I'm Stay, a voice companion for the things you keep putting off. Talk or type, and I'll keep it small."],
   privacy: [
-    "Your history, memory and list stay on this device. Your voice goes to AssemblyAI to be heard and answered, and a picture goes to an AI model to be looked at. Stay doesn't save recordings or pictures.",
+    "Your history, memory and list stay on this device. Your voice goes to AssemblyAI to be heard, your words go to a language model to write the reply, and a picture goes to an AI model to be looked at. Stay doesn't save recordings or pictures.",
   ],
   cost: ["There's nothing to pay in this version."],
   vision: [

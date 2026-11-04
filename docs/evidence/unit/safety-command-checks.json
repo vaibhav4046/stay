@@ -1,9 +1,9 @@
 {
-  "gitSha": "fa97596b1aa93be060e9b23246e2c5dddfb08e8e",
+  "gitSha": "bdcd654921791f4a2dbd88ad40f6c08afb70cd13",
   "dirty": true,
   "tier": "unit",
   "scenarioId": "deterministic-safety-and-parser-checks",
-  "timestamp": "2026-11-01T05:55:22.185Z",
+  "timestamp": "2026-11-04T05:38:48.440Z",
   "note": "Synchronous deterministic unit checks only. Network/LLM latency is not measured here (latency_ms: null).",
   "total": 28,
   "passed": 28,

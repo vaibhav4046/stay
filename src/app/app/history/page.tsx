@@ -7,13 +7,14 @@ import { BARRIER_DEFINITIONS, STRATEGY_DEFINITIONS } from '@/lib/coach/strategie
 import { StrategyPatternSummary } from '@/components/StrategyPatternSummary';
 import { weekTally, weekTallyLine } from '@/lib/coach/weekTally';
 import { PageSkeleton } from '@/components/PageSkeleton';
+import { PageHeading } from '@/components/PageHeading';
 import type { CoachSessionRecord } from '@/types/domain';
 
 const OUTCOME_LABEL: Record<string, { text: string; color: string }> = {
-  started: { text: 'Started', color: '#5BD6A0' },
-  partly_started: { text: 'Partly started', color: '#8FD3FF' },
-  not_started: { text: 'Not started', color: '#747A75' },
-  paused_or_stopped: { text: 'Paused', color: '#F0B35A' },
+  started: { text: 'Started', color: 'var(--color-success)' },
+  partly_started: { text: 'Partly started', color: 'var(--color-accent)' },
+  not_started: { text: 'Not started', color: 'var(--color-muted)' },
+  paused_or_stopped: { text: 'Paused', color: 'var(--color-caution)' },
 };
 
 export default function HistoryPage() {
@@ -47,7 +48,7 @@ export default function HistoryPage() {
         <div className="mb-6 rounded-2xl border border-primary/20 bg-primary/5 p-4 flex flex-wrap items-center justify-between gap-3" data-testid="onboarding-guide-banner">
           <div>
             <p className="font-semibold text-sm text-ink">Welcome to Stay</p>
-            <p className="text-xs text-ink-2 mt-0.5">Complete the quick 2-question setup on Today to personalize your focus coaching.</p>
+            <p className="text-xs text-ink-2 mt-0.5">Answer two quick questions on Today so Stay can fit how it helps you.</p>
           </div>
           <Link href="/app/today" className="btn btn-primary text-xs py-2 px-3">
             Start setup
@@ -55,10 +56,10 @@ export default function HistoryPage() {
         </div>
       )}
 
+      <PageHeading className="mb-5">History</PageHeading>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] relative">
-      <section className="card p-5 sm:p-6" aria-labelledby="hist-title">
-        <h1 id="hist-title" className="section-title">History</h1>
-        <p className="mt-2 text-ink-2" data-testid="week-tally">{weekTallyLine(week)}</p>
+      <section className="card p-5 sm:p-6" aria-label="Your sessions">
+        <p className="text-ink-2" data-testid="week-tally">{weekTallyLine(week)}</p>
         {sessions.length === 0 ? (
           <p className="text-ink-2 mt-3">Nothing here yet. Start one small thing and it will show up here, even if it goes badly. That is still data.</p>
         ) : (
@@ -66,8 +67,8 @@ export default function HistoryPage() {
             {sessions.map((s) => {
               const o = s.outcome ? OUTCOME_LABEL[s.outcome] : null;
               return (
-                <li key={s.id} className="group py-4">
-                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <li key={s.id} className="py-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="font-medium">{s.taskText}</p>
                     <div className="flex items-center gap-2">
                       {o && (
@@ -78,7 +79,7 @@ export default function HistoryPage() {
                       <button
                         type="button"
                         onClick={() => handleDelete(s)}
-                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity text-xs text-ink-3 hover:text-red-500 cursor-pointer px-1.5 py-0.5 rounded border border-transparent hover:border-edge"
+                        className="min-h-11 cursor-pointer rounded-lg border border-transparent px-3 text-sm text-ink-2 hover:border-danger/40 hover:text-danger"
                         aria-label={`Delete log "${s.taskText}"`}
                         data-testid={`history-delete-${s.id}`}
                       >
@@ -87,14 +88,11 @@ export default function HistoryPage() {
                     </div>
                   </div>
                   <p className="text-ink-2 text-[0.92rem] mt-1">{s.firstStep}</p>
-                  <p className="meta mt-1.5 tnum">
-                    {new Date(s.createdAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                    {' · '}
-                    {BARRIER_DEFINITIONS[s.barrierType].label}
-                    {' · '}
-                    {STRATEGY_DEFINITIONS[s.strategyKey].label}
-                    {' · '}
-                    {s.plannedMinutes} min · {s.mode}
+                  <p className="meta mt-1.5 tnum flex flex-wrap gap-x-4 gap-y-0.5">
+                    <span>{new Date(s.createdAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                    <span>{BARRIER_DEFINITIONS[s.barrierType].label}</span>
+                    <span>{STRATEGY_DEFINITIONS[s.strategyKey].label}</span>
+                    <span>{s.plannedMinutes} min, {s.mode === 'voice' ? 'by voice' : 'typed'}</span>
                   </p>
                 </li>
               );
@@ -133,7 +131,7 @@ export default function HistoryPage() {
           <button
             type="button"
             onClick={handleUndo}
-            className="text-xs font-semibold text-primary hover:underline cursor-pointer ml-2"
+            className="ml-2 min-h-11 cursor-pointer px-2 text-xs font-semibold text-primary hover:underline"
             data-testid="history-undo-button"
           >
             Undo (4s)

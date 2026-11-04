@@ -37,7 +37,7 @@ export const SAMPLE_DEMO_SESSIONS: CoachSessionRecord[] = [
     taskText: 'Reply to landlord email about lease renewal date',
     barrierType: 'perfectionism_or_fear',
     strategyKey: 'task_shrinking',
-    firstStep: 'Open the email thread and write one rough sentence in the draft box without sending it.',
+    firstStep: 'Open a blank message to your landlord and type one rough sentence. Do not send it.',
     plannedMinutes: 10,
     actualSeconds: 600,
     outcome: 'started',
@@ -55,7 +55,7 @@ export const SAMPLE_DEMO_SESSIONS: CoachSessionRecord[] = [
     taskText: 'Upload three October receipts to expense portal',
     barrierType: 'boredom_or_distraction',
     strategyKey: 'timeboxing',
-    firstStep: 'Work on the receipts folder for one bounded 5-minute sprint with permission to stop at the bell.',
+    firstStep: 'Work on the receipts until the timer rings. You can stop the moment it does.',
     plannedMinutes: 5,
     actualSeconds: 300,
     outcome: 'started',
@@ -73,7 +73,7 @@ export const SAMPLE_DEMO_SESSIONS: CoachSessionRecord[] = [
     taskText: 'Outline Q4 project handover notes for team meeting',
     barrierType: 'overwhelm',
     strategyKey: 'task_shrinking',
-    firstStep: 'Open a blank note, write the title at the top, and list three bullet fragments.',
+    firstStep: 'Open a blank note, type a working title, and list three rough bullets.',
     plannedMinutes: 10,
     actualSeconds: 600,
     outcome: 'started',
@@ -127,7 +127,7 @@ export const SAMPLE_DEMO_SESSIONS: CoachSessionRecord[] = [
     taskText: 'Rewrite portfolio bio paragraph',
     barrierType: 'perfectionism_or_fear',
     strategyKey: 'reframing',
-    firstStep: 'Write a deliberately messy 2-sentence version 0 draft that nobody sees yet.',
+    firstStep: 'Write two rough sentences. Nobody sees them yet.',
     plannedMinutes: 10,
     actualSeconds: 240,
     outcome: 'not_started',
@@ -435,17 +435,39 @@ function readRawJson(key: string): unknown {
   }
 }
 
+const MEMORY_KEY = 'stay_user_memory_v1';
+const CALIBRATION_KEY = 'stay_user_calibration_v1';
+/** Own API keys and cloud setup: left out so a file handed to someone else never carries a secret. */
+const NOT_EXPORTED_KEYS = new Set(['stay_byok', 'stay_supabase_url', 'stay_supabase_anon_key']);
+
+/**
+ * Everything else Stay keeps under its own prefixes (the same two the delete-all wipe uses): the conversation in progress
+ * (`stay_active_session_v1`), what Stay learned, the Today list, parked thoughts, routines, reminders and so on. Keyed by storage key.
+ */
+function readOtherStayData(): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  if (typeof window === 'undefined') return out;
+  const named = new Set<string>([...Object.values(STORAGE_KEYS), MEMORY_KEY, CALIBRATION_KEY]);
+  for (let i = 0; i < window.localStorage.length; i++) {
+    const k = window.localStorage.key(i);
+    if (!k || !(k.startsWith('stay_') || k.startsWith('stay:')) || named.has(k) || NOT_EXPORTED_KEYS.has(k)) continue;
+    out[k] = readRawJson(k) ?? window.localStorage.getItem(k);
+  }
+  return out;
+}
+
 export function exportAllUserDataJson(): string {
   const payload = {
     exportedAt: new Date().toISOString(),
-    application: 'Stay — Voice-First ADHD Support Companion',
-    notice: 'User-generated self-tracking export. Not a medical device or clinical diagnostic record.',
+    application: 'Stay: a voice companion for adults with ADHD',
+    notice: 'User-generated self-tracking export. Not a medical device or clinical diagnostic record. Your own API keys and cloud setup are not included.',
     profile: getLocalProfile(),
     coachSessions: getLocalSessions(),
     treatmentCheckins: getLocalCheckins(),
     auditEvents: getLocalAuditEvents(),
-    memory: readRawJson('stay_user_memory_v1'),
-    calibration: readRawJson('stay_user_calibration_v1'),
+    memory: readRawJson(MEMORY_KEY),
+    calibration: readRawJson(CALIBRATION_KEY),
+    otherSavedData: readOtherStayData(),
   };
   return JSON.stringify(payload, null, 2);
 }

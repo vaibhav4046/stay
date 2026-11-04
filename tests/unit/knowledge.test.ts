@@ -54,7 +54,8 @@ describe('ADHD Clinical Knowledge Engine (VoiceAgentRAG)', () => {
   it('detects boredom and understimulation', () => {
     const res = analyzeStreamingUtterance('This spreadsheet is so boring and tedious I keep scrolling my phone');
     expect(res.detectedBarrier).toBe('boredom_or_distraction');
-    expect(res.suggestedBackchannel).toContain('dopamine');
+    expect(res.suggestedBackchannel).toContain('block');
+    expect(res.suggestedBackchannel).not.toMatch(/dopamine|right here with you|I hear/i);
   });
 
   it('extracts task targets using verb heuristics', () => {

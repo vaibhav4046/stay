@@ -7,7 +7,8 @@ import { GLANCE_PROMPT, isQuietReply } from '@/lib/vision/image';
 import { answerAboutStay } from '@/lib/voice/aboutStay';
 import { honestFailureMessage } from '@/lib/conversation/response';
 import { stripThink } from '@/lib/voice/thinkFilter';
-import { FastSocket, FAST_TTS_LANGUAGE, toAssemblyVoiceId } from '@/lib/voice/fastSocket';
+import { FastSocket, FAST_TTS_LANGUAGE, quickConfirmation, toAssemblyVoiceId } from '@/lib/voice/fastSocket';
+import { outcomeAsOpen } from '@/lib/voice/repairToolCall';
 import {
   computeProgressiveCaption,
   transitionConversationState,
@@ -80,6 +81,7 @@ import {
 import {
   detectPanel,
   detectVoiceCommand,
+  isResumePhrase,
   parseMultiIntentUtterance,
   type PanelId,
   type VoiceCommandAction,
@@ -190,6 +192,13 @@ export const NATIVE_VOICE_FOR_LANG: Record<string, string> = NATIVE_PERSONA_FOR_
 export const AGENT_VERIFIED_LANGS = ['en', 'es', 'fr', 'de', 'it', 'pt', 'hi', 'ja', 'zh', 'ko', 'nl', 'ru', 'tr', 'ar', 'sv', 'no', 'da', 'fi', 'ro', 'vi', 'id', 'ms', 'he'] as const;
 /** Languages the fast path hears but the voice cannot speak: replies are written in Roman letters and spoken by the English voice. */
 const FAST_HEARS_ONLY = new Set(['hi']);
+
+/** Commands a typed message may run on the device, without the model: panels and screens, corrections, pause and resume, language and voice. */
+const LOCAL_SAFE_COMMANDS = new Set<string>([
+  'pause_listening', 'resume_listening', 'scratch_that', 'change_that_to', 'show_panel', 'show_memory', 'show_history', 'show_what_heard',
+  'navigate', 'switch_view', 'close_modals', 'clear_chat', 'repeat_last', 'open_grounding', 'open_voice_menu', 'change_language',
+  'change_voice', 'toggle_quiet_mode', 'stop_timer',
+]);
 
 export function isAgentVerifiedLanguage(code: string): boolean {
   return (AGENT_VERIFIED_LANGS as readonly string[]).includes(code.split('-')[0].toLowerCase());
@@ -422,22 +431,22 @@ export function buildLocalizedStayResponse(
   basePlan: CoachPlanProposal
 ): string {
   if (langCode === 'hi-IN') {
-    return `नमस्ते! मैं समझ सकती हूँ कि जब दिमाग थका हो तो काम शुरू करना कितना भारी लगता है। चलिए सारा दबाव हटाते हैं — सिर्फ 60 सेकंड के लिए पहला छोटा कदम उठाते हैं: "${basePlan.firstStep}". मैं यहीं आपके साथ हूँ!`;
+    return `${basePlan.firstStep} बस 60 सेकंड के लिए। टाइमर चलते समय मैं यहीं हूँ।`;
   }
   if (langCode === 'ko-KR') {
-    return `안녕하세요! 머리가 복잡하고 지칠 때 시작하는 게 얼마나 힘든지 잘 알아요. 부담을 완전히 내려놓고 딱 60초 동안만 첫 번째 작은 단계를 함께 해볼까요? "${basePlan.firstStep}" — 제가 바로 옆에서 함께할게요!`;
+    return `${basePlan.firstStep} 딱 60초만 해 봐요. 하는 동안 함께할게요.`;
   }
   if (langCode === 'es-ES') {
-    return `¡Hola! Te entiendo perfectamente. Vamos a quitar toda la presión y dar un solo micro-paso de 60 segundos: "${basePlan.firstStep}". ¡Estoy aquí contigo!`;
+    return `${basePlan.firstStep} Solo 60 segundos. Me quedo contigo mientras lo haces.`;
   }
   if (langCode === 'fr-FR') {
-    return `Salut ! Je comprends tout à fait. Enlevons toute la pression et commençons par une micro-étape de 60 secondes : "${basePlan.firstStep}". Je reste ici avec toi !`;
+    return `${basePlan.firstStep} Juste 60 secondes. Je reste avec toi pendant que tu le fais.`;
   }
   if (langCode === 'de-DE') {
-    return `Hallo! Ich verstehe dich total. Lass uns allen Druck wegnehmen und mit einem 60-Sekunden-Schritt starten: "${basePlan.firstStep}". Ich bin direkt bei dir!`;
+    return `${basePlan.firstStep} Nur 60 Sekunden. Ich bleibe bei dir, solange du es machst.`;
   }
   if (langCode === 'ja-JP') {
-    return `こんにちは！頭が疲れている時に始めるのがどれほど大変かよく分かります。プレッシャーを手放して、まずは60秒だけ最初の小さな一歩「${basePlan.firstStep}」を一緒にやってみましょう！`;
+    return `${basePlan.firstStep} まずは60秒だけやってみましょう。やっている間、そばにいます。`;
   }
   return basePlan.spokenResponse;
 }
@@ -862,6 +871,13 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       playEarcon('resume');
     }
   }, [playEarcon]);
+
+  // Paused listening: the mic keeps streaming to the fast socket, which drops everything except a wake phrase ("hey stay", "resume").
+  // It is told here, at the one place the paused state changes, and again when a new session is ready.
+  useEffect(() => {
+    const ws = wsRef.current as unknown;
+    if (ws instanceof FastSocket && ws.readyState === WebSocket.OPEN && sessionReadyRef.current) ws.send(JSON.stringify({ type: 'listening.pause', on: isHandsFreePaused }));
+  }, [isHandsFreePaused]);
 
   const stopPlaybackQueue = useCallback(() => {
     localBargeInRef.current.reset();
@@ -1485,6 +1501,89 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     [runAppAction]
   );
 
+  /**
+   * A typed message with no live voice goes to the same brain as the voice: the chat route (its safety gates, its answers about Stay, the
+   * model) and the same app tool. Judge and user reviews, 4 Nov 2026: without this, typed turns went to a local command parser and a plan
+   * template ("Morphed into Timer (7-Fold AI Morph)!", "yes" read as a game move, the person's own sentence pasted into a step). The reply is
+   * shown, not spoken: someone who types at 11pm has not asked for sound.
+   */
+  const textHistoryRef = useRef<Array<{ role: 'user' | 'assistant' | 'tool'; content: string | null; tool_calls?: unknown[]; tool_call_id?: string }>>([]);
+  const chatByText = useCallback(
+    async (clean: string) => {
+      const add = (t: string) => setTranscripts((prev) => [...prev, { id: `agent-${Date.now()}`, role: 'agent', text: t, timestamp: new Date().toISOString() }]);
+      const memory = loadUserMemory();
+      const context = {
+        localHour: new Date().getHours(),
+        personal: [learningsPromptLine(loadLearnings()), memoryLine(memory)].filter(Boolean).join(' ').slice(0, 600),
+      };
+      const ask = async (withTools: boolean) => {
+        const res = await fetch('/api/voice/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...byokHeaders() },
+          body: JSON.stringify({ messages: textHistoryRef.current.slice(-16), withTools, context }),
+          signal: AbortSignal.timeout(20_000), // a stalled network ends in an honest message, not an endless "Thinking" (QA review, 4 Nov 2026)
+        });
+        if ((res.headers.get('content-type') || '').includes('application/json')) {
+          const j = (await res.json().catch(() => ({}))) as { safety?: string; message?: string };
+          return { safety: j.safety, text: typeof j.message === 'string' ? j.message : honestFailureMessage('unavailable'), call: null };
+        }
+        let text = '';
+        const call = { id: '', name: '', args: '' };
+        for (const line of (await res.text()).split('\n')) {
+          if (!line.startsWith('data: ') || line === 'data: [DONE]') continue;
+          try {
+            const delta = (JSON.parse(line.slice(6)) as { choices?: Array<{ delta?: { content?: string | null; tool_calls?: Array<{ id?: string; function?: { name?: string; arguments?: string } }> } }> }).choices?.[0]?.delta;
+            if (delta?.content) text += delta.content;
+            for (const tc of delta?.tool_calls ?? []) {
+              call.id ||= tc.id ?? '';
+              call.name ||= tc.function?.name ?? '';
+              call.args += tc.function?.arguments ?? '';
+            }
+          } catch {
+            // a line that is not JSON: skip it
+          }
+        }
+        return { safety: undefined, text: stripThink(text).trim(), call: call.name ? call : null };
+      };
+
+      textHistoryRef.current = [...textHistoryRef.current, { role: 'user' as const, content: clean }].slice(-16);
+      setVisualState('thinking');
+      try {
+        const first = await ask(true);
+        if (first.safety === 'crisis') return optionsRef.current.onCrisisDetected?.(crisisMessage());
+        let said = first.text;
+        if (first.call && first.call.name === 'app') {
+          let args: Record<string, unknown> = {};
+          try {
+            args = JSON.parse(outcomeAsOpen(first.call.args, clean) ?? (first.call.args || '{}')) as Record<string, unknown>;
+          } catch {
+            args = {};
+          }
+          const result = runAppAction(args as unknown as AppActionArgs);
+          const id = first.call.id || `call-${Date.now()}`;
+          textHistoryRef.current = [
+            ...textHistoryRef.current,
+            { role: 'assistant' as const, content: null, tool_calls: [{ id, type: 'function', function: { name: 'app', arguments: JSON.stringify(args) } }] },
+            { role: 'tool' as const, tool_call_id: id, content: JSON.stringify(result).slice(0, 1500) },
+          ].slice(-16);
+          const resultSay = typeof result.say === 'string' ? result.say : '';
+          if (!said) said = resultSay || quickConfirmation(args.action, JSON.stringify(result), 'english') || (await ask(false)).text;
+        }
+        if (!said) said = honestFailureMessage('unavailable');
+        // a failure line is shown but never kept in the history, so the model does not copy it next turn
+        if (said !== honestFailureMessage('unavailable') && !/too many requests/i.test(said)) {
+          textHistoryRef.current = [...textHistoryRef.current, { role: 'assistant' as const, content: said }].slice(-16);
+        }
+        add(said);
+      } catch {
+        add(honestFailureMessage('timeout'));
+      } finally {
+        setVisualState('idle');
+      }
+    },
+    [runAppAction],
+  );
+
   /** The newest frame of a shared screen or camera, passed to the live voice so a spoken "what do you see" can use it. */
   const setVisionFrame = useCallback((frame: string | null) => {
     visionFrameRef.current = frame;
@@ -1563,6 +1662,25 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       }
       lastUserSaidTimeRef.current = now;
 
+      // 0. Safety first: crisis wording runs nothing else, no command, timer, memory or plan (safety review, 4 Nov 2026: "start a 5 minute
+      // timer, I want to end my life" showed the help panel with a timer counting down behind it)
+      if (detectCrisisSignal(clean).triggered) {
+        lastUserSaidRef.current = clean;
+        setTranscripts((prev) => [...prev, { id: `msg-${Date.now()}`, role: 'user', text: clean, timestamp: new Date().toISOString() }]);
+        disconnectVoiceSession();
+        optionsRef.current.onCrisisDetected?.(detectCrisisSignal(clean).message);
+        return true;
+      }
+
+      // 0b. Paused: a typed "resume" or "hey stay" wakes listening (a bare "resume" means this only while paused)
+      if (handsFreePausedRef.current && isResumePhrase(clean)) {
+        handsFreePausedRef.current = false;
+        setIsHandsFreePaused(false);
+        setVisualState('listening');
+        playEarcon('resume');
+        return true;
+      }
+
       // 1. Real-time multilingual auto-detection (Devanagari, Hangul, Romanized Hinglish/Korean, 32 languages)
       const autoDetectedLang = detectTextLanguage(clean, 'auto');
       const effectiveLang =
@@ -1576,6 +1694,22 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         } catch {
           // ignore
         }
+      }
+
+      // 1b. A medication question gets the fixed boundary before any command or plan runs (same review)
+      const medFirst = detectMedicationAdviceRequest(clean);
+      if (medFirst.triggered) {
+        lastUserSaidRef.current = clean;
+        medicationSuppressionRef.current = true;
+        stopPlaybackQueue();
+        optionsRef.current.onMedicalBoundaryDetected?.(medFirst.message);
+        setTranscripts((prev) => [
+          ...prev,
+          { id: `msg-${Date.now()}`, role: 'user', text: clean, timestamp: new Date().toISOString() },
+          { id: `med-boundary-${Date.now()}`, role: 'agent', text: medFirst.message, timestamp: new Date().toISOString() },
+        ]);
+        speakDeterministicBoundary(medFirst.message, effectiveLang, true);
+        return true;
       }
 
       // 2. Extract long-term memory from typed/spoken text
@@ -1598,8 +1732,15 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       // 4. Multi-Intent Human Conversational Parser (executes simultaneous commands + task context)
       // a message that already carries a picture is a question about it: never read it as a command ("look at my screen" would reopen the panel)
       const multi = opts?.image ? { commands: [], conversationalContext: null, isMultiContext: false } : parseMultiIntentUtterance(clean);
+      // Handled here, instantly and offline: a short "pause"/"resume", corrections ("scratch that"), and plain screen/panel asks ("show my
+      // history"). Everything else goes to the model and its app tool, typed or spoken, so it is one brain (reviews, 4 Nov 2026: locally
+      // parsed orb, game and timer commands turned "make it smaller" into an orb morph and "yes" into a game move, and "hold on, let me
+      // think" paused the call).
+      const shortCommand = clean.split(/\s+/).length <= 4;
       const liveNow = !!wsRef.current && wsRef.current.readyState === WebSocket.OPEN && sessionReadyRef.current;
-      if (multi.commands.length > 0 && (!liveNow || multi.commands.some((c) => c.type === 'pause_listening' || c.type === 'resume_listening'))) {
+      const hasPauseResume = multi.commands.some((c) => c.type === 'pause_listening' || c.type === 'resume_listening');
+      const allSafeLocal = multi.commands.length > 0 && multi.commands.every((c) => LOCAL_SAFE_COMMANDS.has(c.type));
+      if (multi.commands.length > 0 && allSafeLocal && (hasPauseResume ? shortCommand : !liveNow || multi.commands.some((c) => c.type === 'scratch_that' || c.type === 'change_that_to'))) {
         const isCorrection = multi.commands.some((c) => c.type === 'scratch_that' || c.type === 'change_that_to');
         if (!isCorrection) {
           setTranscripts((prev) => [
@@ -1634,7 +1775,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           } else if (cmd.type === 'start_timer') {
             optionsRef.current.onStartTimerRequested?.(cmd.minutes, clean);
             playEarcon('chime');
-            executedReplies.push(`⏱️ Started your ${cmd.minutes}-minute focus sprint.`);
+            executedReplies.push(`Started a ${cmd.minutes}-minute timer.`);
           } else if (cmd.type === 'stop_timer') {
             playEarcon('pause');
             return true;
@@ -1645,11 +1786,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           } else if (cmd.type === 'change_voice') {
             setSelectedVoice(cmd.voiceId);
             playEarcon('chime');
-            executedReplies.push(`🎙️ Switched voice persona to ${cmd.voiceId}.`);
+            executedReplies.push(`Voice changed to ${cmd.voiceId}.`);
           } else if (cmd.type === 'change_language') {
             setSelectedLanguage(cmd.langCode);
             playEarcon('chime');
-            executedReplies.push(`🌐 Switched language to ${cmd.langName}.`);
+            executedReplies.push(`Language changed to ${cmd.langName}.`);
           } else if (cmd.type === 'open_voice_menu') {
             optionsRef.current.onChangeVoiceRequested?.();
             playEarcon('chime');
@@ -1697,35 +1838,35 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
             if (cmd.difficulty) setGameDifficulty(cmd.difficulty);
             const gameTitle =
               cmd.game === 'gonogo'
-                ? 'Prefrontal Impulse Shield'
+                ? 'Go and stop'
                 : cmd.game === 'wordrally'
-                ? 'Dopamine Word Rally'
-                : 'Harmonic Simon Pulse';
+                ? 'Word chain'
+                : 'Pattern memory';
             executedReplies.push(
               cmd.difficulty
-                ? `🎮 Orb morphed into ${gameTitle} on ${cmd.difficulty.toUpperCase()} difficulty! Watch the Orb and let's play together.`
-                : `🎮 Orb transformed into our ADHD Cognitive Game Arena (${gameTitle})! What difficulty would you like — Easy, Medium, or Hard?`
+                ? `${gameTitle}, ${cmd.difficulty}. Watch the orb.`
+                : `${gameTitle} is on the orb. Easy, medium or hard?`
             );
           } else if (cmd.type === 'set_game_difficulty') {
             playEarcon('chime');
             setTopicShape(5);
             setGameDifficulty(cmd.difficulty);
             executedReplies.push(
-              `🎯 Game difficulty locked to ${cmd.difficulty.toUpperCase()}! Let's play together right inside the Orb.`
+              `Difficulty set to ${cmd.difficulty}.`
             );
           } else if (cmd.type === 'game_action') {
             optionsRef.current.onVoiceCommandDetected?.(cmd);
             playEarcon('chime');
-            executedReplies.push('🎮 Executed hands-free game move.');
+            executedReplies.push('Done.');
             shouldReturnEarly = true;
           } else if (cmd.type === 'change_orb_color') {
             playEarcon('chime');
             setOrbColorTheme(cmd.colorTheme);
-            executedReplies.push(`🎨 Orb color gradient transformed to ${cmd.colorTheme.toUpperCase()} theme.`);
+            executedReplies.push(`Orb colour set to ${cmd.colorTheme}.`);
           } else if (cmd.type === 'change_orb_shape') {
             playEarcon('chime');
             setTopicShape(cmd.shapeId);
-            executedReplies.push(`✨ Orb smoothly morphed into ${cmd.shapeLabel}!`);
+            executedReplies.push(`Orb shape changed to ${cmd.shapeLabel}.`);
           } else if (cmd.type === 'synthesize_billion_shape') {
             playEarcon('chime');
             const synthesized =
@@ -1738,29 +1879,27 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
               setTopicShape(8);
             }
             executedReplies.push(
-              `Morphed into ${synthesized.label}! Check out the transformation. Where should we head today?`
+              `Orb shape changed to ${synthesized.label}.`
             );
           } else if (cmd.type === 'web_research') {
             playEarcon('chime');
             setTopicShape(6);
             optionsRef.current.onWebResearchRequested?.(cmd.query);
             executedReplies.push(
-              `🌐 Researching "${cmd.query}" across live encyclopedic and clinical sources now...`
+              'I cannot search the web yet.'
             );
           } else if (cmd.type === 'calculate_time') {
             playEarcon('chime');
             const calculation = calculateTaskReality(clean);
-            executedReplies.push(
-              `⏱️ ${calculation.spokenSummary}\n\n• Perceived time: ~${calculation.perceivedMinutes} min\n• Micro-entry move: ${calculation.microEntrySeconds}s\n• Recommended block: ${calculation.recommendedSprintMinutes} min\n• Momentum rate: ${calculation.inertiaBreakRate}%`
-            );
+            executedReplies.push(calculation.spokenSummary);
             shouldReturnEarly = true;
           } else if (cmd.type === 'brainstorm_angles') {
             playEarcon('chime');
             const brainstorm = brainstormStarterAngles(clean);
             executedReplies.push(
-              `💡 3 Starter Angles for "${clean}":\n\n` +
+              'Three ways in:\n\n' +
                 brainstorm.angles
-                  .map((a, i) => `${i + 1}. **${a.name}** (~${a.timeSeconds}s)\n${a.prompt}`)
+                  .map((a, i) => `${i + 1}. ${a.name} (about ${a.timeSeconds} seconds)\n${a.prompt}`)
                   .join('\n\n')
             );
             shouldReturnEarly = true;
@@ -1768,9 +1907,9 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
             playEarcon('chime');
             const path = synthesizeTaskPath(clean);
             executedReplies.push(
-              `🧭 3-Phase Action Path for "${clean}" (${path.totalSprintMinutes}m total):\n\n` +
+              `A path in three parts, about ${path.totalSprintMinutes} minutes in all:\n\n` +
                 path.phases
-                  .map((p) => `Phase ${p.phase} · **${p.name}** (${p.durationMinutes}m)\n${p.action}`)
+                  .map((p) => `${p.phase}. ${p.name} (${p.durationMinutes} min)\n${p.action}`)
                   .join('\n\n')
             );
             shouldReturnEarly = true;
@@ -1809,7 +1948,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           } else if (cmd.type === 'repeat_last') {
             playEarcon('chime');
             const lastAgentMsg = [...transcripts].reverse().find((t) => t.role === 'agent');
-            const toRepeat = lastAgentMsg ? lastAgentMsg.text : 'I recommended taking one small breath and starting with 90 seconds of setup.';
+            const toRepeat = lastAgentMsg ? lastAgentMsg.text : 'I have not said anything yet.';
             executedReplies.push(`Here is what I said: ${toRepeat}`);
             shouldReturnEarly = true;
           } else if (cmd.type === 'show_what_heard') {
@@ -1826,7 +1965,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           const localizedSpoken = buildLocalizedStayResponse(clean, effectiveLang, instantLocalPlan);
           const combinedReply =
             executedReplies.length > 0
-              ? `${executedReplies.join(' ')} — And I hear you on your task too: ${localizedSpoken}`
+              ? `${executedReplies.join(' ')} ${localizedSpoken}`
               : localizedSpoken;
           const optimisticPlan: CoachPlanProposal = {
             ...instantLocalPlan,
@@ -1923,82 +2062,26 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         return true;
       }
 
-      // The caller (the app screen) already requests the plan for typed text: a second plan, a second voice and a second
-      // model call would race the first and pull the person back to the plan card after they have started.
+      // The caller (the app screen) already makes the plan card for a typed task: a second reply would race it
       if (opts?.skipLocalPlan) return true;
 
-      // Conversational check-in & greeting: respond warmly without forcing a task or plan card
+      // A bare greeting: answered at once, free, no model call
       const isGreeting =
         /\b(?:hi|hello|hey|hiya|namaste|hola|bonjour|hallo|sup)\b/i.test(clean) ||
         /\b(?:how\s+are\s+you|how\s+are\s+you\s+doing|how's\s+it\s+going|what's\s+up|good\s+(?:morning|afternoon|evening))\b/i.test(clean);
       const isChoreTask = /\b(?:work|clean|email|write|read|study|tax|dishes|doc|report|homework|laundry|tidy|pay|call|send|finish|start|draft|fix|buy)\b/i.test(clean);
-      if (isGreeting && !isChoreTask) {
+      if (isGreeting && !isChoreTask && clean.split(/\s+/).length <= 6) {
         const greetingReply = "Hey. Good to hear from you. What's on your mind?";
-        setTranscripts((prev) => [
-          ...prev,
-          {
-            id: `agent-${Date.now()}`,
-            role: 'agent',
-            text: greetingReply,
-            timestamp: new Date().toISOString(),
-          },
-        ]);
+        setTranscripts((prev) => [...prev, { id: `agent-${Date.now()}`, role: 'agent', text: greetingReply, timestamp: new Date().toISOString() }]);
         speakDeterministicBoundary(greetingReply, effectiveLang);
         return true;
       }
 
-      // SUB-15MS INSTANT OPTIMISTIC LOCAL-FIRST ADHD REFLEX:
-      // Render plan, localized reply (Hindi/Korean/32L), and voice output immediately with zero network wait!
-      const instantLocalPlan = buildDeterministicCoachPlan({ taskText: clean });
-      const localizedSpoken = buildLocalizedStayResponse(clean, effectiveLang, instantLocalPlan);
-      const optimisticPlan: CoachPlanProposal = {
-        ...instantLocalPlan,
-        spokenResponse: localizedSpoken,
-      };
-      optionsRef.current.onPlanProposed?.(optimisticPlan);
-      setTranscripts((prev) => [
-        ...prev,
-        {
-          id: `agent-${Date.now()}`,
-          role: 'agent',
-          text: localizedSpoken,
-          timestamp: new Date().toISOString(),
-        },
-      ]);
-      speakDeterministicBoundary(localizedSpoken, effectiveLang);
-
-      // Background non-blocking cache warm / LLM refinement
-      fetch('/api/coach/plan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          taskText: clean,
-          userMemoryPrompt: buildMemorySystemPrompt(loadUserMemory()),
-        }),
-      })
-        .then(async (res) => {
-          if (!res.ok) return null;
-          return (await res.json()) as CoachPlanProposal;
-        })
-        .then((planProposal) => {
-          if (!planProposal) return;
-          if (planProposal.safetyFlag === 'crisis') {
-            optionsRef.current.onCrisisDetected?.(planProposal.spokenResponse);
-            setVisualState('idle');
-            return;
-          }
-          if (planProposal.safetyFlag === 'medical_boundary') {
-            optionsRef.current.onMedicalBoundaryDetected?.(planProposal.spokenResponse);
-            return;
-          }
-        })
-        .catch(() => {
-          // Instant local reflex already succeeded
-        });
-
+      // no live voice: the same brain as the voice, in text (see chatByText)
+      void chatByText(clean);
       return true;
     },
-    [disconnectVoiceSession, stopPlaybackQueue, speakDeterministicBoundary, playEarcon]
+    [disconnectVoiceSession, stopPlaybackQueue, speakDeterministicBoundary, playEarcon, chatByText]
   );
 
   const startNativeSpeechRecognition = useCallback(() => {
@@ -2329,7 +2412,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         } else {
           setTransportInfo({
             mode: 'backup',
-            label: `Backup voice — Azure (${speech.ref.locale})`,
+            label: `Backup voice: Azure (${speech.ref.locale})`,
             sttModel: 'universal-3-6-pro',
             ttsModel: 'azure-neural',
             voiceId: speech.ref.voice,
@@ -2341,7 +2424,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       } else {
         setTransportInfo({
           mode: 'backup',
-          label: 'Backup voice — Managed agent',
+          label: 'Backup voice: Managed agent',
           sttModel: 'universal-3-6-pro',
           ttsModel: 'assemblyai-agent',
           voiceId: resolvedVoiceId,
@@ -2353,7 +2436,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
       // 4. Connect: either the managed Voice Agent socket (when explicitly selected in E2E), or fast voice (default)
       const socket: WebSocket = useFast
-        ? (new FastSocket({ sttToken: tokenJson.sttToken || '', ttsToken: tokenJson.ttsToken || '', recall: (() => { let files: ReturnType<typeof buildVault> | null = null; return (text: string) => { try { files ??= buildVault({ memory: loadUserMemory(), learnings: loadLearnings(), sessions: getLocalSessions(), list: loadToday().map((i) => ({ text: i.text, bucket: i.bucket, done: i.done })) }); return relevantNotes(text, files); } catch { return []; } }; })(), freshTtsToken: async () => String(((await (await fetch('/api/voice/fast-token', { method: 'POST', headers: byokHeaders() })).json()) as { ttsToken?: string }).ttsToken || ''), keyterms: appKeyterms(), autoLanguage: selectedLanguageRef.current === 'auto', ttsConnect: speech.ref.engine === 'assemblyai' ? undefined : () => createTtsConnection(speech.ref, speech.browserVoiceName)! }) as unknown as WebSocket)
+        ? (new FastSocket({ sttToken: tokenJson.sttToken || '', ttsToken: tokenJson.ttsToken || '', recall: (() => { let files: ReturnType<typeof buildVault> | null = null; return (text: string) => { try { files ??= buildVault({ memory: loadUserMemory(), learnings: loadLearnings(), sessions: getLocalSessions(), list: loadToday().map((i) => ({ text: i.text, bucket: i.bucket, done: i.done })) }); return relevantNotes(text, files); } catch { return []; } }; })(), freshTtsToken: async () => String(((await (await fetch('/api/voice/fast-token', { method: 'POST', headers: byokHeaders() })).json()) as { ttsToken?: string }).ttsToken || ''), freshSttToken: async () => { const r = await fetch(`/api/voice/fast-token${longQuery}`, { method: 'POST', headers: byokHeaders() }); if (!r.ok) throw new Error(`fast-token ${r.status}`); return String(((await r.json()) as { sttToken?: string }).sttToken || ''); }, keyterms: appKeyterms(), autoLanguage: selectedLanguageRef.current === 'auto', ttsConnect: speech.ref.engine === 'assemblyai' ? undefined : () => createTtsConnection(speech.ref, speech.browserVoiceName)! }) as unknown as WebSocket)
         : new WebSocket(`${tokenJson.wsUrl}?token=${encodeURIComponent(tokenJson.token || '')}`);
       setVoiceEngine(useFast ? 'fast' : 'agent');
       wsRef.current = socket;
@@ -2426,6 +2509,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           setVisualState('listening');
           connectRetriesRef.current = 0;
           if (visionFrameRef.current) socket.send(JSON.stringify({ type: 'input.image', image: visionFrameRef.current }));
+          if (handsFreePausedRef.current && socket instanceof FastSocket) socket.send(JSON.stringify({ type: 'listening.pause', on: true })); // a new session starts out paused too
           dispatchVoiceEvent({ type: 'session_ready' });
 
           // Start streaming microphone audio now that session.ready has fired
@@ -2463,8 +2547,9 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
               sessionReadyRef.current &&
               socket.readyState === WebSocket.OPEN
             ) {
-              // Suppress mic audio chunks when hands-free listening is paused or gated by VAD silence saver
-              if (handsFreePausedRef.current) return;
+              // Suppress mic audio chunks when hands-free listening is paused or gated by VAD silence saver. The fast socket keeps hearing while
+              // paused (it drops everything but "hey stay" / "resume"); the managed agent cannot filter, so it hears nothing.
+              if (handsFreePausedRef.current && !(socket instanceof FastSocket)) return;
 
               const b64 = arrayBufferToBase64(payload.buffer);
               socket.send(
@@ -2896,7 +2981,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           setTransportInfo((prev) => ({
             ...prev,
             mode: 'backup',
-            label: `Backup voice — reconnecting TTS (${String(msg.attempt || 1)}/3)`,
+            label: `Backup voice: reconnecting TTS (${String(msg.attempt || 1)}/3)`,
             lastCloseCode: Number(msg.code ?? 1006),
           }));
           return;
@@ -2909,6 +2994,29 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
             label: 'AssemblyAI voice',
             reason: undefined,
           }));
+          return;
+        }
+
+        // The speech-to-text socket dropped and is being replaced (the call, the history and the voice carry on): a calm "Reconnecting",
+        // and an error only if both tries fail (the session.error below).
+        if (type === 'stt.reconnecting') {
+          setVisualState('reconnecting');
+          return;
+        }
+
+        if (type === 'stt.reconnected') {
+          setVisualState((prev) => (prev === 'reconnecting' ? 'listening' : prev));
+          return;
+        }
+
+        // "Hey Stay" / "resume" was heard while paused: the fast socket already dropped the phrase (it is not an utterance to answer or save)
+        if (type === 'listening.resumed') {
+          if (handsFreePausedRef.current) {
+            handsFreePausedRef.current = false;
+            setIsHandsFreePaused(false);
+            setVisualState('listening');
+            playEarcon('resume');
+          }
           return;
         }
 
@@ -2929,7 +3037,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           setTransportInfo((prev) => ({
             ...prev,
             mode: 'device',
-            label: `Backup voice — TTS closed (${closeCode})`,
+            label: `Backup voice: TTS closed (${closeCode})`,
             reason: String(msg.message || 'AssemblyAI TTS unavailable'),
             lastCloseCode: closeCode,
           }));
