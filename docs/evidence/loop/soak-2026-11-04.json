@@ -1,0 +1,1843 @@
+{
+  "summary": {
+    "label": "synthetic-mic (one neural voice, English/Spanish/Hindi) + live-model; nothing played aloud",
+    "minutes": 40.4,
+    "turns": 128,
+    "firstSoundMs": {
+      "n": 128,
+      "median": 1300,
+      "p95": 2677,
+      "max": 5385
+    },
+    "turnsWithFlags": 3,
+    "flagCounts": {
+      "long sentence": 1,
+      "quotation marks": 1,
+      "filler": 1
+    },
+    "pageErrors": [
+      "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+    ],
+    "playback": {
+      "underflows": 0,
+      "prebufferMs": 140,
+      "bufferedMs": 0,
+      "state": "STOPPED"
+    },
+    "jsHeapMB": 54
+  },
+  "turns": [
+    {
+      "bubbles": [
+        "I'm Stay, a focused helper built for ADHD support, not a generic chatbot. I keep replies short, practical, and on task. What do you need help starting?"
+      ],
+      "replyWords": 27,
+      "n": 1,
+      "minute": 0.4,
+      "scene": "test-opening",
+      "said": "Okay so, yeah, this is Stay? Prove you're not just another chatbot. Go.",
+      "heard": "Okay, so yeah, this is Stay. Prove you're not just another chatbot. Go.",
+      "reply": "I'm Stay, a focused helper built for ADHD support, not a generic chatbot. I keep replies short, practical, and on task. What do you need help starting?",
+      "firstSoundMs": 1590,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "The hard part isn't the timer, it's starting. So I do the starting with you: one tiny step, a clock running while I'm here, no talking over your pauses, a check-in when time's up, and a memory of what worked. Your list and history stay on your device."
+      ],
+      "replyWords": 48,
+      "n": 2,
+      "minute": 1,
+      "scene": "test-opening",
+      "said": "Meh. Why would I use you and not just ask the big AI app? Be honest.",
+      "heard": "Ma? Why would I use you and not just ask the big AI app? Be honest.",
+      "reply": "The hard part isn't the timer, it's starting. So I do the starting with you: one tiny step, a clock running while I'm here, no talking over your pauses, a check-in when time's up, and a memory of what worked. Your list and history stay on your device.",
+      "firstSoundMs": 887,
+      "flags": [
+        "long sentence (32 words)"
+      ]
+    },
+    {
+      "bubbles": [
+        "What task should I start for you right now?"
+      ],
+      "replyWords": 9,
+      "n": 3,
+      "minute": 1.2,
+      "scene": "test-opening",
+      "said": "Okay okay. Fine. But can you actually, like, do something, not just talk?",
+      "heard": "Okay, okay, fine. But can you actually, like, do something, not just talk?",
+      "reply": "What task should I start for you right now?",
+      "firstSoundMs": 1067,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Tell me one thing you want to begin, and we'll break it into the smallest first step."
+      ],
+      "replyWords": 17,
+      "n": 4,
+      "minute": 1.5,
+      "scene": "test-opening",
+      "said": "I'll be real, I have zero patience. If this is slow I'm gone.",
+      "heard": "I'll be real, I have zero patience. If this is slow, I'm gone.",
+      "reply": "Tell me one thing you want to begin, and we'll break it into the smallest first step.",
+      "firstSoundMs": 1393,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Close Instagram now. Then pick one quick task you’d rather do."
+      ],
+      "replyWords": 11,
+      "n": 5,
+      "minute": 1.8,
+      "scene": "doomscroll-instagram",
+      "said": "I have been on Instagram for two hours and I don't even remember what I looked at.",
+      "heard": "I've been on Instagram for 2 hours and I don't even remember what I looked at.",
+      "reply": "Close Instagram now. Then pick one quick task you’d rather do.",
+      "firstSoundMs": 1707,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Try putting your phone face‑down for five minutes, then choose one small thing to start.",
+        "Yes, habits can trigger actions without conscious decision. Your brain links the app icon to a reward, so it launches automatically. Want tips to break that loop?"
+      ],
+      "replyWords": 42,
+      "n": 6,
+      "minute": 2.2,
+      "scene": "doomscroll-instagram",
+      "said": "It's like my thumb just does it. I open the app without deciding to. Is that normal?",
+      "heard": "It's like my thumb just does it. I open the app without deciding to. Is that normal?",
+      "reply": "Try putting your phone face‑down for five minutes, then choose one small thing to start. Yes, habits can trigger actions without conscious decision. Your brain links the app icon to a reward, so it launches automatically. Want tips to break that loop?",
+      "firstSoundMs": 2158,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Close Instagram now. Then open your paper document and write just one sentence."
+      ],
+      "replyWords": 13,
+      "n": 7,
+      "minute": 2.5,
+      "scene": "doomscroll-instagram",
+      "said": "Okay but I have a paper due at nine tomorrow and I'm just scrolling reels.",
+      "heard": "Okay, but I have a paper due at 9 tomorrow and I'm just scrolling Reels.",
+      "reply": "Close Instagram now. Then open your paper document and write just one sentence.",
+      "firstSoundMs": 1726,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Close Instagram, open your paper, and type a single opening sentence."
+      ],
+      "replyWords": 11,
+      "n": 8,
+      "minute": 2.8,
+      "scene": "doomscroll-instagram",
+      "said": "Don't give me a lecture. Just tell me what to do right now.",
+      "heard": "Don't give me a lecture, just tell me what to do right now.",
+      "reply": "Close Instagram, open your paper, and type a single opening sentence.",
+      "firstSoundMs": 1670,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Pick up your laptop or open the document and write the first sentence of your introduction."
+      ],
+      "replyWords": 16,
+      "n": 9,
+      "minute": 3.1,
+      "scene": "doomscroll-instagram",
+      "said": "Ugh, fine. Phone goes face down. What's the next step after that?",
+      "heard": "Ugh, fine. Phone goes face down. What's the next step after that?",
+      "reply": "Pick up your laptop or open the document and write the first sentence of your introduction.",
+      "firstSoundMs": 1311,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "It’s a habit loop: cue, routine, reward. The routine keeps triggering automatically. You can break it by changing the cue."
+      ],
+      "replyWords": 20,
+      "n": 10,
+      "minute": 3.5,
+      "scene": "doomscroll-instagram",
+      "said": "I'm doing it. Wait, I just picked it back up. Why am I like this?",
+      "heard": "I'm doing it. Wait, I just picked it back up. Why am I like this?",
+      "reply": "It’s a habit loop: cue, routine, reward. The routine keeps triggering automatically. You can break it by changing the cue.",
+      "firstSoundMs": 1113,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Done."
+      ],
+      "replyWords": 1,
+      "n": 11,
+      "minute": 3.7,
+      "scene": "doomscroll-instagram",
+      "said": "Okay okay. Set a timer for two minutes and I'll open the doc.",
+      "heard": "Okay, okay, set a timer for 2 minutes and I'll open the doc.",
+      "reply": "Done.",
+      "firstSoundMs": 1595,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Write the title and a single sentence summary of your paper. Great. Now add a short paragraph outlining your main argument."
+      ],
+      "replyWords": 21,
+      "n": 12,
+      "minute": 4.1,
+      "scene": "doomscroll-instagram",
+      "said": "Done. The doc is open. It's just a blank page and it's judging me.",
+      "heard": "Done. The doc is open. It's just a blank page and it's judging me.",
+      "reply": "Write the title and a single sentence summary of your paper. Great. Now add a short paragraph outlining your main argument.",
+      "firstSoundMs": 1929,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Choose one right now. Focus on the assignment first. Then reply to the chat. Finish the assignment first, then you’ll feel relaxed answering the group chat. That’ll clear your mind, then you can reply without pressure."
+      ],
+      "replyWords": 36,
+      "n": 13,
+      "minute": 4.4,
+      "scene": "indecisive",
+      "said": "Should I do the assignment first or reply to my group chat? I can't decide.",
+      "heard": "Should I do the assignment first or reply to my group chat? I can't decide.",
+      "reply": "Choose one right now. Focus on the assignment first. Then reply to the chat. Finish the assignment first, then you’ll feel relaxed answering the group chat. That’ll clear your mind, then you can reply without pressure.",
+      "firstSoundMs": 1269,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Try a quick one‑minute rule: pick the assignment, write one sentence, then move on."
+      ],
+      "replyWords": 14,
+      "n": 14,
+      "minute": 4.8,
+      "scene": "indecisive",
+      "said": "I always do this. I make a list of options and then I freeze.",
+      "heard": "I always do this. I make a list of options and then I freeze.",
+      "reply": "Try a quick one‑minute rule: pick the assignment, write one sentence, then move on.",
+      "firstSoundMs": 2098,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Finish the assignment first. First step, two minutes: open what you need for assignment."
+      ],
+      "replyWords": 14,
+      "n": 15,
+      "minute": 5.1,
+      "scene": "indecisive",
+      "said": "Just pick for me. Seriously. Pick one.",
+      "heard": "Just pick for me. Seriously, pick one.",
+      "reply": "Finish the assignment first. First step, two minutes: open what you need for assignment.",
+      "firstSoundMs": 1347,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "If they’re mad, wait until after the assignment. Finish it, then reply calmly. Reply after you finish the assignment."
+      ],
+      "replyWords": 19,
+      "n": 16,
+      "minute": 5.4,
+      "scene": "indecisive",
+      "said": "Okay but what if the group chat is mad at me? Ugh.",
+      "heard": "Okay, but what if the group chat is mad at me?",
+      "reply": "If they’re mad, wait until after the assignment. Finish it, then reply calmly. Reply after you finish the assignment.",
+      "firstSoundMs": 638,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Set a 10‑minute timer for the assignment. After that, reply to the group chat."
+      ],
+      "replyWords": 14,
+      "n": 17,
+      "minute": 5.6,
+      "scene": "indecisive",
+      "said": "Fine. Assignment first. Ten minutes. Then the chat.",
+      "heard": "Fine, assignment first, 10 minutes, then the chat.",
+      "reply": "Set a 10‑minute timer for the assignment. After that, reply to the group chat.",
+      "firstSoundMs": 1429,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Let’s break the assignment into smaller pieces. What’s the first thing you need to do for it?",
+        "Wrong doesn’t matter. Any finished thing beats a perfect one you never start."
+      ],
+      "replyWords": 30,
+      "n": 18,
+      "minute": 5.9,
+      "scene": "indecisive",
+      "said": "What if I pick the wrong thing though?",
+      "heard": "What if I pick the wrong thing though?",
+      "reply": "Let’s break the assignment into smaller pieces. What’s the first thing you need to do for it? Wrong doesn’t matter. Any finished thing beats a perfect one you never start.",
+      "firstSoundMs": 1362,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Great. Start with one small step and move forward."
+      ],
+      "replyWords": 9,
+      "n": 19,
+      "minute": 6.2,
+      "scene": "indecisive",
+      "said": "Okay, noted. Smaller decisions. I'll stop overthinking it.",
+      "heard": "Okay, noted. Smaller decisions. I'll stop overthinking it.",
+      "reply": "Great. Start with one small step and move forward.",
+      "firstSoundMs": 1571,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I'm here. What's the real question?",
+        "A normal chatbot gives generic advice. Stay helps you start things and breaks tasks into tiny steps right here."
+      ],
+      "replyWords": 25,
+      "n": 20,
+      "minute": 6.6,
+      "scene": "why-not-the-big-ai",
+      "said": "Real question. Why shouldn't I just use a normal AI chatbot for this stuff?",
+      "heard": "Real question. Why shouldn't I just use a normal AI chatbot for this stuff?",
+      "reply": "I'm here. What's the real question? A normal chatbot gives generic advice. Stay helps you start things and breaks tasks into tiny steps right here.",
+      "firstSoundMs": 1267,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I can start timers, break tasks into steps, and remember your preferences. A normal chatbot just talks."
+      ],
+      "replyWords": 17,
+      "n": 21,
+      "minute": 6.9,
+      "scene": "why-not-the-big-ai",
+      "said": "That sounds like marketing. What's actually different?",
+      "heard": "That sounds like marketing. What's actually different?",
+      "reply": "I can start timers, break tasks into steps, and remember your preferences. A normal chatbot just talks.",
+      "firstSoundMs": 1005,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I remember specific things you ask me to remember, like your routine or what you focus best on."
+      ],
+      "replyWords": 18,
+      "n": 22,
+      "minute": 7.1,
+      "scene": "why-not-the-big-ai",
+      "said": "Hm. Okay. So you remember me between days?",
+      "heard": "Hmm, okay, so you remember me between days?",
+      "reply": "I remember specific things you ask me to remember, like your routine or what you focus best on.",
+      "firstSoundMs": 830,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Got it, I will remember."
+      ],
+      "replyWords": 5,
+      "n": 23,
+      "minute": 7.4,
+      "scene": "why-not-the-big-ai",
+      "said": "Prove it. Remember that I scroll when I'm anxious.",
+      "heard": "Prove it. Remember that I scroll when I'm anxious.",
+      "reply": "Got it, I will remember.",
+      "firstSoundMs": 1225,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Mostly I get you started and stay with you. One small step on a task, a timer, a brain dump sorted into a short list, reminders, and a memory of what helps. You can show me your screen or a picture too."
+      ],
+      "replyWords": 42,
+      "n": 24,
+      "minute": 7.9,
+      "scene": "why-not-the-big-ai",
+      "said": "Okay, cool. And what do you do if I just ghost you?",
+      "heard": "Okay, cool. And what do you do if I just ghost you?",
+      "reply": "Mostly I get you started and stay with you. One small step on a task, a timer, a brain dump sorted into a short list, reminders, and a memory of what helps. You can show me your screen or a picture too.",
+      "firstSoundMs": 559,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Tell me what’s bothering you and we’ll break it into a tiny step.",
+        "That is a concrete task. Want me to break it down into smaller steps so it feels less overwhelming?"
+      ],
+      "replyWords": 32,
+      "n": 25,
+      "minute": 8.2,
+      "scene": "real-problems",
+      "said": "Real problem. Rent is due Friday and I haven't texted my landlord about the late fee.",
+      "heard": "Real problem. Rent is due Friday and I haven't texted my landlord about the late fee.",
+      "reply": "Tell me what’s bothering you and we’ll break it into a tiny step. That is a concrete task. Want me to break it down into smaller steps so it feels less overwhelming?",
+      "firstSoundMs": 3185,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "That physical reaction is real for you. Want to break this down into tiny steps to make it feel less big?"
+      ],
+      "replyWords": 21,
+      "n": 26,
+      "minute": 8.5,
+      "scene": "real-problems",
+      "said": "I just avoid it. Every time I open the text my stomach drops.",
+      "heard": "I just avoid it. Every time I open the text, my stomach drops.",
+      "reply": "That physical reaction is real for you. Want to break this down into tiny steps to make it feel less big?",
+      "firstSoundMs": 1067,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "First step, two minutes: open what you need for assignment. The timer is running."
+      ],
+      "replyWords": 14,
+      "n": 27,
+      "minute": 8.8,
+      "scene": "real-problems",
+      "said": "Okay, what do I even say? Give me the first sentence.",
+      "heard": "Okay, what do I even say? Give me the first sentence.",
+      "reply": "First step, two minutes: open what you need for assignment. The timer is running.",
+      "firstSoundMs": 1208,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Parked."
+      ],
+      "replyWords": 1,
+      "n": 28,
+      "minute": 9,
+      "scene": "real-problems",
+      "said": "That's actually not bad. Park it: text the landlord tonight.",
+      "heard": "That's actually not bad. Park it. Text the landlord tonight.",
+      "reply": "Parked.",
+      "firstSoundMs": 1037,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 29,
+      "minute": 9.2,
+      "scene": "real-problems",
+      "said": "Another one. I keep saying I'll start going to the gym and I never do.",
+      "heard": "Another one: I keep saying I'll start going to the gym and I never do.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 632,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "It’s frustrating when plans slip. One tiny step: set a reminder for the next gym visit. Good. Second step, five minutes: open the exact tool or surface you need for assignment and do the first 90 seconds of. The timer is running."
+      ],
+      "replyWords": 42,
+      "n": 30,
+      "minute": 9.7,
+      "scene": "real-problems",
+      "said": "Don't say start small. Everyone says start small.",
+      "heard": "Don't say start small. Everyone says start small.",
+      "reply": "It’s frustrating when plans slip. One tiny step: set a reminder for the next gym visit. Good. Second step, five minutes: open the exact tool or surface you need for assignment and do the first 90 seconds of. The timer is running.",
+      "firstSoundMs": 1429,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 31,
+      "minute": 10,
+      "scene": "real-problems",
+      "said": "Okay, ten push-ups tomorrow after I wake up. Add push-ups to my list.",
+      "heard": "Okay, 10 push-ups tomorrow after I wake up. Add push-ups to my list.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1107,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I did not catch what to change. Try \"move the bins to later\" or \"that one is done\".",
+        "Added push‑ups to your list. Good. One tiny step: do ten push‑ups tomorrow after you wake up.",
+        "I did not catch what to change. Try move the bins to later or that one is done."
+      ],
+      "replyWords": 53,
+      "n": 32,
+      "minute": 10.4,
+      "scene": "real-problems",
+      "said": "You're kinda useful. Don't let it go to your head.",
+      "heard": "You're kinda useful. Don't let it go to your head.",
+      "reply": "I did not catch what to change. Try \"move the bins to later\" or \"that one is done\". Added push‑ups to your list. Good. One tiny step: do ten push‑ups tomorrow after you wake up. I did not catch what to change. Try move the bins to later or that one is done.",
+      "firstSoundMs": 1957,
+      "flags": [
+        "quotation marks"
+      ]
+    },
+    {
+      "bubbles": [
+        "Make a weekly calendar, block study time for each subject, and include short breaks. Prioritize hardest topics first, then review. Finish with a final review day and rest. Want more detail?"
+      ],
+      "replyWords": 31,
+      "n": 33,
+      "minute": 10.8,
+      "scene": "impatient-test",
+      "said": "Explain how to build a study schedule for finals. Like all of it.",
+      "heard": "Explain how to build the study schedule for finals, like all of it.",
+      "reply": "Make a weekly calendar, block study time for each subject, and include short breaks. Prioritize hardest topics first, then review. Finish with a final review day and rest. Want more detail?",
+      "firstSoundMs": 1113,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 34,
+      "minute": 11.4,
+      "scene": "impatient-test",
+      "said": "Wait wait, stop. Too long. Just give me the first block.",
+      "heard": "Wait, wait, stop. Too long. Just give me the first block.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1049,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Block first hour: one subject, hard topic."
+      ],
+      "replyWords": 7,
+      "n": 35,
+      "minute": 11.6,
+      "scene": "impatient-test",
+      "said": "Ugh, you're slow. Say it in five words.",
+      "heard": "Ugh, you're slow. Say it in 5 words.",
+      "reply": "Block first hour: one subject, hard topic.",
+      "firstSoundMs": 720,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Move to a short break, stretch, then start the next subject’s study block. Keep blocks consistent. Want more?"
+      ],
+      "replyWords": 18,
+      "n": 36,
+      "minute": 11.9,
+      "scene": "impatient-test",
+      "said": "Fine. That works. What do I do after the first block?",
+      "heard": "Fine, that works. What do I do after the first block?",
+      "reply": "Move to a short break, stretch, then start the next subject’s study block. Keep blocks consistent. Want more?",
+      "firstSoundMs": 1300,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 37,
+      "minute": 12.2,
+      "scene": "impatient-test",
+      "said": "Why did your voice sound weird just then?",
+      "heard": "Why did your voice sound weird just then?",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1115,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "After your break, start another 45‑minute block on the next subject, then repeat the cycle. Continue repeating study‑break cycles until you finish all topics. Need anything else? Add a quick review at the end of the day."
+      ],
+      "replyWords": 37,
+      "n": 38,
+      "minute": 12.6,
+      "scene": "impatient-test",
+      "said": "Never mind. Keep going.",
+      "heard": "Never mind, keep going.",
+      "reply": "After your break, start another 45‑minute block on the next subject, then repeat the cycle. Continue repeating study‑break cycles until you finish all topics. Need anything else? Add a quick review at the end of the day.",
+      "firstSoundMs": 1878,
+      "flags": [
+        "filler"
+      ]
+    },
+    {
+      "bubbles": [
+        "I can’t open that screen. Try opening history from the main menu."
+      ],
+      "replyWords": 12,
+      "n": 39,
+      "minute": 12.9,
+      "scene": "app-tour",
+      "said": "Open my history.",
+      "heard": "Open My History.",
+      "reply": "I can’t open that screen. Try opening history from the main menu.",
+      "firstSoundMs": 1159,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I can only open my own screens: history, memory, your list, brain dump, routines or settings."
+      ],
+      "replyWords": 16,
+      "n": 40,
+      "minute": 13.2,
+      "scene": "app-tour",
+      "said": "Show my report.",
+      "heard": "Show my report.",
+      "reply": "I can only open my own screens: history, memory, your list, brain dump, routines or settings.",
+      "firstSoundMs": 1291,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 41,
+      "minute": 13.5,
+      "scene": "app-tour",
+      "said": "Open settings.",
+      "heard": "Open settings.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 706,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 42,
+      "minute": 13.7,
+      "scene": "app-tour",
+      "said": "Open my memory.",
+      "heard": "Open my memory.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1161,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 43,
+      "minute": 14,
+      "scene": "app-tour",
+      "said": "Add finish essay to my list.",
+      "heard": "Add finish essay to my list.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 773,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Got it, I will remember."
+      ],
+      "replyWords": 5,
+      "n": 44,
+      "minute": 14.3,
+      "scene": "app-tour",
+      "said": "Remember that I focus best after midnight.",
+      "heard": "Remember that I focus best after midnight.",
+      "reply": "Got it, I will remember.",
+      "firstSoundMs": 923,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+        "Parked."
+      ],
+      "replyWords": 21,
+      "n": 45,
+      "minute": 14.5,
+      "scene": "app-tour",
+      "said": "Park it: reply to Maya.",
+      "heard": "Park it. Reply to Maya.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again. Parked.",
+      "firstSoundMs": 3500,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Done."
+      ],
+      "replyWords": 1,
+      "n": 46,
+      "minute": 14.7,
+      "scene": "app-tour",
+      "said": "Set a five minute timer.",
+      "heard": "Set a 5-minute timer.",
+      "reply": "Done.",
+      "firstSoundMs": 1729,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 47,
+      "minute": 15,
+      "scene": "check-in",
+      "said": "Okay I did the ten minutes and then I opened Instagram again.",
+      "heard": "Okay, I did the 10 minutes and then I opened Instagram again.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1491,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "That is a fair read on yourself. Five is a good number to aim for next time."
+      ],
+      "replyWords": 17,
+      "n": 48,
+      "minute": 15.3,
+      "scene": "check-in",
+      "said": "Only for like five minutes. Okay maybe fifteen.",
+      "heard": "Only for like 5 minutes. Okay, maybe 15.",
+      "reply": "That is a fair read on yourself. Five is a good number to aim for next time.",
+      "firstSoundMs": 1670,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "You can set a 15‑minute timer now."
+      ],
+      "replyWords": 7,
+      "n": 49,
+      "minute": 15.5,
+      "scene": "check-in",
+      "said": "Don't judge me. What now?",
+      "heard": "Don't judge me. What now?",
+      "reply": "You can set a 15‑minute timer now.",
+      "firstSoundMs": 1392,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Done."
+      ],
+      "replyWords": 1,
+      "n": 50,
+      "minute": 15.8,
+      "scene": "check-in",
+      "said": "Okay. Next block. I'm using the timer this time.",
+      "heard": "Okay, next block. I'm using the timer this time.",
+      "reply": "Done.",
+      "firstSoundMs": 1532,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 51,
+      "minute": 16,
+      "scene": "check-in",
+      "said": "Done. That actually helped a bit. Weird.",
+      "heard": "Done. That actually helped a bit. Weird.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1221,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+        "It feels like everyone else is ahead, but you’re making progress. Keep moving forward."
+      ],
+      "replyWords": 34,
+      "n": 52,
+      "minute": 16.4,
+      "scene": "low-point",
+      "said": "Honestly I feel kind of behind everyone my age. Everyone's posting their wins.",
+      "heard": "Honestly, I feel kind of behind everyone my age. Everyone's posting their wins.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again. It feels like everyone else is ahead, but you’re making progress. Keep moving forward.",
+      "firstSoundMs": 2827,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 53,
+      "minute": 16.7,
+      "scene": "low-point",
+      "said": "It makes me not want to try. What's the point if I'm already behind?",
+      "heard": "It makes me not want to try. What's the point if I'm already behind?",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1259,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+        "You deserve support, not judgment, and you’re already taking steps forward."
+      ],
+      "replyWords": 31,
+      "n": 54,
+      "minute": 17,
+      "scene": "low-point",
+      "said": "Yeah. Okay. Thanks for not being cringe about it.",
+      "heard": "Yeah, okay. Thanks for not being cringe about it.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again. You deserve support, not judgment, and you’re already taking steps forward.",
+      "firstSoundMs": 1476,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Sleep well. The phone's far, so you can rest. Good night."
+      ],
+      "replyWords": 11,
+      "n": 55,
+      "minute": 17.2,
+      "scene": "wrap",
+      "said": "Okay I think I'm good for tonight. Phone's across the room.",
+      "heard": "Okay, I think I'm good for tonight. Phone's across the room.",
+      "reply": "Sleep well. The phone's far, so you can rest. Good night.",
+      "firstSoundMs": 1408,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 56,
+      "minute": 17.5,
+      "scene": "wrap",
+      "said": "What did we actually get done today?",
+      "heard": "What did we actually get done today?",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1237,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 57,
+      "minute": 17.8,
+      "scene": "wrap",
+      "said": "Cool. Goodnight, Stay.",
+      "heard": "Cool. Good night, Stay.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1736,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I’m here to help you, not just chat. Let’s keep moving forward."
+      ],
+      "replyWords": 12,
+      "n": 58,
+      "minute": 18,
+      "scene": "test-opening",
+      "said": "Okay so, yeah, this is Stay? Prove you're not just another chatbot. Go.",
+      "heard": "Okay, so yeah, this is Stay. Prove you're not just another chatbot. Go.",
+      "reply": "I’m here to help you, not just chat. Let’s keep moving forward.",
+      "firstSoundMs": 1315,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "A clock app starts a timer, and a general voice assistant will talk about anything. I'm for the moment you're stuck. Tell me what you're avoiding and I give you one tiny first step, start the clock with you, and wait through your pauses. When time's up I check in, and I remember what helped."
+      ],
+      "replyWords": 55,
+      "n": 59,
+      "minute": 18.5,
+      "scene": "test-opening",
+      "said": "Meh. Why would I use you and not just ask the big AI app? Be honest.",
+      "heard": "Meh? Why would I use you and not just ask the big AI app? Be honest.",
+      "reply": "A clock app starts a timer, and a general voice assistant will talk about anything. I'm for the moment you're stuck. Tell me what you're avoiding and I give you one tiny first step, start the clock with you, and wait through your pauses. When time's up I check in, and I remember what helped.",
+      "firstSoundMs": 943,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 60,
+      "minute": 18.8,
+      "scene": "test-opening",
+      "said": "Okay okay. Fine. But can you actually, like, do something, not just talk?",
+      "heard": "Okay, okay, fine. But can you actually, like, do something, not just talk?",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1265,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I’m sorry you’re feeling frustrated. Let’s try one quick action together. What would you like to do next?"
+      ],
+      "replyWords": 18,
+      "n": 61,
+      "minute": 19.1,
+      "scene": "test-opening",
+      "said": "I'll be real, I have zero patience. If this is slow I'm gone.",
+      "heard": "I'll be real, I have zero patience. If this is slow, I'm gone.",
+      "reply": "I’m sorry you’re feeling frustrated. Let’s try one quick action together. What would you like to do next?",
+      "firstSoundMs": 1417,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "You spent two hours scrolling, but you’re not sure what you saw. Take a quick pause, close the app, and write down one thing that stood out. That will help you remember and decide what to do next."
+      ],
+      "replyWords": 38,
+      "n": 62,
+      "minute": 19.6,
+      "scene": "doomscroll-instagram",
+      "said": "I have been on Instagram for two hours and I don't even remember what I looked at.",
+      "heard": "I have been on Instagram for 2 hours and I don't even remember what I looked at.",
+      "reply": "You spent two hours scrolling, but you’re not sure what you saw. Take a quick pause, close the app, and write down one thing that stood out. That will help you remember and decide what to do next.",
+      "firstSoundMs": 2522,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I can't open other apps or sites for you. What I can do is start a timer and tell you when your time is up. Want a timer for it?"
+      ],
+      "replyWords": 30,
+      "n": 63,
+      "minute": 19.9,
+      "scene": "doomscroll-instagram",
+      "said": "It's like my thumb just does it. I open the app without deciding to. Is that normal?",
+      "heard": "It's like my thumb just does it. I open the app without deciding to. Is that normal?",
+      "reply": "I can't open other apps or sites for you. What I can do is start a timer and tell you when your time is up. Want a timer for it?",
+      "firstSoundMs": 972,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "’re stuck scrolling while a paper is due. Start a 20‑minute timer to focus on writing. When it ends, you’ll know when to pause and check your progress."
+      ],
+      "replyWords": 28,
+      "n": 64,
+      "minute": 20.3,
+      "scene": "doomscroll-instagram",
+      "said": "Okay but I have a paper due at nine tomorrow and I'm just scrolling reels.",
+      "heard": "Okay, but I have a paper due at 9 tomorrow and I'm just scrolling Reels.",
+      "reply": "’re stuck scrolling while a paper is due. Start a 20‑minute timer to focus on writing. When it ends, you’ll know when to pause and check your progress.",
+      "firstSoundMs": 2412,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 65,
+      "minute": 20.6,
+      "scene": "doomscroll-instagram",
+      "said": "Don't give me a lecture. Just tell me what to do right now.",
+      "heard": "Don't give me a lecture, just tell me what to do right now.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1167,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Set a 20‑minute timer. When it ends, start writing the paper."
+      ],
+      "replyWords": 11,
+      "n": 66,
+      "minute": 20.9,
+      "scene": "doomscroll-instagram",
+      "said": "Ugh, fine. Phone goes face down. What's the next step after that?",
+      "heard": "Ugh, fine. Phone goes face down. What's the next step after that?",
+      "reply": "Set a 20‑minute timer. When it ends, start writing the paper.",
+      "firstSoundMs": 1490,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "The habit loop is strong. Put the phone face down again, then start writing."
+      ],
+      "replyWords": 14,
+      "n": 67,
+      "minute": 21.2,
+      "scene": "doomscroll-instagram",
+      "said": "I'm doing it. Wait, I just picked it back up. Why am I like this?",
+      "heard": "I'm doing it. Wait, I just picked it back up. Why am I like this?",
+      "reply": "The habit loop is strong. Put the phone face down again, then start writing.",
+      "firstSoundMs": 1163,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Done."
+      ],
+      "replyWords": 1,
+      "n": 68,
+      "minute": 21.4,
+      "scene": "doomscroll-instagram",
+      "said": "Okay okay. Set a timer for two minutes and I'll open the doc.",
+      "heard": "Okay, okay, set a timer for 2 minutes and I'll open the doc.",
+      "reply": "Done.",
+      "firstSoundMs": 1159,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 69,
+      "minute": 21.8,
+      "scene": "doomscroll-instagram",
+      "said": "Done. The doc is open. It's just a blank page and it's judging me.",
+      "heard": "Done. The doc is open. It's just a blank page and it's judging me.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1725,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Do the assignment first. Then reply to the chat. I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 29,
+      "n": 70,
+      "minute": 22.1,
+      "scene": "indecisive",
+      "said": "Should I do the assignment first or reply to my group chat? I can't decide.",
+      "heard": "Should I do the assignment first or reply to my group chat? I can't decide.",
+      "reply": "Do the assignment first. Then reply to the chat. I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1420,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Pick one thing. Right now, write your name in the doc."
+      ],
+      "replyWords": 11,
+      "n": 71,
+      "minute": 22.4,
+      "scene": "indecisive",
+      "said": "I always do this. I make a list of options and then I freeze.",
+      "heard": "I always do this. I make a list of options and then I freeze.",
+      "reply": "Pick one thing. Right now, write your name in the doc.",
+      "firstSoundMs": 1551,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Start the assignment. Open the document and write a quick outline."
+      ],
+      "replyWords": 11,
+      "n": 72,
+      "minute": 22.7,
+      "scene": "indecisive",
+      "said": "Just pick for me. Seriously. Pick one.",
+      "heard": "Just pick for me. Seriously, pick one.",
+      "reply": "Start the assignment. Open the document and write a quick outline.",
+      "firstSoundMs": 1141,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Write the outline now and send a brief apology later."
+      ],
+      "replyWords": 10,
+      "n": 73,
+      "minute": 22.8,
+      "scene": "indecisive",
+      "said": "Okay but what if the group chat is mad at me? Ugh.",
+      "heard": "Okay, but what if the group chat is mad at me?",
+      "reply": "Write the outline now and send a brief apology later.",
+      "firstSoundMs": 304,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 74,
+      "minute": 23.1,
+      "scene": "indecisive",
+      "said": "Fine. Assignment first. Ten minutes. Then the chat.",
+      "heard": "Fine, assignment first, 10 minutes, then the chat.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1143,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "The risk of picking wrong is low if you start; you can always adjust after."
+      ],
+      "replyWords": 15,
+      "n": 75,
+      "minute": 23.3,
+      "scene": "indecisive",
+      "said": "What if I pick the wrong thing though?",
+      "heard": "What if I pick the wrong thing though?",
+      "reply": "The risk of picking wrong is low if you start; you can always adjust after.",
+      "firstSoundMs": 1549,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+        "You’re choosing to start the assignment, then the chat. That’s a clear, simple plan. Good move."
+      ],
+      "replyWords": 36,
+      "n": 76,
+      "minute": 23.6,
+      "scene": "indecisive",
+      "said": "Okay, noted. Smaller decisions. I'll stop overthinking it.",
+      "heard": "Okay, noted. Smaller decisions. I'll stop overthinking it.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again. You’re choosing to start the assignment, then the chat. That’s a clear, simple plan. Good move.",
+      "firstSoundMs": 1634,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "You should use a normal AI chatbot, not Stay."
+      ],
+      "replyWords": 9,
+      "n": 77,
+      "minute": 23.9,
+      "scene": "why-not-the-big-ai",
+      "said": "Real question. Why shouldn't I just use a normal AI chatbot for this stuff?",
+      "heard": "Real question. Why shouldn't I just use a normal AI chatbot for this stuff?",
+      "reply": "You should use a normal AI chatbot, not Stay.",
+      "firstSoundMs": 1385,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Stay focuses on ADHD-friendly habits, not general chat. It structures tasks and reminders for you. Want more details?"
+      ],
+      "replyWords": 18,
+      "n": 78,
+      "minute": 24.3,
+      "scene": "why-not-the-big-ai",
+      "said": "That sounds like marketing. What's actually different?",
+      "heard": "That sounds like marketing. What's actually different?",
+      "reply": "Stay focuses on ADHD-friendly habits, not general chat. It structures tasks and reminders for you. Want more details?",
+      "firstSoundMs": 1068,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 79,
+      "minute": 24.6,
+      "scene": "why-not-the-big-ai",
+      "said": "Hm. Okay. So you remember me between days?",
+      "heard": "Hmm, okay, so you remember me between days?",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1135,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 80,
+      "minute": 24.9,
+      "scene": "why-not-the-big-ai",
+      "said": "Prove it. Remember that I scroll when I'm anxious.",
+      "heard": "Prove it. Remember that I scroll when I'm anxious.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1201,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Mostly I get you started and stay with you. One small step on a task, a timer, a brain dump sorted into a short list, reminders, and a memory of what helps. You can show me your screen or a picture too."
+      ],
+      "replyWords": 42,
+      "n": 81,
+      "minute": 25.4,
+      "scene": "why-not-the-big-ai",
+      "said": "Okay, cool. And what do you do if I just ghost you?",
+      "heard": "Okay, cool. And what do you do if I just ghost you?",
+      "reply": "Mostly I get you started and stay with you. One small step on a task, a timer, a brain dump sorted into a short list, reminders, and a memory of what helps. You can show me your screen or a picture too.",
+      "firstSoundMs": 1078,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Done.",
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+        "Done."
+      ],
+      "replyWords": 22,
+      "n": 82,
+      "minute": 25.7,
+      "scene": "real-problems",
+      "said": "Real problem. Rent is due Friday and I haven't texted my landlord about the late fee.",
+      "heard": "Real problem. Rent is due Friday and I haven't texted my landlord about the late fee.",
+      "reply": "Done. I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again. Done.",
+      "firstSoundMs": 2063,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 83,
+      "minute": 26,
+      "scene": "real-problems",
+      "said": "I just avoid it. Every time I open the text my stomach drops.",
+      "heard": "I just avoid it. Every time I open the text, my stomach drops.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1075,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 84,
+      "minute": 26.4,
+      "scene": "real-problems",
+      "said": "Okay, what do I even say? Give me the first sentence.",
+      "heard": "Okay, what do I even say? Give me the first sentence.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1216,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I need a complete thought to park. Please tell me what you want to remember."
+      ],
+      "replyWords": 15,
+      "n": 85,
+      "minute": 26.7,
+      "scene": "real-problems",
+      "said": "That's actually not bad. Park it: text the landlord tonight.",
+      "heard": "That's actually not bad. Park it. Text the landlord tonight.",
+      "reply": "I need a complete thought to park. Please tell me what you want to remember.",
+      "firstSoundMs": 2468,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Parking that."
+      ],
+      "replyWords": 2,
+      "n": 86,
+      "minute": 26.9,
+      "scene": "real-problems",
+      "said": "Another one. I keep saying I'll start going to the gym and I never do.",
+      "heard": "Another one, I keep saying I'll start going to the gym and I never do.",
+      "reply": "Parking that.",
+      "firstSoundMs": 654,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "You’re noticing a common pattern: hearing start small feels like a cliché."
+      ],
+      "replyWords": 12,
+      "n": 87,
+      "minute": 27.2,
+      "scene": "real-problems",
+      "said": "Don't say start small. Everyone says start small.",
+      "heard": "Don't say start small. Everyone says start small.",
+      "reply": "You’re noticing a common pattern: hearing start small feels like a cliché.",
+      "firstSoundMs": 966,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 88,
+      "minute": 27.5,
+      "scene": "real-problems",
+      "said": "Okay, ten push-ups tomorrow after I wake up. Add push-ups to my list.",
+      "heard": "Okay, 10 push-ups tomorrow after I wake up. Add push-ups to my list.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1322,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 89,
+      "minute": 27.9,
+      "scene": "real-problems",
+      "said": "You're kinda useful. Don't let it go to your head.",
+      "heard": "You're kinda useful. Don't let it go to your head.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 5385,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Build a calendar for each study day, block 60‑minute focused sessions with 5‑minute breaks. Assign one subject per block, rotating to keep fresh. Review the schedule each morning, adjust if needed. Want more detail?"
+      ],
+      "replyWords": 34,
+      "n": 90,
+      "minute": 28.4,
+      "scene": "impatient-test",
+      "said": "Explain how to build a study schedule for finals. Like all of it.",
+      "heard": "Explain how to build the study schedule for finals, like all of it.",
+      "reply": "Build a calendar for each study day, block 60‑minute focused sessions with 5‑minute breaks. Assign one subject per block, rotating to keep fresh. Review the schedule each morning, adjust if needed. Want more detail?",
+      "firstSoundMs": 1339,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 91,
+      "minute": 28.9,
+      "scene": "impatient-test",
+      "said": "Wait wait, stop. Too long. Just give me the first block.",
+      "heard": "Wait, wait, stop. too long. Just give me the first block.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1068,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 92,
+      "minute": 29.2,
+      "scene": "impatient-test",
+      "said": "Ugh, you're slow. Say it in five words.",
+      "heard": "Ugh, you're slow. Say it in 5 words.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 631,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 93,
+      "minute": 29.6,
+      "scene": "impatient-test",
+      "said": "Fine. That works. What do I do after the first block?",
+      "heard": "Fine, that works. What do I do after the first block?",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1282,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I didn't change my voice—just my phrasing. If it felt off, maybe it was the tone I used. Let me know if you want me to adjust it."
+      ],
+      "replyWords": 28,
+      "n": 94,
+      "minute": 29.9,
+      "scene": "impatient-test",
+      "said": "Why did your voice sound weird just then?",
+      "heard": "Why did your voice sound weird just then?",
+      "reply": "I didn't change my voice—just my phrasing. If it felt off, maybe it was the tone I used. Let me know if you want me to adjust it.",
+      "firstSoundMs": 1441,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 95,
+      "minute": 30.2,
+      "scene": "impatient-test",
+      "said": "Never mind. Keep going.",
+      "heard": "Never mind, keep going.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1223,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 96,
+      "minute": 30.5,
+      "scene": "app-tour",
+      "said": "Open my history.",
+      "heard": "Open My History.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 756,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I can’t open that for you right now. Let me know what you need from the report."
+      ],
+      "replyWords": 17,
+      "n": 97,
+      "minute": 30.7,
+      "scene": "app-tour",
+      "said": "Show my report.",
+      "heard": "Show my report.",
+      "reply": "I can’t open that for you right now. Let me know what you need from the report.",
+      "firstSoundMs": 1351,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 98,
+      "minute": 31,
+      "scene": "app-tour",
+      "said": "Open settings.",
+      "heard": "Open Settings.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 728,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I opened your memory. It has two notes about your focus and scrolling habits."
+      ],
+      "replyWords": 14,
+      "n": 99,
+      "minute": 31.2,
+      "scene": "app-tour",
+      "said": "Open my memory.",
+      "heard": "Open my memory.",
+      "reply": "I opened your memory. It has two notes about your focus and scrolling habits.",
+      "firstSoundMs": 1323,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 100,
+      "minute": 31.5,
+      "scene": "app-tour",
+      "said": "Add finish essay to my list.",
+      "heard": "Add finish essay to my list.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 971,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Got it, I will remember."
+      ],
+      "replyWords": 5,
+      "n": 101,
+      "minute": 31.7,
+      "scene": "app-tour",
+      "said": "Remember that I focus best after midnight.",
+      "heard": "Remember that I focus best after midnight.",
+      "reply": "Got it, I will remember.",
+      "firstSoundMs": 775,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Parked."
+      ],
+      "replyWords": 1,
+      "n": 102,
+      "minute": 32,
+      "scene": "app-tour",
+      "said": "Park it: reply to Maya.",
+      "heard": "Park it. Reply to Maya.",
+      "reply": "Parked.",
+      "firstSoundMs": 2677,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Done."
+      ],
+      "replyWords": 1,
+      "n": 103,
+      "minute": 32.2,
+      "scene": "app-tour",
+      "said": "Set a five minute timer.",
+      "heard": "Set a 5-minute timer.",
+      "reply": "Done.",
+      "firstSoundMs": 1178,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 104,
+      "minute": 32.5,
+      "scene": "check-in",
+      "said": "Okay I did the ten minutes and then I opened Instagram again.",
+      "heard": "Okay, I did the 10 minutes and then I opened Instagram again.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 655,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 105,
+      "minute": 32.8,
+      "scene": "check-in",
+      "said": "Only for like five minutes. Okay maybe fifteen.",
+      "heard": "Only for like 5 minutes. Okay, maybe 15.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1771,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Set another 15‑minute timer to keep focus, then check Instagram after it ends."
+      ],
+      "replyWords": 13,
+      "n": 106,
+      "minute": 33.1,
+      "scene": "check-in",
+      "said": "Don't judge me. What now?",
+      "heard": "Don't judge me. What now?",
+      "reply": "Set another 15‑minute timer to keep focus, then check Instagram after it ends.",
+      "firstSoundMs": 1443,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Done."
+      ],
+      "replyWords": 1,
+      "n": 107,
+      "minute": 33.3,
+      "scene": "check-in",
+      "said": "Okay. Next block. I'm using the timer this time.",
+      "heard": "Okay, next block. I'm using the timer this time.",
+      "reply": "Done.",
+      "firstSoundMs": 1312,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Nice. Try another 15‑minute focus block next, then check Instagram."
+      ],
+      "replyWords": 10,
+      "n": 108,
+      "minute": 33.6,
+      "scene": "check-in",
+      "said": "Done. That actually helped a bit. Weird.",
+      "heard": "Done. That actually helped a bit. Weird.",
+      "reply": "Nice. Try another 15‑minute focus block next, then check Instagram.",
+      "firstSoundMs": 1274,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "You’re doing a lot already. That’s enough for today.",
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 29,
+      "n": 109,
+      "minute": 34,
+      "scene": "low-point",
+      "said": "Honestly I feel kind of behind everyone my age. Everyone's posting their wins.",
+      "heard": "Honestly, I feel kind of behind everyone my age. Everyone's posting their wins.",
+      "reply": "You’re doing a lot already. That’s enough for today. I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 2249,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 110,
+      "minute": 34.3,
+      "scene": "low-point",
+      "said": "It makes me not want to try. What's the point if I'm already behind?",
+      "heard": "It makes me not want to try. What's the point if I'm already behind?",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 692,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "You’re making progress, even if it feels slow."
+      ],
+      "replyWords": 8,
+      "n": 111,
+      "minute": 34.6,
+      "scene": "low-point",
+      "said": "Yeah. Okay. Thanks for not being cringe about it.",
+      "heard": "Yeah, okay. Thanks for not being cringe about it.",
+      "reply": "You’re making progress, even if it feels slow.",
+      "firstSoundMs": 1500,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 112,
+      "minute": 34.8,
+      "scene": "wrap",
+      "said": "Okay I think I'm good for tonight. Phone's across the room.",
+      "heard": "Okay, I think I'm good for tonight. Phone's across the room.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1215,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I don’t have a record of what you finished today. Tell me, and I’ll keep it."
+      ],
+      "replyWords": 16,
+      "n": 113,
+      "minute": 35.1,
+      "scene": "wrap",
+      "said": "What did we actually get done today?",
+      "heard": "What did we actually get done today?",
+      "reply": "I don’t have a record of what you finished today. Tell me, and I’ll keep it.",
+      "firstSoundMs": 1964,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+        "Good night, rest well."
+      ],
+      "replyWords": 24,
+      "n": 114,
+      "minute": 35.4,
+      "scene": "wrap",
+      "said": "Cool. Goodnight, Stay.",
+      "heard": "Cool. Good night, Stay.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again. Good night, rest well.",
+      "firstSoundMs": 1749,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 115,
+      "minute": 35.7,
+      "scene": "test-opening",
+      "said": "Okay so, yeah, this is Stay? Prove you're not just another chatbot. Go.",
+      "heard": "Okay, so yeah, this is Stay. Prove you're not just another chatbot. Go.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1162,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "A clock app starts a timer, and a general voice assistant will talk about anything. I'm for the moment you're stuck. Tell me what you're avoiding and I give you one tiny first step, start the clock with you, and wait through your pauses. When time's up I check in, and I remember what helped."
+      ],
+      "replyWords": 55,
+      "n": 116,
+      "minute": 36.2,
+      "scene": "test-opening",
+      "said": "Meh. Why would I use you and not just ask the big AI app? Be honest.",
+      "heard": "Meh? Why would I use you and not just ask the big AI app? Be honest.",
+      "reply": "A clock app starts a timer, and a general voice assistant will talk about anything. I'm for the moment you're stuck. Tell me what you're avoiding and I give you one tiny first step, start the clock with you, and wait through your pauses. When time's up I check in, and I remember what helped.",
+      "firstSoundMs": 960,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I can only do what you ask me to do. If you want a timer, a plan, or to remember something, just say it. Otherwise, I’m just here to chat."
+      ],
+      "replyWords": 30,
+      "n": 117,
+      "minute": 36.7,
+      "scene": "test-opening",
+      "said": "Okay okay. Fine. But can you actually, like, do something, not just talk?",
+      "heard": "Okay, okay, fine. But can you actually, like, do something, not just talk?",
+      "reply": "I can only do what you ask me to do. If you want a timer, a plan, or to remember something, just say it. Otherwise, I’m just here to chat.",
+      "firstSoundMs": 1880,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I keep it short. No fluff. What do you need to do right now?"
+      ],
+      "replyWords": 14,
+      "n": 118,
+      "minute": 37,
+      "scene": "test-opening",
+      "said": "I'll be real, I have zero patience. If this is slow I'm gone.",
+      "heard": "I'll be real, I have zero patience. If this is slow, I'm gone.",
+      "reply": "I keep it short. No fluff. What do you need to do right now?",
+      "firstSoundMs": 1265,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "You spent two hours scrolling. Pick a clear goal for the next 10 minutes. Try closing the app and writing one thing you want to do."
+      ],
+      "replyWords": 26,
+      "n": 119,
+      "minute": 37.4,
+      "scene": "doomscroll-instagram",
+      "said": "I have been on Instagram for two hours and I don't even remember what I looked at.",
+      "heard": "I've been on Instagram for 2 hours and I don't even remember what I looked at.",
+      "reply": "You spent two hours scrolling. Pick a clear goal for the next 10 minutes. Try closing the app and writing one thing you want to do.",
+      "firstSoundMs": 2758,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I can't open other apps or sites for you. What I can do is start a timer and tell you when your time is up. Want me to start a 10-minute timer?"
+      ],
+      "replyWords": 32,
+      "n": 120,
+      "minute": 37.8,
+      "scene": "doomscroll-instagram",
+      "said": "It's like my thumb just does it. I open the app without deciding to. Is that normal?",
+      "heard": "It's like my thumb just does it. I open the app without deciding to. Is that normal?",
+      "reply": "I can't open other apps or sites for you. What I can do is start a timer and tell you when your time is up. Want me to start a 10-minute timer?",
+      "firstSoundMs": 730,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 121,
+      "minute": 38.1,
+      "scene": "doomscroll-instagram",
+      "said": "Okay but I have a paper due at nine tomorrow and I'm just scrolling reels.",
+      "heard": "Okay, but I have a paper due at 9 tomorrow and I'm just scrolling Reels.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 2502,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Close Instagram. Open your paper. Write one sentence."
+      ],
+      "replyWords": 8,
+      "n": 122,
+      "minute": 38.3,
+      "scene": "doomscroll-instagram",
+      "said": "Don't give me a lecture. Just tell me what to do right now.",
+      "heard": "Don't give me a lecture, just tell me what to do right now.",
+      "reply": "Close Instagram. Open your paper. Write one sentence.",
+      "firstSoundMs": 1287,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Set a 25-minute timer. Write one section."
+      ],
+      "replyWords": 7,
+      "n": 123,
+      "minute": 38.6,
+      "scene": "doomscroll-instagram",
+      "said": "Ugh, fine. Phone goes face down. What's the next step after that?",
+      "heard": "Ugh, fine. Phone goes face down. What's the next step after that?",
+      "reply": "Set a 25-minute timer. Write one section.",
+      "firstSoundMs": 1350,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 124,
+      "minute": 38.9,
+      "scene": "doomscroll-instagram",
+      "said": "I'm doing it. Wait, I just picked it back up. Why am I like this?",
+      "heard": "I'm doing it. Wait, I just picked it back up. Why am I like this?",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1518,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 125,
+      "minute": 39.2,
+      "scene": "doomscroll-instagram",
+      "said": "Okay okay. Set a timer for two minutes and I'll open the doc.",
+      "heard": "Okay, okay, set a timer for 2 minutes and I'll open the dock.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1761,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 126,
+      "minute": 39.5,
+      "scene": "doomscroll-instagram",
+      "said": "Done. The doc is open. It's just a blank page and it's judging me.",
+      "heard": "Done. The doc is open. It's just a blank page and it's judging me.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1833,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 127,
+      "minute": 39.9,
+      "scene": "indecisive",
+      "said": "Should I do the assignment first or reply to my group chat? I can't decide.",
+      "heard": "Should I do the assignment first or reply to my group chat? I can't decide.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1178,
+      "flags": []
+    },
+    {
+      "bubbles": [
+        "Freezing is normal. Pick the group chat. Send one message."
+      ],
+      "replyWords": 10,
+      "n": 128,
+      "minute": 40.2,
+      "scene": "indecisive",
+      "said": "I always do this. I make a list of options and then I freeze.",
+      "heard": "I always do this. I make a list of options and then I freeze.",
+      "reply": "Freezing is normal. Pick the group chat. Send one message.",
+      "firstSoundMs": 2793,
+      "flags": []
+    }
+  ]
+}

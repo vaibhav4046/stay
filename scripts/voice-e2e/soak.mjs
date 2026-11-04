@@ -28,7 +28,7 @@ for (const line of fs.existsSync('.env.local') ? fs.readFileSync('.env.local', '
   const m = line.match(/^([A-Z0-9_]+)=(.*)$/);
   if (m && !process.env[m[1]]) process.env[m[1]] = m[2].trim().replace(/^["']|["']$/g, '');
 }
-const KEY = process.env.GROQ_API_KEY;
+const KEY = (process.env.GROQ_API_KEYS || '').split(',')[0].trim() || process.env.GROQ_API_KEY; // the speaker's lines use the qwen bucket, which Stay itself only uses as a spare
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const now = () => Date.now();
 const rnd = (a, b) => a + Math.random() * (b - a);
@@ -68,7 +68,8 @@ const GENZ_SCENES = [
 const SCENES = GENZ ? GENZ_SCENES : DEFAULT_SCENES;
 
 // --offline: the speaker's lines come from this list instead of a model, so a soak spends no tokens (used with stub-llm.mjs for pipeline runs)
-const OFFLINE = args.includes('--offline') || GENZ;
+const REACTIVE = args.includes('--reactive'); // the speaker's lines are written live by a model, reacting to what Stay said (with --genz)
+const OFFLINE = (args.includes('--offline') || GENZ) && !REACTIVE;
 const OFFLINE_LINES = {
   'morning-overwhelm': ["I woke up late and there's so much to do I don't know where to start.", 'Emails, laundry, and a report due Friday. My head is full.', 'Okay, maybe the laundry. That feels small enough.', 'Fine. I will do the laundry first.', 'Alright, the machine is running now.'],
   'avoided-email': ["I keep avoiding replying to my landlord about the lease.", "I don't even know what to say to them.", 'Okay, I could open the email and read it again.', 'Right, I opened it. Now what?', 'I wrote a first line. It is bad but it exists.', 'Okay, I will send it after one more read.'],
@@ -87,8 +88,9 @@ const OFFLINE_LINES = {
 const offlineLine = (scene, k) => { const l = scene.lines ?? OFFLINE_LINES[scene.id] ?? ['I do not know where to start.']; return l[k % l.length]; };
 
 async function persona(scene, history, lastStay) {
+  const brief = scene.brief ?? `Scene "${scene.id}". Things you might say, always in new words and reacting to what Stay just said: ${(scene.lines || []).slice(0, 3).join(' / ')}`;
   const convo = history.slice(-8).map((h) => `${h.who === 'you' ? 'You' : 'Stay'}: ${h.text}`).join('\n');
-  const sys = `You are role-playing a real adult with ADHD talking out loud to a voice companion app called Stay. ${scene.brief}\nSay ONE short spoken line (under 22 words) in the language of the scene. Natural: contractions, sometimes an "um", never stage directions, quotes or role-play talk.${scene.pause ? '\nFormat: first part, then " || ", then the continuation after a pause.' : ''}`;
+  const sys = `You are role-playing ${GENZ ? 'an impatient Gen Z person with ADHD (casual, blunt, a little sarcastic, short sentences, hates waiting, tests the app, sometimes tries to break it)' : 'a real adult with ADHD'} talking out loud to a voice companion app called Stay. ${brief}\nSay ONE short spoken line (under 22 words) in the language of the scene. Natural: contractions, sometimes an "um", never stage directions, quotes or role-play talk.${scene.pause ? '\nFormat: first part, then " || ", then the continuation after a pause.' : ''}`;
   for (let i = 0; i < 5; i++) {
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',

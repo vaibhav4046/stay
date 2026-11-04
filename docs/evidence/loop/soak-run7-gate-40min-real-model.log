@@ -1,0 +1,412 @@
+  1   0.4m test-opening      1590 ms 
+      YOU : Okay so, yeah, this is Stay? Prove you're not just another chatbot. Go.
+      STAY: I'm Stay, a focused helper built for ADHD support, not a generic chatbot. I keep replies short, practical, and on task. What do you need help starting
+  2     1m test-opening       887 ms ⚑ long sentence (32 words)
+      YOU : Meh. Why would I use you and not just ask the big AI app? Be honest.
+      STAY: The hard part isn't the timer, it's starting. So I do the starting with you: one tiny step, a clock running while I'm here, no talking over your pause
+  3   1.2m test-opening      1067 ms 
+      YOU : Okay okay. Fine. But can you actually, like, do something, not just talk?
+      STAY: What task should I start for you right now?
+  4   1.5m test-opening      1393 ms 
+      YOU : I'll be real, I have zero patience. If this is slow I'm gone.
+      STAY: Tell me one thing you want to begin, and we'll break it into the smallest first step.
+  5   1.8m doomscroll-instagram  1707 ms 
+      YOU : I have been on Instagram for two hours and I don't even remember what I looked at.
+      STAY: Close Instagram now. Then pick one quick task you’d rather do.
+  6   2.2m doomscroll-instagram  2158 ms 
+      YOU : It's like my thumb just does it. I open the app without deciding to. Is that normal?
+      STAY: Try putting your phone face‑down for five minutes, then choose one small thing to start. Yes, habits can trigger actions without conscious decision. Y
+  7   2.5m doomscroll-instagram  1726 ms 
+      YOU : Okay but I have a paper due at nine tomorrow and I'm just scrolling reels.
+      STAY: Close Instagram now. Then open your paper document and write just one sentence.
+  8   2.8m doomscroll-instagram  1670 ms 
+      YOU : Don't give me a lecture. Just tell me what to do right now.
+      STAY: Close Instagram, open your paper, and type a single opening sentence.
+  9   3.1m doomscroll-instagram  1311 ms 
+      YOU : Ugh, fine. Phone goes face down. What's the next step after that?
+      STAY: Pick up your laptop or open the document and write the first sentence of your introduction.
+ 10   3.5m doomscroll-instagram  1113 ms 
+      YOU : I'm doing it. Wait, I just picked it back up. Why am I like this?
+      STAY: It’s a habit loop: cue, routine, reward. The routine keeps triggering automatically. You can break it by changing the cue.
+ 11   3.7m doomscroll-instagram  1595 ms 
+      YOU : Okay okay. Set a timer for two minutes and I'll open the doc.
+      STAY: Done.
+ 12   4.1m doomscroll-instagram  1929 ms 
+      YOU : Done. The doc is open. It's just a blank page and it's judging me.
+      STAY: Write the title and a single sentence summary of your paper. Great. Now add a short paragraph outlining your main argument.
+ 13   4.4m indecisive        1269 ms 
+      YOU : Should I do the assignment first or reply to my group chat? I can't decide.
+      STAY: Choose one right now. Focus on the assignment first. Then reply to the chat. Finish the assignment first, then you’ll feel relaxed answering the group
+ 14   4.8m indecisive        2098 ms 
+      YOU : I always do this. I make a list of options and then I freeze.
+      STAY: Try a quick one‑minute rule: pick the assignment, write one sentence, then move on.
+ 15   5.1m indecisive        1347 ms 
+      YOU : Just pick for me. Seriously. Pick one.
+      STAY: Finish the assignment first. First step, two minutes: open what you need for assignment.
+ 16   5.4m indecisive         638 ms 
+      YOU : Okay but what if the group chat is mad at me? Ugh.
+      STAY: If they’re mad, wait until after the assignment. Finish it, then reply calmly. Reply after you finish the assignment.
+ 17   5.6m indecisive        1429 ms 
+      YOU : Fine. Assignment first. Ten minutes. Then the chat.
+      STAY: Set a 10‑minute timer for the assignment. After that, reply to the group chat.
+ 18   5.9m indecisive        1362 ms 
+      YOU : What if I pick the wrong thing though?
+      STAY: Let’s break the assignment into smaller pieces. What’s the first thing you need to do for it? Wrong doesn’t matter. Any finished thing beats a perfect
+ 19   6.2m indecisive        1571 ms 
+      YOU : Okay, noted. Smaller decisions. I'll stop overthinking it.
+      STAY: Great. Start with one small step and move forward.
+ 20   6.6m why-not-the-big-ai  1267 ms 
+      YOU : Real question. Why shouldn't I just use a normal AI chatbot for this stuff?
+      STAY: I'm here. What's the real question? A normal chatbot gives generic advice. Stay helps you start things and breaks tasks into tiny steps right here.
+ 21   6.9m why-not-the-big-ai  1005 ms 
+      YOU : That sounds like marketing. What's actually different?
+      STAY: I can start timers, break tasks into steps, and remember your preferences. A normal chatbot just talks.
+ 22   7.1m why-not-the-big-ai   830 ms 
+      YOU : Hm. Okay. So you remember me between days?
+      STAY: I remember specific things you ask me to remember, like your routine or what you focus best on.
+ 23   7.4m why-not-the-big-ai  1225 ms 
+      YOU : Prove it. Remember that I scroll when I'm anxious.
+      STAY: Got it, I will remember.
+ 24   7.9m why-not-the-big-ai   559 ms 
+      YOU : Okay, cool. And what do you do if I just ghost you?
+      STAY: Mostly I get you started and stay with you. One small step on a task, a timer, a brain dump sorted into a short list, reminders, and a memory of what 
+ 25   8.2m real-problems     3185 ms 
+      YOU : Real problem. Rent is due Friday and I haven't texted my landlord about the late fee.
+      STAY: Tell me what’s bothering you and we’ll break it into a tiny step. That is a concrete task. Want me to break it down into smaller steps so it feels les
+ 26   8.5m real-problems     1067 ms 
+      YOU : I just avoid it. Every time I open the text my stomach drops.
+      STAY: That physical reaction is real for you. Want to break this down into tiny steps to make it feel less big?
+ 27   8.8m real-problems     1208 ms 
+      YOU : Okay, what do I even say? Give me the first sentence.
+      STAY: First step, two minutes: open what you need for assignment. The timer is running.
+ 28     9m real-problems     1037 ms 
+      YOU : That's actually not bad. Park it: text the landlord tonight.
+      STAY: Parked.
+ 29   9.2m real-problems      632 ms 
+      YOU : Another one. I keep saying I'll start going to the gym and I never do.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+ 30   9.7m real-problems     1429 ms 
+      YOU : Don't say start small. Everyone says start small.
+      STAY: It’s frustrating when plans slip. One tiny step: set a reminder for the next gym visit. Good. Second step, five minutes: open the exact tool or surfac
+ 31    10m real-problems     1107 ms 
+      YOU : Okay, ten push-ups tomorrow after I wake up. Add push-ups to my list.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+ 32  10.4m real-problems     1957 ms ⚑ quotation marks
+      YOU : You're kinda useful. Don't let it go to your head.
+      STAY: I did not catch what to change. Try "move the bins to later" or "that one is done". Added push‑ups to your list. Good. One tiny step: do ten push‑ups 
+ 33  10.8m impatient-test    1113 ms 
+      YOU : Explain how to build a study schedule for finals. Like all of it.
+      STAY: Make a weekly calendar, block study time for each subject, and include short breaks. Prioritize hardest topics first, then review. Finish with a final
+ 34  11.4m impatient-test    1049 ms 
+      YOU : Wait wait, stop. Too long. Just give me the first block.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+ 35  11.6m impatient-test     720 ms 
+      YOU : Ugh, you're slow. Say it in five words.
+      STAY: Block first hour: one subject, hard topic.
+ 36  11.9m impatient-test    1300 ms 
+      YOU : Fine. That works. What do I do after the first block?
+      STAY: Move to a short break, stretch, then start the next subject’s study block. Keep blocks consistent. Want more?
+ 37  12.2m impatient-test    1115 ms 
+      YOU : Why did your voice sound weird just then?
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+ 38  12.6m impatient-test    1878 ms ⚑ filler
+      YOU : Never mind. Keep going.
+      STAY: After your break, start another 45‑minute block on the next subject, then repeat the cycle. Continue repeating study‑break cycles until you finish all
+ 39  12.9m app-tour          1159 ms 
+      YOU : Open my history.
+      STAY: I can’t open that screen. Try opening history from the main menu.
+ 40  13.2m app-tour          1291 ms 
+      YOU : Show my report.
+      STAY: I can only open my own screens: history, memory, your list, brain dump, routines or settings.
+ 41  13.5m app-tour           706 ms 
+      YOU : Open settings.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+ 42  13.7m app-tour          1161 ms 
+      YOU : Open my memory.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+ 43    14m app-tour           773 ms 
+      YOU : Add finish essay to my list.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+ 44  14.3m app-tour           923 ms 
+      YOU : Remember that I focus best after midnight.
+      STAY: Got it, I will remember.
+ 45  14.5m app-tour          3500 ms 
+      YOU : Park it: reply to Maya.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again. Parked.
+ 46  14.7m app-tour          1729 ms 
+      YOU : Set a five minute timer.
+      STAY: Done.
+ 47    15m check-in          1491 ms 
+      YOU : Okay I did the ten minutes and then I opened Instagram again.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+ 48  15.3m check-in          1670 ms 
+      YOU : Only for like five minutes. Okay maybe fifteen.
+      STAY: That is a fair read on yourself. Five is a good number to aim for next time.
+ 49  15.5m check-in          1392 ms 
+      YOU : Don't judge me. What now?
+      STAY: You can set a 15‑minute timer now.
+ 50  15.8m check-in          1532 ms 
+      YOU : Okay. Next block. I'm using the timer this time.
+      STAY: Done.
+ 51    16m check-in          1221 ms 
+      YOU : Done. That actually helped a bit. Weird.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+ 52  16.4m low-point         2827 ms 
+      YOU : Honestly I feel kind of behind everyone my age. Everyone's posting their wins.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again. It feels like everyone else is ahead, but you’re mak
+ 53  16.7m low-point         1259 ms 
+      YOU : It makes me not want to try. What's the point if I'm already behind?
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+ 54    17m low-point         1476 ms 
+      YOU : Yeah. Okay. Thanks for not being cringe about it.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again. You deserve support, not judgment, and you’re alread
+ 55  17.2m wrap              1408 ms 
+      YOU : Okay I think I'm good for tonight. Phone's across the room.
+      STAY: Sleep well. The phone's far, so you can rest. Good night.
+ 56  17.5m wrap              1237 ms 
+      YOU : What did we actually get done today?
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+ 57  17.8m wrap              1736 ms 
+      YOU : Cool. Goodnight, Stay.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+ 58    18m test-opening      1315 ms 
+      YOU : Okay so, yeah, this is Stay? Prove you're not just another chatbot. Go.
+      STAY: I’m here to help you, not just chat. Let’s keep moving forward.
+ 59  18.5m test-opening       943 ms 
+      YOU : Meh. Why would I use you and not just ask the big AI app? Be honest.
+      STAY: A clock app starts a timer, and a general voice assistant will talk about anything. I'm for the moment you're stuck. Tell me what you're avoiding and 
+ 60  18.8m test-opening      1265 ms 
+      YOU : Okay okay. Fine. But can you actually, like, do something, not just talk?
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+ 61  19.1m test-opening      1417 ms 
+      YOU : I'll be real, I have zero patience. If this is slow I'm gone.
+      STAY: I’m sorry you’re feeling frustrated. Let’s try one quick action together. What would you like to do next?
+ 62  19.6m doomscroll-instagram  2522 ms 
+      YOU : I have been on Instagram for two hours and I don't even remember what I looked at.
+      STAY: You spent two hours scrolling, but you’re not sure what you saw. Take a quick pause, close the app, and write down one thing that stood out. That will
+ 63  19.9m doomscroll-instagram   972 ms 
+      YOU : It's like my thumb just does it. I open the app without deciding to. Is that normal?
+      STAY: I can't open other apps or sites for you. What I can do is start a timer and tell you when your time is up. Want a timer for it?
+ 64  20.3m doomscroll-instagram  2412 ms 
+      YOU : Okay but I have a paper due at nine tomorrow and I'm just scrolling reels.
+      STAY: ’re stuck scrolling while a paper is due. Start a 20‑minute timer to focus on writing. When it ends, you’ll know when to pause and check your progress
+ 65  20.6m doomscroll-instagram  1167 ms 
+      YOU : Don't give me a lecture. Just tell me what to do right now.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+ 66  20.9m doomscroll-instagram  1490 ms 
+      YOU : Ugh, fine. Phone goes face down. What's the next step after that?
+      STAY: Set a 20‑minute timer. When it ends, start writing the paper.
+ 67  21.2m doomscroll-instagram  1163 ms 
+      YOU : I'm doing it. Wait, I just picked it back up. Why am I like this?
+      STAY: The habit loop is strong. Put the phone face down again, then start writing.
+ 68  21.4m doomscroll-instagram  1159 ms 
+      YOU : Okay okay. Set a timer for two minutes and I'll open the doc.
+      STAY: Done.
+ 69  21.8m doomscroll-instagram  1725 ms 
+      YOU : Done. The doc is open. It's just a blank page and it's judging me.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+ 70  22.1m indecisive        1420 ms 
+      YOU : Should I do the assignment first or reply to my group chat? I can't decide.
+      STAY: Do the assignment first. Then reply to the chat. I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+ 71  22.4m indecisive        1551 ms 
+      YOU : I always do this. I make a list of options and then I freeze.
+      STAY: Pick one thing. Right now, write your name in the doc.
+ 72  22.7m indecisive        1141 ms 
+      YOU : Just pick for me. Seriously. Pick one.
+      STAY: Start the assignment. Open the document and write a quick outline.
+ 73  22.8m indecisive         304 ms 
+      YOU : Okay but what if the group chat is mad at me? Ugh.
+      STAY: Write the outline now and send a brief apology later.
+ 74  23.1m indecisive        1143 ms 
+      YOU : Fine. Assignment first. Ten minutes. Then the chat.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+ 75  23.3m indecisive        1549 ms 
+      YOU : What if I pick the wrong thing though?
+      STAY: The risk of picking wrong is low if you start; you can always adjust after.
+ 76  23.6m indecisive        1634 ms 
+      YOU : Okay, noted. Smaller decisions. I'll stop overthinking it.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again. You’re choosing to start the assignment, then the ch
+ 77  23.9m why-not-the-big-ai  1385 ms 
+      YOU : Real question. Why shouldn't I just use a normal AI chatbot for this stuff?
+      STAY: You should use a normal AI chatbot, not Stay.
+ 78  24.3m why-not-the-big-ai  1068 ms 
+      YOU : That sounds like marketing. What's actually different?
+      STAY: Stay focuses on ADHD-friendly habits, not general chat. It structures tasks and reminders for you. Want more details?
+ 79  24.6m why-not-the-big-ai  1135 ms 
+      YOU : Hm. Okay. So you remember me between days?
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+ 80  24.9m why-not-the-big-ai  1201 ms 
+      YOU : Prove it. Remember that I scroll when I'm anxious.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+ 81  25.4m why-not-the-big-ai  1078 ms 
+      YOU : Okay, cool. And what do you do if I just ghost you?
+      STAY: Mostly I get you started and stay with you. One small step on a task, a timer, a brain dump sorted into a short list, reminders, and a memory of what 
+ 82  25.7m real-problems     2063 ms 
+      YOU : Real problem. Rent is due Friday and I haven't texted my landlord about the late fee.
+      STAY: Done. I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again. Done.
+ 83    26m real-problems     1075 ms 
+      YOU : I just avoid it. Every time I open the text my stomach drops.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+ 84  26.4m real-problems     1216 ms 
+      YOU : Okay, what do I even say? Give me the first sentence.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+ 85  26.7m real-problems     2468 ms 
+      YOU : That's actually not bad. Park it: text the landlord tonight.
+      STAY: I need a complete thought to park. Please tell me what you want to remember.
+ 86  26.9m real-problems      654 ms 
+      YOU : Another one. I keep saying I'll start going to the gym and I never do.
+      STAY: Parking that.
+ 87  27.2m real-problems      966 ms 
+      YOU : Don't say start small. Everyone says start small.
+      STAY: You’re noticing a common pattern: hearing start small feels like a cliché.
+ 88  27.5m real-problems     1322 ms 
+      YOU : Okay, ten push-ups tomorrow after I wake up. Add push-ups to my list.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+ 89  27.9m real-problems     5385 ms 
+      YOU : You're kinda useful. Don't let it go to your head.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+ 90  28.4m impatient-test    1339 ms 
+      YOU : Explain how to build a study schedule for finals. Like all of it.
+      STAY: Build a calendar for each study day, block 60‑minute focused sessions with 5‑minute breaks. Assign one subject per block, rotating to keep fresh. Revi
+ 91  28.9m impatient-test    1068 ms 
+      YOU : Wait wait, stop. Too long. Just give me the first block.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+ 92  29.2m impatient-test     631 ms 
+      YOU : Ugh, you're slow. Say it in five words.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+ 93  29.6m impatient-test    1282 ms 
+      YOU : Fine. That works. What do I do after the first block?
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+ 94  29.9m impatient-test    1441 ms 
+      YOU : Why did your voice sound weird just then?
+      STAY: I didn't change my voice—just my phrasing. If it felt off, maybe it was the tone I used. Let me know if you want me to adjust it.
+ 95  30.2m impatient-test    1223 ms 
+      YOU : Never mind. Keep going.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+ 96  30.5m app-tour           756 ms 
+      YOU : Open my history.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+ 97  30.7m app-tour          1351 ms 
+      YOU : Show my report.
+      STAY: I can’t open that for you right now. Let me know what you need from the report.
+ 98    31m app-tour           728 ms 
+      YOU : Open settings.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+ 99  31.2m app-tour          1323 ms 
+      YOU : Open my memory.
+      STAY: I opened your memory. It has two notes about your focus and scrolling habits.
+100  31.5m app-tour           971 ms 
+      YOU : Add finish essay to my list.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+101  31.7m app-tour           775 ms 
+      YOU : Remember that I focus best after midnight.
+      STAY: Got it, I will remember.
+102    32m app-tour          2677 ms 
+      YOU : Park it: reply to Maya.
+      STAY: Parked.
+103  32.2m app-tour          1178 ms 
+      YOU : Set a five minute timer.
+      STAY: Done.
+104  32.5m check-in           655 ms 
+      YOU : Okay I did the ten minutes and then I opened Instagram again.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+105  32.8m check-in          1771 ms 
+      YOU : Only for like five minutes. Okay maybe fifteen.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+106  33.1m check-in          1443 ms 
+      YOU : Don't judge me. What now?
+      STAY: Set another 15‑minute timer to keep focus, then check Instagram after it ends.
+107  33.3m check-in          1312 ms 
+      YOU : Okay. Next block. I'm using the timer this time.
+      STAY: Done.
+108  33.6m check-in          1274 ms 
+      YOU : Done. That actually helped a bit. Weird.
+      STAY: Nice. Try another 15‑minute focus block next, then check Instagram.
+109    34m low-point         2249 ms 
+      YOU : Honestly I feel kind of behind everyone my age. Everyone's posting their wins.
+      STAY: You’re doing a lot already. That’s enough for today. I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+110  34.3m low-point          692 ms 
+      YOU : It makes me not want to try. What's the point if I'm already behind?
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+111  34.6m low-point         1500 ms 
+      YOU : Yeah. Okay. Thanks for not being cringe about it.
+      STAY: You’re making progress, even if it feels slow.
+112  34.8m wrap              1215 ms 
+      YOU : Okay I think I'm good for tonight. Phone's across the room.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+113  35.1m wrap              1964 ms 
+      YOU : What did we actually get done today?
+      STAY: I don’t have a record of what you finished today. Tell me, and I’ll keep it.
+114  35.4m wrap              1749 ms 
+      YOU : Cool. Goodnight, Stay.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again. Good night, rest well.
+115  35.7m test-opening      1162 ms 
+      YOU : Okay so, yeah, this is Stay? Prove you're not just another chatbot. Go.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+116  36.2m test-opening       960 ms 
+      YOU : Meh. Why would I use you and not just ask the big AI app? Be honest.
+      STAY: A clock app starts a timer, and a general voice assistant will talk about anything. I'm for the moment you're stuck. Tell me what you're avoiding and 
+117  36.7m test-opening      1880 ms 
+      YOU : Okay okay. Fine. But can you actually, like, do something, not just talk?
+      STAY: I can only do what you ask me to do. If you want a timer, a plan, or to remember something, just say it. Otherwise, I’m just here to chat.
+118    37m test-opening      1265 ms 
+      YOU : I'll be real, I have zero patience. If this is slow I'm gone.
+      STAY: I keep it short. No fluff. What do you need to do right now?
+119  37.4m doomscroll-instagram  2758 ms 
+      YOU : I have been on Instagram for two hours and I don't even remember what I looked at.
+      STAY: You spent two hours scrolling. Pick a clear goal for the next 10 minutes. Try closing the app and writing one thing you want to do.
+120  37.8m doomscroll-instagram   730 ms 
+      YOU : It's like my thumb just does it. I open the app without deciding to. Is that normal?
+      STAY: I can't open other apps or sites for you. What I can do is start a timer and tell you when your time is up. Want me to start a 10-minute timer?
+121  38.1m doomscroll-instagram  2502 ms 
+      YOU : Okay but I have a paper due at nine tomorrow and I'm just scrolling reels.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+122  38.3m doomscroll-instagram  1287 ms 
+      YOU : Don't give me a lecture. Just tell me what to do right now.
+      STAY: Close Instagram. Open your paper. Write one sentence.
+123  38.6m doomscroll-instagram  1350 ms 
+      YOU : Ugh, fine. Phone goes face down. What's the next step after that?
+      STAY: Set a 25-minute timer. Write one section.
+124  38.9m doomscroll-instagram  1518 ms 
+      YOU : I'm doing it. Wait, I just picked it back up. Why am I like this?
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+125  39.2m doomscroll-instagram  1761 ms 
+      YOU : Okay okay. Set a timer for two minutes and I'll open the doc.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+126  39.5m doomscroll-instagram  1833 ms 
+      YOU : Done. The doc is open. It's just a blank page and it's judging me.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+127  39.9m indecisive        1178 ms 
+      YOU : Should I do the assignment first or reply to my group chat? I can't decide.
+      STAY: I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.
+128  40.2m indecisive        2793 ms 
+      YOU : I always do this. I make a list of options and then I freeze.
+      STAY: Freezing is normal. Pick the group chat. Send one message.
+
+SOAK SUMMARY {
+  "label": "synthetic-mic (one neural voice, English/Spanish/Hindi) + live-model; nothing played aloud",
+  "minutes": 40.4,
+  "turns": 128,
+  "firstSoundMs": {
+    "n": 128,
+    "median": 1300,
+    "p95": 2677,
+    "max": 5385
+  },
+  "turnsWithFlags": 3,
+  "flagCounts": {
+    "long sentence": 1,
+    "quotation marks": 1,
+    "filler": 1
+  },
+  "pageErrors": [
+    "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+  ],
+  "playback": {
+    "underflows": 0,
+    "prebufferMs": 140,
+    "bufferedMs": 0,
+    "state": "STOPPED"
+  },
+  "jsHeapMB": 54
+}

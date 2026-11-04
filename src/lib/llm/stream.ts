@@ -2,8 +2,8 @@
  * Streaming twin of callLlm (see provider.ts): the person's own key first, then Stay's shared one (rate-limited),
  * under the same address rules. Used by fast voice, which needs tokens as they arrive.
  */
-import { getNextGroqKey, reportGroqKeyRateLimit } from '@/lib/voice/tokenOptimizer';
-import { allowServerUse, clientIp, classifyStatus, readUserLlm, userTargetUsable, GROQ_BASE, type LlmError, type LlmTarget } from './provider';
+import { getGroqKeys, getNextGroqKey, reportGroqKeyRateLimit } from '@/lib/voice/tokenOptimizer';
+import { allowServerUse, clientIp, classifyStatus, readUserLlm, safeBaseUrl, userTargetUsable, GROQ_BASE, type LlmError, type LlmTarget } from './provider';
 
 /** Models tried, in order, after the main one is out of tokens for the minute (each has its own 8,000-token bucket). */
 const DEFAULT_SPARE_MODELS = 'openai/gpt-oss-20b,qwen/qwen3.8-27b';
@@ -85,25 +85,47 @@ export async function openLlmStream(req: Request, call: LlmStreamCall): Promise<
   const first = getNextGroqKey() || process.env.GROQ_API_KEY;
   if (!first) return done({ res: null, source: 'server', error: 'no_server_key', userKeyError });
   const primary: LlmTarget = { baseUrl: GROQ_BASE, key: first, model: call.serverModel };
-  let r = await openStream(primary, call, timings);
-  let soonest = r.retryAfterMs ?? Infinity; // the shortest wait any refused bucket asked for
-  const note = (x: { retryAfterMs?: number }) => { if (x.retryAfterMs != null) soonest = Math.min(soonest, x.retryAfterMs); };
-  if (!r.res && (r.error === 'quota' || r.error === 'invalid_key')) {
-    reportGroqKeyRateLimit(first);
-    const backup = getNextGroqKey();
-    if (backup && backup !== first) { r = await openStream({ ...primary, key: backup }, call, timings); note(r); }
-  }
-  // each Groq model has its own per-minute token bucket: when the main one is spent, the next one still answers
+  // Every key is tried on every model before the turn is refused. Each Groq model has its own per-minute and per-day token bucket for each
+  // key, so a key that is spent on the main model still has its spare models. Real-model gate run, 4 Nov 2026: the spare models were only
+  // tried on the first key, and 37% of turns were refused while the second key's spare buckets sat unused.
+  const keys = [first, ...getGroqKeys().filter((k) => k !== first)].slice(0, 3);
   const spares = (process.env.GROQ_FALLBACK_MODELS || process.env.GROQ_FALLBACK_MODEL || DEFAULT_SPARE_MODELS).split(',').map((m) => m.trim()).filter((m) => m && m !== call.serverModel);
-  for (const spare of spares) {
-    if (r.res || (r.error !== 'quota' && r.error !== 'other')) break; // out of tokens, or the model answered with an error: the next model takes the turn
-    r = await openStream({ ...primary, model: spare }, call, timings);
-    note(r);
+  let r: { res: Response | null; error?: LlmError; retryAfterMs?: number } = { res: null, error: 'other' };
+  let soonest = Infinity; // the shortest wait any refused bucket asked for
+  attempts: for (const [index, model] of [call.serverModel, ...spares].entries()) {
+    for (const key of keys) {
+      r = await openStream({ ...primary, key, model }, call, timings);
+      if (r.retryAfterMs != null) soonest = Math.min(soonest, r.retryAfterMs);
+      if (r.res) break attempts;
+      if (r.error === 'quota' || r.error === 'invalid_key') {
+        if (index === 0) reportGroqKeyRateLimit(key); // the next turn starts on another key
+        continue; // another key may still have room on this model
+      }
+      if (r.error === 'other') break; // the model answered with an error: another key will not change that, the next model may
+      break attempts; // unreachable or a bad endpoint: nothing else will answer either
+    }
   }
   // every bucket spent, but one refills within a moment: wait for that rather than turn the person away
   if (!r.res && r.error === 'quota' && soonest <= MAX_REFILL_WAIT_MS) {
     await new Promise((resolve) => setTimeout(resolve, soonest + 50));
     r = await openStream(primary, call, timings);
   }
+  // Last resort, another provider: STAY_FALLBACK_LLM_BASE / _KEY / _MODEL (any OpenAI-compatible chat service) take the turn once every
+  // Groq bucket has refused it, so one provider's quota or outage does not take Stay down.
+  const fb = fallbackTarget();
+  if (!r.res && fb && (r.error === 'quota' || r.error === 'other' || r.error === 'unreachable')) {
+    const f = await openStream(fb, call, timings);
+    if (f.res) return done({ res: f.res, source: 'server', userKeyError });
+  }
   return done({ res: r.res, source: 'server', error: r.error, userKeyError });
+}
+
+/** The second provider from the environment, or null. The address goes through the same check as a person's own endpoint. */
+function fallbackTarget(): LlmTarget | null {
+  const base = process.env.STAY_FALLBACK_LLM_BASE;
+  const key = process.env.STAY_FALLBACK_LLM_KEY;
+  const model = process.env.STAY_FALLBACK_LLM_MODEL;
+  if (!base || !key || !model) return null;
+  const baseUrl = safeBaseUrl(base);
+  return baseUrl ? { baseUrl, key, model } : null;
 }

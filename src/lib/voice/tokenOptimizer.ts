@@ -63,6 +63,11 @@ export class CompliantKeyRotationPool {
     return this.keys[bestIdx].key;
   }
 
+  /** Every configured key, in the order they would be handed out. */
+  public listKeys(): string[] {
+    return this.keys.map((k) => k.key);
+  }
+
   public reportRateLimitOrError(failedKey: string, cooldownMs = 60_000): void {
     const entry = this.keys.find((k) => k.key === failedKey);
     if (entry) {
@@ -104,6 +109,10 @@ export function reportAssemblyAiKeyRateLimit(key: string): void {
 
 export function getNextGroqKey(): string | null {
   return groqPool.getNextHealthyKey();
+}
+
+export function getGroqKeys(): string[] {
+  return groqPool.listKeys();
 }
 
 export function reportGroqKeyRateLimit(key: string): void {

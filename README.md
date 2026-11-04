@@ -8,6 +8,7 @@ Built on **AssemblyAI Universal-3.6 Pro** (speech to text) and **AssemblyAI TTS-
 
 - **Live:** https://stay-two-swart.vercel.app/app/today
 - **Film, 3 min 38 s:** [`public/demo/stay-pix-film.mp4`](public/demo/stay-pix-film.mp4): an impatient user tests Stay in one real call (synthetic voice-over, effects and music; how it was made and its weak spots: [`docs/evidence/film/README.md`](docs/evidence/film/README.md))
+- **Scale, availability, fault tolerance (what is measured, what is not):** [`docs/DESIGN_PRINCIPLES.md`](docs/DESIGN_PRINCIPLES.md)
 - **Submission and evidence index:** [`HACKATHON_SUBMISSION.md`](HACKATHON_SUBMISSION.md)
 - **What was checked, gate by gate, and what is still open:** [`docs/loop/LEDGER.md`](docs/loop/LEDGER.md)
 

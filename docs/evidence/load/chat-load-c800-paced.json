@@ -1,0 +1,18 @@
+{
+  "label": "stand-in model, one machine",
+  "target": "http://localhost:3122",
+  "concurrentUsers": 800,
+  "seconds": 28,
+  "requests": 6919,
+  "perSecond": 247,
+  "status": {
+    "200": 6626,
+    "-1": 293
+  },
+  "totalMs": {
+    "p50": 1689,
+    "p95": 2455,
+    "p99": 3307,
+    "max": 4931
+  }
+}
