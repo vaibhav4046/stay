@@ -88,7 +88,7 @@ test.describe('Landing: measured results', () => {
     await expect(sec.getByTestId('measured-now')).toContainText('Words wrong');
     await expect(sec.getByTestId('result-limits')).toBeVisible();
     await expect(sec.getByTestId('result-limits')).toContainText(/simulated speaker/i);
-    await expect(sec.getByTestId('languages')).toContainText('pt');
+    await expect(sec.getByTestId('languages')).toContainText('Portuguese');
     expect(await sec.locator('[data-ok="true"]').count()).toBe(23);
     expect(await sec.locator('[data-ok="false"]').count()).toBe(8);
     await expect(page.locator('body')).not.toContainText(/chatgpt|gemini|slower here|where stay lost/i);

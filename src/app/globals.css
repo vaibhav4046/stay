@@ -406,3 +406,43 @@ body::before {
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 12'%3E%3Cpath d='M5 0v12M5 5L1 1M5 5l4-4' stroke='black' stroke-width='1.6' fill='none' stroke-linecap='square'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 @media (prefers-reduced-motion: reduce) { body::before { opacity: 0.4; } }
+/* the landing example: a voice call played back (words arrive as they are heard and spoken), see HeroExample.tsx */
+.hx-chip { border: 1px solid var(--line); border-radius: 999px; padding: 0.28rem 0.75rem; font-size: 0.8rem; color: var(--ink-2); background: transparent; cursor: pointer; transition: background-color 0.2s, color 0.2s, border-color 0.2s; }
+.hx-chip:hover { color: var(--ink); border-color: #2c3d55; }
+.hx-chip:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.hx-chip-on { color: var(--ink); background: rgba(94, 168, 255, 0.14); border-color: rgba(94, 168, 255, 0.45); }
+.hx-status { display: flex; align-items: center; gap: 0.45rem; min-height: 1.1rem; }
+.hx-live { width: 7px; height: 7px; border-radius: 999px; background: #53657c; }
+.hx-live-on { background: #5ea8ff; animation: hx-pulse 1.4s ease-in-out infinite; }
+.hx-thread { min-height: 31rem; }
+.hx-pop { animation: hx-pop 260ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.hx-wave { display: inline-flex; align-items: center; gap: 3px; height: 18px; vertical-align: middle; }
+.hx-wave i { width: 3px; height: 100%; border-radius: 2px; background: currentColor; opacity: 0.8; transform-origin: center; animation: hx-wave 900ms ease-in-out infinite; }
+.hx-wave i:nth-child(2) { animation-delay: 120ms; }
+.hx-wave i:nth-child(3) { animation-delay: 240ms; }
+.hx-wave i:nth-child(4) { animation-delay: 360ms; }
+.hx-wave i:nth-child(5) { animation-delay: 480ms; }
+.hx-dots { display: inline-flex; gap: 4px; align-items: center; height: 18px; }
+.hx-dots i { width: 6px; height: 6px; border-radius: 999px; background: currentColor; opacity: 0.6; animation: hx-dot 1s ease-in-out infinite; }
+.hx-dots i:nth-child(2) { animation-delay: 160ms; }
+.hx-dots i:nth-child(3) { animation-delay: 320ms; }
+@keyframes hx-pop { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
+@keyframes hx-wave { 0%, 100% { transform: scaleY(0.25); } 50% { transform: scaleY(1); } }
+@keyframes hx-dot { 0%, 100% { transform: translateY(0); opacity: 0.4; } 50% { transform: translateY(-3px); opacity: 1; } }
+@keyframes hx-pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+/* the voice before the words: a ring turning around a small wave; the solved card at the end of each exchange */
+.hx-orb { position: relative; display: inline-grid; place-items: center; width: 30px; height: 30px; vertical-align: middle; }
+.hx-orb::before { content: ''; position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 0deg, transparent 0 55%, #5ea8ff 100%); -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px)); mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px)); animation: hx-spin 1.1s linear infinite; }
+.hx-wave-sm { height: 12px; gap: 2px; }
+.hx-wave-sm i { width: 2px; }
+.hx-grow { transform-origin: right center; animation: hx-grow 240ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.hx-outcome-slot { min-height: 6.2rem; margin-top: 0.75rem; }
+.hx-outcome { display: flex; align-items: center; gap: 0.85rem; padding: 0.8rem 1rem; border: 1px solid rgba(94, 168, 255, 0.4); border-radius: var(--radius-control); background: rgba(94, 168, 255, 0.08); }
+.hx-outcome-title { margin: 0; font-size: 0.8rem; font-weight: 600; color: var(--ink); }
+.hx-outcome-detail { margin: 0.15rem 0 0; font-size: 0.92rem; line-height: 1.4; color: var(--ink-2); }
+.hx-solve { flex: none; position: relative; width: 26px; height: 26px; border-radius: 50%; border: 2px solid rgba(94, 168, 255, 0.35); border-top-color: #5ea8ff; animation: hx-spin 0.8s linear infinite; }
+.hx-solve-done { animation: none; border-color: #5ea8ff; background: #5ea8ff; }
+.hx-solve-done::after { content: ''; position: absolute; left: 8px; top: 3px; width: 6px; height: 11px; border: solid #07111c; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+@keyframes hx-spin { to { transform: rotate(360deg); } }
+@keyframes hx-grow { from { opacity: 0.6; transform: scale(0.9); } to { opacity: 1; transform: none; } }

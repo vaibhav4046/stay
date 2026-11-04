@@ -385,6 +385,22 @@ describe('FastSocket', () => {
     expect(events.filter((e) => e.type === 'reply.text').every((e) => !String(e.text).includes('think'))).toBe(true);
   });
 
+  it('a failure line is never remembered as something Stay said (reactive run: the model then copied "Try again in a minute.")', async () => {
+    const MSG = 'I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.';
+    fetchMock
+      .mockResolvedValueOnce(new Response(JSON.stringify({ error: 'quota', message: MSG }), { status: 503, headers: { 'content-type': 'application/json' } }))
+      .mockResolvedValueOnce(sse(text('Open the document and write one line.')));
+    const { stt } = await open();
+    stt.push({ type: 'Turn', transcript: 'I do not know where to start.', end_of_turn: true, turn_order: 0, turn_is_formatted: true });
+    await new Promise((r) => setTimeout(r, 1200));
+    stt.push({ type: 'Turn', transcript: 'Okay, try once more.', end_of_turn: true, turn_order: 1, turn_is_formatted: true });
+    await tick(60);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const sent = JSON.parse(fetchMock.mock.calls[1][1].body as string).messages as Array<{ role: string; content: string }>;
+    expect(sent.some((m) => m.role === 'assistant' && /too many requests/.test(m.content))).toBe(false);
+    expect(events.filter((e) => e.type === 'transcript.agent').map((e) => e.text)).toEqual([MSG, 'Open the document and write one line.']); // still shown and spoken
+  });
+
   it('speculates immediately on short greetings like "Hi hello" even without terminal punctuation', async () => {
     fetchMock.mockResolvedValue(sse(text('Hello! What are you working on?')));
     const { stt } = await open();

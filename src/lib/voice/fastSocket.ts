@@ -9,7 +9,7 @@
  */
 import { toSpeech } from '@/lib/voice/speechText';
 import { isImageDataUrl, looksVisual } from '@/lib/vision/image';
-import { honestFailureMessage } from '@/lib/conversation/response';
+import { honestFailureMessage, isFailureLine } from '@/lib/conversation/response';
 import { mayChangeLook, mayStartTimer } from '@/lib/conversation/capabilities';
 import { GATED_ACTIONS, mayDoAction } from '@/lib/conversation/actionGates';
 import { MEDICAL_BOUNDARY_FIXED_MESSAGE } from '@/lib/safety/crisis';
@@ -1228,7 +1228,9 @@ export class FastSocket {
     this.wordBoundaryOffsetMs = 0;
     this.lastWordEndMs = 0;
     this.agentSpeaking = false;
-    this.history = [...this.history, { role: 'assistant' as const, content: text }].slice(-MAX_HISTORY);
+    // Real-model reactive run, 4 Nov 2026: after "I am getting too many requests..." the model began answering with "Try again in a minute."
+    // and "I could not reach my thinking service", copying the line from the history. A failure line is shown and spoken, never remembered.
+    if (!isFailureLine(text)) this.history = [...this.history, { role: 'assistant' as const, content: text }].slice(-MAX_HISTORY);
     if (this.stt?.readyState === WebSocket.OPEN) {
       try {
         this.stt.send(JSON.stringify({ type: 'UpdateConfiguration', agent_context: text.slice(0, 1750) }));

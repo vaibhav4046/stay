@@ -35,3 +35,9 @@ export function failureKindFromError(error: string | undefined, vision = false):
 
 /** The reply to a turn that sets off the safety gate while a picture is attached or has just been read. */
 export const VISION_SAFETY_FLAG = 'crisis_in_vision_text';
+
+/** True when a reply is one of Stay's own "I cannot answer" lines. Those are never remembered as something Stay said: the model copies them. */
+export function isFailureLine(text: string): boolean {
+  const t = text.trim();
+  return (['unavailable', 'rate_limited', 'vision', 'config', 'timeout'] as const).some((k) => t.startsWith(honestFailureMessage(k)));
+}

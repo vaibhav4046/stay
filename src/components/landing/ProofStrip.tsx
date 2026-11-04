@@ -8,7 +8,7 @@ export function ProofStrip() {
     { k: sec(CURRENT.firstPartialMs), v: 'first words on screen after you start speaking (median)' },
     { k: sec(CURRENT.ttsFirstAudioMs), v: "from the reply text to Stay's voice (median)" },
     { k: CURRENT.englishWer, v: `of English words wrong, across ${CURRENT.englishN} clips` },
-    { k: CURRENT.langCorrect, v: 'languages recognised correctly' },
+    { k: CURRENT.langCorrect, v: 'clips in the right language' },
   ];
   return (
     <section className="lp-wrap pb-4" aria-label="Measured with AssemblyAI" data-testid="proof-strip">
