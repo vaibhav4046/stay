@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { AppLink } from '@/components/landing/AppLink';
 import { StayWordmark } from '@/components/StayMark';
 import { UrgentHelpButton } from '@/components/UrgentHelpButton';
 
@@ -28,7 +29,7 @@ export function SiteHeader({ anchors = false }: { anchors?: boolean }) {
         ))}
       <Link href="/privacy" className="btn btn-ghost nav-sm">Privacy</Link>
       <UrgentHelpButton />
-      <Link href="/app/today" className="btn btn-primary !px-3 sm:!px-5">Open Stay</Link>
+      <AppLink href="/app/today" className="btn btn-primary !px-3 sm:!px-5">Open Stay</AppLink>
     </nav>
   );
 
@@ -65,9 +66,9 @@ export function SiteFooter() {
         </div>
         <nav className="flex flex-col text-[0.9rem]" aria-label="Product">
           <p className="mb-1 font-medium text-ink">Stay</p>
-          <Link href="/app/today" className="inline-flex min-h-11 items-center text-ink-2 hover:text-ink">Open Stay</Link>
-          <Link href="/app/history" className="inline-flex min-h-11 items-center text-ink-2 hover:text-ink">History</Link>
-          <Link href="/app/reports" className="inline-flex min-h-11 items-center text-ink-2 hover:text-ink">Appointment report</Link>
+          <AppLink href="/app/today" className="inline-flex min-h-11 items-center text-ink-2 hover:text-ink">Open Stay</AppLink>
+          <AppLink href="/app/history" className="inline-flex min-h-11 items-center text-ink-2 hover:text-ink">History</AppLink>
+          <AppLink href="/app/reports" className="inline-flex min-h-11 items-center text-ink-2 hover:text-ink">Appointment report</AppLink>
         </nav>
         <nav className="flex flex-col text-[0.9rem]" aria-label="Legal">
           <p className="mb-1 font-medium text-ink">About</p>

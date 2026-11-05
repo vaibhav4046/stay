@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { AppLink } from './AppLink';
 import { dotGlyph } from './personaDots';
 
 /* Server components: no script ships for any of this. */
@@ -130,9 +130,9 @@ export function Platforms() {
           <span className="lp-status">{p.badge}</span>
           <p className="text-ink-2">{p.body}</p>
           {p.id === 'web' && (
-            <Link href="/app/today" className="btn btn-primary mt-auto">
+            <AppLink href="/app/today" className="btn btn-primary mt-auto">
               Open Stay
-            </Link>
+            </AppLink>
           )}
         </li>
       ))}

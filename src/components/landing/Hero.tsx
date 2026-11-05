@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
+import { AppLink } from './AppLink';
 import { HeroExample } from './HeroExample';
 import { useCrisisPanel } from '@/components/CrisisHelpPanel';
 import { detectCrisisSignal } from '@/lib/safety/crisis';
@@ -52,13 +52,13 @@ export function Hero() {
             maxLength={120}
             onChange={(e) => setText(e.target.value)}
           />
-          <Link href="/app/today" onClick={handoff} className="lp-mic" data-testid="hero-start" title="Talk to Stay">
+          <AppLink href="/app/today" onClick={handoff} className="lp-mic" data-testid="hero-start" title="Talk to Stay">
             <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
               <rect x="9" y="3" width="6" height="12" rx="3" fill="none" stroke="currentColor" strokeWidth="1.9" />
               <path d="M5 11a7 7 0 0 0 14 0M12 18v3" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
             </svg>
             <span className="sr-only">Talk to Stay</span>
-          </Link>
+          </AppLink>
         </form>
         <p className="meta mt-3 max-w-[46ch]">Not a crisis service. Your history stays on your device.</p>
       </div>

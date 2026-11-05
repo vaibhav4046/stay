@@ -6,13 +6,16 @@
 import crypto from 'node:crypto';
 import { del, get, list, put } from '@vercel/blob';
 import type { PushSubscriptionJson } from './validate';
-import type { SentLog } from './schedule';
+import type { SentLog, SlotPrefs } from './schedule';
 
 export interface PushRecord {
   sub: PushSubscriptionJson;
   tz: string;
   created: number;
   sent: SentLog;
+  /** Which windows are wanted (both when absent) and when a pause ends (none when absent). */
+  prefs?: SlotPrefs;
+  snoozeUntil?: number;
 }
 
 const PREFIX = 'push/';
@@ -38,6 +41,8 @@ async function read(pathname: string): Promise<PushRecord | null> {
     return null;
   }
 }
+
+export const readRecord = (endpoint: string) => read(pathFor(endpoint));
 
 export async function listRecords(): Promise<PushRecord[]> {
   const out: PushRecord[] = [];

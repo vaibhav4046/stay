@@ -22,7 +22,8 @@ function authorised(req: NextRequest): boolean {
 const seedOf = (endpoint: string) => crypto.createHash('sha256').update(endpoint).digest().readUInt16BE(0);
 
 async function tickOne(rec: PushRecord, now: Date): Promise<'sent' | 'idle' | 'removed' | 'failed'> {
-  const slot = dueSlot(now, rec.tz, rec.sent);
+  if (rec.snoozeUntil && now.getTime() < rec.snoozeUntil) return 'idle'; // paused by the person
+  const slot = dueSlot(now, rec.tz, rec.sent, rec.prefs);
   if (!slot) return 'idle';
   const day = new Intl.DateTimeFormat('en-CA', { timeZone: rec.tz }).format(now);
   const result = await sendPush(rec.sub, messageFor(slot, day, seedOf(rec.sub.endpoint)), slot);

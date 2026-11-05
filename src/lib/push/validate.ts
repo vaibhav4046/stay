@@ -43,3 +43,16 @@ export function parseTimeZone(raw: unknown): string | null {
     return null;
   }
 }
+
+/** { morning, evening } as booleans, at least one on; anything else is refused. */
+export function parsePrefs(raw: unknown): { morning: boolean; evening: boolean } | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const { morning, evening } = raw as { morning?: unknown; evening?: unknown };
+  if (typeof morning !== 'boolean' || typeof evening !== 'boolean' || (!morning && !evening)) return null;
+  return { morning, evening };
+}
+
+/** Whole hours of quiet, 0 (resume) to 72. */
+export function parseSnoozeHours(raw: unknown): number | null {
+  return typeof raw === 'number' && Number.isInteger(raw) && raw >= 0 && raw <= 72 ? raw : null;
+}

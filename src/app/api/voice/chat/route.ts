@@ -17,6 +17,7 @@ import { classifyIntent } from '@/lib/conversation/intent';
 import { NOTHING_SHOWN, honestFailureMessage, failureKindFromError } from '@/lib/conversation/response';
 import { readSseText, visionReplyVerdict } from '@/lib/conversation/visionGate';
 import { MAX_IMAGE_CHARS, VISION_SYSTEM, isImageDataUrl, withImage } from '@/lib/vision/image';
+import { fitHistory } from '@/lib/voice/historyBudget';
 
 /** The app tool's parameters with some actions taken out of its list of actions. */
 function withoutActions(parameters: typeof APP_TOOL.parameters, removed: readonly string[]) {
@@ -27,7 +28,6 @@ function withoutActions(parameters: typeof APP_TOOL.parameters, removed: readonl
 }
 
 const MAX_HISTORY_TURNS = 20;
-const MAX_HISTORY_BYTES = 8_192;
 /** A request may carry one shrunk picture; the history itself stays small. */
 const MAX_BODY_BYTES = MAX_IMAGE_CHARS + 40_000;
 
@@ -221,23 +221,11 @@ export async function POST(req: NextRequest) {
       guard
     );
   }
-  const { messages: clientMessages, withTools, context, image, instruction } = parsed.data;
+  const { withTools, context, image, instruction } = parsed.data;
+  // a long conversation (or one in a script that takes 3 bytes a letter) loses its oldest turns instead of being refused
+  const clientMessages = fitHistory(parsed.data.messages);
   if (image !== undefined && !isImageDataUrl(image)) {
     return attachGuardHeaders(NextResponse.json({ error: 'Bad picture: send a small JPEG, PNG or WebP data URL.' }, { status: 400 }), guard);
-  }
-
-  const totalHistoryBytes = Buffer.byteLength(
-    clientMessages.map((m) => m.content || '').join('\n'),
-    'utf8'
-  );
-  if (totalHistoryBytes > MAX_HISTORY_BYTES) {
-    return attachGuardHeaders(
-      NextResponse.json(
-        { error: `Conversation history exceeds ${MAX_HISTORY_BYTES} bytes.` },
-        { status: 413 }
-      ),
-      guard
-    );
   }
 
   // an app-started turn answers the instruction, not the person's last words (those were already checked, answered and gated on their own turn)

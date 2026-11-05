@@ -92,8 +92,8 @@ const tick = (n = 6) => new Promise((r) => { let i = 0; const f = () => (++i >= 
 let events: Array<Record<string, unknown>>;
 let openedSockets: FastSocket[] = []; // closed after each test so a late timer of one test never writes into the next
 let fetchMock: ReturnType<typeof vi.fn>;
-async function open(opts: { tools?: boolean; greeting?: string; holdMs?: number; autoLanguage?: boolean; personal?: string; freshTtsToken?: () => Promise<string>; freshSttToken?: () => Promise<string>; fakeTimers?: boolean } = {}) {
-  const s = new FastSocket({ sttToken: 'stt', ttsToken: 'tts', holdMs: opts.holdMs ?? 60, interruptHoldMs: opts.holdMs ?? 60, proactiveQuietMs: 60, proactiveGiveUpMs: 700, warmUp: false, autoLanguage: opts.autoLanguage, freshTtsToken: opts.freshTtsToken, freshSttToken: opts.freshSttToken });
+async function open(opts: { tools?: boolean; greeting?: string; holdMs?: number; autoLanguage?: boolean; personal?: string; freshTtsToken?: () => Promise<string>; freshSttToken?: () => Promise<string>; fakeTimers?: boolean; socketCfg?: Partial<ConstructorParameters<typeof FastSocket>[0]> } = {}) {
+  const s = new FastSocket({ sttToken: 'stt', ttsToken: 'tts', holdMs: opts.holdMs ?? 60, interruptHoldMs: opts.holdMs ?? 60, proactiveQuietMs: 60, proactiveGiveUpMs: 700, warmUp: false, autoLanguage: opts.autoLanguage, freshTtsToken: opts.freshTtsToken, freshSttToken: opts.freshSttToken, ...opts.socketCfg });
   events = [];
   openedSockets.push(s);
   s.onmessage = (e) => events.push(JSON.parse(e.data));
@@ -289,6 +289,50 @@ describe('FastSocket', () => {
     expect(events.filter((e) => e.type === 'transcript.user')).toHaveLength(1);
     expect(events.find((e) => e.type === 'transcript.user')?.text).toBe('I need to, um, send that email and, uh, and I keep thinking about how to start it.');
     expect(events.filter((e) => e.type === 'input.speech.started')).toHaveLength(1);
+  });
+
+  it('tells the learning layer when a pause was picked up again, and uses the wait it gives', async () => {
+    fetchMock.mockResolvedValue(sse(text('Okay.')));
+    const holds: Array<{ kind: string; afterMs: number }> = [];
+    const { stt } = await open({ socketCfg: { holdFor: () => 300, onHold: (e) => holds.push(e) } });
+    stt.push({ type: 'Turn', transcript: 'I need to, um, send that email and, uh,', end_of_turn: true, turn_order: 0 });
+    await tick(5);
+    expect(fetchMock).not.toHaveBeenCalled();
+    stt.push({ type: 'Turn', transcript: 'and I keep thinking about it', end_of_turn: false, turn_order: 1 });
+    await tick(5);
+    expect(holds).toHaveLength(1);
+    expect(holds[0].kind).toBe('resumed');
+    expect(holds[0].afterMs).toBeGreaterThanOrEqual(0);
+  });
+
+  it('tells the learning layer when the wait ran out unused', async () => {
+    fetchMock.mockResolvedValue(sse(text('Okay.')));
+    const holds: Array<{ kind: string; afterMs: number }> = [];
+    const { stt } = await open({ socketCfg: { holdFor: () => 60, onHold: (e) => holds.push(e) } });
+    stt.push({ type: 'Turn', transcript: 'I keep avoiding my taxes and,', end_of_turn: true, turn_order: 0 });
+    await tick(40);
+    await new Promise((r) => setTimeout(r, 120));
+    expect(holds.map((h) => h.kind)).toEqual(['expired']);
+    expect(types()).toContain('transcript.user'); // and the turn was still answered
+  });
+
+  it('does not count an opening greeting or a cut-in as a measure of how long someone pauses', async () => {
+    fetchMock.mockResolvedValue(sse(text('Hi.')));
+    const holds: unknown[] = [];
+    const { stt } = await open({ socketCfg: { holdFor: () => 60, onHold: (e) => holds.push(e) } });
+    stt.push({ type: 'Turn', transcript: 'Hola.', end_of_turn: true, turn_order: 0 });
+    await tick(10);
+    await new Promise((r) => setTimeout(r, 200));
+    expect(holds).toEqual([]);
+  });
+
+  it('a learning layer that throws never stops the call', async () => {
+    fetchMock.mockResolvedValue(sse(text('Okay.')));
+    const { stt } = await open({ socketCfg: { holdFor: () => { throw new Error('storage gone'); }, onHold: () => { throw new Error('storage gone'); } } });
+    stt.push({ type: 'Turn', transcript: 'I keep avoiding my taxes and,', end_of_turn: true, turn_order: 0 });
+    await tick(10);
+    await new Promise((r) => setTimeout(r, 120));
+    expect(types()).toContain('transcript.user');
   });
 
   it('asks the model early when a partial already ends the sentence, and uses that request when the final transcript agrees', async () => {

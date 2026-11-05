@@ -18,3 +18,17 @@ export function proactiveFrame(mode: ProactiveMode, text: string, fast: boolean)
   if (fast && mode === 'say' && !looksLikeInstruction(text)) return { type: 'reply.say', text, when: 'idle' };
   return { type: 'reply.create', instructions: text, when: 'idle' };
 }
+
+/**
+ * What Stay is told to do when a focus block ends. One question at a time: first whether they got started, and only after the outcome
+ * is recorded a second short one, about what helped (or what got in the way), so the next block can use it. "Nothing" and "skip" are
+ * fine answers; the second question is never pressed.
+ */
+export function timerEndedInstruction(minutes: number, firstStep: string): string {
+  return `The user's ${minutes}-minute focus timer just ended. Speak first: in under 20 words, warmly ask whether they got started on "${firstStep}". Ask just that one question. When they answer, call record_session_outcome. Then, in under 12 words, ask one short follow-up: what helped if it went well, or what got in the way if it did not. If they say nothing, skip, or do not know, accept that kindly and stop; never ask it twice.`;
+}
+
+/** A timer with no plan behind it: say the time is up, ask nothing. */
+export function timerEndedNoPlanInstruction(minutes: number): string {
+  return `The user's ${minutes}-minute timer just ended. Say in under 10 words that their time is up. Ask nothing.`;
+}
