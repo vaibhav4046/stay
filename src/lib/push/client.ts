@@ -26,6 +26,9 @@ export async function readPushState(): Promise<PushState> {
   if (!supported()) return iosInBrowser() ? 'needs-install' : 'unsupported';
   if (!(await config()).enabled) return 'unconfigured';
   if (Notification.permission === 'denied') return 'denied';
+  // No permission means no subscription can exist, so there is nothing to look up. Skipping the lookup also keeps a browser whose push support is
+  // partial from being asked a question it cannot answer (a desktop WebKit build froze the whole tab on getSubscription()).
+  if (Notification.permission !== 'granted') return 'off';
   const reg = await navigator.serviceWorker.getRegistration();
   return (await reg?.pushManager.getSubscription()) ? 'on' : 'off';
 }

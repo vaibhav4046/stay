@@ -31,7 +31,7 @@ under `docs/evidence/`; `docs/loop/LEDGER.md` lists each check, its label (synth
 
 Stay can speak first with the tab closed: a scheduled GitHub Action (`.github/workflows/push-tick.yml`, hourly) calls `/api/push/tick`, which sends at most two short Web Push messages a day in the person's own morning and evening windows, never at night. The server keeps only the browser's notification address, keys and time zone (`src/lib/push/`, `src/app/api/push/`); the sentence itself is written on the device from the person's own list, so the server never sees it. Proof: `docs/evidence/push/real-run.txt` (a real Chrome, the real push service and the real store, against the live site; `node scripts/push-e2e.mjs` repeats it with keys in `.env.local`) and the unit tests in `tests/unit/push*.test.ts`.
 
-Limits, stated plainly: the scheduler runs hourly (free-plan Blob storage allows 2,000 list/write operations a month); a focus timer ending while the app is closed cannot send a message at the exact moment; iPhone needs the app added to the Home Screen; Firefox and Safari were not tested.
+Limits, stated plainly: the scheduler runs hourly (free-plan Blob storage allows 2,000 list/write operations a month); a focus timer ending while the app is closed cannot send a message at the exact moment; iPhone needs the app added to the Home Screen. Safari's engine (desktop and iPhone) and Firefox pass a smoke suite (`npx playwright test -c playwright.cross.config.ts`, 36 checks: every page loads with no console errors, nothing scrolls sideways, the foldable folds and blurs, scroll animations never leave a card invisible; screenshots in `docs/evidence/cross-browser/`), but push delivery was not tried on a real Mac, iPhone or Firefox.
 
 ## Testing it with your own microphone
 
