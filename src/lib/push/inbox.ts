@@ -66,10 +66,12 @@ export function useCheckinInbox() {
     };
   }, [refresh]);
 
+  /** Resolves once the stored copy is gone, so a page that navigates away straight after cannot leave it behind. */
   const dismiss = useCallback(
-    (at: number | 'all') => {
+    async (at: number | 'all') => {
       setItems((cur) => (at === 'all' ? [] : cur.filter((i) => i.at !== at)));
-      void remove(at).then(refresh);
+      await remove(at);
+      refresh();
     },
     [refresh],
   );

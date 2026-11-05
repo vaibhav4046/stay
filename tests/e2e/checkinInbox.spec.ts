@@ -28,8 +28,7 @@ test('dismissing clears the card, the dot and what was stored', async ({ page })
   await page.getByTestId('checkin-dismiss').click();
   await expect(page.getByTestId('checkin-inbox')).toHaveCount(0);
   await expect(page.getByTestId('nav-unread-dot')).toHaveCount(0);
-  const left = await page.evaluate(async () => (await (await caches.open('stay-inbox')).keys()).length);
-  expect(left).toBe(0);
+  await expect.poll(() => page.evaluate(async () => (await (await caches.open('stay-inbox')).keys()).length)).toBe(0);
   await page.reload();
   await expect(page.getByTestId('checkin-inbox')).toHaveCount(0);
 });
@@ -51,4 +50,14 @@ test('no card and no dot when nothing arrived', async ({ page }) => {
   await page.goto('/app/today');
   await expect(page.getByTestId('checkin-inbox')).toHaveCount(0);
   await expect(page.getByTestId('nav-unread-dot')).toHaveCount(0);
+});
+
+test('Talk it through clears the card first, then opens the voice on Today', async ({ page }) => {
+  await page.goto('/app/settings');
+  await seed(page, [[`/__stay-inbox/${AT}`, JSON.stringify({ at: AT, body: 'Morning. One small thing is enough to start.' })]]);
+  await page.reload();
+  await page.getByTestId('checkin-talk').click();
+  await page.waitForURL('**/app/today?voice=auto');
+  await expect(page.getByTestId('checkin-inbox')).toHaveCount(0);
+  expect(await page.evaluate(async () => (await (await caches.open('stay-inbox')).keys()).length)).toBe(0);
 });
