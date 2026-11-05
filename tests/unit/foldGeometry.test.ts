@@ -2,11 +2,11 @@ import { describe, it, expect } from 'vitest';
 import { BEZEL, DEPTH, FOLD, barrelFacets, edgeFacets, sizeOf } from '@/components/landing/foldGeometry';
 
 describe('foldable geometry', () => {
-  it('opens to one display of about 4:3 with the same thin bezel on every outer side and none at the spine', () => {
+  it('opens to one display of about 3:2 with the same thin bezel on every outer side and none at the spine', () => {
     const { a, b } = FOLD.wide;
     const ratio = (a.sw + b.sw) / a.sh;
-    expect(ratio).toBeGreaterThan(1.3);
-    expect(ratio).toBeLessThan(1.45);
+    expect(ratio).toBeGreaterThan(1.4);
+    expect(ratio).toBeLessThan(1.6);
     expect(a.sx).toBe(BEZEL); // outer left
     expect(a.w - a.sx - a.sw).toBe(0); // none at the spine
     expect(b.sx).toBe(0);

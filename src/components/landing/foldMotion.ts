@@ -13,7 +13,7 @@ export type FoldEvent =
   | { type: 'release'; to: Head }
   | { type: 'settled' };
 
-export const FOLD_DEG = 165; // the second half lies over the first, 15 degrees short of flat (fold.css turns by the same number)
+export const FOLD_DEG = 180; // the second half lies exactly over the first (fold.css turns by the same number)
 export const CLOSE_MS = 540;
 export const OPEN_MS = 600;
 export const SNAP_MS = 450; // a released drag springs to the nearer end in about this long

@@ -10,8 +10,8 @@
 @media (min-width: 640px) { .lp-wrap { padding-inline: 2rem; } }
 .lp-wrap strong { font-weight: 600; }
 
-.lp-section { padding-block: clamp(3.25rem, 7vw, 5.75rem); content-visibility: auto; contain-intrinsic-size: auto 900px; }
-.lp-band { padding-block: clamp(3.5rem, 8vw, 6.5rem); content-visibility: auto; contain-intrinsic-size: auto 900px; }
+.lp-section { padding-block: clamp(3.25rem, 7vw, 5.75rem); } /* no content-visibility: scroll-driven ranges (scroll.css) need the real height of every section */
+.lp-band { padding-block: clamp(3.5rem, 8vw, 6.5rem); }
 .lp-night { background: var(--color-night); color: var(--color-night-ink); }
 .lp-night-title { color: var(--color-night-ink); }
 .lp-night-copy { color: var(--color-night-ink-2); line-height: 1.65; }

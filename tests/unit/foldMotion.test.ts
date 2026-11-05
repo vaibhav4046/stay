@@ -108,7 +108,7 @@ describe('dragging and snapping', () => {
   it('the angle is the fold times the turn the CSS makes', () => {
     expect(angleOf(0)).toBe(0);
     expect(angleOf(1)).toBe(FOLD_DEG);
-    expect(angleOf(0.5)).toBeCloseTo(82.5);
+    expect(angleOf(0.5)).toBeCloseTo(FOLD_DEG / 2);
     const css = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'app', 'fold.css'), 'utf8');
     expect(css).toContain(`* -${FOLD_DEG}deg`); // wide: rotateY
     expect(css).toContain(`* ${FOLD_DEG}deg`); // stacked: rotateX

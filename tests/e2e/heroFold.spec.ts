@@ -32,10 +32,10 @@ test.describe('Landing hero: the foldable', () => {
     expect(device.w).toBeLessThanOrEqual(680);
     const a = await rect(page, '.fd-a .fd-screen');
     const b = await rect(page, '.fd-b .fd-screen');
-    expect(Math.abs(a.w - 292)).toBeLessThanOrEqual(16); // about 290 x 420 each
+    expect(Math.abs(a.w - 300)).toBeLessThanOrEqual(30); // about 316 x 420 design px each (a portrait panel), a little less at this column width
     expect(Math.abs(a.h - 420)).toBeLessThanOrEqual(24);
     expect(b.x).toBeGreaterThan(a.x + a.w * 0.8); // the second half is to the right of the first, meeting it at the spine
-    expect(Math.abs(((a.w * 2) / a.h) - 4 / 3)).toBeLessThan(0.3); // one display, about 4:3 when open
+    expect(Math.abs(((a.w * 2) / a.h) - 3 / 2)).toBeLessThan(0.3); // one display, about 3:2 when open
     expect(await overflowX(page)).toBeLessThanOrEqual(0);
   });
 
@@ -204,7 +204,7 @@ test.describe('Landing hero: the foldable', () => {
       expect(mid).toBeLessThan(0.9);
       await expect(page.locator('.fd')).toHaveAttribute('data-phase', 'dragging');
       expect(await page.locator('.fd-b').evaluate((el) => getComputedStyle(el).transform)).not.toBe('none');
-      expect(await page.locator('.fd-b .fd-front').evaluate((el) => Number(getComputedStyle(el).opacity))).toBeLessThan(1); // the glass comes up with the angle
+      expect(await page.locator('.fd-a .fd-screen').evaluate((el) => Number(getComputedStyle(el).opacity))).toBeLessThan(1); // the first half dims a little as the lid comes over it
       await page.mouse.move((await page.locator('.fd').boundingBox())!.x + 100, 400, { steps: 6 });
       expect(await foldVar(page)).toBeGreaterThan(mid);
       await page.mouse.up();

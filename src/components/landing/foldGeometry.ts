@@ -11,7 +11,7 @@ export type Role = 'a' | 'b';
 type Radii = [number, number, number, number]; // top-left, top-right, bottom-right, bottom-left
 export type Half = { w: number; h: number; sx: number; sy: number; sw: number; sh: number; r: Radii; rs: Radii };
 
-export const DEPTH = 24; // thickness of a half
+export const DEPTH = 12; // thickness of a half
 export const SPINE = DEPTH / 2 - 0.5; // radius of the hinge barrel: a hair inside the faces, so it never fights them
 export const BEZEL = 8; // the same on every outer side: ultra thin
 export const R_OUT = 36; // the large outer corner
@@ -33,8 +33,8 @@ const slab = (sw: number, sh: number, bezel: { t: number; r: number; b: number; 
 const B = BEZEL;
 export const FOLD: Record<Orient, { a: Half; b: Half }> = {
   wide: {
-    a: slab(292, 420, { t: B, r: 0, b: B, l: B }, [R_OUT, R_IN, R_IN, R_OUT]),
-    b: slab(292, 420, { t: B, r: B, b: B, l: 0 }, [R_IN, R_OUT, R_OUT, R_IN]),
+    a: slab(316, 420, { t: B, r: 0, b: B, l: B }, [R_OUT, R_IN, R_IN, R_OUT]),
+    b: slab(316, 420, { t: B, r: B, b: B, l: 0 }, [R_IN, R_OUT, R_OUT, R_IN]),
   },
   tall: {
     a: slab(326, 360, { t: B, r: B, b: 0, l: B }, [R_OUT, R_OUT, R_IN, R_IN]),

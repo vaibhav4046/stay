@@ -193,14 +193,17 @@ function Screen({ id, rows, scene, t, reduced, status, speaking, folded, childre
 }
 
 /** The small display on the outside of the shut device (and, with reduced motion, the whole shut device): the Stay mark and what the call is doing. */
-function Cover({ status, speaking }: { status: string; speaking: boolean }) {
+function Cover({ status, speaking, line }: { status: string; speaking: boolean; line: Line | null }) {
   return (
     <div className="fd-cover">
-      <span className="fd-face" data-mode={speaking ? 'speaking' : 'idle'}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/brand/stay-mark.svg" alt="" width={24} height={24} />
-      </span>
-      <span className="fd-status fd-cover-status">{status}</span>
+      <div className="fd-cover-head">
+        <span className="fd-face" data-mode={speaking ? 'speaking' : 'idle'}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/stay-mark.svg" alt="" width={24} height={24} />
+        </span>
+        <span className="fd-status fd-cover-status">{status}</span>
+      </div>
+      {line && <p className="fd-cover-line" data-who={line.who}>{line.text}</p>}
     </div>
   );
 }
@@ -343,6 +346,7 @@ export function HeroExample() {
   const live = reduced || timelineFold ? undefined : rows.find(({ step }) => t >= step.start && t < step.end);
   const speaking = live?.line.who === 'stay' && t >= live.step.textStart;
   const status = paused ? 'Paused' : reduced ? 'Example' : live ? (live.line.who === 'you' ? 'Listening' : 'Speaking') : 'Listening';
+  const latest = rows.length > 0 ? rows[rows.length - 1].line : null;
   const lastOnB = !reduced && rows.length > 0 && onSecondScreen(rows[rows.length - 1].i, count);
   const rowsA = rows.filter(({ i }) => !onSecondScreen(i, count));
   const rowsB = rows.filter(({ i }) => onSecondScreen(i, count));
@@ -395,13 +399,13 @@ export function HeroExample() {
                 </div>
                 <div className="fd-back">
                   <i className="fd-lid-streak" />
-                  <Cover status={status} speaking={!!speaking} />
+                  <Cover status={status} speaking={!!speaking} line={latest} />
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <div className="fd-flat"><Cover status={status} speaking={!!speaking} /></div>
+        <div className="fd-flat"><Cover status={status} speaking={!!speaking} line={latest} /></div>
         <div ref={hitRef} className="fd-hit" />
       </div>
 

@@ -57,8 +57,8 @@ export function FeatureBento() {
     <div id="features" className="mt-20" data-testid="features">
       <h3 id="bento-title" className="section-title max-w-[24ch]">Talk it out, get the next step</h3>
       <ul className="bento mt-9">
-        {cards.map((c) => (
-          <li key={c.id} className={`facet bento-card${c.wide ? ' bento-wide' : ''}`} data-testid={`feature-${c.id}`}>
+        {cards.map((c, n) => (
+          <li key={c.id} className={`facet bento-card${c.wide ? ' bento-wide' : ''}`} style={css({ '--i': n % 3 })} data-testid={`feature-${c.id}`}>
             <div className={`bento-vis${c.vis ? ` bento-${c.vis}` : ''}`} aria-hidden="true">
               {c.shape && <DotIcon shape={c.shape} size={64} />}
               {c.vis === 'wave' && Array.from({ length: 26 }, (_, i) => <i key={i} style={css({ '--i': i, '--h': i > 13 && i < 19 ? '6%' : `${24 + ((i * 41) % 62)}%` })} />)}
