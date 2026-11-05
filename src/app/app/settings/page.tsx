@@ -15,6 +15,7 @@ import { AuthModal } from '@/components/AuthModal';
 import { KeysSection } from '@/components/KeysSection';
 import { StyleSettings } from '@/components/StyleSettings';
 import { PageSkeleton } from '@/components/PageSkeleton';
+import { PageHeading } from '@/components/PageHeading';
 
 export default function SettingsPage() {
   const { profile, loaded, updateProfile } = useStayData('app');
@@ -61,7 +62,7 @@ export default function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <h1 className="section-title">Settings</h1>
+      <PageHeading>Settings</PageHeading>
 
       <section className="card p-5 sm:p-6" aria-labelledby="pref-title">
         <h2 id="pref-title" className="card-title">Preferences</h2>
@@ -75,15 +76,15 @@ export default function SettingsPage() {
             ))}
           </div>
         </fieldset>
-        <label className="mt-5 flex items-center gap-3 cursor-pointer">
+        <label className="mt-5 flex min-h-11 items-center gap-3 cursor-pointer">
           <input type="checkbox" className="h-5 w-5 accent-[#8FD3FF]" checked={profile.interactionMode === 'quiet_text_only'} onChange={(e) => updateProfile({ interactionMode: e.target.checked ? 'quiet_text_only' : 'voice_and_text' })} />
           <span>Quiet mode by default (text only)</span>
         </label>
-        <label className="mt-3 flex items-center gap-3 cursor-pointer">
+        <label className="mt-3 flex min-h-11 items-center gap-3 cursor-pointer">
           <input type="checkbox" className="h-5 w-5 accent-[#8FD3FF]" checked={profile.proactiveCheckins} onChange={(e) => updateProfile({ proactiveCheckins: e.target.checked })} />
           <span>Check in when a focus block ends</span>
         </label>
-        <label className="mt-3 flex items-start gap-3 cursor-pointer">
+        <label className="mt-3 flex min-h-11 items-start gap-3 cursor-pointer">
           <input
             type="checkbox"
             className="mt-0.5 h-5 w-5 accent-[#8FD3FF]"
@@ -101,14 +102,14 @@ export default function SettingsPage() {
             <span className="text-xs text-ink-2 block">The orb turns into what you talk about, and into a face while Stay speaks. Turn off for a still orb.</span>
           </span>
         </label>
-        <div className="mt-4 pt-3 border-t border-line flex items-center justify-between">
+        <div className="mt-4 pt-3 border-t border-line flex items-center justify-between gap-3">
           <div>
             <span className="font-medium text-ink block text-sm">Microphone permission</span>
-            <span className="text-xs text-ink-2 block">Reset in-app consent prompt to review voice data notice.</span>
+            <span className="text-xs text-ink-2 block">Show the notice about your voice data again.</span>
           </div>
           <button
             type="button"
-            className="btn btn-secondary text-xs py-1.5 px-3"
+            className="btn btn-secondary shrink-0 whitespace-nowrap text-xs px-3"
             onClick={() => {
               if (typeof window !== 'undefined') {
                 window.localStorage.removeItem('stay:mic_consented:v1');
@@ -122,7 +123,7 @@ export default function SettingsPage() {
       </section>
 
       <section className="card p-5 sm:p-6" aria-labelledby="auth-title">
-        <h2 id="auth-title" className="card-title">Account &amp; Cloud Sync</h2>
+        <h2 id="auth-title" className="card-title">Account and sync</h2>
         <p className="text-ink-2 mt-2 text-[0.95rem]">
           Your history lives on this device by default. Plans and voice go through a server to a language model and to AssemblyAI (see Privacy). Sign in only if you want your memory and session history synced between your phone and desktop; what syncs is exactly what History and Memory show.
         </p>
@@ -130,7 +131,7 @@ export default function SettingsPage() {
           {user ? (
             <div className="flex items-center gap-3">
               <span className="rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold text-accent border border-accent/20">
-                ✓ Signed in as {user.email}
+                Signed in as {user.email}
               </span>
               <button
                 type="button"

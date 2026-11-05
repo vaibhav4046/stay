@@ -5,6 +5,7 @@
  */
 import type { CoachSessionRecord } from '@/types/domain';
 import { buildDeterministicFirstStep } from '@/lib/coach/strategies';
+import { wholeWords } from '@/lib/voice/spokenSteps';
 import { openToday, type TodayItem } from '@/lib/coach/todayList';
 import { localDay, localDayOf } from '@/lib/coach/time';
 
@@ -104,14 +105,15 @@ export const STEPS_KEY = 'stay_steps_v1';
 
 /** Four plain steps, each with its own timer: get ready, the tiny first move, one working block, a clean stop. */
 export function breakDown(task: string, workMinutes = 10, now = new Date()): StepPlan {
-  const t = task.replace(/\s+/g, ' ').trim().slice(0, 80);
+  const t = wholeWords(task, 80); // cut between words, never in the middle of one
   const first = buildDeterministicFirstStep(t, 'task_shrinking');
   const work = Math.max(5, Math.min(25, Math.round(workMinutes)));
   return {
     task: t,
     at: now.toISOString(),
     steps: [
-      { text: `Open what you need for ${t}`, minutes: 2, done: false },
+      // "for the email" but "to write paper due at 9": a task said as a verb phrase needs "to" (it was read aloud as "open what you need for write paper")
+      { text: `Open what you need ${/^(?:to\s+)?(?:write|start|finish|do|make|send|reply|read|study|clean|call|email|pay|fix|plan|draft|submit|review|prepare|cook|book|buy|organi[sz]e|tidy|sort|file|print|upload|register|apply|revise|practi[sz]e|pack|wash|take|get|go|set up|sign|renew|check|update|complete|build|learn|text|message|ring)\b/i.test(t) ? `to ${t.replace(/^to\s+/i, '')}` : `for ${t}`}`, minutes: 2, done: false },
       { text: first, minutes: 5, done: false },
       { text: `Keep going on ${t}, rough is fine`, minutes: work, done: false },
       { text: 'Stop where you are and write down the next move', minutes: 2, done: false },

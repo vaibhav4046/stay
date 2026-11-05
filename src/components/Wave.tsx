@@ -25,7 +25,7 @@ interface WaveProps {
   periods?: number;
   /** slower drift for calm states */
   slow?: boolean;
-  /** fade the two ends (off for progress, where the end meets the thumb) */
+  /** fade the two ends (off for progress, where the wave meets the straight line) */
   fade?: boolean;
   className?: string;
 }
@@ -61,7 +61,7 @@ interface WaveProgressProps {
   className?: string;
 }
 
-/** Progress as a wavy line up to the thumb and a straight line after it, like a media player. */
+/** Progress as a wavy line up to the value and a straight line after it. */
 export function WaveProgress({ value, label, className = '' }: WaveProgressProps) {
   const v = Math.min(1, Math.max(0, value));
   const pct = `${(v * 100).toFixed(2)}%`;
@@ -86,10 +86,6 @@ export function WaveProgress({ value, label, className = '' }: WaveProgressProps
           <Wave amplitude={5} periods={9} fade={false} />
         </div>
       </div>
-      <div
-        className="absolute top-1/2 h-[18px] w-[18px] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[#E4F6FF] bg-[#3E8FD6] shadow-[0_0_0_4px_rgb(228_246_255_/_0.22),0_0_18px_rgb(62_143_214_/_0.6)]"
-        style={{ left: pct }}
-      />
     </div>
   );
 }

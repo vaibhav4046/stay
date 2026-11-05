@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { detectPanel, parseVoiceCommand, parseMultiIntentUtterance } from '@/lib/voice/voiceCommands';
+import { detectPanel, isResumePhrase, parseVoiceCommand, parseMultiIntentUtterance } from '@/lib/voice/voiceCommands';
 
 describe('Hands-Free Voice Command Parser', () => {
   it('detects pause listening commands', () => {
@@ -251,5 +251,26 @@ describe('Multi-Intent & Conversational Context Parser', () => {
       ])
     );
   });
+
+  it('hold on inside a sentence is not a pause (it muted the mic and nothing could un-mute it)', () => {
+    expect(parseVoiceCommand('hold on, let me think')).not.toEqual({ type: 'pause_listening' });
+  });
 });
 
+describe('isResumePhrase: the only thing heard while listening is paused', () => {
+  it.each(['Hey Stay', 'Hey, Stay.', 'hey stay!', 'Resume', 'resume.', 'Resume listening', 'Stay, listen.', 'stay resume', 'Unmute', "I'm back", 'I’m back, Stay.', 'Okay, Stay.'])('wakes on %s', (t) => {
+    expect(isResumePhrase(t)).toBe(true);
+  });
+  it.each([
+    '',
+    'pause listening',
+    'hold on',
+    'hey stay pause listening', // a pause is never a resume
+    'I need to update my resume before Friday.', // long, and about a document
+    'we should resume the meeting', // the word alone inside a sentence
+    'let me tell you about my day',
+    'stay',
+  ])('stays paused on %j', (t) => {
+    expect(isResumePhrase(t)).toBe(false);
+  });
+});

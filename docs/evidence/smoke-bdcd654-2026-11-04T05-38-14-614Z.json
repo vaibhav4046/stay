@@ -1,0 +1,41 @@
+{
+  "status": "PASS",
+  "gitSha": "bdcd654921791f4a2dbd88ad40f6c08afb70cd13",
+  "dirty": false,
+  "tier": "real-provider",
+  "scenarioId": "assemblyai-live-ws-smoke",
+  "timestamp": "2026-11-04T05:38:17.846Z",
+  "durationMs": 3229,
+  "sttEvents": [
+    "Begin",
+    "Termination"
+  ],
+  "ttsEvents": [
+    "Begin",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Audio",
+    "Cancelled",
+    "Termination"
+  ],
+  "voiceIdVerified": "49c443a4-8a1d-5f7e-b70b-98bdbd9823c3"
+}

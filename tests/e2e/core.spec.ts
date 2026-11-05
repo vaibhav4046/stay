@@ -1,4 +1,5 @@
 import { test, expect, type Page, type Browser } from '@playwright/test';
+import { askStay } from './helpers/askStay';
 
 async function onboard(page: Page) {
   await page.goto('/app/today');
@@ -34,9 +35,9 @@ test.describe('Landing', () => {
   test('promise, real orb, and no demo surfaces', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText("Start the thing you've been avoiding.");
-    await expect(page.getByTestId('hero-example')).toContainText('An example exchange');
+    await expect(page.getByTestId('hero-example')).toContainText('A recorded test call');
     await expect(page.getByTestId('hero-start')).toBeVisible();
-    await expect(page.getByText(/not a diagnosis/i).first()).toBeVisible();
+    await expect(page.getByText(/does not diagnose/i).first()).toBeVisible();
     for (const banned of ['Interactive Preview', 'Try the demo', 'Guided preview', 'example data']) {
       await expect(page.getByText(banned, { exact: false })).toHaveCount(0);
     }
@@ -47,9 +48,10 @@ test.describe('Landing', () => {
   test('the hero shows one example exchange, labelled as an example, and no dot toy (removed 2 Nov 2026)', async ({ page }) => {
     await page.goto('/');
     const ex = page.getByTestId('hero-example');
-    await expect(ex).toContainText('real replies are generated live');
-    // the exchange plays like a call: bubbles arrive one after another (all at once when motion is reduced)
-    await expect.poll(async () => ex.locator('.bubble').count(), { timeout: 8000 }).toBeGreaterThanOrEqual(2);
+    await expect(ex).toContainText("The caller is synthetic; Stay's replies are real.");
+    // the card is never empty: the first line and Stay's reply are on screen at once, then the call carries on one bubble at a time
+    expect(await ex.locator('.bubble').count()).toBeGreaterThanOrEqual(2);
+    await expect.poll(async () => ex.locator('.bubble').count(), { timeout: 8000 }).toBeGreaterThanOrEqual(3);
     await expect(ex.locator('ol.sr-only li')).toHaveCount(7); // the six lines of the scene and its result, for a screen reader
     await expect(page.locator('[data-testid="hero-orb"], [data-testid="hero-chips"], [data-testid="hero-face"]')).toHaveCount(0);
     await expect(page.getByText(/watch the dots/i)).toHaveCount(0);
@@ -62,9 +64,11 @@ test.describe('Landing', () => {
     await page.goto('/');
     await page.getByTestId('hero-input').fill('I want to take my own life');
     await page.getByTestId('hero-start').click();
-    await expect(page).toHaveURL(/\/app\/today$/);
+    // help opens on the landing page at once; the words are never handed to the app as a task (safety review, 4 Nov 2026)
+    await expect(page.getByTestId('crisis-panel')).toBeVisible();
     await expect(page.getByText('116 123').first()).toBeVisible({ timeout: 10000 });
-    await expect(page.getByTestId('plan-card')).toHaveCount(0);
+    await expect(page).not.toHaveURL(/\/app\//);
+    expect(await page.evaluate(() => localStorage.getItem('stay_pending_prompt'))).toBeNull();
   });
 });
 
@@ -117,11 +121,11 @@ test.describe('Safety', () => {
 test.describe('Menu and memory', () => {
   test('new users start with an empty memory, and the sheet works', async ({ page }) => {
     await onboard(page);
-    await page.getByTestId('menu-button').click();
-    await page.getByRole('button', { name: 'What Stay remembers' }).click();
+    // memory is not in the More menu any more: it opens when asked
+    await askStay(page, 'show my memory', { action: 'open', value: 'memory' });
     await expect(page.getByTestId('memory-list')).toContainText(/nothing yet/i);
     await page.keyboard.press('Escape');
-    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.getByTestId('inline-panel')).toHaveCount(0);
   });
 });
 
@@ -152,10 +156,14 @@ test('two people on two browsers never see each other’s history', async ({ bro
   await expect(a.getByText(/VAT/i).first()).toBeVisible();
 });
 
+// the key settings sit behind "Advanced" on the Settings page
+const openAdvanced = (page: Page) => page.getByTestId('keys-section').locator('summary').click();
+
 test.describe('Your own keys and block lengths', () => {
   test('own-key settings: a private address is refused, the choice survives a reload, and removal clears it', async ({ page }) => {
     await onboard(page);
     await page.goto('/app/settings');
+    await openAdvanced(page);
     await page.getByTestId('provider-custom').click();
     await page.getByTestId('llm-key').fill('sk-test-key-123');
     await page.getByTestId('llm-base').fill('https://127.0.0.1/v1');
@@ -165,6 +173,7 @@ test.describe('Your own keys and block lengths', () => {
     expect(await page.evaluate(() => localStorage.getItem('stay_byok'))).toBeNull(); // memory only (B4)
     await page.reload();
     await expect(page.getByTestId('provider-default')).toHaveAttribute('aria-pressed', 'true'); // not persisted: back to default
+    await openAdvanced(page);
     await page.getByTestId('provider-custom').click();
     await page.getByTestId('keys-clear').click();
     await expect(page.getByTestId('provider-default')).toHaveAttribute('aria-pressed', 'true');
@@ -174,6 +183,7 @@ test.describe('Your own keys and block lengths', () => {
   test('delete-all-data also removes saved keys', async ({ page }) => {
     await onboard(page);
     await page.goto('/app/settings');
+    await openAdvanced(page);
     await page.getByTestId('provider-groq').click();
     await page.getByTestId('llm-key').fill('gsk_not_real_key');
     expect(await page.evaluate(() => localStorage.getItem('stay_byok'))).toBeNull(); // keys are never persisted (B4)
@@ -193,13 +203,14 @@ test.describe('Your own keys and block lengths', () => {
     await expect(page.getByTestId('start-timer')).toContainText('Start 90 min');
   });
 
-  test('all-day mode is a visible switch in the menu', async ({ page }) => {
+  test('all-day mode is a visible switch in the voice sheet', async ({ page }) => {
     await onboard(page);
     await page.getByTestId('menu-button').click();
+    await page.getByRole('button', { name: 'Voice and language' }).click();
     const t = page.getByTestId('companion-toggle');
-    await expect(t).toContainText('off');
-    await t.click();
-    await expect(t).toContainText('on');
+    await expect(t).not.toBeChecked();
+    await t.check();
+    await expect(t).toBeChecked();
     expect(await page.evaluate(() => localStorage.getItem('stay_companion'))).toBe('1');
   });
 });
@@ -208,10 +219,10 @@ test.describe('Parking lot and reply-speed readout', () => {
   test('parked thoughts list, start-from, and remove; wiped with all data', async ({ page }) => {
     await onboard(page);
     await page.evaluate(() => localStorage.setItem('stay_parking_lot', JSON.stringify([{ id: 'p-1', text: 'call the dentist', at: new Date().toISOString() }, { id: 'p-2', text: 'buy printer ink', at: new Date().toISOString() }])));
-    await page.getByTestId('menu-button').click();
-    await page.getByTestId('parking-open').click();
+    await askStay(page, 'show parked thoughts', { action: 'park_show' });
     const list = page.getByTestId('parking-list');
     await expect(list).toContainText('call the dentist');
+    await page.waitForTimeout(450); // the panel opens at once; the app ignores a second message inside 350 ms (double-tap guard)
     await page.getByRole('button', { name: 'Remove buy printer ink' }).click();
     await expect(list).not.toContainText('printer ink');
     await list.getByRole('button', { name: 'Start this' }).click();
@@ -267,14 +278,13 @@ test('the landing page shows measured results with their limits and does not nam
   await expect(page.getByText(/faster than|beats |better than google/i)).toHaveCount(0);
 });
 
-test('the landing page has the demo video with a captions track, custom controls, and the files are served', async ({ page, request }) => {
+test('the landing page has the film with a captions track and a sound button, and the files are served', async ({ page, request }) => {
   await page.goto('/');
   const video = page.getByTestId('demo-video').locator('video');
   await expect(video.locator('track[kind="captions"]')).toHaveCount(1);
-  await expect(video).toHaveAttribute('poster', '/demo/stay-demo-poster.jpg');
-  await expect(page.getByTestId('player-bigplay')).toBeVisible(); // our controls replace the browser's once the page is interactive
-  await expect(page.getByTestId('player-captions')).toHaveAttribute('aria-pressed', 'true');
-  for (const path of ['/demo/stay-demo.mp4', '/demo/stay-demo.vtt', '/demo/stay-demo-poster.jpg']) {
+  await expect(video).toHaveAttribute('poster', '/demo/stay-story-film-poster.jpg');
+  await expect(page.getByTestId('film-sound')).toBeVisible();
+  for (const path of ['/demo/stay-story-film-web.mp4', '/demo/stay-story-film.vtt', '/demo/stay-story-film-poster.jpg']) {
     const res = await request.head(path);
     expect(res.ok(), path).toBe(true);
   }
@@ -347,8 +357,7 @@ test.describe('Routines, check-ins and the offline shell', () => {
     await page.evaluate(() => localStorage.setItem('stay_reminders_v1', JSON.stringify([{ id: 'r1', text: 'is the laundry on', dueAt: Date.now() - 1000 }])));
     await page.reload();
     await expect(page.getByTestId('note')).toContainText('Check-in: is the laundry on', { timeout: 20000 });
-    await page.getByTestId('menu-button').click();
-    await page.getByTestId('remind-open').click();
+    await askStay(page, 'show my reminders', { action: 'open', value: 'reminders' });
     await page.getByTestId('remind-20').click();
     await expect(page.getByTestId('reminder-list')).toContainText('20 min');
   });

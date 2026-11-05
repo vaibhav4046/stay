@@ -26,13 +26,13 @@ for (const p of PERSONAS) {
   }
 }
 
-/** One line saying which engine would speak this persona right now, e.g. "AssemblyAI" or "Browser voice: Microsoft Heera". */
+/** One line naming the engine that would speak this persona right now, only when it is not the default AssemblyAI voice, e.g. "Browser voice: Microsoft Heera". */
 function engineLine(p: VoicePersona, caps: TtsCaps): string {
   const c = chooseVoice(p, caps);
-  if (!c.ref) return 'Needs setup';
+  if (!c.ref) return '';
   if (c.ref.engine === 'browser') return `Browser voice: ${c.browserVoiceName}`;
   if (c.ref.engine === 'azure') return `${ENGINES.azure.label}: ${c.ref.voice.split('-').slice(2).join('-').replace(/Neural$/, '')}`;
-  return ENGINES.assemblyai.label;
+  return '';
 }
 
 /** Structured ElevenLabs-style metadata tags (Accent, Gender, Tone) for a voice persona. */
@@ -71,6 +71,7 @@ function VoiceCard({
   const usable = chooseVoice(p, caps).ref !== null;
   const needText = chooseVoice(p, caps).needs;
   const tags = personaTags(p);
+  const engine = engineLine(p, caps);
 
   return (
     <div
@@ -78,11 +79,11 @@ function VoiceCard({
       tabIndex={0}
       onClick={onPick}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onPick(); } }}
-      className={`el-voice-card group relative flex flex-col justify-between rounded-2xl border cursor-pointer select-none ${
+      className={`el-voice-card group relative flex flex-col justify-between rounded-[var(--radius-card)] border cursor-pointer select-none ${
         selected
           ? '!border-primary !bg-primary/[0.04] ring-2 ring-primary/25 shadow-sm'
           : 'border-line bg-surface hover:border-line-strong'
-      } ${playing ? 'ring-2 ring-emerald-500/40 !border-emerald-600' : ''} p-4 ${hidden ? 'hidden' : ''}`}
+      } ${playing ? 'ring-2 ring-success/40 !border-success' : ''} p-4 ${hidden ? 'hidden' : ''}`}
       style={{ opacity: usable ? 1 : 0.82 }}
       data-testid={`voice-${p.id}`}
       data-usable={usable}
@@ -156,28 +157,25 @@ function VoiceCard({
               </span>
             </div>
 
-            <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-              {usable ? (
-                <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-emerald-500/10 px-2 py-0.5 text-[0.68rem] font-medium text-emerald-300 dark:text-emerald-300">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Ready
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-amber-500/10 px-2 py-0.5 text-[0.68rem] font-medium text-amber-300 dark:text-amber-300">
-                  Needs Setup
+            <div className="mt-1 flex items-center gap-1.5 flex-wrap empty:hidden">
+              {!usable && (
+                <span className="inline-flex items-center whitespace-nowrap rounded-full bg-caution/10 px-2 py-0.5 text-[0.68rem] font-medium text-caution">
+                  Needs setup
                 </span>
               )}
-              <span className="meta text-[0.72rem] text-ink-3 truncate" data-testid={`voice-engine-${p.id}`}>
-                {engineLine(p, caps)}
-              </span>
+              {engine && (
+                <span className="meta text-[0.72rem] text-ink-3 truncate" data-testid={`voice-engine-${p.id}`}>
+                  {engine}
+                </span>
+              )}
             </div>
           </button>
         </div>
 
-        {/* ElevenLabs category tags (Accent · Gender · Tone) */}
+        {/* category tags: accent, gender, tone */}
         <div className="mt-2.5 flex items-center gap-1.5 flex-wrap" data-testid={`voice-tags-${p.id}`}>
           <span className="inline-flex items-center rounded-md bg-surface-2 px-2 py-0.5 text-[0.68rem] font-medium text-ink-2 border border-line/80">
-            {p.voiceLabel}
+            {p.voiceLabel.replace(/\s*\(AssemblyAI\)/, '')}
           </span>
           <span className="inline-flex items-center rounded-md bg-surface-2 px-2 py-0.5 text-[0.68rem] font-medium text-ink-2 border border-line/80">
             {tags.gender}
@@ -194,7 +192,7 @@ function VoiceCard({
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <button
             type="button"
-            className={`inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-medium transition-all duration-200 cursor-pointer ${
+            className={`inline-flex min-h-11 items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-medium transition-all duration-200 cursor-pointer ${
               playing
                 ? 'bg-primary text-[#05080C] shadow-sm scale-105'
                 : usable
@@ -235,7 +233,7 @@ function VoiceCard({
           </button>
 
           {!usable && (
-            <span className="meta text-xs text-amber-300 dark:text-amber-300">
+            <span className="meta text-xs text-caution">
               {needText}
             </span>
           )}
@@ -350,62 +348,27 @@ export function VoicePicker({ selected, onSelect, fastVoice }: Props) {
             placeholder="Search voice, accent, tone…"
             aria-label="Search voices"
             data-testid="voice-search"
-            className="w-full rounded-xl border border-line-strong bg-surface px-3 py-1.5 text-xs text-ink placeholder:text-ink-3 focus:border-primary focus:outline-none"
+            className="field"
           />
         </div>
 
-        {/* ElevenLabs category filter bar */}
+        {/* filter bar */}
         <div className="flex items-center gap-1.5 flex-wrap" role="group" aria-label="Filter voices">
-          <button
-            type="button"
-            onClick={() => setFilter('all')}
-            className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all ${
-              filter === 'all' ? 'bg-primary text-[#05080C] shadow-sm' : 'bg-surface-2 text-ink-2 hover:text-ink'
-            }`}
-          >
-            All ({PERSONAS.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilter('ready')}
-            className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all flex items-center gap-1 ${
-              filter === 'ready' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/10'
-            }`}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            Ready ({readyCount})
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilter('british')}
-            className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all ${
-              filter === 'british' ? 'bg-primary text-[#05080C] shadow-sm' : 'bg-surface-2 text-ink-2 hover:text-ink'
-            }`}
-          >
-            British ({britishCount})
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilter('american')}
-            className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all ${
-              filter === 'american' ? 'bg-primary text-[#05080C] shadow-sm' : 'bg-surface-2 text-ink-2 hover:text-ink'
-            }`}
-          >
-            American ({americanCount})
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilter('native')}
-            className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all ${
-              filter === 'native' ? 'bg-primary text-[#05080C] shadow-sm' : 'bg-surface-2 text-ink-2 hover:text-ink'
-            }`}
-          >
-            Native ({nativeCount})
-          </button>
+          {([
+            ['all', `All (${PERSONAS.length})`],
+            ['ready', `Ready (${readyCount})`],
+            ['british', `British (${britishCount})`],
+            ['american', `American (${americanCount})`],
+            ['native', `Native (${nativeCount})`],
+          ] as const).map(([mode, label]) => (
+            <button key={mode} type="button" className="chip" aria-pressed={filter === mode} onClick={() => setFilter(mode)}>
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="mt-2 grid gap-2.5 sm:grid-cols-2" data-testid="voice-recommended">
+      <div className="mt-2 grid grid-cols-[minmax(0,1fr)] gap-2.5 sm:grid-cols-2" data-testid="voice-recommended">
         {RECOMMENDED_PERSONAS.map(card)}
       </div>
 
@@ -420,7 +383,7 @@ export function VoicePicker({ selected, onSelect, fastVoice }: Props) {
         <p className="meta mt-1">
           Every name matches its voice: British, American, Indian English and Mexican Spanish voices have those accents, and only the native voices speak Spanish, French, German, Italian or Portuguese. Some English voices are labelled "accent not documented" because the provider does not say.
         </p>
-        <div className="mt-3 grid gap-2.5 sm:grid-cols-2">{others.map(card)}</div>
+        <div className="mt-3 grid grid-cols-[minmax(0,1fr)] gap-2.5 sm:grid-cols-2">{others.map(card)}</div>
       </details>
 
       <details className="mt-5" data-testid="voice-engines">

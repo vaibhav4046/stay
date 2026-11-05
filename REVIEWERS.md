@@ -11,10 +11,10 @@ Stay is not a doctor or therapist: it never diagnoses and never advises on medic
 ```bash
 npm ci
 npx tsc --noEmit                 # types
-npx vitest run                   # ~1,340 unit tests; the model and AssemblyAI are mocked
+npx vitest run                   # 1,613 passed, 1 skipped on 4 Nov 2026 (the count grows); the model and AssemblyAI are mocked
 node scripts/claims-lint.mjs     # no banned claim, and every number on the site points at an evidence file
 npm run build && npx next start -p 3120 &
-PLAYWRIGHT_BASE_URL=http://localhost:3120 npx playwright test   # ~200 browser tests with a faked voice service
+PLAYWRIGHT_BASE_URL=http://localhost:3120 npx playwright test   # 218 browser tests listed on 4 Nov 2026 (`--list`), with a faked voice service
 ```
 
 With keys in `.env.local` (`ASSEMBLYAI_API_KEY`, `GROQ_API_KEY`; see `.env.example`), the live checks run against real services:

@@ -5,7 +5,7 @@
  * ElevenLabs, all synthetic), and composes the film next to the Pix scene (original art, scripts/demo-video/scene.html).
  *
  *   node scripts/demo-video/film.mjs http://localhost:3120        needs ELEVENLABS_API_KEY in .env.local and ffmpeg; nothing is played aloud
- *   -> public/demo/stay-pix-film.mp4  and  docs/submission/stay-pix-film-captioned.mp4
+ *   -> public/demo/stay-pix-film-v2.mp4  and  docs/submission/stay-pix-film-v2-captioned.mp4
  *
  * Honest by construction: every Stay reply is the app's real reply from that run; the film is only built if no beat fails.
  */
@@ -60,21 +60,17 @@ const wavOf = (pcm) => { const w = pcm.replace(/\.pcm$/, '.wav'); if (!fs.exists
 
 // ---- the beats: what Pix says to Stay, and what he says to us ----------------------------------------------------------------
 const BEATS = [
-  { vo: "I'm Pix. I have zero patience and a thumb that opens Instagram without asking me. So I tested Stay like it owed me money.", title: { text: 'Meet Pix.', sub: 'Zero patience. Thumb on Instagram.' } },
-  { say: "Okay so, this is Stay? Prove you're not just another chatbot. Go." },
-  { say: 'Meh. Why would I use you and not just ask the big AI app? Be honest.' },
-  { sfx: 'scroll' },
-  { say: "I have been on Instagram for two hours and I don't even remember what I looked at." },
-  { say: "Don't give me a lecture. Just tell me what to do right now." },
-  { say: 'Explain how to build a study schedule for finals. Like all of it.', interruptWith: "Wait wait, stop. Just the first block.", title: { text: 'Talk over it.', sub: 'It stops.' } },
-  { vo: 'It stopped the second I talked over it. I hate how well that worked.' },
-  { say: "Remember that I scroll when I'm anxious.", title: { text: 'It remembers.', sub: 'Memory, report, settings.' } },
-  { say: 'What do you remember about me?' },
-  { say: 'Show my report.', closes: 'inline-reports-close', hold: 3 },
-  { say: 'Open settings.', closes: 'inline-settings-close', hold: 3.5 },
-  { say: 'Set a two minute timer.', sfx: 'ding' },
-  { say: 'Park it: text my landlord tonight.' },
-  { vo: "It's not magic. It's a voice that helps me start. Fine. I'm staying.", end: true },
+  { vo: "I'm Pix. I have a paper due at nine tomorrow, and my thumb is stuck on Instagram. Let's see if Stay can actually get me started.", title: { text: 'Pix has a paper due at nine.', sub: 'And a thumb stuck on Instagram.' } },
+  { say: "I have a paper due at nine tomorrow and I'm just scrolling reels." },
+  { say: "Don't give me a lecture. Just tell me what to do right now.", title: { text: 'No lecture.', sub: 'One small step.' } },
+  { say: 'Okay. Set a one minute timer.', sfx: 'ding', timer: true, title: { text: 'It starts the clock.', sub: 'You asked, so it did.' } },
+  { say: 'Why would I use this and not just ask a regular chatbot?', title: { text: 'Why not a regular chatbot?', sub: 'It acts, it waits, it comes back.' } },
+  { say: "Remember that I scroll when I'm anxious.", title: { text: 'It remembers.', sub: 'Only what you ask it to.' } },
+  { vo: "Okay. Document open. One sentence. Two." },
+  { waitStay: 75, title: { text: 'It comes back.', sub: 'When the time is up.' } },
+  { say: 'Yeah. I wrote two lines.' },
+  { say: 'Show my report.', closes: 'inline-reports-close', hold: 3.5, title: { text: 'It kept the score.', sub: 'The block is logged.' } },
+  { vo: "It kept it short. It started the clock when I asked. It came back when time was up. And it remembers me. That's the difference. Now I'm going to finish this paper.", end: true },
 ];
 
 // ---- the browser: Pix's voice goes into the microphone; Stay's voice is recorded from the page; nothing plays aloud ----------------
@@ -156,6 +152,9 @@ async function settled(max) {
 }
 
 const cues = [], titles = [], clips = [];
+const trail = []; // how many Stay bubbles there were, and when, so a line that arrives by itself (the check-in) can be found afterwards
+const poll = setInterval(async () => { try { trail.push({ t: now(), n: await bubbleCount() }); } catch { /* the page is closing */ } }, 400);
+let timerSetAt = 0;
 const rel = (ms) => (ms - recStart) / 1000;
 const warm = () => { for (const b of BEATS) { if (b.vo) speech(b.vo); if (b.say) speech(b.say); if (b.interruptWith) speech(b.interruptWith); } };
 warm(); // every line is synthesized before the call starts, so the take has no gaps from the voice service
@@ -193,6 +192,22 @@ for (const [i, b] of BEATS.entries()) {
   if (b.title) titles.push({ t: rel(now()) + (b.vo ? 0.3 : -0.2), end: rel(now()) + 4.2, ...b.title });
   if (b.vo) { await voiceOver(b.vo); if (b.end) break; continue; }
   if (b.sfx === 'scroll') { clips.push({ file: sfxFiles.scroll, at: now() + 100, vol: 0.5 }); await sleep(900); continue; }
+  if (b.waitStay) {
+    // Stay speaks first when the timer ends. It waits for a quiet moment in the talk, so wait here until it has spoken (or give up honestly).
+    const due = timerSetAt + 55_000;
+    if (now() < due - 3000) await sleep(due - 3000 - now());
+    const nAtDue = [...trail].reverse().find((x) => x.t <= due)?.n ?? (await bubbleCount());
+    const came = await until(async () => (await bubbleCount()) > nAtDue, b.waitStay * 1000);
+    if (!came) { failed = 'Stay did not come back when the timer ended'; break; }
+    await settled(60000);
+    const all = await bubbles();
+    const reply = all.slice(nAtDue).join(' ');
+    if (!reply || /too many requests|could not reach my thinking/i.test(reply)) { failed = `the check-in was not a clean reply: ${reply.slice(0, 100)}`; break; }
+    const plays = await page.evaluate(() => window.__stayPlays.slice());
+    const firstPlay = plays.find((x) => x > due - 500) ?? plays[plays.length - 1] ?? 0;
+    cues.push({ t: Math.max(rel(firstPlay) - 0.05, rel(now()) - 2 - reply.split(/\s+/).length * 0.33), end: rel(now()) - 1.3, who: 'stay', text: reply });
+    continue;
+  }
   const before = await bubbleCount();
   await sleep(500 + Math.random() * 600); // the person's own beat
   await speak(b.say, 'say');
@@ -212,9 +227,11 @@ for (const [i, b] of BEATS.entries()) {
   const tEnd = now();
   cues.push({ t: Math.max(rel(firstPlay) - 0.05, rel(tEnd) - 2 - reply.split(/\s+/).length * 0.33), end: rel(tEnd) - 1.3, who: 'stay', text: reply });
   if (b.sfx === 'ding') clips.push({ file: sfxFiles.ding, at: now() - 300, vol: 0.6 });
+  if (b.timer) timerSetAt = now();
   if (b.hold) await sleep(b.hold * 1000);
   if (b.closes) { await page.getByTestId(b.closes).click().catch(() => undefined); await sleep(600); }
 }
+clearInterval(poll);
 const total = Math.ceil(rel(now()) + 1.5);
 
 // Stay's voice, as the page played it
@@ -264,7 +281,7 @@ const stamp = (s) => { const h = Math.floor(s / 3600), m = Math.floor((s % 3600)
 const vtt = 'WEBVTT\n\n' + cues.map((c) => `${stamp(Math.max(0, c.t))} --> ${stamp(c.end)}\n${c.who === 'stay' ? 'Stay' : 'Pix'}: ${c.text.replace(/\n/g, ' ')}\n`).join('\n');
 fs.mkdirSync('public/demo', { recursive: true });
 fs.mkdirSync('docs/submission', { recursive: true });
-fs.writeFileSync('public/demo/stay-pix-film.vtt', vtt);
+fs.writeFileSync('public/demo/stay-pix-film-v2.vtt', vtt);
 
 const audio = [...stayAudio, ...clips].map((a) => ({ ...a, delay: Math.max(0, Math.round(a.at - recStart)) }));
 const musicIdx = 4 + audio.length;
@@ -281,8 +298,8 @@ const inputs = ['-i', appVideo, '-ss', lead.toFixed(2), '-i', sceneVideo, '-loop
 void whoosh;
 const enc = ['-map', '[v]', '-map', '[aout]', '-t', String(total), '-c:v', 'libx264', '-preset', 'slow', '-crf', '24', '-pix_fmt', 'yuv420p', '-r', '25', '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart'];
 const ff = (args) => execFileSync('ffmpeg', ['-y', '-loglevel', 'error', ...args], { stdio: 'inherit' });
-ff([...inputs, '-filter_complex', filters, ...enc, 'public/demo/stay-pix-film.mp4']);
-const capFilters = filters.replace('[v]', "[vv];[vv]subtitles=public/demo/stay-pix-film.vtt:original_size=1920x1080:force_style='FontName=Arial,FontSize=30,PrimaryColour=&H00FFFFFF,OutlineColour=&H00111111,BorderStyle=1,Outline=2,Alignment=2,MarginV=200'[v]");
-ff([...inputs, '-filter_complex', capFilters, ...enc, 'docs/submission/stay-pix-film-captioned.mp4']);
-ff(['-ss', '8', '-i', 'public/demo/stay-pix-film.mp4', '-frames:v', '1', '-q:v', '3', 'public/demo/stay-pix-film-poster.jpg']);
-console.log('film built: public/demo/stay-pix-film.mp4 and docs/submission/stay-pix-film-captioned.mp4');
+ff([...inputs, '-filter_complex', filters, ...enc, 'public/demo/stay-pix-film-v2.mp4']);
+const capFilters = filters.replace('[v]', "[vv];[vv]subtitles=public/demo/stay-pix-film-v2.vtt:original_size=1920x1080:force_style='FontName=Arial,FontSize=9,PrimaryColour=&H00FFFFFF,OutlineColour=&H00111111,BorderStyle=1,Outline=1,Alignment=2,MarginV=16'[v]");
+ff([...inputs, '-filter_complex', capFilters, ...enc, 'docs/submission/stay-pix-film-v2-captioned.mp4']);
+ff(['-ss', '8', '-i', 'public/demo/stay-pix-film-v2.mp4', '-frames:v', '1', '-q:v', '3', 'public/demo/stay-pix-film-v2-poster.jpg']);
+console.log('film built: public/demo/stay-pix-film-v2.mp4 and docs/submission/stay-pix-film-v2-captioned.mp4');

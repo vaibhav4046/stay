@@ -100,7 +100,8 @@ describe('a timer starts only when asked for', () => {
     await post([{ role: 'user', content: 'I keep avoiding my taxes.' }]);
     const without = (streamMock.openLlmStream.mock.calls[0][1] as { tools: Array<{ function: { parameters: { properties: { action: { enum: string[] } } } } }> }).tools[0].function.parameters.properties.action.enum;
     expect(without).not.toContain('timer_start');
-    expect(without).toContain('open'); // other actions stay offered (park itself is offered only when asked, 3 Nov 2026)
+    expect(without).toContain('ground'); // actions that carry no side effect stay offered; open, plan, park and the rest are offered only when the words ask (3 and 4 Nov 2026)
+    expect(without).not.toContain('open');
 
     streamMock.openLlmStream.mockClear();
     await post([{ role: 'user', content: 'Set a five minute timer.' }]);
@@ -204,5 +205,37 @@ describe('the same opening words do not come back turn after turn', () => {
     ]);
     const system = String((streamMock.openLlmStream.mock.calls[0][1] as { messages: Array<{ content: unknown }> }).messages[0].content);
     expect(system).toContain("Do not begin this reply with the same words as your last replies (\"I'm right here with you\")");
+  });
+});
+
+describe('a timer asked for in other words and other languages starts (a review, 4 Nov 2026, found these were refused)', () => {
+  it.each([
+    'ponme un temporizador de dos minutos', 'mets un minuteur de deux minutes', 'gimme 5 mins', 'start the clock', 'set a one minute timer',
+    'do minute ka timer laga do', 'stell einen Timer auf 5 Minuten', 'pon un cronómetro de 10 minutos',
+  ])('%s', (q) => expect(mayStartTimer(q), q).toBe(true));
+  it('and talk about time is still not a request', () => {
+    for (const q of ['I have 10 minutes before lunch', 'what time is it', 'the clock on my wall is slow']) expect(mayStartTimer(q), q).toBe(false);
+  });
+});
+
+describe('a turn the app starts (a timer ending) is answered as the instruction, not as the last thing the person said', () => {
+  it('the instruction is the last line, from the app, with no tools, and the stale last message is not checked or answered', async () => {
+    const res = await chatPost(
+      new NextRequest('http://localhost:3000/api/voice/chat', {
+        method: 'POST',
+        headers: { host: 'localhost:3000', origin: 'http://localhost:3000', 'content-type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: 'What is Stay?' }, { role: 'assistant', content: 'A voice companion.' }],
+          withTools: false,
+          instruction: "The user's 1-minute timer just ended. Say in under 10 words that their time is up.",
+        }),
+      }),
+    );
+    expect(await textOf(res)).toBe('Okay.'); // the model's words, not the canned answer to "What is Stay?"
+    const call = streamMock.openLlmStream.mock.calls[0][1] as { messages: Array<{ role: string; content: string }>; tools?: unknown };
+    expect(call.tools).toBeUndefined();
+    const last = call.messages.at(-1)!;
+    expect(last.role).toBe('user');
+    expect(last.content).toMatch(/Message from the app, not from the person: .*timer just ended/);
   });
 });

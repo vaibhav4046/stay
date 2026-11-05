@@ -77,7 +77,8 @@ export function detectVoiceCommand(text: string): VoiceCommandAction {
 
   // 1. Pause / Mute Command ("stay pause", "pause listening", "mute mic", "hold on")
   if (
-    /\b(?:stay pause|pause listening|mute microphone|mute mic|hold on(?: a second| a sec)?|one sec stay|stop listening|stay be quiet|pause for a sec)\b/i.test(
+    // "hold on" only as the whole message: inside a sentence ("hold on, let me think") it muted the mic and nothing could un-mute it
+    /\b(?:stay pause|pause listening|mute microphone|mute mic|one sec stay|stop listening|stay be quiet|pause for a sec)\b|^\W*hold on(?: a second| a sec)?\W*$/i.test(
       clean
     )
   ) {
@@ -698,5 +699,19 @@ export function parseMultiIntentUtterance(text: string): MultiIntentParseResult 
 }
 
 export const parseVoiceCommand = detectVoiceCommand;
+
+/** A bare "resume" (or "okay stay resume listening"): too common in other sentences to be a command anywhere but while paused. */
+const BARE_RESUME = /^(?:(?:hey|ok|okay|please)\s+)?(?:stay\s+)?resume(?:\s+listening)?$/;
+
+/**
+ * While listening is paused the microphone still streams, but only a short wake phrase is acted on ("hey stay", "resume", "stay
+ * listen", "unmute", "I'm back"); everything else said in the room is dropped. Short, so a sentence that merely contains one of
+ * those words ("update my resume before Friday") never wakes it; and a pause phrase is never a resume.
+ */
+export function isResumePhrase(text: string): boolean {
+  const clean = text.toLowerCase().replace(/’/g, "'").replace(/[^\p{L}\p{N}'\s]+/gu, ' ').replace(/\s+/g, ' ').trim(); // "Hey, Stay." -> "hey stay"
+  if (!clean || clean.split(' ').length > 5) return false;
+  return detectVoiceCommand(clean)?.type === 'resume_listening' || BARE_RESUME.test(clean);
+}
 
 

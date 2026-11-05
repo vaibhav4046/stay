@@ -98,7 +98,7 @@ export async function openLlmStream(req: Request, call: LlmStreamCall): Promise<
       if (r.retryAfterMs != null) soonest = Math.min(soonest, r.retryAfterMs);
       if (r.res) break attempts;
       if (r.error === 'quota' || r.error === 'invalid_key') {
-        if (index === 0) reportGroqKeyRateLimit(key); // the next turn starts on another key
+        if (index === 0) reportGroqKeyRateLimit(key, r.retryAfterMs); // the next turn starts on the next key in order; this one is tried again when it has refilled
         continue; // another key may still have room on this model
       }
       if (r.error === 'other') break; // the model answered with an error: another key will not change that, the next model may

@@ -38,4 +38,12 @@ describe('answerAboutStay: questions about Stay get a straight answer', () => {
       expect(a.split(/\s+/).length, q).toBeLessThan(60);
     }
   });
+
+  it.each([
+    'Why would I use this and not just ask a regular chatbot?',
+    'why use this instead of the big AI app',
+    'Why should I use this?',
+  ])('%s gets the straight answer about what Stay is for', (q) => {
+    expect(answerAboutStay(q), q).toMatch(/start|first step|clock/i);
+  });
 });

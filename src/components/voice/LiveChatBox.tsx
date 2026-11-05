@@ -53,6 +53,10 @@ export interface LiveChatBoxProps {
   className?: string;
 }
 
+/** The small actions under a message: real buttons, 44px tall, quiet until pointed at. */
+// 44px tall to reach, but the extra height is negative margin: the row takes one line, so a reply starting or a turn ending moves nothing
+const wisprButton = 'relative -my-3 inline-flex min-h-11 min-w-11 items-center justify-center px-2 text-[0.78rem] text-ink-2 underline underline-offset-4 hover:text-ink';
+
 const DEFAULT_STARTERS = [
   'I feel overwhelmed by my to-do list',
   'Help me start a 2-minute block',
@@ -69,7 +73,7 @@ export function LiveChatBox({
   targetTranslationLang,
   isTranslating = false,
   translations = {},
-  thinkingStatusLine = 'Finding the smallest first step',
+  thinkingStatusLine = 'finding the smallest first step',
   undoNotice = null,
   onClear,
   onWisprAction,
@@ -150,8 +154,7 @@ export function LiveChatBox({
       return {
         stateCode: 'INTERRUPTED',
         label: 'Interrupted',
-        srAnnouncement: 'Interrupted — listening to your thought',
-        dotStyle: { backgroundColor: '#F0B35A' },
+        srAnnouncement: 'Interrupted. Listening.',
         textStyle: { color: '#F0B35A' },
       };
     }
@@ -160,7 +163,6 @@ export function LiveChatBox({
         stateCode: 'TRANSCRIBING',
         label: 'Transcribing speech',
         srAnnouncement: 'Transcribing speech',
-        dotStyle: { backgroundColor: '#8FD3FF' },
         textStyle: { color: '#8FD3FF' },
       };
     }
@@ -169,7 +171,6 @@ export function LiveChatBox({
         stateCode: 'SPEAKING',
         label: 'Speaking',
         srAnnouncement: 'Speaking',
-        dotStyle: { backgroundColor: '#8FD3FF' },
         textStyle: { color: '#8FD3FF' },
       };
     }
@@ -178,7 +179,6 @@ export function LiveChatBox({
         stateCode: 'THINKING',
         label: 'Thinking',
         srAnnouncement: 'Thinking',
-        dotStyle: { backgroundColor: '#F0B35A' },
         textStyle: { color: '#F0B35A' },
       };
     }
@@ -187,7 +187,6 @@ export function LiveChatBox({
         stateCode: 'LISTENING',
         label: 'Listening',
         srAnnouncement: 'Listening',
-        dotStyle: { backgroundColor: '#8FD3FF' },
         textStyle: { color: '#8FD3FF' },
       };
     }
@@ -196,7 +195,6 @@ export function LiveChatBox({
         stateCode: 'CONNECTING',
         label: 'CONNECTING',
         srAnnouncement: 'CONNECTING',
-        dotStyle: { backgroundColor: '#8FD3FF' },
         textStyle: { color: '#8FD3FF' },
       };
     }
@@ -205,7 +203,6 @@ export function LiveChatBox({
         stateCode: 'RECONNECTING',
         label: 'RECONNECTING',
         srAnnouncement: 'RECONNECTING',
-        dotStyle: { backgroundColor: '#F0B35A' },
         textStyle: { color: '#F0B35A' },
       };
     }
@@ -214,7 +211,6 @@ export function LiveChatBox({
         stateCode: 'PAUSED',
         label: 'PAUSED',
         srAnnouncement: 'PAUSED',
-        dotStyle: { backgroundColor: '#C5D6E6' },
         textStyle: { color: '#C5D6E6' },
       };
     }
@@ -223,7 +219,6 @@ export function LiveChatBox({
         stateCode: 'TEXT_ONLY',
         label: 'TEXT_ONLY',
         srAnnouncement: 'TEXT_ONLY',
-        dotStyle: { backgroundColor: '#C5D6E6' },
         textStyle: { color: '#C5D6E6' },
       };
     }
@@ -232,7 +227,6 @@ export function LiveChatBox({
         stateCode: 'ERROR',
         label: 'ERROR',
         srAnnouncement: 'ERROR',
-        dotStyle: { backgroundColor: '#FF8A80' },
         textStyle: { color: '#FF8A80' },
       };
     }
@@ -241,7 +235,6 @@ export function LiveChatBox({
         stateCode: 'LISTENING',
         label: 'LISTENING',
         srAnnouncement: 'LISTENING',
-        dotStyle: { backgroundColor: '#8FD3FF' },
         textStyle: { color: '#8FD3FF' },
       };
     }
@@ -249,7 +242,6 @@ export function LiveChatBox({
       stateCode: 'IDLE',
       label: 'IDLE',
       srAnnouncement: '',
-      dotStyle: { backgroundColor: '#C5D6E6' },
       textStyle: { color: '#C5D6E6' },
     };
   })();
@@ -271,15 +263,15 @@ export function LiveChatBox({
   };
 
   const getLanguageLabel = (code: string) => {
-    if (code.startsWith('hi')) return 'हिन्दी · Hindi';
-    if (code.startsWith('es')) return 'Español · Spanish';
-    if (code.startsWith('fr')) return 'Français · French';
-    if (code.startsWith('de')) return 'Deutsch · German';
-    if (code.startsWith('ja')) return '日本語 · Japanese';
-    if (code.startsWith('ko')) return '한국어 · Korean';
-    if (code.startsWith('it')) return 'Italiano · Italian';
-    if (code.startsWith('pt')) return 'Português · Portuguese';
-    return 'English · Multilingual';
+    if (code.startsWith('hi')) return 'Hindi (हिन्दी)';
+    if (code.startsWith('es')) return 'Spanish (Español)';
+    if (code.startsWith('fr')) return 'French (Français)';
+    if (code.startsWith('de')) return 'German (Deutsch)';
+    if (code.startsWith('ja')) return 'Japanese (日本語)';
+    if (code.startsWith('ko')) return 'Korean (한국어)';
+    if (code.startsWith('it')) return 'Italian (Italiano)';
+    if (code.startsWith('pt')) return 'Portuguese (Português)';
+    return 'English';
   };
 
   return (
@@ -297,13 +289,12 @@ export function LiveChatBox({
       {bare && (
         <div className="mb-2 flex items-center justify-between gap-2 text-xs">
           <div className="flex items-center gap-1.5" data-testid="chat-status-pill">
-            <span className="h-2 w-2 rounded-full" style={statusConfig.dotStyle} aria-hidden="true" />
             <span className="font-semibold tracking-tight" style={statusConfig.textStyle}>
               {statusConfig.label === 'IDLE' ? 'Ready' : statusConfig.label === 'TEXT_ONLY' ? 'Text only' : statusConfig.label.charAt(0) + statusConfig.label.slice(1).toLowerCase()}
             </span>
           </div>
           {transcripts.length > 0 && onClear && (
-            <button type="button" onClick={onClear} className="rounded px-2 py-1 font-medium hover:underline" style={{ color: '#C5D6E6' }} title="Start a new conversation" data-testid="chat-clear-btn">
+            <button type="button" onClick={onClear} className="btn btn-ghost !px-3 font-medium hover:underline" style={{ color: '#C5D6E6' }} title="Start a new conversation" data-testid="chat-clear-btn">
               New chat
             </button>
           )}
@@ -318,7 +309,6 @@ export function LiveChatBox({
       >
         <div className="flex items-center gap-2 min-w-0 flex-wrap">
           <div className="flex items-center gap-1.5" data-testid="chat-status-pill">
-            <span className="h-2 w-2 rounded-full" style={statusConfig.dotStyle} aria-hidden="true" />
             <span className="text-xs font-semibold tracking-tight truncate" style={statusConfig.textStyle}>
               {statusConfig.label}
             </span>
@@ -357,7 +347,7 @@ export function LiveChatBox({
                   ? { backgroundColor: '#12304A', color: '#B8E4FF', borderColor: '#8FD3FF' }
                   : { backgroundColor: '#0F1620', color: '#C5D6E6', borderColor: '#1E2B3D' }
               }
-              title={quietMode ? 'Switch to Duplex Voice' : 'Switch to Text-Only'}
+              title={quietMode ? 'Switch to voice' : 'Switch to text only'}
               data-testid="chat-mode-toggle"
             >
               {quietMode ? 'Text only' : 'Voice'}
@@ -417,7 +407,7 @@ export function LiveChatBox({
           <button
             type="button"
             onClick={undoNotice.onUndo}
-            className="font-semibold underline px-2 py-0.5 rounded"
+            className="btn btn-ghost !px-3 font-semibold underline"
             style={{ color: '#8FD3FF' }}
             data-testid="wispr-undo-btn"
           >
@@ -498,6 +488,7 @@ export function LiveChatBox({
                       ? liveSpokenText
                       : showVerbatimId === entry.id && entry.verbatimText ? entry.verbatimText : entry.heardText ?? entry.text;
                   const tx = isUser ? translations[entry.id] : undefined;
+                  const hasVerbatim = Boolean(entry.verbatimText && entry.verbatimText !== entry.text);
                   return (
                     <div
                       key={entry.id}
@@ -512,7 +503,9 @@ export function LiveChatBox({
                         <span className="font-medium" style={{ color: '#EEF6FF' }}>
                           {isUser ? 'You' : 'Stay'}
                         </span>
-                        {entry.timestamp && <span className="tnum">· {formatTime(entry.timestamp)}</span>}
+                        {entry.timestamp && formatTime(entry.timestamp) && (
+                          <time className="tnum" dateTime={entry.timestamp}>{formatTime(entry.timestamp)}</time>
+                        )}
                         {entry.sourceLanguage && (
                           <span className="uppercase text-[0.7rem] px-1 rounded bg-[#1A2433] border border-[#1E2B3D]">
                             {entry.sourceLanguage}
@@ -526,49 +519,6 @@ export function LiveChatBox({
                           >
                             Interrupted
                           </span>
-                        )}
-                        {entry.verbatimText && entry.verbatimText !== entry.text && (
-                          <button
-                            type="button"
-                            onClick={() => setShowVerbatimId(showVerbatimId === entry.id ? null : entry.id)}
-                            className="text-[0.72rem] underline ml-1 cursor-pointer"
-                            style={{ color: '#8FD3FF' }}
-                          >
-                            {showVerbatimId === entry.id ? 'Show clean' : 'Show what I heard'}
-                          </button>
-                        )}
-                        {isLastUser && onWisprAction && (
-                          <button
-                            type="button"
-                            onClick={() => onWisprAction('scratch')}
-                            className="text-[0.72rem] underline ml-2 cursor-pointer text-[#C5D6E6] hover:text-[#EEF6FF]"
-                            data-testid="wispr-scratch-btn"
-                            title="Scratch this thought"
-                          >
-                            Undo
-                          </button>
-                        )}
-                        {isLastAgent && onWisprAction && (
-                          <div className="flex items-center gap-2 ml-2">
-                            <button
-                              type="button"
-                              onClick={() => onWisprAction('repeat')}
-                              className="text-[0.72rem] underline cursor-pointer text-[#8FD3FF]"
-                              data-testid="wispr-repeat-btn"
-                              title="Repeat Stay's last response"
-                            >
-                              Say again
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => onWisprAction('heard')}
-                              className="text-[0.72rem] underline cursor-pointer text-[#C5D6E6]"
-                              data-testid="wispr-heard-btn"
-                              title="Show what Stay heard"
-                            >
-                              What I heard
-                            </button>
-                          </div>
                         )}
                       </div>
                     <div
@@ -595,7 +545,7 @@ export function LiveChatBox({
                                     onClick={() => onAddKeyterm?.(w.word.replace(/[^\p{L}\p{N}-]/gu, ''))}
                                     className="underline decoration-dotted underline-offset-4 cursor-pointer font-medium"
                                     style={{ color: '#EEF6FF', textDecorationColor: '#F0B35A' }}
-                                    title={`Low confidence (${Math.round((w.confidence ?? 0) * 100)}%) — click to add "${w.word}" to My words`}
+                                    title={`Not sure this was heard right (${Math.round((w.confidence ?? 0) * 100)}%). Click to add "${w.word}" to My words.`}
                                     data-testid="low-confidence-word"
                                   >
                                     {w.word}
@@ -654,6 +604,34 @@ export function LiveChatBox({
                         </div>
                       )}
                     </div>
+                    {(hasVerbatim || (isLastUser && onWisprAction) || (isLastAgent && onWisprAction)) && (
+                      <div className={`flex flex-wrap items-center gap-1 ${isUser ? 'justify-end' : ''}`}>
+                        {hasVerbatim && (
+                          <button
+                            type="button"
+                            onClick={() => setShowVerbatimId(showVerbatimId === entry.id ? null : entry.id)}
+                            className={wisprButton}
+                          >
+                            {showVerbatimId === entry.id ? 'Show clean' : 'Show what I heard'}
+                          </button>
+                        )}
+                        {isLastUser && onWisprAction && (
+                          <button type="button" onClick={() => onWisprAction('scratch')} className={wisprButton} data-testid="wispr-scratch-btn" title="Scratch this thought">
+                            Undo
+                          </button>
+                        )}
+                        {isLastAgent && onWisprAction && (
+                          <>
+                            <button type="button" onClick={() => onWisprAction('repeat')} className={wisprButton} data-testid="wispr-repeat-btn" title="Repeat Stay's last response">
+                              Say again
+                            </button>
+                            <button type="button" onClick={() => onWisprAction('heard')} className={wisprButton} data-testid="wispr-heard-btn" title="Show what Stay heard">
+                              What I heard
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               });
@@ -666,7 +644,6 @@ export function LiveChatBox({
                     className="flex items-center gap-1.5 mb-1 px-1 text-[0.8125rem] font-medium"
                     style={{ color: '#8FD3FF' }}
                   >
-                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: '#8FD3FF' }} />
                     <span>You (speaking)</span>
                   </div>
                   <div
@@ -693,7 +670,7 @@ export function LiveChatBox({
                     style={{ color: '#F0B35A' }}
                   >
                     <StayLogo size={13} className="shrink-0" />
-                    <span>Stay · {thinkingStatusLine}</span>
+                    <span>Stay is {thinkingStatusLine}</span>
                     <span className="typing-dots" aria-hidden="true"><i /><i /><i /></span>
                   </div>
                 </div>
@@ -725,8 +702,7 @@ export function LiveChatBox({
                     className="inline-flex items-center gap-1.5 rounded-full border border-[#F0B35A]/30 px-2.5 py-0.5 text-[0.75rem] font-medium"
                     style={{ backgroundColor: 'rgba(240,179,90,0.14)', color: '#F0B35A' }}
                   >
-                    <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: '#F0B35A' }} />
-                    Interrupted — listening to your thought
+                    Interrupted. Listening.
                   </span>
                 </div>
               )}

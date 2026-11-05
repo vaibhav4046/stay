@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Stay story: the pixel world</title>
+<style>html,body{margin:0;background:#000}</style></head>
+<body>
+<script>
+/*
+ * The pixel world of the Stay short film (original art, no logos, no real products).
+ * One 320x134 pixel grid (shown at 6x = 1920x804), drawn into a typed array by hand: window.render(t) draws film time t,
+ * window.frameB64() returns the raw RGBA of the last frame. story = { shots, bubbles, cards, stay } is set with window.setStory().
+ *   shots   [{ t0, t1, type, p, fi, fo }]    type: wide | ots | clock | laptop | list | face | black
+ *   bubbles [{ t0, t1, text }]               Pix's lines, as pixel speech bubbles (word by word)
+ *   cards   [{ t0, t1, text, sub, kind }]    full | stamp
+ *   stay    [[t0, t1]]                       when Stay is speaking (the laptop and Pix react)
+ */
+const W = 320, H = 134;
+const buf = new Uint8ClampedArray(W * H * 4);
+let AMB = [1, 1, 1];
+const hxm = {};
+const hx = (h) => hxm[h] || (hxm[h] = [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]);
+const cc = (c) => { if (typeof c !== 'string') return c; const q = hx(c); return [q[0] * AMB[0], q[1] * AMB[1], q[2] * AMB[2]]; }; // a hex string is lit by the ambient light; an array is emissive
+const E = (h) => hx(h);
+const lerp = (a, b, t) => a + (b - a) * t;
+const lerpc = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+const ease = (x) => { x = clamp(x); return x * x * (3 - 2 * x); };
+const rnd = (n) => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+
+function px(x, y, c) { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= W || y >= H) return; const q = cc(c), i = (y * W + x) * 4; buf[i] = q[0]; buf[i + 1] = q[1]; buf[i + 2] = q[2]; buf[i + 3] = 255; }
+function rect(x, y, w, h, c) { const q = cc(c); x = Math.round(x); y = Math.round(y); w = Math.round(w); h = Math.round(h); for (let j = Math.max(0, y); j < Math.min(H, y + h); j++) for (let i = Math.max(0, x); i < Math.min(W, x + w); i++) { const k = (j * W + i) * 4; buf[k] = q[0]; buf[k + 1] = q[1]; buf[k + 2] = q[2]; buf[k + 3] = 255; } }
+function ell(cx, cy, rx, ry, c) { const q = cc(c); for (let j = Math.max(0, Math.floor(cy - ry)); j <= Math.min(H - 1, Math.ceil(cy + ry)); j++) for (let i = Math.max(0, Math.floor(cx - rx)); i <= Math.min(W - 1, Math.ceil(cx + rx)); i++) { const dx = (i - cx) / (rx + 0.45), dy = (j - cy) / (ry + 0.45); if (dx * dx + dy * dy <= 1) { const k = (j * W + i) * 4; buf[k] = q[0]; buf[k + 1] = q[1]; buf[k + 2] = q[2]; buf[k + 3] = 255; } } }
+function line(x0, y0, x1, y1, c) { x0 = Math.round(x0); y0 = Math.round(y0); x1 = Math.round(x1); y1 = Math.round(y1); const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1; let e = dx + dy; for (;;) { px(x0, y0, c); if (x0 === x1 && y0 === y1) break; const e2 = 2 * e; if (e2 >= dy) { e += dy; x0 += sx; } if (e2 <= dx) { e += dx; y0 += sy; } } }
+function tline(x0, y0, x1, y1, w, c) { for (let k = 0; k < w; k++) line(x0 + (k - (w >> 1)), y0, x1 + (k - (w >> 1)), y1, c); }
+function poly(pts, c) { const q = cc(c); let y0 = 1e9, y1 = -1e9; pts.forEach((p) => { y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); }); for (let y = Math.max(0, Math.floor(y0)); y <= Math.min(H - 1, Math.ceil(y1)); y++) { const xs = []; for (let i = 0; i < pts.length; i++) { const a = pts[i], b = pts[(i + 1) % pts.length]; if ((a[1] <= y + 0.5 && b[1] > y + 0.5) || (b[1] <= y + 0.5 && a[1] > y + 0.5)) xs.push(a[0] + (y + 0.5 - a[1]) / (b[1] - a[1]) * (b[0] - a[0])); } xs.sort((a, b) => a - b); for (let i = 0; i + 1 < xs.length; i += 2) for (let x = Math.max(0, Math.round(xs[i])); x < Math.min(W, Math.round(xs[i + 1])); x++) { const k = (y * W + x) * 4; buf[k] = q[0]; buf[k + 1] = q[1]; buf[k + 2] = q[2]; buf[k + 3] = 255; } } }
+const B4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+function glow(cx, cy, r, col, k = 1, steps = 5, sx = 1, sy = 1) { // additive light in dithered steps, so it stays pixel art
+  for (let j = Math.max(0, Math.floor(cy - r * sy)); j <= Math.min(H - 1, Math.ceil(cy + r * sy)); j++) for (let i = Math.max(0, Math.floor(cx - r * sx)); i <= Math.min(W - 1, Math.ceil(cx + r * sx)); i++) {
+    const d = Math.hypot((i - cx) / sx, (j - cy) / sy) / r; if (d >= 1) continue;
+    const v = Math.pow(1 - d, 1.7) * k * steps, f = Math.floor(v), q = f + ((v - f) * 16 > B4[(j & 3) * 4 + (i & 3)] ? 1 : 0); if (!q) continue;
+    const a = Math.min(1, q / steps) * 0.6, o = (j * W + i) * 4; buf[o] = Math.min(255, buf[o] + col[0] * a); buf[o + 1] = Math.min(255, buf[o + 1] + col[1] * a); buf[o + 2] = Math.min(255, buf[o + 2] + col[2] * a);
+  }
+}
+function dim(f) { for (let i = 0; i < buf.length; i += 4) { buf[i] *= f; buf[i + 1] *= f; buf[i + 2] *= f; } }
+
+// ---- the pixel font: 5 x 7, proportional, my own design -----------------------------------------------------------------------
+const G = {
+  A: '.###./#...#/#...#/#####/#...#/#...#/#...#', B: '####./#...#/#...#/####./#...#/#...#/####.', C: '.###./#...#/#..../#..../#..../#...#/.###.', D: '####./#...#/#...#/#...#/#...#/#...#/####.',
+  E: '#####/#..../#..../####./#..../#..../#####', F: '#####/#..../#..../####./#..../#..../#....', G: '.###./#...#/#..../#.###/#...#/#...#/.###.', H: '#...#/#...#/#...#/#####/#...#/#...#/#...#',
+  I: '###/.#./.#./.#./.#./.#./###', J: '....#/....#/....#/....#/#...#/#...#/.###.', K: '#...#/#..#./#.#../##.../#.#../#..#./#...#', L: '#..../#..../#..../#..../#..../#..../#####',
+  M: '#...#/##.##/#.#.#/#.#.#/#...#/#...#/#...#', N: '#...#/##..#/#.#.#/#..##/#...#/#...#/#...#', O: '.###./#...#/#...#/#...#/#...#/#...#/.###.', P: '####./#...#/#...#/####./#..../#..../#....',
+  Q: '.###./#...#/#...#/#...#/#.#.#/#..#./.##.#', R: '####./#...#/#...#/####./#.#../#..#./#...#', S: '.####/#..../#..../.###./....#/....#/####.', T: '#####/..#../..#../..#../..#../..#../..#..',
+  U: '#...#/#...#/#...#/#...#/#...#/#...#/.###.', V: '#...#/#...#/#...#/#...#/#...#/.#.#./..#..', W: '#...#/#...#/#...#/#.#.#/#.#.#/##.##/#...#', X: '#...#/#...#/.#.#./..#../.#.#./#...#/#...#',
+  Y: '#...#/#...#/.#.#./..#../..#../..#../..#..', Z: '#####/....#/...#./..#../.#.../#..../#####',
+  0: '.###./#...#/#..##/#.#.#/##..#/#...#/.###.', 1: '..#../.##../..#../..#../..#../..#../.###.', 2: '.###./#...#/....#/...#./..#../.#.../#####', 3: '.###./#...#/....#/..##./....#/#...#/.###.',
+  4: '...#./..##./.#.#./#..#./#####/...#./...#.', 5: '#####/#..../####./....#/....#/#...#/.###.', 6: '.###./#..../#..../####./#...#/#...#/.###.', 7: '#####/....#/...#./..#../.#.../.#.../.#...',
+  8: '.###./#...#/#...#/.###./#...#/#...#/.###.', 9: '.###./#...#/#...#/.####/....#/....#/.###.',
+  '.': '././././././#', '!': '#/#/#/#/#/./#', '?': '.###./#...#/....#/...#./..#../...../..#..', "'": '#/#/././././.', '"': '#.#/#.#/.../.../.../.../...', ':': './././#/././#/.'.replace('./././#', './.../#').split('/').join('/'),
+  '-': '..../..../..../####/..../..../....', '_': '...../...../...../...../...../...../#####', '/': '....#/....#/...#./..#../.#.../#..../#....', '(': '.#/#./#./#./#./#./.#', ')': '#./.#/.#/.#/.#/.#/#.',
+  '+': '...../..#../..#../#####/..#../..#../.....', '=': '...../...../#####/...../#####/...../.....', '&': '.##../#..#./#.#../.#.../#.#.#/#..#./.##.#', '%': '##..#/##..#/...#./..#../.#.../#..##/#..##', '#': '.#.#./#####/.#.#./.#.#./#####/.#.#./.....', '*': '...../#.#.#/.###./#####/.###./#.#.#/.....', '>': '#..../.#.../..#../...#./..#../.#.../#....', '<': '....#/...#./..#../.#.../..#../...#./....#', '@': '.###./#...#/#.###/#.#.#/#.###/#..../.###.',
+  ' ': '..../..../..../..../..../..../....',
+};
+G[':'] = './././#/././#/.'.split('/').map((r, i) => (i === 2 || i === 5) ? '#' : '.').join('/');
+G[','] = '../../../../../.#/.#/#.'.split('/').join('/') ; G[';'] = '../#./../../../.#/.#/#.';
+const GL = { // lowercase, rows from the x-height line (5 rows), or 7 rows for ascenders (from the top) and descenders (from the x-height)
+  a: '.###./....#/.####/#...#/.####', c: '.###./#..../#..../#...#/.###.', e: '.###./#...#/#####/#..../.###.', m: '##.#./#.#.#/#.#.#/#.#.#/#.#.#', n: '#.##./##..#/#...#/#...#/#...#', o: '.###./#...#/#...#/#...#/.###.', r: '#.##./##..#/#..../#..../#....', s: '.####/#..../.###./....#/####.', u: '#...#/#...#/#...#/#..##/.##.#', v: '#...#/#...#/#...#/.#.#./..#..', w: '#...#/#...#/#.#.#/#.#.#/.#.#.', x: '#...#/.#.#./..#../.#.#./#...#', z: '#####/...#./..#../.#.../#####',
+};
+const GA = { b: '#..../#..../####./#...#/#...#/#...#/####.', d: '....#/....#/.####/#...#/#...#/#...#/.####', f: '.##./#..#/#.../###./#.../#.../#...', h: '#..../#..../#.##./##..#/#...#/#...#/#...#', i: '#/././#/#/#/#'.replace('/././', '/./') , k: '#..../#..../#..#./#.#../##.../#.#../#..#.', l: '##./.#./.#./.#./.#./.#./.##', t: '.#../.#../###./.#../.#../.#../..##' };
+GA.i = '#/./#/#/#/#/#';
+const GD = { g: '.####/#...#/#...#/#...#/.####/....#/.###.', p: '#.##./##..#/#...#/#...#/####./#..../#....', q: '.##.#/#..##/#...#/#...#/.####/....#/....#', y: '#...#/#...#/#...#/#...#/.####/....#/.###.' };
+const GJ = '..#/.../..#/..#/..#/..#/..#/#.#/.#.';
+const glyph = (ch) => {
+  if (G[ch]) return { r: G[ch].split('/'), dy: 0 };
+  if (GL[ch]) return { r: GL[ch].split('/'), dy: 2 };
+  if (GA[ch]) return { r: GA[ch].split('/'), dy: 0 };
+  if (GD[ch]) return { r: GD[ch].split('/'), dy: 2 };
+  if (ch === 'j') return { r: GJ.split('/'), dy: 0 };
+  return { r: G[' '].split('/'), dy: 0 };
+};
+const gdraw = (ch, x, y, c, sc) => { const g = glyph(ch); g.r.forEach((row, j) => { for (let i = 0; i < row.length; i++) if (row[i] === '#') (sc > 1 ? rect(x + i * sc, y + (g.dy + j) * sc, sc, sc, c) : px(x + i, y + g.dy + j, c)); }); return glyph(ch).r[0].length; };
+const tw = (s, sc = 1) => { let w = 0; for (const ch of s) w += (glyph(ch).r[0].length + 1) * sc; return Math.max(0, w - sc); };
+function text(s, x, y, c, sc = 1, shadow) { if (shadow) text(s, x + sc, y + sc, shadow, sc); for (const ch of s) x += (gdraw(ch, x, y, c, sc) + 1) * sc; }
+function wrap(s, maxW) { const out = []; let cur = ''; for (const w of s.split(' ')) { const t = cur ? cur + ' ' + w : w; if (tw(t) <= maxW || !cur) cur = t; else { out.push(cur); cur = w; } } if (cur) out.push(cur); return out; }
+
+// ---- Pix: messy black hair, striped shirt, drawn at any scale from the same shapes ----------------------------------------------
+const SK = '#f0c6a0', SKD = '#d49a76', HAIR = '#16131c', LIP = '#8a3d3d';
+function pix(cx, cy, s, o = {}) {
+  const open = o.open ?? 1, look = o.look || [0, 0], brow = o.brow || 0, tilt = o.tilt || 0;
+  const bottom = o.bottom ?? 92;
+  if (o.torso !== false) { // neck and striped shirt
+    rect(cx - 3 * s, cy + 9 * s, 6 * s, 5 * s, SKD);
+    const top = Math.round(cy + 11.5 * s), th = Math.max(2, Math.round(2.2 * s));
+    for (let y = top; y < bottom; y++) {
+      const f = clamp((y - top) / (4.2 * s)), hw = lerp(5.5 * s, 15.5 * s, f) + (o.slump || 0) * 0.4;
+      rect(cx - hw + tilt * 0.3, y, hw * 2, 1, (Math.floor((y - top) / th) % 2) ? '#4a6bb0' : '#e7ecf4');
+    }
+    ell(cx, cy + 12.4 * s, 4.2 * s, 1.5 * s, '#2b3a63'); // collar
+  }
+  ell(cx, cy - 1.5 * s, 10.2 * s, 11.2 * s, HAIR);
+  ell(cx - 9.2 * s, cy + 1.6 * s, 1.8 * s, 2.4 * s, SKD); ell(cx + 9.2 * s, cy + 1.6 * s, 1.8 * s, 2.4 * s, SKD);
+  ell(cx, cy + 1.2 * s, 8.8 * s, 9.8 * s, SKD); ell(cx - 0.8 * s, cy + 0.7 * s, 8.1 * s, 9.2 * s, SK);
+  poly([[-9, -9], [9, -9], [9, -1.5], [6.5, -4.6], [4.5, -1], [2, -4.9], [-0.5, -0.4], [-3.5, -4.6], [-6, -1.4], [-9, -3.6]].map(([x, y]) => [cx + x * s, cy + y * s]), HAIR);
+  [[[-8, -10], [-6.5, -14.5], [-4, -10.5]], [[-3, -11], [-0.5, -15.5], [2, -11]], [[2.5, -11], [6, -14], [7.5, -10]], [[7, -9], [11.5, -11.5], [10, -5]], [[-11, -7], [-13.5, -10.5], [-9.5, -3]]].forEach((tr) => poly(tr.map(([x, y]) => [cx + x * s, cy + y * s]), HAIR));
+  rect(cx - 3.5 * s, cy - 6.5 * s, 1.2 * s, Math.max(1, 0.6 * s), '#33304a'); rect(cx + 3 * s, cy - 7 * s, 1.4 * s, Math.max(1, 0.6 * s), '#33304a');
+  const ey = cy + 1.4 * s;
+  for (const sg of [-1, 1]) {
+    const ex = cx + sg * 3.8 * s, ew = 2.3 * s, eh = Math.max(0.5, 2.5 * s * open);
+    ell(ex, ey, ew, eh, '#f6f3f0');
+    if (open > 0.12) { ell(ex + look[0] * 0.9 * s, ey + look[1] * 0.7 * s * (open > 0.5 ? 1 : 0.4), 1.25 * s, Math.min(1.45 * s, eh), '#1b1620'); if (s >= 1.5 && open > 0.5) px(ex + look[0] * 0.9 * s + 0.5 * s, ey - 0.5 * s, '#ffffff'); }
+    rect(ex - ew, ey - eh - Math.max(0.6, 0.5 * s), ew * 2, Math.max(1, 0.6 * s), '#2a1a22');
+    if (o.bag) ell(ex, ey + eh + 0.9 * s, 2.1 * s, Math.max(0.5, 0.38 * s), '#c79aa0');
+    const iy = cy - 3.2 * s + brow * 1.1 * s, oy = cy - 3.2 * s - brow * 0.7 * s - (o.bag ? -0.6 * s : 0);
+    tline(cx + sg * 2 * s, iy, cx + sg * 6.4 * s, oy, Math.max(1, Math.round(0.7 * s)), '#1a1620');
+  }
+  rect(cx + 0.3 * s, cy + 3.6 * s, Math.max(1, 0.9 * s), Math.max(1, 1.6 * s), SKD);
+  const my = cy + 6.8 * s, lw = Math.max(1, Math.round(0.7 * s)), m = o.mouth || 'flat';
+  if (m === 'flat') tline(cx - 2 * s, my, cx + 2 * s, my, lw, LIP);
+  else if (m === 'smile') { tline(cx - 3.2 * s, my - 0.4 * s, cx - 1.2 * s, my + 0.9 * s, lw, LIP); tline(cx - 1.2 * s, my + 0.9 * s, cx + 1.2 * s, my + 0.9 * s, lw, LIP); tline(cx + 1.2 * s, my + 0.9 * s, cx + 3.2 * s, my - 0.4 * s, lw, LIP); }
+  else if (m === 'frown') { tline(cx - 2.6 * s, my + 0.6 * s, cx - 1 * s, my - 0.2 * s, lw, LIP); tline(cx - 1 * s, my - 0.2 * s, cx + 1 * s, my - 0.2 * s, lw, LIP); tline(cx + 1 * s, my - 0.2 * s, cx + 2.6 * s, my + 0.6 * s, lw, LIP); }
+  else if (m === 'o') { ell(cx, my + 0.4 * s, 1.3 * s, 1.5 * s, '#5a2230'); }
+  else if (m === 'talk') { const a = o.talk ?? 0.5; ell(cx, my + 0.4 * s, 2 * s, Math.max(0.5, (0.5 + a * 1.5) * s), '#5a2230'); if (a > 0.5 && s >= 1.5) rect(cx - 1.2 * s, my + 0.4 * s - (0.5 + a * 1.5) * s + 0.4, 2.4 * s, Math.max(1, 0.5 * s), '#f4f1ee'); }
+}
+
+// ---- shared scenery -----------------------------------------------------------------------------------------------------------
+const NIGHT = [0.33, 0.39, 0.7], DAWN = [1.0, 0.84, 0.68];
+const setAmb = (sk) => { AMB = lerpc(NIGHT, DAWN, clamp(sk * 1.25)); };
+function skyBox(x0, y0, w, h, sk, t) {
+  const top = lerpc(hx('#091030'), hx('#5367b0'), sk), mid = lerpc(hx('#13224c'), hx('#e48c74'), sk), bot = lerpc(hx('#1d2f63'), hx('#ffd592'), sk);
+  for (let j = 0; j < h; j++) { const f = j / (h - 1); rect(x0, y0 + j, w, 1, f < 0.5 ? lerpc(top, mid, f * 2) : lerpc(mid, bot, (f - 0.5) * 2)); }
+  if (sk < 0.6) for (let i = 0; i < 16; i++) { const sx = x0 + 2 + rnd(i) * (w - 4), sy = y0 + 2 + rnd(i + 40) * (h * 0.55); if (((t * 1.3 + i * 0.7) % 3) > 0.35) px(sx, sy, lerpc(hx('#cfe0ff'), hx('#091030'), clamp(sk / 0.6))); }
+  if (sk < 0.7) { const a = 1 - sk / 0.7, mx = x0 + w * 0.72, my = y0 + 8 + sk * 22; ell(mx, my, 4.2, 4.2, lerpc(hx('#13224c'), hx('#eef3ff'), a)); ell(mx + 2, my - 1, 3.6, 3.6, lerpc(hx('#13224c'), hx('#0e1a3e'), 1)); }
+  if (sk > 0.4) { const r = clamp((sk - 0.4) / 0.6), sx = x0 + w * 0.34, sy = y0 + h - 4 - r * (h * 0.5); ell(sx, sy, 6.5, 6.5, E('#fff0b8')); glow(sx, sy, 24, [255, 190, 110], 0.8 * r); }
+  const sc = lerpc(hx('#0a0f22'), hx('#46385a'), sk);
+  for (let i = 0; i < 11; i++) { const bx = x0 + i * (w / 10.5) - 2, bw = 4 + rnd(i + 7) * 6, bh = 8 + rnd(i + 20) * 14; rect(bx, y0 + h - bh, bw, bh, sc); for (let k = 0; k < 6; k++) if (rnd(i * 9 + k) < 0.55 * (1 - sk) + 0.04) px(bx + 1 + (k % 2) * 3, y0 + h - bh + 2 + Math.floor(k / 2) * 4, E('#ffd56a')); }
+}
+function windowFrame(x, y, w, h, sk, t) {
+  rect(x, y, w, h, '#e8dec9'); skyBox(x + 3, y + 3, w - 6, h - 6, sk, t); rect(x + w / 2 - 1, y + 3, 2, h - 6, '#e8dec9'); rect(x + 3, y + h / 2 - 1, w - 6, 2, '#e8dec9'); rect(x - 3, y + h, w + 6, 3, '#cdbfa5');
+  rect(x - 9, y - 2, 9, h + 18, '#8a4a60'); rect(x - 9, y - 2, 3, h + 18, '#6e3a4d'); rect(x + w, y - 2, 6, h + 18, '#8a4a60');
+}
+function wallClock(cx, cy, r, hm, t) {
+  ell(cx, cy, r + 1.5, r + 1.5, '#2a2430'); ell(cx, cy, r, r, '#efe9db');
+  for (let i = 0; i < 12; i++) { const a = i / 12 * 6.283; px(cx + Math.cos(a) * (r - 1.6), cy + Math.sin(a) * (r - 1.6), '#3b3446'); }
+  const [h, m] = hm, am = (m / 60) * 6.283 - 1.5708, ah = (((h % 12) + m / 60) / 12) * 6.283 - 1.5708, as = (Math.floor(t) % 60 / 60) * 6.283 - 1.5708;
+  line(cx, cy, cx + Math.cos(ah) * r * 0.5, cy + Math.sin(ah) * r * 0.5, '#2a2430'); line(cx, cy, cx + Math.cos(am) * r * 0.78, cy + Math.sin(am) * r * 0.78, '#2a2430'); line(cx, cy, cx + Math.cos(as) * r * 0.82, cy + Math.sin(as) * r * 0.82, '#c33a3a'); px(cx, cy, '#c33a3a');
+}
+function note(x, y, red) {
+  rect(x, y, 50, 27, '#f2d65c'); rect(x, y + 24, 50, 3, '#d9b93f'); rect(x + 21, y - 2, 8, 4, '#c43a3a');
+  text('ESSAY', x + 4, y + 5, '#3a2c10'); text('DUE 9:00', x + 4, y + 15, '#3a2c10');
+  if (red) { rect(x + 3, y + 23, 44, 1, '#d02020'); }
+}
+function stayMark(cx, cy, r, c, n = 26) { for (let a = 0; a < n; a++) { const g = a / n * 6.283; px(cx + Math.cos(g) * r, cy + Math.sin(g) * r, c); } px(cx, cy, c); }
+function heart(x, y, sc, c) { const m = ['.##.##.', '#######', '#######', '.#####.', '..###..', '...#...']; m.forEach((r, j) => { for (let i = 0; i < 7; i++) if (r[i] === '#') rect(x + i * sc - 3.5 * sc, y + j * sc - 3 * sc, sc, sc, c); }); }
+
+// ---- the reels on the phone: invented pixel clips ----------------------------------------------------------------------------
+const REELS = {
+  cat(x, y, w, h, t) { rect(x, y, w, h, E('#8fd0f0')); rect(x, y + 74, w, 4, E('#6b4a30')); rect(x, y + 78, w, h - 78, E('#4a3322'));
+    const swat = Math.floor(t * 2.2) % 2, cupx = x + 40 + (swat ? Math.min(12, (t * 2.2 % 1) * 24) : 0), cupy = y + 66 + (swat && (t * 2.2 % 1) > 0.5 ? ((t * 2.2 % 1) - 0.5) * 120 : 0);
+    ell(x + 22, y + 62, 11, 9, E('#f09a3a')); ell(x + 22, y + 48, 8, 7, E('#f09a3a')); poly([[x + 15, y + 44], [x + 15, y + 35], [x + 20, y + 41]], E('#f09a3a')); poly([[x + 29, y + 44], [x + 29, y + 35], [x + 24, y + 41]], E('#f09a3a'));
+    px(x + 19, y + 48, E('#222')); px(x + 25, y + 48, E('#222')); px(x + 22, y + 51, E('#e07080')); tline(x + 32, y + 60, x + 38 + (swat ? 6 : 0), y + 62 - (swat ? 4 : 0), 2, E('#f09a3a'));
+    if (cupy < y + 100) { rect(cupx, cupy, 8, 9, E('#f4f4f4')); rect(cupx + 8, cupy + 2, 2, 4, E('#f4f4f4')); } },
+  dance(x, y, w, h, t) { const b = Math.floor(t * 4) % 4; rect(x, y, w, h, E(['#7a2bd0', '#d02b8a', '#2b6ad0', '#2bd0a0'][b])); for (let i = 0; i < 6; i++) for (let j = 0; j < 4; j++) rect(x + i * 10, y + 80 + j * 9, 10, 9, E(((i + j + b) % 2) ? '#ffffff30'.slice(0, 7) : '#101030'));
+    const a = Math.floor(t * 5) % 2; ell(x + 30, y + 38, 6, 6, E('#f0c6a0')); rect(x + 24, y + 31, 12, 4, E('#222')); rect(x + 25, y + 45, 11, 20, E('#ffe14a')); tline(x + 25, y + 47, x + 14, y + (a ? 34 : 56), 3, E('#f0c6a0')); tline(x + 36, y + 47, x + 47, y + (a ? 56 : 34), 3, E('#f0c6a0')); tline(x + 28, y + 65, x + (a ? 22 : 26), y + 84, 3, E('#2b3a8a')); tline(x + 33, y + 65, x + (a ? 38 : 34), y + 84, 3, E('#2b3a8a'));
+    for (let i = 0; i < 6; i++) px(x + rnd(i + Math.floor(t * 6)) * w, y + rnd(i + 9 + Math.floor(t * 6)) * 60, E('#ffffff')); },
+  cook(x, y, w, h, t) { rect(x, y, w, h, E('#e8c58c')); rect(x, y + 70, w, 46, E('#6a4a34')); ell(x + 30, y + 78, 24, 6, E('#2a2a30')); rect(x + 52, y + 76, 14, 3, E('#2a2a30'));
+    const f = (t * 1.1) % 1, py = y + 70 - Math.sin(f * 3.14159) * 34; ell(x + 26 + f * 4, py, 9, 3 + (f > 0.4 && f < 0.6 ? 2 : 0), E(f < 0.5 ? '#e9b45a' : '#c88a3a'));
+    for (let i = 0; i < 3; i++) px(x + 14 + i * 12 + Math.sin(t * 4 + i) * 2, y + 60 - ((t * 20 + i * 9) % 22), E('#ffffffaa'.slice(0, 7))); rect(x + 6, y + 8, 48, 7, E('#fff6e0')); text('PAN', x + 8, y + 8, E('#7a3a1a')); },
+  gym(x, y, w, h, t) { rect(x, y, w, h, E('#34363c')); rect(x, y + 92, w, 24, E('#1f2024')); const up = (Math.sin(t * 3.4) + 1) / 2, by = y + 40 - up * 16;
+    ell(x + 30, y + 44, 6, 6, E('#d9a77a')); rect(x + 20, y + 50, 20, 24, E('#c43a3a')); tline(x + 21, y + 52, x + 8, by + 6, 4, E('#d9a77a')); tline(x + 39, y + 52, x + 52, by + 6, 4, E('#d9a77a')); rect(x + 25, y + 74, 4, 18, E('#2a3a6a')); rect(x + 31, y + 74, 4, 18, E('#2a3a6a'));
+    rect(x + 2, by + 4, 56, 2, E('#c8ccd4')); rect(x + 1, by - 3, 5, 16, E('#111')); rect(x + 54, by - 3, 5, 16, E('#111')); if (up > 0.9) px(x + 36, y + 41, E('#8fd8ff')); text('X' + (8 + Math.floor(t / 1.85) % 4), x + 4, y + 8, E('#ffe14a')); },
+  meme(x, y, w, h, t) { rect(x, y, w, h, E('#d8472b')); ell(x + 30, y + 58, 22, 24, E('#f6d34a')); const bl = Math.floor(t * 3) % 9 === 0; rect(x + 19, y + 52, 8, bl ? 1 : 5, E('#fff')); rect(x + 33, y + 52, 8, bl ? 1 : 5, E('#fff')); if (!bl) { px(x + 22, y + 55, E('#111')); px(x + 36, y + 55, E('#111')); } rect(x + 22, y + 70, 16, 2, E('#6a3a10'));
+    text('ME AT', x + 17, y + 12, E('#fff'), 1, E('#000')); text('2 AM:', x + 17, y + 22, E('#fff'), 1, E('#000')); text('ONE', x + 21, y + 94, E('#fff'), 1, E('#000')); text('MORE', x + 19, y + 104, E('#fff'), 1, E('#000')); },
+};
+const REEL_ORDER = ['cat', 'dance', 'cook', 'gym', 'meme'];
+
+// ---- shots ---------------------------------------------------------------------------------------------------------------------
+const WALLC = '#5d6c9b', FLOORC = '#7a5a42';
+function room(p, t) {
+  setAmb(p.sky || 0);
+  rect(0, 0, W, 98, WALLC); for (let x = 0; x < W; x += 8) rect(x, 0, 1, 98, '#566594'); rect(0, 94, W, 5, '#3d3652');
+  rect(0, 99, W, 35, FLOORC); for (let y = 105; y < H; y += 9) rect(0, y, W, 1, '#6c4f3a'); rect(78, 114, 164, 20, '#46598c'); rect(78, 114, 164, 2, '#d9a35f'); rect(78, 132, 164, 2, '#d9a35f');
+  windowFrame(236, 12, 62, 56, p.sky || 0, t);
+  wallClock(40, 24, 13, p.clock || [11, 7], t); note(78, 36, p.noteRed);
+  rect(14, 46, 40, 3, '#6d5a44'); rect(16, 38, 6, 8, '#9b3b4a'); rect(23, 36, 5, 10, '#3b6b9b'); rect(29, 39, 7, 7, '#d9a35f'); rect(40, 40, 10, 6, '#5a8a5a'); // little shelf with books
+  if ((p.sky || 0) > 0.35) { const r = clamp(((p.sky || 0) - 0.35) / 0.65); glow(262, 108, 60, [255, 175, 100], 0.9 * r, 5, 1.6, 0.55); glow(160, 48, 90, [255, 150, 90], 0.25 * r, 4, 1.6, 1); }
+}
+function desk(p, t) {
+  rect(56, 90, 208, 4, '#a77b52'); rect(56, 94, 208, 4, '#7d5a3b'); rect(56, 98, 5, 36, '#6a4a30'); rect(259, 98, 5, 36, '#6a4a30'); rect(61, 98, 198, 36, '#241f34');
+  rect(150 - 9, 99, 7, 21, '#3d6ea8'); rect(150 + 3, 99, 7, 21, '#3d6ea8'); const jig = p.jig ? Math.floor(t * 4) % 2 : 0; rect(150 - 10, 119 - jig, 9, 5, '#b8483a'); rect(150 + 3, 119, 9, 5, '#b8483a');
+  rect(77, 87, 12, 3, '#4a4a56'); line(83, 87, 83, 73, '#4a4a56'); line(83, 73, 94, 66, '#4a4a56'); poly([[90, 62], [104, 67], [99, 73], [88, 68]], '#e0a43a');
+  if (p.lamp !== false) { px(96, 70, E('#fff2b0')); glow(97, 71, 44, [255, 185, 100], 0.75, 5, 1.2, 0.8); glow(98, 90, 30, [255, 185, 100], 0.55, 4, 2, 0.4); }
+  rect(226, 80, 11, 10, '#e9e4da'); rect(237, 82, 3, 5, '#e9e4da'); rect(227, 81, 9, 2, '#5a3a22');
+  if (p.steam) for (let i = 0; i < 3; i++) px(228 + i * 3 + Math.sin(t * 2 + i) * 1.2, 76 - ((t * 7 + i * 3) % 9), '#cfd8e8');
+  for (let i = 0; i < (p.cups || 0); i++) { const cx = 205 + (i % 3) * 7, cy = 82 - Math.floor(i / 3) * 6; poly([[cx, cy], [cx + 6, cy], [cx + 5, cy + 8], [cx + 1, cy + 8]], i % 2 ? '#d9d4c8' : '#c4463c'); }
+}
+function laptopBack(x, open, awake, t) { // seen from behind
+  const h = 25 * open; if (open > 0.02) { rect(x - 23, 90 - h, 46, h, '#c4cad6'); rect(x - 23, 90 - h, 46, 2, '#a3abb9'); if (open > 0.6) { stayMark(x, 90 - h / 2, 4.5, awake ? E('#9fdcff') : '#7d8798'); if (awake) glow(x, 90 - h / 2, 14, [120, 200, 255], 0.5); } }
+  rect(x - 25, 90, 50, 2, '#9ba3b2');
+}
+const pixBubbleAnchor = {};
+function wide(lt, t, p, st) {
+  room(p, t); desk(p, t);
+  const pose = p.pose || 'scroll', fat = p.fat || 0, sink = fat * 9 + (pose === 'sigh' ? Math.sin(lt * 1.5) * 1 : 0);
+  let cx = 150, cy = 50 + sink; const blink = Math.floor(t * 10) % 41 === 0;
+  let open = (1 - fat * 0.62) * (blink ? 0.1 : 1), look = [0, 1], mouth = 'flat', brow = fat * -0.4, bag = fat > 0.3, tilt = 0;
+  if (pose === 'read') { look = [Math.sin(lt * 2) * 0.6, 1]; brow = -0.5; }
+  if (pose === 'sigh') { mouth = lt > 0.6 ? 'o' : 'flat'; open = lt > 0.6 && lt < 1.6 ? 0.2 : open; look = [0, 0.5]; }
+  if (pose === 'open' || pose === 'type' || pose === 'think' || pose === 'talk' || pose === 'lean' || pose === 'happy') look = [0, 0.4];
+  if (pose === 'lean') { cy -= 3; cx += 2; look = [0, -0.2]; }
+  if (st.talking) mouth = 'talk'; if (pose === 'happy' && !st.talking) mouth = 'smile'; if (pose === 'lean' && !st.talking) mouth = 'smile';
+  if (st.stayTalking && pose !== 'lean') look = [0.8, 0.3];
+  const lap = p.lapAnim ? { x: lerp(210, 150, ease(lt / 1.1)), open: ease((lt - 1.1) / 0.9) } : (p.lap || { x: 205, open: 0 });
+  const phone = pose === 'scroll' || pose === 'read' || pose === 'sigh';
+  if (!phone) { laptopBack(lap.x, lap.open, p.awake || st.stayTalking, t); }
+  else laptopBack(210, 0, false, t);
+  const flick = Math.floor(t * 1.9) % 2;
+  pix(cx, cy, 1, { open, look, brow, bag, mouth, talk: (Math.floor(t * 9) % 3) / 2, bottom: 92, slump: fat * 4 });
+  if (phone) { // phone in two hands, its glow on his face
+    const py = cy + 17 + (pose === 'sigh' ? lt * 3 : 0);
+    tline(cx - 14, cy + 20, cx - 5, py + 6, 4, '#e7ecf4'); tline(cx + 14, cy + 20, cx + 5, py + 6, 4, '#e7ecf4');
+    rect(cx - 6, py, 12, 20, '#12131a'); rect(cx - 5, py + 1, 3, 3, '#2a2c38'); px(cx - 4, py + 2, '#5a6cff');
+    rect(cx - 6, py, 12, 1, E('#5fb8e8')); rect(cx - 6, py, 1, 20, E('#4a9ac8')); rect(cx + 5, py, 1, 20, E('#4a9ac8'));
+    rect(cx - 8, py + 8, 2, 6, SKD); rect(cx + 6, py + 8, 2, 6, SKD); rect(cx + 2, py - 1 - flick, 4, 2, SK);
+    const tints = [[120, 205, 255], [255, 140, 200], [255, 220, 120], [140, 255, 190], [255, 150, 120]], tint = tints[Math.floor(t * 1.9 / 2) % 5];
+    const fl = 0.8 + 0.2 * Math.sin(t * 17) * (p.flicker || 1); glow(cx, py + 6, 34, tint, 0.95 * fl, 5); glow(cx, cy + 2, 18, tint, 0.45 * fl, 4);
+  } else {
+    if (pose === 'lean') { tline(cx - 14, cy + 20, cx - 22, cy + 8, 4, '#e7ecf4'); tline(cx - 22, cy + 8, cx - 9, cy - 2, 4, '#e7ecf4'); tline(cx + 14, cy + 20, cx + 22, cy + 8, 4, '#e7ecf4'); tline(cx + 22, cy + 8, cx + 9, cy - 2, 4, '#e7ecf4'); rect(cx - 12, cy - 4, 5, 3, SKD); rect(cx + 8, cy - 4, 5, 3, SKD); }
+    if ((p.lap && p.lap.open > 0.5) || pose === 'lean') glow(cx, cy + 10, 30, pose === 'lean' ? [255, 190, 120] : [190, 215, 255], pose === 'lean' ? 0.5 : 0.7 + (st.stayTalking ? 0.2 * Math.sin(t * 6) : 0), 5);
+  }
+  if (p.prog) { const f = clamp((lt - p.prog[0]) / (p.prog[1] - p.prog[0])); rect(70, 124, 180, 6, E('#10141f')); rect(71, 125, 178, 4, E('#232c44')); rect(71, 125, Math.round(178 * f), 4, E('#6fc3ff')); rect(71 + Math.round(178 * f) - 1, 125, 1, 4, E('#ffffff')); text('1:00', 254, 123, E('#9fdcff')); }
+  pixBubbleAnchor.wide = { x: 158, y: 15, mx: cx + 3, my: cy + 8 };
+}
+function ots(lt, t, p, st) {
+  setAmb(p.sky || 0); rect(0, 0, W, H, '#3a4468'); for (let x = 0; x < W; x += 8) rect(x, 0, 1, H, '#343d60');
+  rect(0, 108, W, 26, '#7a5a42'); rect(0, 108, W, 3, '#a77b52'); rect(0, 104, W, 4, '#3d3652');
+  wallClock(232, 22, 11, p.clock || [11, 7], t); note(248, 44, p.noteRed);
+  rect(250, 90, 40, 18, '#c4cad6'); rect(250, 106, 46, 2, '#9ba3b2'); rect(280, 94, 11, 14, '#e9e4da'); // laptop lid and mug at the right
+  const reels = p.reels || [['cat', 1.7], ['dance', 1.7], ['cook', 1.7], ['gym', 1.7], ['meme', 1.7]], total = reels.reduce((a, r) => a + r[1], 0);
+  let acc = 0, idx = 0, rl = 0; const tt = p.loop === false ? Math.min(lt, total - 0.01) : lt % total; for (let i = 0; i < reels.length; i++) { if (tt < acc + reels[i][1]) { idx = i; rl = tt - acc; break; } acc += reels[i][1]; }
+  const sl = rl < 0.2 ? ease(rl / 0.2) : 1, prev = reels[(idx + reels.length - 1) % reels.length][0], cur = reels[idx][0];
+  const tint = [[120, 205, 255], [255, 140, 200], [255, 220, 120], [140, 255, 190], [255, 150, 120]][idx % 5];
+  glow(160, 66, 100, tint, 0.55, 5, 1.1, 1.1);
+  // Pix from behind: hair, ear, neck and shoulder, rim-lit by the screen
+  const slump = (p.fat || 0) * 6;
+  ell(34, 66 + slump, 27, 31, '#14121a'); poly([[0, 134], [0, 100 + slump], [20, 94 + slump], [52, 98 + slump], [70, 112 + slump], [76, 134]], '#2b3a63'); for (let y = 100 + slump; y < 134; y += 5) rect(0, y, 70, 2, '#e7ecf4'.replace('#e7ecf4', '#b8c2d8'));
+  rect(28, 94 + slump, 14, 8, '#c9916c'); ell(60, 70 + slump, 4, 7, '#d49a76'); ell(34, 66 + slump, 27, 31, '#14121a'); poly([[10, 50 + slump], [20, 36 + slump], [30, 48 + slump]], '#14121a'); poly([[34, 36 + slump], [44, 30 + slump], [46, 44 + slump]], '#14121a');
+  for (let a = -1.2; a < 1.2; a += 0.05) px(34 + Math.cos(a) * 27, 66 + slump + Math.sin(a) * 31, E('#5fb8e8'));
+  // the phone
+  const X = 122, Y = 6; rect(X - 3, Y - 3, 74, 136, '#0a0b10'); rect(X - 2, Y - 2, 72, 134, '#1c1e28');
+  const vx = X + 1, vy = Y + 1, vw = 66, vh = 118;
+  if (sl < 1) { REELS[prev](vx + 3, vy + 1 - sl * vh, 60, 116, t + 3); REELS[cur](vx + 3, vy + 1 + (1 - sl) * vh, 60, 116, t); } else REELS[cur](vx + 3, vy + 1, 60, 116, t);
+  rect(vx - 1, vy, 3, vh, E('#05060a')); rect(vx + 63, vy, 4, vh, E('#05060a'));
+  const likeT = rl - 0.9; if (likeT > 0 && likeT < 0.5) { const k = ease(likeT / 0.15) * (1 - clamp((likeT - 0.3) / 0.2)); heart(vx + 33, vy + 55, Math.max(1, Math.round(k * 5)), E('#ff3b5c')); }
+  heart(vx + 58, vy + 70, 1, likeT > 0 ? E('#ff3b5c') : E('#ffffff')); rect(vx + 55, vy + 82, 7, 6, E('#fff')); rect(vx + 56, vy + 90, 6, 5, E('#fff'));
+  rect(vx + 5, vy + 102, 22, 3, E('#ffffff')); rect(vx + 5, vy + 108, 34, 2, E('#ffffffaa'.slice(0, 7))); rect(vx + 3, vy + 115, Math.round(60 * (rl / reels[idx][1])), 1, E('#ffffff'));
+  if (likeT > 0.1 && likeT < 0.9) for (let i = 0; i < 3; i++) heart(vx + 56 + Math.sin(likeT * 8 + i * 2) * 4, vy + 66 - (likeT - 0.1) * 40 - i * 7, 1, E('#ff6b8a'));
+  // thumb and fingers
+  const th = rl < 0.3 ? Math.sin(rl / 0.3 * 3.14) * 22 : 0; rect(X - 10, 80, 9, 54, '#c9916c'); rect(X + 68, 84, 9, 50, '#c9916c'); tline(X + 38, 134, X + 34 + th * 0.1, 112 - th, 8, '#d9a77a'); ell(X + 34 + th * 0.1, 110 - th, 5, 6, '#e9b78a');
+  // the friend's message
+  if (p.msg) { const m = p.msg, a = lt - m.at; if (a > 0) { const k = ease(a / 0.25), bx = 148, by = 10 - (1 - k) * 30, name = 'Maya';
+    const lines = wrap(m.text, 150).concat(m.url ? wrap(m.url, 156) : []); const bh = 24 + lines.length * 11 + 4; rect(bx + 2, by + 2, 168, bh, E('#05060a')); rect(bx, by, 168, bh, E('#f4f7fb'));
+    ell(bx + 12, by + 12, 8, 8, E('#ff8fb8')); ell(bx + 12, by + 13, 5, 5.5, E('#f0c6a0')); rect(bx + 6, by + 6, 12, 4, E('#8a3a6a')); px(bx + 10, by + 13, E('#222')); px(bx + 14, by + 13, E('#222'));
+    text(name, bx + 26, by + 5, E('#1c3a7a')); text('now', bx + 26, by + 15, E('#7a8498')); const ws = (m.text + ' ' + (m.url || '')).split(' '), show = Math.floor(clamp((a - 0.4) / m.dur) * ws.length + 0.001); let yy = by + 28, n = 0;
+    for (const ln of lines.map((l) => l.split(' '))) { let xx = bx + 6; for (const w of ln) { n++; if (n <= show) { const isUrl = /vercel/.test(w); text(w, xx, yy, isUrl ? E('#1f5fd0') : E('#1b2230')); if (isUrl) rect(xx, yy + 8, tw(w), 1, E('#1f5fd0')); } xx += tw(w) + 6; } yy += 11; } if (a > 0.1 && a < 0.2) rect(0, 0, W, H, E('#ffffff')); } }
+  pixBubbleAnchor.ots = { x: 8, y: 15, mx: 40, my: 60 };
+}
+const SEG = { 0: 'abcdef', 1: 'bc', 2: 'abged', 3: 'abgcd', 4: 'fgbc', 5: 'afgcd', 6: 'afgedc', 7: 'abc', 8: 'abcdefg', 9: 'abcdfg' };
+function digit(d, x, y, w, h, th, c, off) { const s = SEG[d] || ''; const seg = { a: [x + th, y, w - 2 * th, th], b: [x + w - th, y + th, th, h / 2 - th], c: [x + w - th, y + h / 2, th, h / 2 - th], d: [x + th, y + h - th, w - 2 * th, th], e: [x, y + h / 2, th, h / 2 - th], f: [x, y + th, th, h / 2 - th], g: [x + th, y + h / 2 - th / 2, w - 2 * th, th] };
+  for (const k of 'abcdefg') rect(...seg[k], s.includes(k) ? c : off); }
+function clockShot(lt, t, p) {
+  setAmb(0); rect(0, 0, W, H, '#4a547c'); for (let x = 0; x < W; x += 8) rect(x, 0, 1, H, '#434c72'); rect(0, 110, W, 24, '#6a4c36'); rect(0, 108, W, 3, '#8a6644');
+  rect(86, 22, 148, 86, '#16171d'); rect(88, 24, 144, 82, '#202229'); rect(94, 30, 132, 70, '#0c0d11');
+  const [hh, mm] = (lt < (p.at ?? 99) ? p.from : p.to).split(':'), scr = lt >= (p.at ?? 99) && lt < (p.at ?? 99) + 0.12, ds = (hh.padStart(2, ' ') + mm).split('');
+  const on = E('#ff5a3a'), off = E('#2a1212'); let x = 102;
+  ds.forEach((d, i) => { if (i === 2) { if (Math.floor(t * 2) % 2 === 0) { rect(x + 1, 52, 4, 4, on); rect(x + 1, 70, 4, 4, on); } x += 9; } if (d !== ' ') digit(scr ? Math.floor(rnd(t * 40 + i) * 10) : +d, x, 38, 20, 46, 4, on, off); x += 25; });
+  text(p.ap || 'PM', 205, 90, on); text('ALARM', 100, 90, E('#5a2418')); rect(98, 97, 6, 2, off);
+  glow(160, 62, 90, [255, 70, 40], 0.5, 5, 1.4, 0.9); glow(160, 62, 40, [255, 90, 50], 0.6, 5, 2, 1);
+  if (p.noteClose) note(238, 56, p.noteRed);
+}
+function browser(x, y, w, h, tabs, t, mode, urlN) {
+  rect(x, y, w, h, '#101521'); rect(x, y, w, 12, '#1c2234'); const tw0 = Math.max(7, Math.min(40, Math.floor((w - 8) / Math.max(1, tabs))));
+  for (let i = 0; i < tabs; i++) { const tx = x + 3 + i * tw0; if (tx + tw0 > x + w - 2) break; rect(tx, y + 3, tw0 - 1, 9, i === tabs - 1 ? '#2b3550' : '#232b42'); rect(tx + 1, y + 5, 3, 3, E(['#e6564a', '#4a9ae6', '#e6b84a', '#4ae68a', '#b04ae6', '#ee8a4a'][(i * 5) % 6])); if (tw0 > 22 && i === 0) text('Essay', tx + 6, y + 4, '#c8d2e8'); if (tw0 > 14) rect(tx + tw0 - 5, y + 5, 2, 2, '#6a7390'); }
+  rect(x, y + 12, w, 10, '#2b3550'); rect(x + 14, y + 14, w - 36, 6, '#161c2c'); if (urlN != null) text('stay-two-swart.vercel.app'.slice(0, urlN), x + 16, y + 13, '#d8e2f8');
+  return { cx: x, cy: y + 22, w, h: h - 22 };
+}
+function stayScreen(x, y, w, h, t, k) { // a pixel copy of the app's first screen
+  rect(x, y, w, h, '#050a14'); for (let j = 0; j < 12; j++) rect(x, y + j, w, 1, '#0a1428'); rect(x, y + 10, w, 1, '#111c33');
+  const u = w / 238; stayMark(x + 22 * u, y + 5, 3.4, E('#7fa6d8'), 18); text('Stay', x + 30 * u, y + 2, E('#f0f4fa'));
+  rect(x + 81 * u, y + 2, 14 * u, 6, E('#1c2c44')); [[83, 10], [99, 12], [115, 9], [130, 9], [146, 12]].forEach(([a, b], i) => rect(x + a * u, y + 4, b * u * 0.7, 2, E(i ? '#6f7f9f' : '#e8f0ff'))); rect(x + w - 42 * u, y + 2, 28 * u, 6, E('#3a1e26')); rect(x + w - 38 * u, y + 4, 20 * u, 2, E('#ff8a7a'));
+  const cx = x + w / 2, cy = y + h * 0.5; for (let a = 0; a < 190; a++) { const th = a * 2.399, rr = Math.sqrt(a / 190) * 15 * u, wob = 1 + 0.06 * Math.sin(t * 3 + a); px(cx + Math.cos(th + t * 0.4) * rr * wob, cy + Math.sin(th + t * 0.4) * rr * wob * 0.85, E(a % 3 ? '#9fc4ee' : '#5d86bd')); }
+  rect(x + 43 * u, y + h - 24, 152 * u, 12, '#0d1626'); rect(x + 43 * u, y + h - 24, 152 * u, 1, '#1d2b45'); text('+', x + 48 * u, y + h - 22, E('#9fb0cc')); text('Message Stay', x + 58 * u, y + h - 22, E('#6a7a98')); rect(x + 178 * u, y + h - 22, 14 * u, 8, '#16233a'); text('Call', x + 180 * u, y + h - 21, E('#dbe6f8'));
+}
+function laptopShot(lt, t, p) {
+  setAmb(0); rect(0, 0, W, H, '#05070d');
+  const z = p.zoom || 1;
+  if (z < 2) { rect(40, 4, 240, 126, '#1a1d28'); rect(44, 8, 232, 114, '#05070d'); rect(20, 126, 280, 8, '#6a4c36'); rect(28, 122, 264, 5, '#aab2c0');
+    if (p.mode === 'tabs') { const n = p.tabs || 3; rect(44, 8, 232, 114, '#0e1424'); const wins = [{ x: 52, y: 14, c: '#f1f1ee', t: 'Essay_final' }]; for (let i = 1; i <= n; i++) wins.push({ x: 60 + ((i * 29) % 110), y: 18 + ((i * 17) % 40), c: ['#e6564a', '#4a9ae6', '#e6b84a', '#4ae68a', '#b04ae6', '#ee8a4a'][i % 6], t: null }); wins.forEach((w, i) => { rect(w.x - 1, w.y - 1, 118, 64, '#05070d'); rect(w.x, w.y, 116, 62, i ? '#1c2234' : '#f1f1ee'); rect(w.x, w.y, 116, 9, i ? w.c : '#3a4a7a'); rect(w.x + 108, w.y + 2, 5, 5, '#ffffff'); if (i) { for (let k = 0; k < 3; k++) rect(w.x + 6, w.y + 14 + k * 12, 70 - k * 12, 5, '#2b3550'); rect(w.x + 84, w.y + 14, 26, 26, E(['#8fd0f0', '#7a2bd0', '#e8c58c', '#34363c', '#d8472b'][i % 5])); } else { text('Essay_final', w.x + 6, w.y + 14, '#2a2f3d'); text('0 words', w.x + 6, w.y + 26, '#8a8f9c'); if (Math.floor(t * 2) % 2) rect(w.x + 6, w.y + 40, 1, 8, '#2a2f3d'); } }); text(n + ' open', 50, 112, E('#6a7390')); glow(160, 66, 120, [160, 190, 255], 0.35, 4, 1.4, 1); }
+    else { const urlN = Math.floor(clamp((lt - 0.5) / 1.5) * 25); const b = browser(46, 10, 228, 110, 1, t, 'url', urlN); rect(b.cx, b.cy, b.w, b.h, '#0a0f1c'); if (lt > 2.3) stayScreen(b.cx, b.cy, b.w, b.h, t, 1); glow(160, 66, 120, [160, 200, 255], 0.35, 4, 1.4, 1); } }
+  else { stayScreen(41, 0, 238, 134, t, 2); }
+}
+function listShot(lt, t, p) {
+  setAmb(p.sky ?? 1); rect(0, 0, W, H, '#6b4c38'); for (let y = 0; y < H; y += 9) rect(0, y, W, 1, '#5e4331'); glow(250, 20, 120, [255, 170, 100], 0.8, 5, 1.6, 1.1);
+  rect(64, 6, 190, 134, '#f4ecd6'); rect(64, 6, 190, 8, '#c4553a'); for (let i = 0; i < 12; i++) rect(70 + i * 15, 2, 5, 12, '#7a7f8c'); for (let y = 26; y < 134; y += 11) rect(64, y, 190, 1, '#d8ceb2');
+  text('Today', 80, 19, '#c4553a', 1); const items = ['Essay intro', 'Reply to landlord', 'Pay the bill'], ticks = p.ticks || [1.4, 3.4, 5.4];
+  items.forEach((s, i) => { const y = 40 + i * 28, tk = lt - ticks[i], done = tk > 0.35; rect(82, y, 14, 14, '#2a2e3a'); rect(84, y + 2, 10, 10, done ? '#8fd18a' : '#fbf6e8');
+    if (tk > 0) { const f = clamp(tk / 0.35); line(85, y + 8, 85 + Math.round(f * 3), y + 8 + Math.round(f * 3), '#1f6a2a'); if (f > 0.6) { const g = (f - 0.6) / 0.4; line(88, y + 11, 88 + Math.round(g * 9), y + 11 - Math.round(g * 12), '#1f6a2a'); line(89, y + 11, 89 + Math.round(g * 9), y + 11 - Math.round(g * 12), '#1f6a2a'); } }
+    text(s, 104, y + 4, done ? '#8a8576' : '#232733'); if (tk > 0.1) rect(103, y + 7, Math.round(tw(s) * clamp((tk - 0.1) / 0.3)), 1, '#232733');
+    if (tk > 0.3 && tk < 0.9) for (let k = 0; k < 7; k++) { const a = k / 7 * 6.283, r = (tk - 0.3) * 30; px(89 + Math.cos(a) * r, y + 7 + Math.sin(a) * r, E(['#ffe28a', '#8fe0a0', '#ffffff'][k % 3])); } });
+  const cur = ticks.findIndex((x) => lt < x + 0.5); if (cur >= 0) { const near = clamp((lt - (ticks[cur] - 0.9)) / 0.6), py = 40 + cur * 28, nx = lerp(210, 88 + Math.min(1, Math.max(0, lt - ticks[cur])) * 8, ease(near)), ny = lerp(py - 10, py + 9, ease(near)); tline(nx, ny, nx + 22, ny - 22, 3, '#2a2e3a'); poly([[nx - 1, ny + 1], [nx + 2, ny - 1], [nx + 1, ny + 3]], '#2a2e3a'); ell(nx + 27, ny - 27, 7, 6, '#d9a77a'); tline(nx + 30, ny - 24, nx + 44, ny - 8, 7, '#e7ecf4'); }
+}
+function faceShot(lt, t, p, st) {
+  const light = p.light || 'phone'; setAmb(light === 'dawn' ? 1 : 0); rect(0, 0, W, H, light === 'dawn' ? '#8a8fb8' : '#3a4468'); for (let x = 0; x < W; x += 8) rect(x, 0, 1, H, light === 'dawn' ? '#8086b0' : '#343d60');
+  if (light === 'dawn') { windowFrame(196, 6, 70, 62, 0.85, t); glow(230, 40, 110, [255, 170, 100], 0.8, 5, 1.4, 1.2); } else { wallClock(262, 22, 11, p.clock || [1, 42], t); }
+  const fat = p.fat || 0, blink = Math.floor(t * 10) % 43 === 0; const cx = p.cx ?? 100, cy = 66 + fat * 7;
+  const pose = p.pose || 'listen'; let mouth = pose === 'happy' ? 'smile' : pose === 'sigh' ? 'o' : (pose === 'impatient' ? 'frown' : 'flat'); if (st.talking) mouth = 'talk'; if (pose === 'happy' && st.talking) mouth = 'talk';
+  const open = (blink ? 0.1 : 1) * (1 - fat * 0.65) * (pose === 'sigh' && lt > 0.8 && lt < 1.8 ? 0.25 : 1), look = pose === 'listen' ? [Math.sin(lt * 1.3) * 0.5, 0.3] : pose === 'read' ? [Math.sin(lt * 2) * 0.8, 1] : [0.7, 0.2];
+  pix(cx, cy, 3.1, { open, look, brow: pose === 'impatient' ? 1 : pose === 'happy' ? -0.3 : -0.2 - fat * 0.5, bag: fat > 0.2 || pose === 'read', mouth, talk: (Math.floor(t * 9) % 3) / 2, bottom: 134, slump: fat * 3 });
+  const tint = light === 'laptop' ? [190, 215, 255] : [[120, 205, 255], [255, 140, 200], [255, 220, 120], [140, 255, 190], [255, 150, 120]][Math.floor(t * 1.9 / 2) % 5];
+  if (light === 'dawn') glow(160, 40, 150, [255, 175, 110], 0.55, 5, 1.2, 1); else glow(light === 'laptop' ? 60 : 150, 128, 120, tint, 0.9 * (0.85 + 0.15 * Math.sin(t * 15)), 5, 1.2, 1);
+  if (light === 'phone') { const X = 190, Y = 40; rect(X - 2, Y - 2, 40, 100, '#0a0b10'); const k = Math.floor(t / 1.7) % 5; REELS[REEL_ORDER[k]](X, Y, 36, 96, t); }
+  pixBubbleAnchor.face = { x: 150, y: 15, mx: cx + 6, my: cy + 21 };
+}
+const SHOTS = { wide, ots, clock: clockShot, laptop: laptopShot, list: listShot, face: faceShot, black: () => { AMB = [1, 1, 1]; rect(0, 0, W, H, '#000000'); } };
+
+// ---- bubbles, cards, the frame ------------------------------------------------------------------------------------------------
+function drawBubble(b, t, type) {
+  const a = pixBubbleAnchor[type] || pixBubbleAnchor.wide || { x: 150, y: 6, mx: 150, my: 56 }; AMB = [1, 1, 1];
+  const lines = wrap(b.text, type === 'face' ? 156 : 140), w = Math.max(...lines.map((l) => tw(l))) + 10, h = lines.length * 11 + 6;
+  const bx = Math.round(clamp(a.x, 4, W - w - 6)), by = a.y, words = b.text.split(' '), dur = Math.max(0.3, b.t1 - b.t0 - 0.35), show = Math.min(words.length, Math.floor(clamp((t - b.t0) / dur) * (words.length + 0.999)));
+  const k = clamp((t - b.t0) / 0.12); if (k <= 0) return;
+  rect(bx + 3, by + 3, w, h, E('#05060c')); rect(bx - 2, by - 2, w + 4, h + 4, E('#2a1604')); rect(bx, by, w, h, E('#ffe3a6'));
+  const tx = clamp(a.mx, bx + 8, bx + w - 8); const ax = clamp(a.mx, tx - 12, tx + 12); poly([[tx - 6, by + h], [tx + 6, by + h], [ax, by + h + 11]], E('#2a1604')); poly([[tx - 4, by + h - 1], [tx + 4, by + h - 1], [ax, by + h + 8]], E('#ffe3a6'));
+  rect(bx + 2, by - 11, 21, 9, E('#2a1604')); rect(bx + 3, by - 10, 19, 8, E('#f0a020')); text('PIX', bx + 5, by - 9, E('#2a1604'));
+  let n = 0; lines.forEach((ln, j) => { let xx = bx + 5; for (const wd of ln.split(' ')) { n++; if (n <= show) text(wd, xx, by + 3 + j * 11, E('#2a1604')); xx += tw(wd) + 6; } });
+}
+function render(t) {
+  const S = window.__STORY || { shots: [], bubbles: [], cards: [], stay: [] };
+  const shot = S.shots.find((s) => t >= s.t0 && t < s.t1); buf.fill(0); for (let i = 3; i < buf.length; i += 4) buf[i] = 255;
+  if (!shot) return;
+  const lt = t - shot.t0, bs = S.bubbles.filter((b) => t >= b.t0 && t < b.t1 + 0.4), st = { talking: bs.some((b) => t < b.t1), stayTalking: S.stay.some((s) => t >= s[0] && t < s[1]) };
+  (SHOTS[shot.type] || SHOTS.black)(lt, t, shot.p || {}, st);
+  AMB = [1, 1, 1];
+  if (shot.type !== 'black') bs.forEach((b) => drawBubble(b, t, shot.type));
+  for (const c of S.cards) if (t >= c.t0 && t < c.t1) {
+    const k = Math.min(clamp((t - c.t0) / 0.4), clamp((c.t1 - t) / 0.4));
+    if (c.kind === 'stamp') { const sc = c.scale || 1; text(c.text, c.x ?? 10, c.y ?? 120, E('#ffb454'), sc, E('#000000')); }
+    else { const f = k; if (f < 1) { /* fade the card with the black under it */ } rect(0, 0, W, H, E('#000000')); const sc = c.scale || 2, w = tw(c.text, sc); text(c.text, Math.round((W - w) / 2), c.sub ? 50 : 58, E('#ffb454'), sc); if (c.sub) text(c.sub, Math.round((W - tw(c.sub)) / 2), 78, E('#9fdcff')); dim(f); }
+  }
+  const fi = shot.fi ?? 0, fo = shot.fo ?? 0; let f = 1; if (fi && t - shot.t0 < fi) f = Math.min(f, (t - shot.t0) / fi); if (fo && shot.t1 - t < fo) f = Math.min(f, (shot.t1 - t) / fo); if (f < 1) dim(clamp(f));
+}
+function frameB64() { let s = ''; for (let i = 0; i < buf.length; i += 0x8000) s += String.fromCharCode.apply(null, buf.subarray(i, i + 0x8000)); return btoa(s); }
+window.render = render; window.frameB64 = frameB64; window.setStory = (s) => { window.__STORY = s; };
+</script>
+</body></html>

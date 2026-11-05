@@ -11,7 +11,7 @@ import { usePersistentDraft } from '@/lib/storage/usePersistentDraft';
 
 type Phase = { kind: 'write' } | { kind: 'sorting' } | { kind: 'done'; result: TriageResponse; source: string } | { kind: 'safety'; which: 'crisis' | 'medication' };
 
-const GROUP_LABEL = { now: 'Start with this', today: 'Today', later: 'Later, no pressure' } as const;
+const GROUP_LABEL = { now: 'Start with this', today: 'Today', later: 'Later' } as const;
 
 /**
  * Brain dump: say or type everything on your mind, in any order. Stay splits it, picks ONE thing to start, a few for today,
@@ -32,12 +32,18 @@ export function BrainDumpSheet({ onClose, onStart, onCrisis, onSaved, live, voic
 }) {
   const [text, setText, clearText] = usePersistentDraft('stay_draft_braindump', '');
   const [phase, setPhase] = useState<Phase>({ kind: 'write' });
+  const [empty, setEmpty] = useState(false);
   const area = useRef<HTMLTextAreaElement>(null);
   useEffect(() => area.current?.focus(), []);
 
   const sort = async () => {
     const t = text.trim();
-    if (t.length < 2) return;
+    if (t.length < 2) {
+      // the button stays a real button: an empty click says what to do and puts the cursor there
+      setEmpty(true);
+      area.current?.focus();
+      return;
+    }
     if (detectCrisisSignal(t).triggered) return onCrisis();
     setPhase({ kind: 'sorting' });
     let result: TriageResponse | null = null;
@@ -68,8 +74,7 @@ export function BrainDumpSheet({ onClose, onStart, onCrisis, onSaved, live, voic
     <Sheet title="Brain dump" onClose={close}>
       {voicePhase?.phase === 'listening' ? (
         <div data-testid="dump-listening">
-          <p className="flex items-center gap-2 font-medium" role="status" aria-live="polite">
-            <span className="inline-block h-3 w-3 animate-pulse rounded-full bg-accent" aria-hidden="true" />
+          <p className="font-medium" role="status" aria-live="polite">
             Listening. Take your time.
           </p>
           <p className="meta mt-1">Say everything on your mind. I will not interrupt. Say &ldquo;that&rsquo;s it&rdquo; when you are done, &ldquo;scratch that&rdquo; to undo the last bit, or &ldquo;never mind&rdquo; to drop it.</p>
@@ -96,9 +101,9 @@ export function BrainDumpSheet({ onClose, onStart, onCrisis, onSaved, live, voic
       ) : phase.kind === 'write' || phase.kind === 'sorting' ? (
         <div>
           <p className="meta">Everything on your mind, in any order, as messy as it comes. Stay will sort it into one thing to start, a few for today, and the rest for later.</p>
-          {onTalk && (
-            <button type="button" className="btn btn-secondary mt-3 w-full" onClick={onTalk} disabled={!voiceOn} data-testid="dump-talk">
-              {voiceOn ? 'Talk it out instead' : 'To talk it out, tap the orb first'}
+          {onTalk && voiceOn && (
+            <button type="button" className="btn btn-secondary mt-3 w-full" onClick={onTalk} data-testid="dump-talk">
+              Talk it out instead
             </button>
           )}
           <textarea
@@ -108,11 +113,13 @@ export function BrainDumpSheet({ onClose, onStart, onCrisis, onSaved, live, voic
             aria-label="Everything on your mind"
             value={text}
             maxLength={2000}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => (setText(e.target.value), setEmpty(false))}
             disabled={phase.kind === 'sorting'}
+            aria-describedby={empty ? 'dump-empty' : undefined}
             data-testid="dump-input"
           />
-          <button type="button" className="btn btn-primary mt-3 w-full" onClick={() => void sort()} disabled={phase.kind === 'sorting' || text.trim().length < 2} data-testid="dump-sort">
+          {empty && <p id="dump-empty" className="meta mt-2" role="status" data-testid="dump-empty">Write one thing first.</p>}
+          <button type="button" className="btn btn-primary mt-3 w-full" onClick={() => void sort()} disabled={phase.kind === 'sorting'} data-testid="dump-sort">
             {phase.kind === 'sorting' ? 'Sorting...' : 'Sort it for me'}
           </button>
         </div>

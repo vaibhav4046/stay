@@ -3,14 +3,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { computeOverallMetrics, computeStrategyStats } from '@/lib/coach/patterns';
 import { SAMPLE_DAYS, SAMPLE_NOW, SAMPLE_SESSIONS, bandOf, dayOf } from '@/components/landing/sampleWeek';
-import { CHAPTERS } from '@/components/landing/DemoPlayer';
 import { TRANSCRIPT } from '@/components/landing/transcript';
 import { dotGlyph } from '@/components/landing/personaDots';
 import { PERSONAS } from '@/lib/voice/personas';
 import { LANGS_NO, LANGS_OK } from '@/components/landing/resultsData';
 import { weekTally } from '@/lib/coach/weekTally';
 
-const vtt = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'demo', 'stay-demo.vtt'), 'utf8');
+const vtt = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'demo', 'stay-story-film.vtt'), 'utf8');
 const cues = [...vtt.matchAll(/(\d\d):(\d\d):(\d\d\.\d{3}) --> [^\n]*\n([^\n]+)/g)].map((m) => ({
   start: Number(m[1]) * 3600 + Number(m[2]) * 60 + Number(m[3]),
   text: m[4].trim(),
@@ -45,11 +44,7 @@ describe('landing: sample week', () => {
   });
 });
 
-describe('landing: demo video', () => {
-  it('chapters start exactly where a caption starts', () => {
-    for (const c of CHAPTERS) expect(cues.some((q) => Math.abs(q.start - c.t) < 0.001), c.label).toBe(true);
-  });
-
+describe('landing: the film', () => {
   it('the transcript is the caption file', () => {
     expect(TRANSCRIPT).toHaveLength(cues.length);
     TRANSCRIPT.forEach((t, i) => expect(t.text).toBe(cues[i].text));

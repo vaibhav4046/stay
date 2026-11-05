@@ -84,7 +84,7 @@ describe('POST /api/coach/plan safety regression', () => {
     const resHi = await POST(reqHi);
     expect(resHi.status).toBe(200);
     const dataHi = await resHi.json();
-    expect(dataHi.spokenResponse).toContain('मैं आपके साथ हूँ');
+    expect(dataHi.spokenResponse).toContain('टाइमर');
     expect(dataHi.firstStep).toContain('छोटा कदम');
 
     // Spanish task
@@ -92,6 +92,7 @@ describe('POST /api/coach/plan safety regression', () => {
     const resEs = await POST(reqEs);
     expect(resEs.status).toBe(200);
     const dataEs = await resEs.json();
-    expect(dataEs.spokenResponse).toContain('Estoy aquí contigo');
+    expect(dataEs.spokenResponse).toContain('temporizador');
+    expect(dataEs.spokenResponse).not.toContain('Estoy aquí contigo'); // no stock opener before the step
   });
 });

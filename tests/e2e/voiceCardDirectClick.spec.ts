@@ -29,7 +29,7 @@ test('Clicking voice card container selects voice and arms it immediately', asyn
 
   // Close sheet and verify receipt feedback on Today screen
   await page.keyboard.press('Escape');
-  await expect(page.getByText(/Audrey armed — ready to speak/)).toBeVisible();
+  await expect(page.getByText(/Audrey ready to speak/)).toBeVisible();
 
   // Re-open and click Card: Paul (id: 'paul') in More voices
   await page.getByTestId('menu-button').click();
@@ -52,7 +52,7 @@ test('Clicking voice card container selects voice and arms it immediately', asyn
 
   // Close sheet and verify Paul armed receipt
   await page.keyboard.press('Escape');
-  await expect(page.getByText(/Paul armed — ready to speak/)).toBeVisible();
+  await expect(page.getByText(/Paul ready to speak/)).toBeVisible();
 
   // Re-open and click Card: Adrienne (id: 'anna') in Recommended
   await page.getByTestId('menu-button').click();
@@ -69,7 +69,7 @@ test('Clicking voice card container selects voice and arms it immediately', asyn
   expect(annaSelected).toBe('anna');
 
   await page.keyboard.press('Escape');
-  await expect(page.getByText(/Adrienne armed — ready to speak/)).toBeVisible();
+  await expect(page.getByText(/Adrienne ready to speak/)).toBeVisible();
 
   await page.screenshot({ path: 'test-results/voice-card-armed-success.png' });
 });

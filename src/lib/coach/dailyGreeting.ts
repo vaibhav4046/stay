@@ -6,6 +6,7 @@
 import type { CoachSessionRecord } from '@/types/domain';
 import type { TodayItem } from '@/lib/coach/todayList';
 import { localDay, localDayOf, partOfDay, yesterdayOf, type PartOfDay } from '@/lib/coach/time';
+import { wholeWords } from '@/lib/voice/spokenSteps';
 
 /** Words and phrases a greeting must never contain. */
 export const BANNED_PHRASES = ['overdue', 'behind', 'failed', 'failure', 'lazy', 'streak lost', 'lost your streak', 'should have', 'should\'ve', 'missed', 'you didn\'t', 'no excuse', 'catch up', 'only '] as const;
@@ -43,22 +44,22 @@ const pick = <T,>(list: readonly T[], seed: number, slot: number): T => list[Mat
 const dayNumber = (d: Date) => Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86_400_000);
 
 const OPENERS: Record<PartOfDay, ((n: string) => string)[]> = {
-  morning: [(n) => `Good morning${n}.`, (n) => `Morning${n}. Glad you are here.`, (n) => `Hello${n}. A fresh morning.`],
-  afternoon: [(n) => `Good afternoon${n}.`, (n) => `Hello${n}. Nice to see you.`, (n) => `Hi${n}. Glad you came by.`],
-  evening: [(n) => `Good evening${n}.`, (n) => `Hi${n}. Settling in for the evening?`, (n) => `Hello${n}. Nice to see you.`],
-  night: [(n) => `Hi${n}. It's late. I'm here.`, (n) => `Hello${n}. Quiet hour. No pressure.`, (n) => `Hi${n}. Glad you're here, even at this hour.`],
+  morning: [(n) => `Good morning${n}.`, (n) => `Morning${n}.`, (n) => `Hello${n}. Good morning.`],
+  afternoon: [(n) => `Good afternoon${n}.`, (n) => `Hello${n}.`, (n) => `Hi${n}.`],
+  evening: [(n) => `Good evening${n}.`, (n) => `Hi${n}. Settling in for the evening?`, (n) => `Hello${n}.`],
+  night: [(n) => `Hi${n}. It's late.`, (n) => `Hello${n}. Quiet hour.`, (n) => `Hi${n}. Still up at this hour?`],
 };
 
 const WINS: Array<(w: number) => string> = [
   (w) => `Yesterday you got ${w === 1 ? 'one thing' : `${w} things`} done.`,
   (w) => `${w === 1 ? 'One win' : `${w} wins`} yesterday. That counts.`,
-  (w) => `You finished ${w === 1 ? 'one thing' : `${w} things`} yesterday. Nice.`,
+  (w) => `You finished ${w === 1 ? 'one thing' : `${w} things`} yesterday.`,
 ];
 
 const OPEN_LINES: Array<(t: string) => string> = [
   (t) => `"${t}" is still here whenever you want it. No rush.`,
   (t) => `If you like, we can pick "${t}" back up. Or not.`,
-  (t) => `"${t}" is waiting, gently.`,
+  (t) => `"${t}" is here when you want it.`,
 ];
 
 const SPOKEN_ASKS = ["What's on your mind?", 'What would help right now?', 'Where do you want to start?'];
@@ -69,7 +70,7 @@ function chooseOptions(part: PartOfDay, openItem: string | undefined): GreetingO
     start_small: { id: 'start_small', label: 'One small start' },
     dump: { id: 'dump', label: 'Empty my head' },
     plan_day: { id: 'plan_day', label: 'Plan my day' },
-    resume: { id: 'resume', label: openItem ? `Pick up ${clip(openItem, 20)}` : 'Pick something up' },
+    resume: { id: 'resume', label: openItem ? `Pick up ${wholeWords(openItem, 20)}` : 'Pick something up' },
     wrap: { id: 'wrap', label: 'Wrap up the day' },
     sit_with_me: { id: 'sit_with_me', label: 'Just keep me company' },
   };
@@ -91,7 +92,7 @@ export function buildDailyGreeting(input: GreetingInput): DailyGreeting {
   const lines = [pick(OPENERS[part], seed, 0)(name)];
   if (input.winsYesterday > 0) lines.push(pick(WINS, seed, 1)(input.winsYesterday));
   // one open item is named, never a pile: counting what is left is what makes people dread the app
-  if (open) lines.push(pick(OPEN_LINES, seed, 2)(clip(open, 40)));
+  if (open) lines.push(pick(OPEN_LINES, seed, 2)(wholeWords(open, 40)));
   const options = chooseOptions(part, open);
   const ask = pick(ASKS, seed, 3);
   const text = `${lines.join(' ')} ${ask}`;

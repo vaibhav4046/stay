@@ -13,7 +13,8 @@ export function looksLikeInstruction(text: string): boolean {
   return INSTRUCTION_START.test(text) || INSTRUCTION_TELLS.test(text);
 }
 
-export function proactiveFrame(mode: ProactiveMode, text: string, fast: boolean): { type: 'reply.say'; text: string } | { type: 'reply.create'; instructions: string } {
-  if (fast && mode === 'say' && !looksLikeInstruction(text)) return { type: 'reply.say', text };
-  return { type: 'reply.create', instructions: text };
+export function proactiveFrame(mode: ProactiveMode, text: string, fast: boolean): { type: 'reply.say'; text: string; when: 'idle' } | { type: 'reply.create'; instructions: string; when: 'idle' } {
+  // `when: 'idle'`: the voice waits for a quiet moment instead of cutting into a reply or talking over the person
+  if (fast && mode === 'say' && !looksLikeInstruction(text)) return { type: 'reply.say', text, when: 'idle' };
+  return { type: 'reply.create', instructions: text, when: 'idle' };
 }

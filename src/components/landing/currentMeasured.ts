@@ -1,8 +1,9 @@
 /**
  * Numbers for the landing page, read straight from the evidence file written by `node scripts/measure-voice.mjs`.
  * Nothing here is typed in by hand; to change it, re-run the script and update the import below.
+ * `node scripts/check-claims.mjs` fails when the file imported here is not the newest measure-*.json in docs/evidence/real-provider.
  */
-import measure from '../../../docs/evidence/real-provider/measure-0f93339.json';
+import measure from '../../../docs/evidence/real-provider/measure-bdcd654.json';
 
 interface Row { category: string; wer: number | null; langOk: boolean | null }
 const rows = measure.results as Row[];
@@ -14,9 +15,15 @@ const plain = rows.filter((r) => r.category === 'names-without-keyterms' && r.we
 const boosted = rows.filter((r) => r.category === 'names-with-keyterms' && r.wer !== null);
 const langChecked = rows.filter((r) => r.langOk !== null);
 
+/** What this speech test does not cover. Two of those (a human microphone, noisy rooms) have not been measured anywhere; the rest is timed elsewhere. */
+const NOT_MEASURED_ANYWHERE = /human|noisy/i;
+const notMeasured = measure.notMeasured as string[];
+
 export const CURRENT = {
   date: measure.timestamp.slice(0, 10),
   gitSha: measure.gitSha.slice(0, 7),
+  /** true when the working tree had uncommitted changes while the script ran: then the stamp is the commit it started from, not an exact build */
+  dirty: measure.dirty === true,
   clips: measure.completed,
   englishWer: pct(mean(english.map((r) => r.wer as number))),
   englishN: english.length,
@@ -32,5 +39,7 @@ export const CURRENT = {
   namesN: plain.length,
   byGroup: Object.entries(measure.werByCategory as Record<string, { n: number; meanWer: number | null }>).map(([k, v]) => ({ key: k, n: v.n, wer: v.meanWer })),
   limits: measure.limits as string[],
-  notMeasured: measure.notMeasured as string[],
+  notMeasured,
+  notCovered: notMeasured.filter((x) => !NOT_MEASURED_ANYWHERE.test(x)),
+  notMeasuredAnywhere: notMeasured.filter((x) => NOT_MEASURED_ANYWHERE.test(x)),
 };

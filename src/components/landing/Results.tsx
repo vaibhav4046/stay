@@ -1,5 +1,5 @@
 'use client';
-// evidence: docs/evidence/real-provider/measure-0f93339.json
+// evidence: docs/evidence/real-provider/measure-bdcd654.json
 
 import { useReveal } from './useReveal';
 import { CURRENT } from './currentMeasured';
@@ -28,9 +28,9 @@ export function Results() {
   return (
     <div ref={ref} data-reveal={state}>
       <div className="lp-rhead" data-testid="measured-now">
-        <h3 className="sub-title">Measured on this build, {CURRENT.date}</h3>
+        <h3 className="sub-title">Speech test of {CURRENT.date}</h3>
         <p className="lp-night-copy">
-          Real AssemblyAI, run by <code>scripts/measure-voice.mjs</code> at commit {CURRENT.gitSha}: {CURRENT.clips} synthetic-speech clips streamed in real time through AssemblyAI's Universal-3.6 Pro model. Numbers are read from the evidence file, not typed in.
+          Real AssemblyAI, run by <code>scripts/measure-voice.mjs</code> at commit {CURRENT.gitSha}{CURRENT.dirty ? ' (the working tree had uncommitted changes)' : ''}: {CURRENT.clips} synthetic-speech clips streamed in real time through AssemblyAI's Universal-3.6 Pro model. Numbers are read from the evidence file in docs/evidence.
         </p>
         <ul className="lp-behind-list">
           <li>Words wrong in {CURRENT.englishN} English sentences across American, British, Indian, Australian and Irish voices: {CURRENT.englishWer}.</li>
@@ -41,14 +41,14 @@ export function Results() {
           <li>Hard names ({CURRENT.namesN} sentences): {CURRENT.namesPlain} of words wrong, {CURRENT.namesBoosted} once they are in My words.</li>
         </ul>
         <p className="lp-limits" data-testid="result-limits">
-          Tested with a simulated speaker on one laptop; a test with a person speaking into a microphone is next. Not measured yet: {CURRENT.notMeasured.join('; ')}.
+          Tested with a simulated speaker on one laptop; a test with a person speaking into a microphone is next. This speech test leaves out: {CURRENT.notCovered.join('; ')}. Reply timing is in the benchmarks above. Not measured anywhere yet: {CURRENT.notMeasuredAnywhere.join('; ')}.
         </p>
       </div>
 
       <div className="lp-rhead lp-rhead-gap">
         <h3 className="sub-title">Languages checked in a live test</h3>
         <p className="lp-night-copy">
-          On 18 October 2026 we played one spoken sentence in each language into a live session and checked what came back. The languages below came back right on auto-detect. Beyond the six it speaks, they were seen working, not promised.
+          On 18 October 2026 we played one spoken sentence in each language into a live session and checked what came back. The languages below came back right on auto-detect. Beyond the six it speaks, they were worked in this one test.
         </p>
       </div>
       <Languages />

@@ -49,21 +49,25 @@ const CRISIS_PATTERNS: Array<{ regex: RegExp; label: string }> = [
   { regex: /\b(?:cut(?:ting)?|burn(?:ing)?|hang(?:ing)?|drown(?:ing)?|shoot(?:ing)?|stab(?:bing)?|poison(?:ing)?|starv(?:e|ing))\s+my\s?self\b(?!\s+(?:some\s+slack|in\s+(?:work|the\s+foot|tasks)|out\b))|\bcut(?:ting)?\s+(?:my\s+)?wrists?\b/i, label: 'self-harm method' },
   { regex: /\bjump(?:ing)?\s+(?:off|from)\s+(?:a|the|my)\s+(?:bridge|building|roof|cliff|balcony|window|train)\b/i, label: 'self-harm method' },
   { regex: /\b(overdos(?:e|ed|ing)|(?:took|taken|taking|swallowed|swallow)\s+(?:too\s+many|all\s+(?:of\s+)?my)\s+(?:pills|tablets|meds|medication))\b/i, label: 'overdose risk' },
+  // indirect wording found by a safety review, 4 Nov 2026 (each one got a productivity step before)
+  { regex: /\b(?:go(?:ing)?\s+to\s+sleep|fall(?:ing)?\s+asleep|sleep)\s+and\s+(?:never|not|don'?t)\s+wake\s+up\b(?!\s+(?:early|at|before|till|until))/i, label: 'life safety risk' },
+  { regex: /\b(?:pills|tablets|meds|medication)\s+(?:saved|stashed|stockpiled|hidden)\s+up\b|\b(?:sav(?:e|ed|ing)|stockpil(?:e|ed|ing)|hoard(?:ed|ing)|stash(?:ed|ing)?)\s+(?:up\s+)?(?:all\s+)?(?:my\s+)?(?:pills|tablets|meds)\b/i, label: 'overdose risk' },
+  { regex: /\b(?:no\s*one|nobody)\s+(?:would|will|'?d)\s+(?:even\s+)?(?:notice|care|miss\s+me)\s+if\s+i\s+(?:was|were|am|'?m)\s+(?:gone|dead|not\s+(?:here|around|alive))\b|\b(?:no\s*one|nobody)\s+(?:would|will|'?d)\s+(?:even\s+)?(?:notice|care)\s+if\s+i\s+died\b/i, label: 'burden / hopelessness' },
 ];
 
 // Non-English crisis phrases (substring match; \b is meaningless outside Latin script).
 const MULTILINGUAL_CRISIS_REGEX = new RegExp(
   [
     // Hindi / Devanagari
-    'मरना चाहता', 'मरना चाहती', 'मर जाना चाहता', 'मर जाना चाहती', 'मर जाऊं', 'जीना नहीं चाहता', 'जीना नहीं चाहती', 'आत्महत्या', 'खुदकुशी', 'अपनी जान', 'ज़िंदगी खत्म', 'जिंदगी खत्म', 'जीने का कोई मतलब नहीं', 'खुद को मार', 'खुद को नुकसान', 'खुद को चोट',
+    'जीने का मन नहीं', 'जीने की इच्छा नहीं', 'और नहीं जीना', 'मरना चाहता', 'मरना चाहती', 'मर जाना चाहता', 'मर जाना चाहती', 'मर जाऊं', 'जीना नहीं चाहता', 'जीना नहीं चाहती', 'आत्महत्या', 'खुदकुशी', 'अपनी जान', 'ज़िंदगी खत्म', 'जिंदगी खत्म', 'जीने का कोई मतलब नहीं', 'खुद को मार', 'खुद को नुकसान', 'खुद को चोट',
     // Hinglish / romanised Hindi
     'mar\\s*jana\\s*chah', 'marna\\s*chah', 'mar\\s*jaana\\s*chah', 'khudkushi', 'khud\\s*kushi', 'atmahatya', 'jeena\\s*nahi\\s*chah', 'jeene\\s*ka\\s*koi\\s*matlab\\s*nahi', 'jaan\\s*de\\s*du', 'zindagi\\s*khatam', 'khud\\s*ko\\s*(?:maar|hurt|nuksan)',
     // Spanish
-    'quiero\\s+morir', 'me\\s+quiero\\s+matar', 'quitarme\\s+la\\s+vida', 'no\\s+quiero\\s+vivir', 'acabar\\s+con\\s+mi\\s+vida', 'hacerme\\s+daño', 'autolesi', 'suicid',
+    'quiero\\s+desaparecer', 'no\\s+quiero\\s+despertar', 'quiero\\s+morir', 'me\\s+quiero\\s+matar', 'quitarme\\s+la\\s+vida', 'no\\s+quiero\\s+vivir', 'acabar\\s+con\\s+mi\\s+vida', 'hacerme\\s+daño', 'autolesi', 'suicid',
     // French
-    'je\\s+veux\\s+mourir', 'envie\\s+de\\s+mourir', 'me\\s+tuer', 'me\\s+suicider', 'mettre\\s+fin\\s+à\\s+(?:ma\\s+vie|mes\\s+jours)', 'plus\\s+envie\\s+de\\s+vivre', 'me\\s+faire\\s+du\\s+mal',
+    'je\\s+veux\\s+dispara[iî]tre', 'plus\\s+(?:jamais\\s+)?me\\s+r[ée]veiller', 'je\\s+veux\\s+mourir', 'envie\\s+de\\s+mourir', 'me\\s+tuer', 'me\\s+suicider', 'mettre\\s+fin\\s+à\\s+(?:ma\\s+vie|mes\\s+jours)', 'plus\\s+envie\\s+de\\s+vivre', 'me\\s+faire\\s+du\\s+mal',
     // German
-    'ich\\s+will\\s+sterben', 'umbringen', 'suizid', 'selbstmord', 'nicht\\s+mehr\\s+leben', 'mich\\s+töten', 'mir\\s+etwas\\s+antun', 'mich\\s+selbst\\s+verletzen',
+    'nicht\\s+mehr\\s+aufwachen', 'ich\\s+will\\s+sterben', 'umbringen', 'suizid', 'selbstmord', 'nicht\\s+mehr\\s+leben', 'mich\\s+töten', 'mir\\s+etwas\\s+antun', 'mich\\s+selbst\\s+verletzen',
     // Italian / Portuguese
     'voglio\\s+morire', 'uccidermi', 'togliermi\\s+la\\s+vita', 'non\\s+voglio\\s+più\\s+vivere', 'farmi\\s+del\\s+male', 'quero\\s+morrer', 'me\\s+matar', 'tirar\\s+minha\\s+vida', 'não\\s+quero\\s+mais\\s+viver', 'me\\s+machucar',
     // Japanese / Chinese / Korean
@@ -180,7 +184,7 @@ export interface SensoryGroundingResult {
 }
 
 export const GROUNDING_FIXED_PROMPT =
-  "I am right here with you. Everything can wait. Let's ground right now with 5-4-3-2-1: Name 5 things you can see around you, 4 things you can physically touch, 3 sounds you can hear, 2 scents you notice, and 1 slow breath. Follow the breathing circle on screen.";
+  "Everything can wait. Let's ground with 5-4-3-2-1: Name 5 things you can see around you, 4 things you can physically touch, 3 sounds you can hear, 2 scents you notice, and 1 slow breath. Follow the breathing circle on screen.";
 
 const GROUNDING_PATTERNS = [
   /\b(?:stay ground me|ground me|having a panic attack|panic attack|can't breathe|cannot breathe|sensory overload|everything is too loud|freaking out|hyperventilating|rsd meltdown|meltdown)\b/i,
@@ -231,7 +235,7 @@ export function detectImpulsiveActionRisk(input: string): ImpulsePauseResult {
         triggered: true,
         reason: item.reason,
         message:
-          "ADHD Dopamine Pause: This feels intensely urgent right now, but big decisions deserve a 10-minute buffer. Let's take a 10-minute pause before sending or spending anything.",
+          "This feels urgent. Give it 10 minutes before you send or spend anything.",
       };
     }
   }

@@ -7,38 +7,51 @@
 
 ## 1. Colour Tokens
 
+Stay is dark only. There is no light theme and no theme switch: `color-scheme: dark` is set on `html`, the app and the landing page read the same tokens, and `tests/e2e/darkOnly.spec.ts` guards it. The palette is "Stay Tide": near-black canvas, one cold blue accent, a wave as the motif. Source of truth: `@theme` in `src/app/globals.css`.
+
 | Token | CSS Variable | Value | Usage |
 |---|---|---|---|
-| Canvas | `--bg-canvas` | `#FAF8F5` | Warm stone primary page background |
-| Elevated Surface | `--bg-surface` | `#FFFFFF` | Primary workspace card surface |
-| Recessed Surface | `--bg-recessed` | `#F1EFE9` | Secondary panels, tabs, code/metric chips |
-| Primary Ink | `--text-primary` | `#212422` | Deep warm charcoal body & headings |
-| Secondary Ink | `--text-secondary` | `#626B66` | Supporting labels & descriptions |
-| Muted Ink | `--color-muted` | `#5C625E` | Captions, sample denominators, timestamps (5.9:1 on canvas; the old `#747A75` was 4.1:1 and failed AA for small text) |
-| Subtle Hairline | `--border-subtle` | `#E9E6DF` | Card borders and row dividers |
-| Strong Hairline | `--border-strong` | `#D5D1C8` | Active input borders and emphasized dividers |
-| Primary Accent | `--accent-primary` | `#006A67` | Deep mineral teal — primary CTA & active state |
-| Accent Hover | `--accent-hover` | `#005653` | Hover state for primary CTA |
-| Accent Soft | `--accent-soft` | `#E4F0EF` | Subtle active pill background |
-| Focus Ring | `--focus-ring` | `#006A67` | `2px solid` accessible keyboard focus outline |
-| Success | `--state-success` | `#236B48` | Completed / started session indicator |
-| Caution | `--state-caution` | `#9A6318` | Listening / paused / preliminary sample notice |
-| Danger | `--state-danger` | `#B23A2E` | Crisis support trigger & destructive actions |
-| Night / Night 2 | `--color-night`, `--color-night-2` | `#15201E` / `#1E2D2A` | The dark stage: demo frame, measured results, closing call to action |
-| Night ink / ink-2 / accent | `--color-night-ink`, `-ink-2`, `-accent` | `#F3F1EC` / `#B3BDB8` / `#6FD0C8` | Text and highlight on the dark stage (all above 7:1 on Night) |
+| Canvas | `--color-canvas` | `#05080C` | Page background (with a faint blue light from above) |
+| Surface | `--color-surface` | `#0F1620` | Cards and panels |
+| Raised surface | `--color-surface-2` | `#1A2433` | Secondary buttons, raised controls |
+| Recessed | `--color-recessed` | `#0B1119` | Wells, tinted bands, metric chips |
+| Primary ink | `--color-ink` | `#EEF6FF` | Body text and headings |
+| Secondary ink | `--color-ink-2` | `#C5D6E6` | Supporting text |
+| Muted ink | `--color-muted` | `#A9BBCF` | Captions, denominators, timestamps |
+| Hairline | `--color-line` | `#1E2B3D` | Card borders, row dividers |
+| Strong hairline | `--color-line-strong` | `#2D3E55` | Emphasised dividers |
+| Field edge | `--color-field-edge` | `#5E7391` | The border of a text field (3:1 against the canvas; hairlines only divide) |
+| Accent | `--color-accent` | `#8FD3FF` | Primary button fill, links, focus ring, active state |
+| Accent hover | `--color-accent-hover` | `#B8E4FF` | Hover on the primary button and active chips |
+| Accent soft | `--color-accent-soft` | `#12304A` | Pressed chip and selected row background |
+| Success | `--color-success` | `#5BD6A0` | Works today, completed, started |
+| Caution | `--color-caution` | `#F0B35A` | Listening, paused, sample badges |
+| Danger | `--color-danger` | `#FF8A80` | Crisis support and destructive actions |
+| Night / Night 2 | `--color-night`, `--color-night-2` | `#0A0E15` / `#101722` | The deepest stage: the film, measured results, the closing call to action |
+| Night line | `--color-night-line` | `#223045` | Borders on the night stage |
+| Night ink / ink-2 / accent | `--color-night-ink`, `-ink-2`, `-accent` | `#EEF6FF` / `#C5D6E6` / `#B8E4FF` | Text and highlight on the night stage |
+
+Contrast (WCAG, computed): on a card (`#0F1620`) ink is 14.4:1, secondary ink 9.5:1, muted 7.3:1, accent 7.6:1, danger 6.9:1; on a raised surface (`#1A2433`) secondary ink is 7.4:1 and muted 5.7:1; dark text on the accent fill is 9.6:1. Text never drops below 4.5:1.
 
 ### Radius and shadow scale (one for every page)
 
 | Token | Value | Used for |
 |---|---|---|
-| `--radius-control` | `10px` | Buttons, fields, notices, segmented controls |
-| `--radius-card` | `14px` | Cards, panels, artifact cards |
-| `--radius-stage` | `28px` | The demo frame, the dark stage, the closing call to action. On a phone the demo frame is edge to edge (0) |
-| `--shadow-lift` | soft 2-layer | Cards that can be touched (hover lift, artifacts) |
-| `--shadow-stage` | deep 2-layer | The demo frame, the story stage, the call to action |
-| `--ease-calm` | `cubic-bezier(.22,.61,.36,1)` | Every transition longer than 150 ms |
+| `--radius-control` | `8px` | Buttons, fields, notices |
+| `--radius-card` | `10px` | Every card and panel, the closing call to action included |
+| `--radius-stage` | `16px` | The film frame on wide screens. On a phone the film is edge to edge (0) |
+| `--shadow-lift` | soft 2-layer | Cards that can be touched (hover lift) |
+| `--shadow-stage` | deep 2-layer | The film frame, the call to action |
+| `--ease-calm` | `cubic-bezier(.23,1,.32,1)` | Every transition longer than 150 ms |
 
-Pages must use these tokens (`rounded-[…]`, ad-hoc `box-shadow` and literal hex in components are the known drift; see `docs/landing/THEME_AUDIT.md`).
+Pages use these tokens. A literal `border-radius` on a card, an ad-hoc `box-shadow` or a literal hex in a component is drift.
+
+### Surfaces and buttons
+
+- One card family: `.card` and `.facet` share face, border, radius and hover. Cards, chips, secondary buttons and notices are translucent, never blurred.
+- The sticky header (landing and app) is the only frosted surface, plus the sheets and the call that sit over live content, and, for the 1.2 s of its fold, the second screen of the hero device (see 3).
+- One primary button: a flat accent fill with dark text (`.btn-primary`). No gradient, no glow.
+- No eyebrow labels and no uppercase tracked labels. A heading introduces its own section; footer column labels are plain medium-weight text.
 
 ---
 
@@ -64,20 +77,27 @@ Pages must use these tokens (`rounded-[…]`, ad-hoc `box-shadow` and literal he
    - One field of 3,200 to 5,200 dots. A shape is a different place for the same dots to gather (jelly morphs). Nothing but dots is drawn. When Stay speaks the dots can gather into a calm dot-drawn person (`docs/THERAPIST_ORB.md`).
    - The signature extends to static form: icons on the landing page are the same shapes sampled into SVG dots (`landing/personaDots.ts`), never stock icons.
    - Respects `prefers-reduced-motion` and falls back to a still gradient disc without WebGL.
+3. **The Fold (the landing hero: `HeroExample.tsx`, `FoldFrame.tsx`, `fold.css`):**
+   - A generic book-style foldable (original CSS and SVG art: no real product's logo, name, island or other trade dress, nothing third-party embedded) plays the recorded test call. One continuous inner display of about 4:3, cut for the story into two halves that meet at the spine, with a very faint crease, thin even bezels, large outer corners, a punch-hole camera and a thin titanium-style frame. The left half takes the first half of the call, the call continues on the right, and the solved step lands last there. It is a real CSS 3D scene: a stage with perspective, a rig that floats a few degrees (about 7 s) and leans toward a fine pointer (clamped to 8 degrees, off under reduced motion), two slabs with front glass, a back and an edge made of thin strips, a barrel hinge along the spine, a glass sheen that slides as it moves, and static contact shadows whose opacity and transform respond.
+   - At the end of the scene the right half swings shut over the left about the spine (`rotateY(-165deg)`, ease in and out), its face going translucent and blurred, its back a frosted glass lid, the shadow and the hinge light answering; the next scene is swapped in while it is shut, and it unfolds and the new call begins. About 1.2 s. Only `transform`, `opacity` and `filter` move.
+   - Colour is the one place the page goes beyond the single cold blue, and it is all tokens: a rim from `--color-accent` through `--color-accent-deep` to `--color-success`, an amber hinge (`--color-caution`), dark screens, the person's bubbles a blue-to-teal gradient, Stay's bubbles a surface tone with a teal edge, the solved step a green-tinted card, and a soft blue, green and amber light behind. The derived tokens (`--fd-*`) are defined once at `:root` in `fold.css`.
+   - Under 640px the device is stacked (hinge horizontal, A on top, B below, the fold turns about the horizontal hinge). Everything on it is sized in one design pixel (`--u`), so the device, its text and its art scale together and never overflow.
+   - The art is `aria-hidden`; the words are real text, and the same exchange is in a list for screen readers (first screen, then second). Reduced motion: no fold and no word-by-word, both screens drawn full. The full-screen grain is switched off while the device is playing on screen (it forces a re-blend of the whole page on every frame of anything large that moves); it returns when the device is paused or scrolled away.
 
 ---
 
 ## 4. Anti-Bloat & ADHD Ergonomics Rules
 
 - **One primary action per screen state.** While the focus timer is running, secondary chrome recedes.
-- **Zero visual noise:** No neon gradients, no glassmorphism, no floating chat widgets, no fake social proof, no unrequested popups, and no gamified streak shame.
+- **Zero visual noise:** No neon gradients, no glassmorphism, no floating chat widgets, no fake social proof, no unrequested popups, and no gamified streak shame. The hero device (3) is the one sanctioned exception, and it is restrained: tokens only, and the glass appears only during its fold.
 - **Always-available Quiet Mode:** Users can switch between Voice + Text and Quiet Text-Only in one click from the workspace header.
 
 ---
 
 ## 5. Landing page composition
 
-- Light sections on `--color-canvas`, alternating with a tinted band (`.lp-tint`) and two dark stages (`.lp-night`): the demo and the measured results. Dark means "evidence you can scrub or measure"; everything else is light.
+- Dark only, in two depths: sections on `--color-canvas`, and the night stages (`.lp-night`) for the film and the measured results. Night means "evidence you can watch or measure"; the sections between them carry the explanation.
 - Every interactive block has a real, labelled data source: sample data is badged **Sample** and built from the same functions as the real screens; measured numbers are copied from `docs/` with their limits beside them.
-- Motion only explains: bars grow once when scrolled to, the story stage follows the scroll, chips reshape the orb. Scroll reveals are armed only after hydration and never when reduced motion is requested, so content can never be hidden by a failed script.
-- Below-the-fold sections hold no canvas. The only WebGL surface is the hero orb.
+- Motion only explains: bars grow once when scrolled to, chips reshape the orb. Scroll reveals are armed only after hydration and never when reduced motion is requested, so content can never be hidden by a failed script.
+- Below-the-fold sections hold no canvas. The only WebGL surface lives in the app.
+- The film plays as a stage: 16:9, muted and looping while on screen. On a phone its Sound and Captions buttons sit in a row under the picture; from 768px they overlay the top right corner.

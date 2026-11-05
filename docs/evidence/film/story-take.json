@@ -1,0 +1,124 @@
+{
+ "at": "2026-11-04T23:27:25.206Z",
+ "failed": null,
+ "errors": [
+  "TypeError: Cannot set properties of undefined (setting 'getUserMedia')"
+ ],
+ "videoDur": 136.16,
+ "flashVT": 1.191,
+ "ready": 4.186,
+ "click": 4.29,
+ "pauseHeld": true,
+ "calib": {
+  "audioVsPlayHookDeltas": [
+   -0.26,
+   0,
+   0.048,
+   0.02,
+   0.06,
+   0.05,
+   0.04,
+   0.05
+  ],
+  "medianApplied": -0.048,
+  "clickAnchorShiftApplied": 1.191
+ },
+ "pix": [
+  {
+   "id": "b1",
+   "text": "I have an essay due at nine and I've been in reels for three hours. Don't coach me, just tell me what to do.",
+   "t": 24.556,
+   "dur": 6.130083333333333
+  },
+  {
+   "id": "b2",
+   "text": "Set a one minute timer.",
+   "t": 38.001,
+   "dur": 1.3932083333333334
+  },
+  {
+   "id": "b3",
+   "text": "Why would I use this and not just ask a regular chatbot?",
+   "t": 44.104,
+   "dur": 3.0185833333333334
+  },
+  {
+   "id": "b4",
+   "text": "Remember that I scroll when I'm anxious.",
+   "t": 62.965,
+   "dur": 2.043375
+  },
+  {
+   "id": "b5a",
+   "text": "Yeah, I wrote...",
+   "t": 107.053,
+   "dur": 1.0216666666666667
+  },
+  {
+   "id": "b5b",
+   "text": "two lines.",
+   "t": 109.033,
+   "dur": 0.8359166666666666
+  },
+  {
+   "id": "b6",
+   "text": "Show my report.",
+   "t": 116.181,
+   "dur": 1.1145416666666668
+  },
+  {
+   "id": "b7",
+   "text": "Thanks, Stay. That actually helped.",
+   "t": 125.378,
+   "dur": 2.275541666666667
+  }
+ ],
+ "stay": {
+  "greet": {
+   "text": "Just so you know, I'm an AI, not a person. Adrienne here. What are you putting off?",
+   "play": 15.691,
+   "settled": 23.05
+  },
+  "b1": {
+   "text": "Stop scrolling. Open your document and write one paragraph.",
+   "play": 31.521,
+   "settled": 37.385
+  },
+  "b2": {
+   "text": "Done.",
+   "play": 40.583,
+   "settled": 43.097
+  },
+  "b3": {
+   "text": "I'm for the moment you're stuck. Tell me what you're avoiding and I give you one tiny first step, start the clock with you, and wait through your pauses. When time's up I check in, and I remember what helped.",
+   "play": 47.871,
+   "settled": 62.372
+  },
+  "b4": {
+   "text": "Got it, I will remember.",
+   "play": 65.721,
+   "settled": 69.476
+  },
+  "checkin": {
+   "text": "Did you open your document and start the first ninety seconds of setup?",
+   "play": null,
+   "settled": 106.332
+  },
+  "b5": {
+   "text": "Great. Write one more sentence now.",
+   "play": 110.971,
+   "settled": 115.12
+  },
+  "b6": {
+   "text": "Done.",
+   "play": 117.731,
+   "settled": 120.229
+  },
+  "b7": {
+   "text": "Glad it worked for you. Take care.",
+   "play": 128.691,
+   "settled": 132.776
+  }
+ },
+ "timerSet": 43.097
+}

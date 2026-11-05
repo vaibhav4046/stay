@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import { OUTCOME, SCENES, plan } from '@/components/landing/HeroExample';
+import { OUTCOME, SCENES, onSecondScreen, plan } from '@/components/landing/HeroExample';
 
 const real = ['soak-run6-hour-elevenlabs-genz', 'soak-run7-gate-40min-real-model']
   .map((f) => JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'docs', 'evidence', 'loop', `${f}.json`), 'utf8')) as { turns: Array<{ said: string; reply: string }> })
@@ -37,6 +37,16 @@ describe('landing example scenes', () => {
       expect(o, s.id).toBeDefined();
       const replies = s.lines.filter((l) => l.who === 'stay').map((l) => norm(l.text));
       expect(replies.some((r) => r.includes(norm(o.detail))), `${s.id}: "${o.detail}"`).toBe(true);
+    }
+  });
+
+  it('the first screen holds the first exchange and about half the call, the second screen the rest, and both are used', () => {
+    for (const s of SCENES) {
+      const n = s.lines.length;
+      const onB = s.lines.map((_, i) => onSecondScreen(i, n));
+      expect(onB[0] || onB[1]).toBe(false); // the first exchange is on the first screen
+      expect(onB.lastIndexOf(false)).toBeLessThan(onB.indexOf(true)); // never back and forth: screen one, then screen two
+      expect(onB.filter(Boolean).length).toBeGreaterThan(0);
     }
   });
 

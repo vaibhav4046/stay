@@ -10,10 +10,10 @@ describe('proactive messages: words to say are said, instructions go to the mode
   const checkIn = `The user's 2-minute focus timer just ended. Speak first: in under 20 words, warmly ask whether they got started on "open the email". When they answer, call record_session_outcome.`;
 
   it('an instruction is never spoken verbatim on the fast path', () => {
-    expect(proactiveFrame('instruct', checkIn, true)).toEqual({ type: 'reply.create', instructions: checkIn });
+    expect(proactiveFrame('instruct', checkIn, true)).toEqual({ type: 'reply.create', instructions: checkIn, when: 'idle' });
   });
   it('words to say are said as they are', () => {
-    expect(proactiveFrame('say', 'Time is up. Nicely done.', true)).toEqual({ type: 'reply.say', text: 'Time is up. Nicely done.' });
+    expect(proactiveFrame('say', 'Time is up. Nicely done.', true)).toEqual({ type: 'reply.say', text: 'Time is up. Nicely done.', when: 'idle' });
   });
   it('the managed agent has only one way: reply.create', () => {
     expect(proactiveFrame('say', 'Hello there.', false).type).toBe('reply.create');

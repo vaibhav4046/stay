@@ -18,13 +18,11 @@ Traditional to-do apps, kanban boards, and calendars overload the prefrontal cor
 - It removes all future planning cognitive load.
 - It immediately negotiates a physical micro-step that can be initiated in under 120 seconds.
 
-### 1.2 Activation Paralysis & Micro-Commitments (Dawson & Guare, 2016)
-Executive functioning research identifies *Task Initiation* as a discrete neurological barrier mediated by dopaminergic pathways. When a task appears large, boring, or ambiguous, the executive brain triggers an avoidance response that mimics physical freezing.
+### 1.2 Starting small
+Task initiation, getting started rather than knowing how, is listed as its own skill in the executive-skills literature (for example Dawson and Guare), and many adults with ADHD report it as hard. Stay's response is a design choice, not a measured effect: it shrinks the first step to something that takes under two minutes (for example "Just open the envelope", "Just put your fingers on the keyboard for 60 seconds"). No brain mechanism is claimed. Skills programmes that teach task breakdown, planning and time management have randomised trials behind them ([Safren and colleagues, JAMA 2010](https://pmc.ncbi.nlm.nih.gov/articles/PMC3641654); [Solanto and colleagues, American Journal of Psychiatry 2010](https://pubmed.ncbi.nlm.nih.gov/20231319/)). Stay applies the same ideas; Stay itself has not been trialled.
 
-Stay implements **Threshold Lowering**: reducing the initial effort below the amygdala's threat threshold. By agreeing to a sub-two-minute step (e.g. *"Just open the envelope"*, *"Just put your fingers on the keyboard for 60 seconds"*), dopamine fires upon initiation, allowing natural momentum to take over.
-
-### 1.3 Virtual Body Doubling & External Anchors (Tuckman, 2012)
-Research confirms that having a supportive, non-judgmental presence nearby dramatically increases task initiation rates for adults with ADHD. The Stay Signal orb acts as a gentle, quiet kinetic anchor—providing visual auditory rhythm without intrusive notifications, gamification shame, or guilt-inducing streaks.
+### 1.3 Quiet company (body doubling)
+Working alongside someone is popular with people who have ADHD, but the research is thin ([CHADD says so](https://chadd.org/adhd-news/adhd-news-adults/could-a-body-double-help-you-increase-your-productivity/)). The Stay Signal orb and the quiet timer blocks are offered in that spirit: a calm presence without notifications, gamification or streaks. Stay does not claim that this raises task initiation; the only evidence Stay itself produces is the person's own counts on the Report page.
 
 ### 1.4 NICE Guideline [NG87] Alignment
 NICE (National Institute for Health and Care Excellence) guidelines recommend non-pharmacological executive support:
@@ -41,7 +39,7 @@ Stay's deterministic and LLM-assisted coaching engines classify user hesitation 
 | Barrier | Cognitive State | Stay Intervention Strategy |
 |---|---|---|
 | **Overwhelm** | Prefrontal cognitive collapse from too many variables. | **Radical Isolation:** Shrink scope to a single physical action; defer all subsequent steps. |
-| **Under-Arousal** | Insufficient dopamine; task is monotonous or dry. | **Sensory Coupling:** Add a quick timer sprint, background instrumental audio, or kinetic challenge. |
+| **Under-Arousal** | The task feels monotonous or dry, so it is hard to engage with. | **Sensory Coupling:** Add a quick timer sprint, background instrumental audio, or kinetic challenge. |
 | **Ambiguity** | "Fuzzy task"; user doesn't know what "done" looks like. | **Definition of First Action:** Clarify the physical starting point (e.g., locate login credentials). |
 | **Perfectionism** | Anxiety over flawed output; all-or-nothing paralysis. | **Permission for Slop:** Deliberately create an ugly draft or throwaway outline for 3 minutes. |
 | **Resistance** | Emotional aversion to administrative paperwork or red tape. | **Tiny Micro-Slice:** Commit to 90 seconds of exposure; option to stop completely afterwards. |
@@ -50,7 +48,7 @@ Stay's deterministic and LLM-assisted coaching engines classify user hesitation 
 
 ## 3. Strict Clinical & Ethical Boundaries
 
-To protect patient safety and comply with MHRA / FDA digital health software guidance, Stay enforces unambiguous ethical guardrails:
+To keep people safe, Stay is built with the guardrails below. Stay has not been assessed against MHRA or FDA digital health software rules and does not claim to comply with them:
 
 ### What Stay DOES:
 - ✅ Provides voice and text coaching strictly for **task initiation** and breaking down daily work.
@@ -74,6 +72,7 @@ Stay incorporates a deterministic, regex-based crisis safety filter that interce
 - **Trigger Terms:** Self-harm, suicide, severe depressive hopelessness, wanting to disappear.
 - **Immediate Action:** Bypasses coach plan generation entirely.
 - **Safety Response:** Mounts the Crisis Modal immediately with localized emergency helplines:
-  - **UK:** NHS Mental Health (`111`), Emergency (`999`), Samaritans (`116 123`).
-  - **US / Canada:** Suicide & Crisis Lifeline (`988`), Crisis Text Line (`HOME to 741741`).
-  - **International:** Befrienders Worldwide & IASP portal (`findahelpline.com`).
+  - **UK:** NHS Mental Health (`111`), Emergency (`999`), Samaritans (`116 123`), Shout (text `SHOUT` to `85258`).
+  - **US:** 988 Suicide & Crisis Lifeline (`988`). **Canada:** 9-8-8 Suicide Crisis Helpline (`988`).
+  - **Anywhere else:** `findahelpline.com`.
+  - The list is in `src/lib/safety/region.ts`; where each was checked is in `docs/audit/SOURCES.md`.

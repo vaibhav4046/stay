@@ -1,11 +1,11 @@
 {
   "status": "PASS",
-  "gitSha": "03d16847e03463048d10812dc418fc9cfa7704fd",
+  "gitSha": "bdcd654921791f4a2dbd88ad40f6c08afb70cd13",
   "dirty": false,
   "tier": "real-provider",
   "scenarioId": "assemblyai-live-ws-smoke",
-  "timestamp": "2026-11-01T18:58:41.829Z",
-  "durationMs": 3167,
+  "timestamp": "2026-11-04T05:38:17.846Z",
+  "durationMs": 3229,
   "sttEvents": [
     "Begin",
     "Termination"

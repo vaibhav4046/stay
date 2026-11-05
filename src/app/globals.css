@@ -35,11 +35,17 @@
   --color-ink-3: #97ABC2;
   --color-line: #1E2B3D;
   --color-line-strong: #2D3E55;
+  /* the edge of a text field: 3:1 against the canvas, unlike the hairlines, which only divide */
+  --color-field-edge: #5E7391;
   --color-edge: #1E2B3D;
   --color-edge-strong: #2D3E55;
   --color-accent: #8FD3FF;
   --color-accent-hover: #B8E4FF;
   --color-accent-soft: #12304A;
+  /* Blue core: the second voice (Stay speaking back) and the deep end of a ramp */
+  --color-accent-deep: #3E8FD6;
+  /* Buttons: hover on a secondary button */
+  --color-surface-3: #3A4A5E;
   --color-primary: #8FD3FF;
   --color-primary-hover: #B8E4FF;
   --color-success: #5BD6A0;
@@ -57,7 +63,7 @@
   --radius-card: 10px;
   --radius-stage: 16px;
   --shadow-lift: inset 0 1px 0 rgb(255 255 255 / 0.05), 0 12px 32px -14px rgb(0 0 0 / 0.75);
-  --shadow-stage: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 2px 6px rgb(0 0 0 / 0.5), 0 40px 80px -30px rgb(0 0 0 / 0.85), 0 0 120px -40px rgb(143 211 255 / 0.25);
+  --shadow-stage: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 2px 6px rgb(0 0 0 / 0.5), 0 40px 80px -30px rgb(0 0 0 / 0.85);
   --ease-calm: cubic-bezier(0.23, 1, 0.32, 1);
   /* DM Sans for text and Instrument Sans for headings and numerals on every device (DESIGN.md); the system face is only the fallback */
   --font-sans: var(--font-dm-sans), system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', sans-serif;
@@ -68,16 +74,13 @@ html {
   color-scheme: dark;
   scroll-padding-top: 4.5rem;
   background-color: var(--color-canvas);
-  /* black to white-ish graphite with one cool blue light from above: depth without decoration */
-  background-image:
-    radial-gradient(1100px 520px at 50% -8%, rgb(62 143 214 / 0.20), transparent 62%),
-    radial-gradient(760px 420px at 106% 6%, rgb(255 255 255 / 0.05), transparent 60%),
-    linear-gradient(180deg, #0A1018 0%, #05080C 38%, #03060A 100%);
+  /* the canvas gradient (one cool blue light from above) lives in glass.css */
   background-repeat: no-repeat;
   color: var(--color-ink);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   letter-spacing: -0.011em;
+  overflow-x: clip;
 }
 @media (min-width: 900px) { html { background-attachment: fixed; } }
 
@@ -87,6 +90,7 @@ body {
   line-height: 1.6;
   min-height: 100vh;
   background: transparent;
+  overflow-x: clip;
 }
 
 ::selection { background: rgb(143 211 255 / 0.35); color: var(--color-ink); }
@@ -114,6 +118,7 @@ body {
   font-weight: 600;
   letter-spacing: -0.015em;
 }
+.hero-title, .section-title, .sub-title { min-width: 0; overflow-wrap: break-word; text-wrap: balance; }
 
 .card {
   /* crystal: a diagonal facet of light across the face, a cold highlight on the top edge */
@@ -130,15 +135,6 @@ body {
   line-height: 1.3;
   font-weight: 600;
   letter-spacing: -0.012em;
-}
-
-.eyebrow {
-  font-size: 0.78rem;
-  line-height: 1.3;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-accent);
 }
 
 .card-title {
@@ -160,6 +156,7 @@ body {
   justify-content: center;
   gap: 0.5rem;
   min-height: 44px;
+  min-width: 44px;
   padding: 0 1.1rem;
   border-radius: var(--radius-control);
   font-weight: 500;
@@ -173,10 +170,10 @@ body {
 @media (min-width: 1024px) { .btn.nav-lg { display: inline-flex; } }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn:active:not(:disabled) { transform: scale(0.97); }
-.btn-primary { background: linear-gradient(180deg, #B8E4FF 0%, #8FD3FF 55%, #6DBBEF 100%); color: var(--on-accent); font-weight: 600; box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.55), 0 0 0 1px rgb(143 211 255 / 0.5), 0 8px 24px -10px rgb(62 143 214 / 0.8); }
-.btn-primary:hover:not(:disabled) { background: linear-gradient(180deg, #D4EEFF 0%, #B8E4FF 55%, #8FD3FF 100%); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.7), 0 0 0 1px rgb(184 228 255 / 0.7), 0 0 28px -4px rgb(143 211 255 / 0.55); }
+.btn-primary { background: var(--color-accent); color: var(--on-accent); font-weight: 600; }
+.btn-primary:hover:not(:disabled) { background: var(--color-accent-hover); }
 .btn-secondary { background: var(--color-surface-2); color: var(--color-ink); border: 1px solid var(--color-line-strong); }
-.btn-secondary:hover:not(:disabled) { background: #3A4A5E; border-color: #3A4A5E; }
+.btn-secondary:hover:not(:disabled) { background: var(--color-surface-3); border-color: var(--color-surface-3); }
 .btn-ghost { color: var(--color-ink-2); }
 .btn-ghost:hover:not(:disabled) { color: var(--color-ink); background: var(--color-recessed); }
 .btn-danger { background: var(--color-surface); color: var(--color-danger); border: 1px solid var(--color-danger); }
@@ -186,6 +183,7 @@ body {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
+  min-width: 44px;
   padding: 0.4rem 0.85rem;
   border-radius: 999px;
   border: 1px solid var(--color-line-strong);
@@ -206,7 +204,7 @@ body {
 .field {
   width: 100%;
   background: var(--color-surface);
-  border: 1px solid var(--color-line-strong);
+  border: 1px solid var(--color-field-edge);
   border-radius: var(--radius-control);
   padding: 0.7rem 0.85rem;
   font-size: 1rem;
@@ -380,7 +378,7 @@ body {
   -webkit-backdrop-filter: blur(18px) saturate(140%);
   box-shadow: var(--shadow-stage);
 }
-/* ---- crystal and frost: cold facets behind everything, a rune before each eyebrow -------------------------------- */
+/* ---- crystal: cold facets behind everything ------------------------------------------------------------------ */
 body::before {
   content: '';
   position: fixed;
@@ -393,69 +391,4 @@ body::before {
   mask-image: linear-gradient(180deg, #000 0%, transparent 85%);
   -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 85%);
 }
-/* Algiz, the protection rune, drawn as a shape so it never depends on a font */
-.eyebrow::before {
-  content: '';
-  display: inline-block;
-  width: 0.8em;
-  height: 0.95em;
-  margin-right: 0.55em;
-  vertical-align: -0.12em;
-  background: currentColor;
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 12'%3E%3Cpath d='M5 0v12M5 5L1 1M5 5l4-4' stroke='black' stroke-width='1.6' fill='none' stroke-linecap='square'/%3E%3C/svg%3E") center / contain no-repeat;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 12'%3E%3Cpath d='M5 0v12M5 5L1 1M5 5l4-4' stroke='black' stroke-width='1.6' fill='none' stroke-linecap='square'/%3E%3C/svg%3E") center / contain no-repeat;
-}
 @media (prefers-reduced-motion: reduce) { body::before { opacity: 0.4; } }
-/* the landing example: a voice call played back (see HeroExample.tsx). Every class here starts with hx- */
-.hx-card { overflow: visible; }
-.hx-bar { display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.75rem; min-height: 2.2rem; }
-.hx-face-slot { position: relative; flex: none; width: 30px; height: 30px; }
-.hx-face { position: absolute; inset: 0; z-index: 3; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #d8ecff 0 7%, #5ea8ff 40%, #1d3a63 100%); box-shadow: 0 0 0 1px rgba(143, 211, 255, 0.35), 0 8px 24px -8px rgba(94, 168, 255, 0.7); transition: transform 800ms cubic-bezier(0.2, 0.7, 0.2, 1); }
-.hx-face[data-big='true'] { transition: none; } /* it starts big in the middle of the thread, then settles into the header */
-.hx-face::before { content: ''; position: absolute; inset: -5px; border-radius: 50%; border: 1.5px solid transparent; border-top-color: rgba(94, 168, 255, 0.95); opacity: 0; transition: opacity 300ms; animation: hx-spin 1.6s linear infinite; }
-.hx-face[data-big='true']::before, .hx-face[data-mode='speaking']::before { opacity: 1; }
-.hx-face[data-mode='speaking'] { animation: hx-breathe 1.3s ease-in-out infinite; }
-.hx-status { flex: 1; font-size: 0.82rem; letter-spacing: 0.01em; color: var(--color-ink-2); }
-.hx-pause { margin-left: auto; }
-.hx-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.1rem; }
-.hx-chip { border: 1px solid var(--color-line); border-radius: 999px; padding: 0.28rem 0.8rem; font-size: 0.8rem; color: var(--color-ink-2); background: transparent; cursor: pointer; transition: background-color 200ms, color 200ms, border-color 200ms; }
-.hx-chip:hover { color: var(--color-ink); border-color: #2c3d55; }
-.hx-chip:focus-visible { outline: 2px solid var(--color-ink); outline-offset: 2px; }
-.hx-chip-on { color: var(--color-ink); background: rgba(94, 168, 255, 0.14); border-color: rgba(94, 168, 255, 0.45); }
-
-.hx-thread { display: flex; flex-direction: column; gap: 0.9rem; min-height: 31rem; }
-.hx-row { display: flex; flex-direction: column; }
-.hx-row-you { align-items: flex-end; }
-.hx-row-stay { align-items: flex-start; }
-.hx-who { margin: 0 0.4rem 0.3rem; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em; color: var(--color-ink-3); }
-.hx-thread .hx-bubble { margin: 0; max-width: 36ch; padding: 0.75rem 1.05rem; font-size: 0.98rem; line-height: 1.55; color: var(--color-ink); border: 1px solid rgba(255, 255, 255, 0.07); box-shadow: 0 12px 30px -18px rgba(0, 0, 0, 0.75); }
-.hx-thread .hx-bubble-you { border-radius: 18px 18px 6px 18px; border-color: rgba(94, 168, 255, 0.32); background: linear-gradient(180deg, rgba(94, 168, 255, 0.22), rgba(94, 168, 255, 0.12)); }
-.hx-thread .hx-bubble-stay { border-radius: 18px 18px 18px 6px; background: rgba(255, 255, 255, 0.05); }
-.hx-word { display: inline-block; white-space: pre; animation: hx-word 340ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
-.hx-pop { animation: hx-pop 380ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
-
-.hx-wave { display: inline-flex; align-items: center; gap: 3px; height: 16px; vertical-align: middle; margin-left: 4px; color: rgba(216, 236, 255, 0.85); }
-.hx-wave i { width: 3px; height: 100%; border-radius: 2px; background: currentColor; transform-origin: center; animation: hx-wave 900ms ease-in-out infinite; }
-.hx-wave i:nth-child(2) { animation-delay: 120ms; }
-.hx-wave i:nth-child(3) { animation-delay: 240ms; }
-.hx-wave i:nth-child(4) { animation-delay: 360ms; }
-.hx-wave i:nth-child(5) { animation-delay: 480ms; }
-.hx-dots { display: inline-flex; gap: 4px; align-items: center; height: 16px; }
-.hx-dots i { width: 6px; height: 6px; border-radius: 999px; background: currentColor; opacity: 0.6; animation: hx-dot 1s ease-in-out infinite; }
-.hx-dots i:nth-child(2) { animation-delay: 160ms; }
-.hx-dots i:nth-child(3) { animation-delay: 320ms; }
-
-.hx-outcome-slot { min-height: 6.2rem; margin-top: 0.75rem; }
-.hx-outcome { display: flex; align-items: center; gap: 0.9rem; padding: 0.85rem 1.05rem; border: 1px solid rgba(94, 168, 255, 0.4); border-radius: 14px; background: linear-gradient(180deg, rgba(94, 168, 255, 0.12), rgba(94, 168, 255, 0.06)); }
-.hx-outcome-title { margin: 0; font-size: 0.8rem; font-weight: 600; color: var(--color-ink); }
-.hx-outcome-detail { margin: 0.15rem 0 0; font-size: 0.92rem; line-height: 1.4; color: var(--color-ink-2); }
-.hx-solve { flex: none; position: relative; width: 26px; height: 26px; border-radius: 50%; border: 2px solid rgba(94, 168, 255, 0.35); border-top-color: #5ea8ff; animation: hx-spin 0.8s linear infinite; }
-.hx-solve-done { animation: none; border-color: #5ea8ff; background: #5ea8ff; }
-.hx-solve-done::after { content: ''; position: absolute; left: 8px; top: 3px; width: 6px; height: 11px; border: solid #07111c; border-width: 0 2px 2px 0; transform: rotate(45deg); }
-
-@keyframes hx-spin { to { transform: rotate(360deg); } }
-@keyframes hx-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-@keyframes hx-word { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
-@keyframes hx-pop { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-@keyframes hx-wave { 0%, 100% { transform: scaleY(0.25); } 50% { transform: scaleY(1); } }
-@keyframes hx-dot { 0%, 100% { transform: translateY(0); opacity: 0.4; } 50% { transform: translateY(-3px); opacity: 1; } }

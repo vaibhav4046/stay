@@ -4,6 +4,7 @@
  * start and a few for today. The sorting itself is the existing triage (model with a deterministic fallback).
  */
 import { splitDump, type TriageItem } from '@/lib/coach/triage';
+import { wholeWords } from '@/lib/voice/spokenSteps';
 
 export type DumpControl =
   | { kind: 'end'; rest: string }
@@ -73,9 +74,9 @@ export function readBackLine(items: TriageItem[]): string {
   const now = items.find((i) => i.bucket === 'now') ?? items[0];
   const today = items.filter((i) => i !== now && i.bucket === 'today');
   const later = items.filter((i) => i !== now && i.bucket === 'later');
-  const parts = [`Got it, ${items.length === 1 ? 'one thing' : `${items.length} things`}. Start with ${clip(now.text, 50)}${now.minutes ? `, about ${now.minutes} minutes` : ''}.`];
-  if (now.firstStep) parts.push(`First: ${clip(now.firstStep.replace(/[.!]+$/, ''), 70)}.`);
-  if (today.length) parts.push(`Maybe also today: ${today.slice(0, 3).map((i) => clip(i.text, 30)).join(', ')}${today.length > 3 ? `, and ${today.length - 3} more` : ''}.`);
+  const parts = [`Got it, ${items.length === 1 ? 'one thing' : `${items.length} things`}. Start with ${wholeWords(now.text, 50)}${now.minutes ? `, about ${now.minutes} minutes` : ''}.`];
+  if (now.firstStep) parts.push(`First: ${wholeWords(now.firstStep.replace(/[.!]+$/, ''), 70)}.`);
+  if (today.length) parts.push(`Maybe also today: ${today.slice(0, 3).map((i) => wholeWords(i.text, 30)).join(', ')}${today.length > 3 ? `, and ${today.length - 3} more` : ''}.`);
   if (later.length) parts.push(`${later.length === 1 ? 'One more is' : `${later.length} more are`} parked for later.`);
   return parts.join(' ');
 }

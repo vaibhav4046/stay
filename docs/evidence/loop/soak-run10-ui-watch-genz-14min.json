@@ -1,0 +1,696 @@
+{
+  "summary": {
+    "label": "synthetic-mic (one neural voice, English/Spanish/Hindi) + live-model; nothing played aloud",
+    "minutes": 14.3,
+    "turns": 44,
+    "firstSoundMs": {
+      "n": 44,
+      "median": 1167,
+      "p95": 2031,
+      "max": 4510
+    },
+    "turnsWithFlags": 0,
+    "flagCounts": {},
+    "pageErrors": [
+      "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+    ],
+    "playback": {
+      "underflows": 0,
+      "prebufferMs": 170,
+      "bufferedMs": 0,
+      "state": "STOPPED"
+    },
+    "jsHeapMB": 37
+  },
+  "turns": [
+    {
+      "ui": [],
+      "bubbles": [
+        "I’m Stay, a calm, practical friend. I help you break tasks into small steps. What do you need help with tonight?"
+      ],
+      "replyWords": 21,
+      "n": 1,
+      "minute": 0.3,
+      "scene": "test-opening",
+      "said": "Okay so, yeah, this is Stay? Prove you're not just another chatbot. Go.",
+      "heard": "Okay, so yeah, this is Stay. Prove you're not just another chatbot. Go.",
+      "reply": "I’m Stay, a calm, practical friend. I help you break tasks into small steps. What do you need help with tonight?",
+      "firstSoundMs": 1203,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "A clock app starts a timer, and a general voice assistant will talk about anything. I'm for the moment you're stuck. Tell me what you're avoiding and I give you one tiny first step, start the clock with you, and wait through your pauses. When time's up I check in, and I remember what helped."
+      ],
+      "replyWords": 55,
+      "n": 2,
+      "minute": 0.8,
+      "scene": "test-opening",
+      "said": "Meh. Why would I use you and not just ask the big AI app? Be honest.",
+      "heard": "Meh? Why would I use you and not just ask the big AI app? Be honest.",
+      "reply": "A clock app starts a timer, and a general voice assistant will talk about anything. I'm for the moment you're stuck. Tell me what you're avoiding and I give you one tiny first step, start the clock with you, and wait through your pauses. When time's up I check in, and I remember what helped.",
+      "firstSoundMs": 994,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 3,
+      "minute": 1.2,
+      "scene": "test-opening",
+      "said": "Okay okay. Fine. But can you actually, like, do something, not just talk?",
+      "heard": "Okay, okay, fine. But can you actually, like, do something, not just talk?",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1084,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I can only talk and give you steps, not run programs or open apps. If that’s too slow, you’re free to stop."
+      ],
+      "replyWords": 22,
+      "n": 4,
+      "minute": 1.5,
+      "scene": "test-opening",
+      "said": "I'll be real, I have zero patience. If this is slow I'm gone.",
+      "heard": "I'll be real, I have zero patience. If this is slow, I'm gone.",
+      "reply": "I can only talk and give you steps, not run programs or open apps. If that’s too slow, you’re free to stop.",
+      "firstSoundMs": 1354,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 5,
+      "minute": 1.9,
+      "scene": "doomscroll-instagram",
+      "said": "I have been on Instagram for two hours and I don't even remember what I looked at.",
+      "heard": "I've been on Instagram for 2 hours and I don't even remember what I looked at.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1731,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I can't open other apps or sites for you. What I can do is start a timer and tell you when your time is up. Want a timer for it?"
+      ],
+      "replyWords": 30,
+      "n": 6,
+      "minute": 2.3,
+      "scene": "doomscroll-instagram",
+      "said": "It's like my thumb just does it. I open the app without deciding to. Is that normal?",
+      "heard": "It's like my thumb just does it. I open the app without deciding to. Is that normal?",
+      "reply": "I can't open other apps or sites for you. What I can do is start a timer and tell you when your time is up. Want a timer for it?",
+      "firstSoundMs": 700,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 7,
+      "minute": 2.6,
+      "scene": "doomscroll-instagram",
+      "said": "Okay but I have a paper due at nine tomorrow and I'm just scrolling reels.",
+      "heard": "Okay, but I have a paper due at 9 tomorrow and I'm just scrolling Reels.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1833,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 8,
+      "minute": 2.9,
+      "scene": "doomscroll-instagram",
+      "said": "Don't give me a lecture. Just tell me what to do right now.",
+      "heard": "Don't give me a lecture, just tell me what to do right now.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1043,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "Open the paper document. Do not read it yet. Just get it on the screen."
+      ],
+      "replyWords": 15,
+      "n": 9,
+      "minute": 3.2,
+      "scene": "doomscroll-instagram",
+      "said": "Ugh, fine. Phone goes face down. What's the next step after that?",
+      "heard": "Ugh, fine. Phone goes face down. What's the next step after that?",
+      "reply": "Open the paper document. Do not read it yet. Just get it on the screen.",
+      "firstSoundMs": 1344,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 40,
+      "n": 10,
+      "minute": 3.5,
+      "scene": "doomscroll-instagram",
+      "said": "I'm doing it. Wait, I just picked it back up. Why am I like this?",
+      "heard": "I'm doing it. Wait, I just picked it back up. Why am I like this?",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again. I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1958,
+      "flags": []
+    },
+    {
+      "ui": [
+        "timer-card",
+        "active-timer-tab-warning",
+        "stop-timer"
+      ],
+      "bubbles": [
+        "Done."
+      ],
+      "replyWords": 1,
+      "n": 11,
+      "minute": 3.7,
+      "scene": "doomscroll-instagram",
+      "said": "Okay okay. Set a timer for two minutes and I'll open the doc.",
+      "heard": "Okay, okay, set a timer for 2 minutes and I'll open the dock.",
+      "reply": "Done.",
+      "firstSoundMs": 980,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 12,
+      "minute": 4.2,
+      "scene": "doomscroll-instagram",
+      "said": "Done. The doc is open. It's just a blank page and it's judging me.",
+      "heard": "Done. The doc is open. It's just a blank page and it's judging me.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1417,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 13,
+      "minute": 4.5,
+      "scene": "indecisive",
+      "said": "Should I do the assignment first or reply to my group chat? I can't decide.",
+      "heard": "Should I do the assignment first or reply to my group chat? I can't decide.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 2917,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "Pick the thing that will clear your mind faster. If replying feels quick, do that, then jump to the assignment. If replying takes a minute, send it now, then start the assignment."
+      ],
+      "replyWords": 32,
+      "n": 14,
+      "minute": 5,
+      "scene": "indecisive",
+      "said": "I always do this. I make a list of options and then I freeze.",
+      "heard": "I always do this. I make a list of options and then I freeze.",
+      "reply": "Pick the thing that will clear your mind faster. If replying feels quick, do that, then jump to the assignment. If replying takes a minute, send it now, then start the assignment.",
+      "firstSoundMs": 2031,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 15,
+      "minute": 5.3,
+      "scene": "indecisive",
+      "said": "Just pick for me. Seriously. Pick one.",
+      "heard": "Just pick for me. Seriously, pick one.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1200,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 16,
+      "minute": 5.7,
+      "scene": "indecisive",
+      "said": "Okay but what if the group chat is mad at me? Ugh.",
+      "heard": "Okay, but what if the group chat is mad at me? Uh,",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 4510,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 40,
+      "n": 17,
+      "minute": 6,
+      "scene": "indecisive",
+      "said": "Fine. Assignment first. Ten minutes. Then the chat.",
+      "heard": "Fine, assignment first, 10 minutes, then the chat.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again. I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 753,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 18,
+      "minute": 6.2,
+      "scene": "indecisive",
+      "said": "What if I pick the wrong thing though?",
+      "heard": "What if I pick the wrong thing though?",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1259,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 19,
+      "minute": 6.5,
+      "scene": "indecisive",
+      "said": "Okay, noted. Smaller decisions. I'll stop overthinking it.",
+      "heard": "Okay, noted. Smaller decisions. I'll stop overthinking it.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1592,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 20,
+      "minute": 6.9,
+      "scene": "why-not-the-big-ai",
+      "said": "Real question. Why shouldn't I just use a normal AI chatbot for this stuff?",
+      "heard": "Real question. Why shouldn't I just use a normal AI chatbot for this stuff?",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1260,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 21,
+      "minute": 7.2,
+      "scene": "why-not-the-big-ai",
+      "said": "That sounds like marketing. What's actually different?",
+      "heard": "That sounds like marketing. What's actually different?",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1208,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 22,
+      "minute": 7.4,
+      "scene": "why-not-the-big-ai",
+      "said": "Hm. Okay. So you remember me between days?",
+      "heard": "Hmm, okay, so you remember me between days?",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 874,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 23,
+      "minute": 7.7,
+      "scene": "why-not-the-big-ai",
+      "said": "Prove it. Remember that I scroll when I'm anxious.",
+      "heard": "Prove it. Remember that I scroll when I'm anxious.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 527,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "Mostly I get you started and stay with you. One small step on a task, a timer, a brain dump sorted into a short list, reminders, and a memory of what helps. You can show me your screen or a picture too."
+      ],
+      "replyWords": 42,
+      "n": 24,
+      "minute": 8.2,
+      "scene": "why-not-the-big-ai",
+      "said": "Okay, cool. And what do you do if I just ghost you?",
+      "heard": "Okay, cool. And what do you do if I just ghost you?",
+      "reply": "Mostly I get you started and stay with you. One small step on a task, a timer, a brain dump sorted into a short list, reminders, and a memory of what helps. You can show me your screen or a picture too.",
+      "firstSoundMs": 961,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+        "You can text your landlord now and ask if you can pay a little late. One quick step: draft a short note."
+      ],
+      "replyWords": 42,
+      "n": 25,
+      "minute": 8.5,
+      "scene": "real-problems",
+      "said": "Real problem. Rent is due Friday and I haven't texted my landlord about the late fee.",
+      "heard": "Real problem. Rent is due Friday and I haven't texted my landlord about the late fee.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again. You can text your landlord now and ask if you can pay a little late. One quick step: draft a short note.",
+      "firstSoundMs": 1570,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 26,
+      "minute": 8.9,
+      "scene": "real-problems",
+      "said": "I just avoid it. Every time I open the text my stomach drops.",
+      "heard": "I just avoid it. Every time I open the text, my stomach drops.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1113,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 27,
+      "minute": 9.1,
+      "scene": "real-problems",
+      "said": "Okay, what do I even say? Give me the first sentence.",
+      "heard": "Okay, what do I even say? Give me the first sentence.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1167,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "Parked."
+      ],
+      "replyWords": 1,
+      "n": 28,
+      "minute": 9.4,
+      "scene": "real-problems",
+      "said": "That's actually not bad. Park it: text the landlord tonight.",
+      "heard": "That's actually not bad. Park it. Text the landlord tonight.",
+      "reply": "Parked.",
+      "firstSoundMs": 1015,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 29,
+      "minute": 9.7,
+      "scene": "real-problems",
+      "said": "Another one. I keep saying I'll start going to the gym and I never do.",
+      "heard": "Another one, I keep saying I'll start going to the gym and I never do.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 689,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 30,
+      "minute": 10,
+      "scene": "real-problems",
+      "said": "Don't say start small. Everyone says start small.",
+      "heard": "Don't say start small. Everyone says start small.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 993,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 31,
+      "minute": 10.4,
+      "scene": "real-problems",
+      "said": "Okay, ten push-ups tomorrow after I wake up. Add push-ups to my list.",
+      "heard": "Okay, 10 push-ups tomorrow after I wake up. Add push-ups to my list.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1197,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 32,
+      "minute": 10.6,
+      "scene": "real-problems",
+      "said": "You're kinda useful. Don't let it go to your head.",
+      "heard": "You're kinda useful. Don't let it go to your head.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1276,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 33,
+      "minute": 10.9,
+      "scene": "impatient-test",
+      "said": "Explain how to build a study schedule for finals. Like all of it.",
+      "heard": "Explain how to build the study schedule for finals, like all of it.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1364,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 34,
+      "minute": 11.5,
+      "scene": "impatient-test",
+      "said": "Wait wait, stop. Too long. Just give me the first block.",
+      "heard": "Wait, wait, stop. Too long. Just give me the first block.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1041,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 35,
+      "minute": 11.8,
+      "scene": "impatient-test",
+      "said": "Ugh, you're slow. Say it in five words.",
+      "heard": "Ugh, you're slow. Say it in 5 words.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 666,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 36,
+      "minute": 12.1,
+      "scene": "impatient-test",
+      "said": "Fine. That works. What do I do after the first block?",
+      "heard": "Fine, that works. What do I do after the first block?",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 919,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 37,
+      "minute": 12.4,
+      "scene": "impatient-test",
+      "said": "Why did your voice sound weird just then?",
+      "heard": "Why did your voice sound weird just then?",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1057,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 38,
+      "minute": 12.7,
+      "scene": "impatient-test",
+      "said": "Never mind. Keep going.",
+      "heard": "Never mind, keep going.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1194,
+      "flags": []
+    },
+    {
+      "ui": [
+        "inline-panel"
+      ],
+      "bubbles": [
+        "Done."
+      ],
+      "replyWords": 1,
+      "n": 39,
+      "minute": 12.9,
+      "scene": "app-tour",
+      "said": "Open my history.",
+      "heard": "Open My History.",
+      "reply": "Done.",
+      "firstSoundMs": 893,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I can’t open anything without you asking directly. What would you like me to do?"
+      ],
+      "replyWords": 15,
+      "n": 40,
+      "minute": 13.1,
+      "scene": "app-tour",
+      "said": "Show my report.",
+      "heard": "Show my report.",
+      "reply": "I can’t open anything without you asking directly. What would you like me to do?",
+      "firstSoundMs": 1221,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 41,
+      "minute": 13.4,
+      "scene": "app-tour",
+      "said": "Open settings.",
+      "heard": "Open Settings.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 747,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 42,
+      "minute": 13.7,
+      "scene": "app-tour",
+      "said": "Open my memory.",
+      "heard": "Open my memory.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 721,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 43,
+      "minute": 14,
+      "scene": "app-tour",
+      "said": "Add finish essay to my list.",
+      "heard": "Add finish essay to my list.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 1121,
+      "flags": []
+    },
+    {
+      "ui": [],
+      "bubbles": [
+        "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again."
+      ],
+      "replyWords": 20,
+      "n": 44,
+      "minute": 14.3,
+      "scene": "app-tour",
+      "said": "Remember that I focus best after midnight.",
+      "heard": "Remember that I focus best after midnight.",
+      "reply": "I am getting too many requests right now, so I cannot answer yet. Give it a minute and ask again.",
+      "firstSoundMs": 616,
+      "flags": []
+    }
+  ]
+}

@@ -67,7 +67,7 @@ export function Onboarding({ onDone }: { onDone: (patch: Partial<UserProfile>) =
       <h1 id="onb-title" className="section-title">Two quick questions</h1>
       <p className="text-ink-2 mt-2">This sets Stay&apos;s tone. You can change it later in Settings.</p>
 
-      <fieldset className={`mt-6 ${error && !care ? 'rounded-xl p-2 ring-2 ring-amber-500/50' : ''}`}>
+      <fieldset className={`mt-6 ${error && !care ? 'rounded-xl p-2 ring-2 ring-caution/50' : ''}`}>
         <legend className="label">Where are you with ADHD care?</legend>
         <div className="mt-3 grid gap-2">
           {CARE_OPTIONS.map((o) => (
@@ -101,7 +101,7 @@ export function Onboarding({ onDone }: { onDone: (patch: Partial<UserProfile>) =
             Text only (quiet)
           </button>
         </div>
-        <label className="mt-4 flex items-center gap-3 cursor-pointer">
+        <label className="mt-4 flex min-h-11 items-center gap-3 cursor-pointer">
           <input type="checkbox" className="h-5 w-5 accent-[#8FD3FF]" checked={proactive} onChange={(e) => setProactive(e.target.checked)} />
           <span className="text-[0.95rem]">Check in with me when a focus block ends</span>
         </label>
@@ -113,7 +113,7 @@ export function Onboarding({ onDone }: { onDone: (patch: Partial<UserProfile>) =
 
       <label
         className={`notice mt-3 flex items-start gap-3 cursor-pointer transition-all ${
-          error && !ack ? 'border-red-500/60 bg-red-500/10 ring-2 ring-red-500/30' : ''
+          error && !ack ? 'border-danger/60 bg-danger/10 ring-2 ring-danger/30' : ''
         }`}
       >
         <input
@@ -133,7 +133,7 @@ export function Onboarding({ onDone }: { onDone: (patch: Partial<UserProfile>) =
       </label>
 
       {error && (
-        <div className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs sm:text-sm text-red-600 dark:text-red-400 font-medium animate-shake" data-testid="onboarding-error" role="alert">
+        <div className="mt-4 rounded-xl border border-danger/30 bg-danger/10 p-3 text-xs sm:text-sm text-danger font-medium animate-shake" data-testid="onboarding-error" role="alert">
           {error}
         </div>
       )}

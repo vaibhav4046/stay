@@ -85,7 +85,7 @@ describe('spoken list corrections', () => {
     const r = applyListEdit('that one is done', NOW);
     expect(r.ok).toBe(true);
     expect(loadToday(NOW).find((i) => i.text.includes('bins'))?.done).toBe(true);
-    expect(r.say).toMatch(/win/);
+    expect(r.say).toMatch(/done/);
   });
   it('making something the start demotes the old one: only one "now"', () => {
     applyListEdit('start with the landlord', NOW);
@@ -163,6 +163,9 @@ describe('break a task into steps with timers', () => {
   });
   it('clamps the working block to 5-25 minutes', () => {
     expect(breakDown('x task', 90, NOW).steps[2].minutes).toBe(25);
+    // the step is read aloud: a task said as a verb phrase gets "to", a noun phrase gets "for" (it was "open what you need for write paper due at 9")
+    expect(breakDown('write paper due at 9 tomorrow', 10, NOW).steps[0].text).toBe('Open what you need to write paper due at 9 tomorrow');
+    expect(breakDown('the email to my landlord', 10, NOW).steps[0].text).toBe('Open what you need for the email to my landlord');
     expect(breakDown('x task', 1, NOW).steps[2].minutes).toBe(5);
   });
 });

@@ -1,0 +1,362 @@
+/*
+  The landing hero device: a book-style foldable with one continuous inner display that plays the recorded call
+  (HeroExample.tsx, art and numbers in FoldFrame.tsx and foldGeometry.ts). Original drawing: no real product's logo, name or marks.
+  It is a real CSS 3D scene: a stage with perspective, a rig that leans toward the pointer and floats, and two slabs (front glass, back, a ring
+  of thin strips for the metal edge) that turn about a hinge barrel along the spine.
+  Every size is a multiple of --u, one design pixel (the device is drawn 600 wide, or 342 wide when stacked), so the picture, the text on it and
+  the art under it scale together and the device can never be wider than its box. Colours come from the palette tokens in globals.css (@theme);
+  the derived ones are defined once, here in :root, and nothing below uses a literal colour.
+  Only transform, opacity and filter are animated. Shadows are static layers whose opacity and transform move.
+*/
+:root {
+  --fd-blue: var(--color-accent-deep);
+  --fd-teal: color-mix(in srgb, var(--color-success) 62%, var(--color-accent));
+  --fd-amber: var(--color-caution);
+  --fd-ease: cubic-bezier(0.65, 0, 0.35, 1); /* ease in and out: the fold starts and ends softly */
+
+  /* the frame is anodised titanium that runs from blue (the first half) through teal to green (the second); the hinge is warm amber */
+  --fd-ti-a-hi: color-mix(in srgb, var(--color-accent) 78%, var(--color-ink));
+  --fd-ti-a-lo: color-mix(in srgb, var(--fd-blue) 46%, var(--color-night));
+  --fd-ti-b-hi: color-mix(in srgb, var(--color-success) 70%, var(--color-ink));
+  --fd-ti-b-lo: color-mix(in srgb, var(--color-success) 40%, var(--color-night));
+  --fd-ring-mid: color-mix(in srgb, var(--fd-teal) 80%, var(--color-ink));
+  --fd-body-a-0: color-mix(in srgb, var(--fd-blue) 30%, var(--color-night));
+  --fd-body-b-0: color-mix(in srgb, var(--color-success) 22%, var(--color-night));
+  --fd-body-1: var(--color-night);
+  --fd-chamfer: color-mix(in srgb, var(--color-ink) 16%, transparent);
+  --fd-well: var(--color-canvas);
+  --fd-barrel-hi: color-mix(in srgb, var(--fd-amber) 78%, var(--color-ink));
+  --fd-barrel-lo: color-mix(in srgb, var(--fd-amber) 34%, var(--color-night));
+  --fd-barrel-spec: color-mix(in srgb, var(--fd-amber) 40%, var(--color-ink));
+  --fd-pin: color-mix(in srgb, var(--fd-amber) 12%, var(--color-night));
+  --fd-brush: color-mix(in srgb, var(--color-ink) 9%, transparent);
+  --fd-gleam: color-mix(in srgb, var(--color-ink) 40%, transparent);
+  --fd-gleam-soft: color-mix(in srgb, var(--color-ink) 22%, transparent);
+
+  /* one display, dark, with a wash of colour at each end; both halves share the same base so it runs on across the spine */
+  --fd-base: linear-gradient(180deg, var(--color-night-2), var(--color-night));
+  --fd-wash-a: radial-gradient(130% 62% at 12% 0%, color-mix(in srgb, var(--fd-blue) 30%, transparent), transparent 64%);
+  --fd-wash-b: radial-gradient(130% 62% at 92% 100%, color-mix(in srgb, var(--fd-teal) 26%, transparent), transparent 64%);
+  --fd-crease: color-mix(in srgb, var(--color-canvas) 30%, transparent);
+  --fd-crease-line: color-mix(in srgb, var(--color-ink) 7%, transparent);
+
+  /* the call: the person in blue, Stay on a surface tone with a teal edge, the solved step in green (ink on each is at least 4.5:1) */
+  --fd-you-0: color-mix(in srgb, var(--fd-blue) 70%, var(--color-night));
+  --fd-you-1: color-mix(in srgb, color-mix(in srgb, var(--fd-teal) 34%, var(--fd-blue)) 58%, var(--color-night));
+  --fd-stay: var(--color-surface-2);
+  --fd-done-0: color-mix(in srgb, var(--color-success) 28%, var(--color-night-2));
+  --fd-done-1: color-mix(in srgb, var(--color-success) 9%, var(--color-night-2));
+  --fd-done-line: color-mix(in srgb, var(--color-success) 44%, transparent);
+
+  /* the glass lid: what the second half turns into as it closes (its back is frosted glass) */
+  --fd-glass: linear-gradient(112deg, color-mix(in srgb, var(--color-ink) 30%, transparent) 0%, color-mix(in srgb, var(--color-accent) 17%, transparent) 40%, color-mix(in srgb, var(--fd-teal) 20%, transparent) 100%);
+  --fd-streak: linear-gradient(104deg, transparent 38%, color-mix(in srgb, var(--color-ink) 22%, transparent) 48%, transparent 58%);
+  --fd-glass-line: color-mix(in srgb, var(--color-ink) 30%, transparent);
+  --fd-sheen: linear-gradient(var(--sha), transparent 41%, color-mix(in srgb, var(--color-ink) 4%, transparent) 46%, color-mix(in srgb, var(--color-ink) 11%, transparent) 50%, color-mix(in srgb, var(--color-ink) 4%, transparent) 54%, transparent 59%);
+
+  /* light and shadow behind and under the device */
+  --fd-light-a: color-mix(in srgb, var(--fd-blue) 46%, transparent);
+  --fd-light-b: color-mix(in srgb, var(--color-success) 30%, transparent);
+  --fd-light-c: color-mix(in srgb, var(--fd-amber) 18%, transparent);
+  --fd-glow: color-mix(in srgb, var(--fd-amber) 70%, transparent);
+  --fd-floor: color-mix(in srgb, var(--color-canvas) 92%, transparent);
+  --fd-floor-soft: color-mix(in srgb, var(--color-canvas) 48%, transparent);
+}
+
+/* ------------------------------------------------------------------ the figure: the device, the controls, the caption */
+.fd-figure { display: flex; flex-direction: column; gap: 1.25rem; width: 100%; max-width: 40rem; margin-inline: auto; }
+/* the controls and the caption sit above the soft light behind the device (it reaches a little past the device) */
+.fd-controls, .fd-caption { position: relative; z-index: 1; }
+.fd-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.5rem 0.75rem; }
+.fd-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; }
+.fd-caption { margin: 0; text-align: center; }
+.fd-chip { min-height: 44px; min-width: 44px; padding: 0.28rem 0.95rem; border: 1px solid var(--color-line-strong); border-radius: 999px; background: transparent; color: var(--color-ink-2); font-size: 0.875rem; cursor: pointer; transition: background-color 200ms var(--ease-calm), color 200ms var(--ease-calm), border-color 200ms var(--ease-calm); }
+.fd-chip:hover { color: var(--color-ink); border-color: var(--color-ink-2); }
+.fd-chip:active { background: var(--color-recessed); }
+.fd-chip:focus-visible { outline: 2px solid var(--color-ink); outline-offset: 2px; }
+.fd-chip-on { color: var(--color-ink); background: var(--color-accent-soft); border-color: var(--color-accent); }
+
+/* ------------------------------------------------------------------ the device */
+.fd {
+  /* wide: the book (spine vertical). The numbers come from foldGeometry.ts, through FoldFrame.tsx, as --wide-* and --tall-*. */
+  --hw: var(--wide-hw); --hh: var(--wide-hh); --sxa: var(--wide-sxa); --sxb: var(--wide-sxb); --sya: var(--wide-sya); --syb: var(--wide-syb);
+  --sw: var(--wide-sw); --sh: var(--wide-sh); --tw: var(--wide-tw); --th: var(--wide-th);
+  --u: calc(100cqw / var(--tw));
+  --fd-open: rotateY(0deg);
+  --fd-shut: rotateY(-165deg); /* the second half lies over the first, 15 degrees short of flat */
+  --fd-over: rotateY(2.5deg);
+  --fd-slide: translateX(calc(var(--u) * var(--hw) * -1)); /* where the second half's shadow goes when it is shut */
+  --fd-blur: calc(var(--u) * 6);
+  --dir: 90deg; /* the way the frame's colour runs: along the book */
+  --sha: 100deg;
+  --shk: 0.5;
+  --shw: 400%;
+  --ro: calc(var(--u) * var(--r-out));
+  --ri: calc(var(--u) * var(--r-in));
+  --so: calc(var(--u) * var(--r-screen));
+  --rim: calc(var(--u) * 4); /* the width of the metal frame on the face */
+  position: relative;
+  width: 100%;
+  max-width: calc(var(--tw) * 1px);
+  margin-inline: auto;
+  aspect-ratio: var(--tw) / var(--th);
+  container-type: inline-size;
+}
+/* each half: its body corners, its display corners, where its frame is, where its glare starts */
+.fd-a { --rb: var(--ro) var(--ri) var(--ri) var(--ro); --rs: var(--so) 0 0 var(--so); --rp: var(--rim) 0 var(--rim) var(--rim); --sx: var(--sxa); --sy: var(--sya); --shl: -100%; --ring-s: var(--fd-ti-a-hi); --ring-e: var(--fd-ring-mid); }
+.fd-b { --rb: var(--ri) var(--ro) var(--ro) var(--ri); --rs: 0 var(--so) var(--so) 0; --rp: var(--rim) var(--rim) var(--rim) 0; --sx: var(--sxb); --sy: var(--syb); --shl: -200%; --ring-s: var(--fd-ring-mid); --ring-e: var(--fd-ti-b-hi); }
+
+.fd-light {
+  /* every gradient fades to nothing before the edge of the box, so no edge shows */
+  position: absolute; inset: -18% -14% -16%; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(closest-side at 22% 54%, var(--fd-light-a), transparent),
+    radial-gradient(closest-side at 78% 46%, var(--fd-light-b), transparent),
+    radial-gradient(50% 15% at 50% 84%, var(--fd-light-c), transparent);
+}
+/* the contact shadow: static layers under the device. Their opacity and transform move (with the float, the lean and the fold); nothing about a blur does. */
+.fd-shadows { position: absolute; inset: 0; z-index: 0; pointer-events: none; transform: translate3d(calc(var(--tilt-ry, 0) * var(--u) * -1.6), 0, 0); transition: transform 650ms var(--ease-calm); }
+.fd-shadow { position: absolute; top: calc(100% - var(--u) * 14); height: calc(var(--u) * 52); width: calc(var(--u) * (var(--hw) - 14)); }
+.fd-shadow > i { position: absolute; inset: 0; background: radial-gradient(ellipse closest-side, var(--fd-floor), var(--fd-floor-soft) 56%, transparent); animation: fd-shadow-float 7s ease-in-out infinite; }
+.fd-shadow-a { left: calc(var(--u) * 6); }
+.fd-shadow-b { left: calc(var(--u) * (var(--hw) + 8)); }
+
+/* the eye is up and to the right of the device, so the top and right edges of the slabs face it */
+.fd-stage { position: absolute; inset: 0; z-index: 1; perspective: calc(var(--u) * 1900); perspective-origin: 94% 6%; }
+.fd-tilt, .fd-float { position: absolute; inset: 0; transform-style: preserve-3d; }
+/* leaning toward the pointer (two numbers set by HeroExample, clamped to 8) and, on top of it, a slow float: a few degrees, about 7 s, ease in and out */
+.fd-tilt { transform: rotateX(calc(var(--tilt-rx, 0) * 1deg)) rotateY(calc(var(--tilt-ry, 0) * 1deg)); transition: transform 650ms var(--ease-calm); }
+.fd-float { animation: fd-float 7s ease-in-out infinite; }
+.fd[data-halt='false'] .fd-tilt, .fd[data-halt='false'] .fd-float { will-change: transform; } /* promoted only while they move */
+
+.fd-half { position: absolute; top: 0; width: calc(var(--u) * var(--hw)); height: calc(var(--u) * var(--hh)); transform-style: preserve-3d; }
+.fd-a { left: 0; }
+.fd-b { left: calc(var(--u) * var(--hw)); transform-origin: 0 50% 0; } /* the hinge is the spine: the second half's inner edge */
+.fd-front, .fd-back { position: absolute; inset: 0; backface-visibility: hidden; }
+.fd-front { transform: translateZ(calc(var(--u) * var(--depth) / 2)); }
+/* the back of the second half is frosted glass: it is what you see when the book is shut */
+.fd-back { transform: translateZ(calc(var(--u) * var(--depth) / -2)) rotateY(180deg); border-radius: var(--rb); background: var(--fd-streak), var(--fd-glass); box-shadow: inset 0 0 0 1px var(--fd-glass-line); pointer-events: none; }
+
+.fd-art, .fd-svg { position: absolute; inset: 0; display: block; width: 100%; height: 100%; pointer-events: none; }
+.fd-only-tall { display: none; }
+.fd-body-a-0 { stop-color: var(--fd-body-a-0); } .fd-body-b-0 { stop-color: var(--fd-body-b-0); } .fd-body-1 { stop-color: var(--fd-body-1); }
+.fd-chamfer { stroke: var(--fd-chamfer); }
+.fd-well { fill: none; stroke: var(--fd-well); }
+
+/* the metal frame on the face: anodised colour that runs across the book, brushed lines, and gleams at the corners; none at the spine */
+.fd-ring {
+  position: absolute; inset: 0; border-radius: var(--rb); padding: var(--rp); pointer-events: none;
+  background:
+    conic-gradient(from 200deg, var(--fd-gleam), transparent 14%, var(--fd-gleam-soft) 30%, transparent 46%, var(--fd-gleam) 62%, transparent 80%, var(--fd-gleam)),
+    repeating-linear-gradient(var(--dir), var(--fd-brush) 0 0.6px, transparent 0.6px 2.2px),
+    linear-gradient(var(--dir), var(--ring-s), var(--ring-e));
+  -webkit-mask: linear-gradient(var(--color-ink) 0 0) content-box, linear-gradient(var(--color-ink) 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(var(--color-ink) 0 0) content-box, linear-gradient(var(--color-ink) 0 0);
+  mask-composite: exclude;
+}
+
+/* the edge: strips standing on the outline, each lit by the way it faces (light from the top left), brushed along its length */
+.fd-edges { position: absolute; inset: 0; transform-style: preserve-3d; }
+.fd-facet {
+  --hi: color-mix(in srgb, var(--fd-ti-b-hi) calc(var(--tint) * 100%), var(--fd-ti-a-hi));
+  --lo: color-mix(in srgb, var(--fd-ti-b-lo) calc(var(--tint) * 100%), var(--fd-ti-a-lo));
+  --c: color-mix(in srgb, var(--hi) calc(var(--shade) * 100%), var(--lo));
+  position: absolute; left: 0; top: 0;
+  width: calc(var(--u) * var(--len)); height: calc(var(--u) * var(--depth));
+  margin: calc(var(--u) * var(--depth) / -2) 0 0 calc(var(--u) * var(--len) / -2);
+  transform: translate3d(calc(var(--u) * var(--x)), calc(var(--u) * var(--y)), 0) rotateZ(calc(var(--a) * 1deg + 90deg)) rotateX(90deg);
+  backface-visibility: hidden;
+  background:
+    repeating-linear-gradient(180deg, var(--fd-brush) 0 0.6px, transparent 0.6px 2.2px),
+    linear-gradient(180deg, color-mix(in srgb, var(--c) 55%, var(--color-ink)) 0, var(--c) 22%, var(--c) 78%, color-mix(in srgb, var(--c) 60%, var(--color-ink)) 100%);
+}
+
+/* the hinge: a barrel along the spine, behind the display when open (the display runs on across it), the thin metal spine when shut */
+.fd-spine { position: absolute; left: calc(var(--u) * var(--hw)); top: 0; width: 0; height: 100%; transform-style: preserve-3d; }
+.fd-barrel {
+  --c: color-mix(in srgb, var(--fd-barrel-hi) calc(var(--shade) * 100%), var(--fd-barrel-lo));
+  position: absolute; left: 0; top: 0; width: calc(var(--u) * var(--bw)); height: 100%; margin-left: calc(var(--u) * var(--bw) / -2);
+  transform: rotateY(calc(var(--p) * 1deg)) translateZ(calc(var(--u) * var(--spine)));
+  backface-visibility: hidden;
+  background: linear-gradient(var(--spine-dir, 180deg), var(--fd-pin) 0 5%, var(--c) 5% 31%, var(--fd-pin) 31% 36%, var(--c) 36% 64%, var(--fd-pin) 64% 69%, var(--c) 69% 95%, var(--fd-pin) 95%);
+}
+.fd-barrel-spec { --c: var(--fd-barrel-spec); } /* the warm catch-light */
+.fd-spine-glow { position: absolute; top: calc(var(--u) * 6); bottom: calc(var(--u) * 6); left: calc(var(--u) * -34); width: calc(var(--u) * 68); border-radius: 50%; background: radial-gradient(ellipse closest-side, var(--fd-glow), transparent); opacity: 0; pointer-events: none; transform: translateZ(calc(var(--u) * (var(--depth) / 2 + 2))); }
+
+/* ------------------------------------------------------------------ the display (one sheet of glass, two halves) */
+.fd-screen, .fd-glare {
+  position: absolute; left: calc(var(--u) * var(--sx)); top: calc(var(--u) * var(--sy));
+  width: calc(var(--u) * var(--sw)); height: calc(var(--u) * var(--sh));
+  border-radius: var(--rs);
+}
+.fd-screen {
+  display: flex; flex-direction: column; gap: calc(var(--u) * 8);
+  padding: calc(var(--u) * 12) calc(var(--u) * 14) calc(var(--u) * 14);
+  overflow: hidden;
+  background: var(--fd-wash-a), var(--fd-base);
+  color: var(--color-ink);
+}
+.fd-b .fd-screen { background: var(--fd-wash-b), var(--fd-base); }
+.fd-glare { overflow: hidden; pointer-events: none; }
+/* a streak of light on the glass that slides as the device floats and leans; both halves are windows on one big streak, so it runs on across the spine */
+.fd-sheen { position: absolute; top: -10%; bottom: -10%; left: var(--shl); width: var(--shw); transform: translateX(calc(var(--tilt-ry, 0) * var(--shk) * -1.6%)); transition: transform 650ms var(--ease-calm); }
+.fd-sheen-i { position: absolute; inset: 0; background: var(--fd-sheen); animation: fd-sheen 7s ease-in-out infinite; }
+/* the crease: a very shallow soft shade and a hair of light where the display folds */
+.fd-crease { position: absolute; top: 0; bottom: 0; width: calc(var(--u) * 46); }
+.fd-a .fd-crease { right: 0; background: linear-gradient(90deg, transparent, var(--fd-crease) 82%, var(--fd-crease-line)); }
+.fd-b .fd-crease { left: 0; background: linear-gradient(270deg, transparent, var(--fd-crease) 82%, var(--fd-crease-line)); }
+.fd-cam { position: absolute; z-index: 3; top: calc(var(--u) * 10); right: calc(var(--u) * 18); width: calc(var(--u) * 7); height: calc(var(--u) * 7); border-radius: 50%; background: radial-gradient(circle at 36% 34%, color-mix(in srgb, var(--color-accent) 55%, var(--color-night)) 0 14%, var(--color-night) 42%, var(--color-canvas) 100%); box-shadow: 0 0 0 calc(var(--u) * 1.5) color-mix(in srgb, var(--color-ink) 9%, transparent); }
+
+.fd-bar { display: flex; flex: none; align-items: center; gap: calc(var(--u) * 8); min-height: calc(var(--u) * 26); }
+.fd-face { position: relative; flex: none; width: calc(var(--u) * 24); height: calc(var(--u) * 24); border-radius: 50%; } /* the Stay mark itself: the sphere of dots */
+.fd-face img { display: block; width: 100%; height: 100%; }
+.fd-face::before { content: ''; position: absolute; inset: calc(var(--u) * -4); border-radius: 50%; border: 1.5px solid transparent; border-top-color: var(--color-accent); opacity: 0; transition: opacity 300ms; animation: fd-spin 1.6s linear infinite; }
+.fd-face[data-mode='speaking']::before { opacity: 1; }
+.fd-face[data-mode='speaking'] { animation: fd-breathe 1.3s ease-in-out infinite; }
+.fd-status { font-size: calc(var(--u) * 12); letter-spacing: 0.01em; color: var(--color-ink-2); }
+
+.fd-thread { display: flex; flex: 1 1 0; flex-direction: column; gap: calc(var(--u) * 8); min-height: 0; overflow: hidden; }
+.fd .fd-bubble { margin: 0; max-width: 90%; padding: calc(var(--u) * 8) calc(var(--u) * 12); border: 0; font-size: calc(var(--u) * 14); line-height: 1.4; color: var(--color-ink); backdrop-filter: none; }
+.fd .fd-bubble-you { align-self: flex-end; border-radius: calc(var(--u) * 17) calc(var(--u) * 17) calc(var(--u) * 5) calc(var(--u) * 17); background: linear-gradient(145deg, var(--fd-you-0), var(--fd-you-1)); box-shadow: inset 0 1px 0 var(--fd-chamfer); }
+.fd .fd-bubble-stay { align-self: flex-start; border-radius: calc(var(--u) * 17) calc(var(--u) * 17) calc(var(--u) * 17) calc(var(--u) * 5); background: var(--fd-stay); box-shadow: inset calc(var(--u) * 3) 0 0 var(--fd-teal); padding-left: calc(var(--u) * 15); }
+.fd-word { display: inline-block; white-space: pre; animation: fd-word 340ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.fd-pop { animation: fd-pop 380ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+
+.fd-wave { display: inline-flex; align-items: center; gap: 3px; height: 16px; vertical-align: middle; margin-left: 4px; color: var(--color-ink-2); }
+.fd-wave i { width: 3px; height: 100%; border-radius: 2px; background: currentColor; transform-origin: center; animation: fd-wave 900ms ease-in-out infinite; }
+.fd-wave i:nth-child(2) { animation-delay: 120ms; }
+.fd-wave i:nth-child(3) { animation-delay: 240ms; }
+.fd-wave i:nth-child(4) { animation-delay: 360ms; }
+.fd-wave i:nth-child(5) { animation-delay: 480ms; }
+.fd-dots { display: inline-flex; gap: 4px; align-items: center; height: 16px; }
+.fd-dots i { width: 6px; height: 6px; border-radius: 999px; background: currentColor; opacity: 0.6; animation: fd-dot 1s ease-in-out infinite; }
+.fd-dots i:nth-child(2) { animation-delay: 160ms; }
+.fd-dots i:nth-child(3) { animation-delay: 320ms; }
+
+/* the step the person walks away with lands last, at the foot of the second half */
+.fd-outcome-slot { display: flex; flex: none; align-items: flex-end; min-height: calc(var(--u) * 76); }
+.fd-outcome { display: flex; width: 100%; align-items: center; gap: calc(var(--u) * 10); padding: calc(var(--u) * 9) calc(var(--u) * 12); border: 1px solid var(--fd-done-line); border-radius: calc(var(--u) * 14); background: linear-gradient(135deg, var(--fd-done-0), var(--fd-done-1)); }
+.fd-outcome-title { margin: 0; font-size: calc(var(--u) * 12); font-weight: 600; color: var(--color-ink); }
+.fd-outcome-detail { margin: calc(var(--u) * 2) 0 0; font-size: calc(var(--u) * 12.5); line-height: 1.35; color: var(--color-ink-2); }
+.fd-solve { flex: none; position: relative; width: calc(var(--u) * 24); height: calc(var(--u) * 24); border-radius: 50%; border: 2px solid var(--fd-done-line); border-top-color: var(--color-success); animation: fd-spin 0.8s linear infinite; }
+.fd-solve-done { animation: none; border-color: var(--color-success); background: var(--color-success); }
+.fd-solve-done::after { content: ''; position: absolute; inset: 22%; background: var(--color-canvas); clip-path: polygon(14% 52%, 0 66%, 38% 100%, 100% 22%, 86% 8%, 38% 72%); } /* a tick drawn without transform, so it still reads under reduced motion */
+
+/* ------------------------------------------------------------------ the fold: the second half turns about the spine in 3D */
+.fd[data-phase='closing'] .fd-b, .fd[data-phase='opening'] .fd-b { will-change: transform; }
+.fd[data-phase='closing'] .fd-b .fd-front, .fd[data-phase='opening'] .fd-b .fd-front { will-change: opacity, filter; }
+.fd[data-phase='closing'] .fd-b { animation: fd-b-close 540ms var(--fd-ease) both; }
+.fd[data-phase='opening'] .fd-b { animation: fd-b-open 600ms var(--fd-ease) both; }
+/* its face goes translucent and blurred as it turns edge on, and its back (frosted glass) comes up as it lies over the first half */
+.fd[data-phase='closing'] .fd-b .fd-front { animation: fd-front-out 540ms linear both; }
+.fd[data-phase='opening'] .fd-b .fd-front { animation: fd-front-in 600ms linear both; }
+.fd[data-phase='closing'] .fd-b .fd-back { animation: fd-back-in 540ms linear both; }
+.fd[data-phase='opening'] .fd-b .fd-back { animation: fd-back-out 600ms linear both; }
+.fd[data-phase='closing'] .fd-a .fd-screen { animation: fd-a-close 540ms var(--fd-ease) both; }
+.fd[data-phase='opening'] .fd-a .fd-screen { animation: fd-a-open 600ms var(--fd-ease) both; }
+/* the hinge light and the shadow answer the fold: the shadow of the second half slides under the first, and the first one deepens */
+.fd[data-phase='closing'] .fd-spine-glow { animation: fd-glow-in 540ms var(--fd-ease) both; }
+.fd[data-phase='opening'] .fd-spine-glow { animation: fd-glow-out 600ms var(--fd-ease) both; }
+.fd[data-phase='closing'] .fd-shadow-b { animation: fd-shadow-b-close 540ms var(--fd-ease) both; }
+.fd[data-phase='opening'] .fd-shadow-b { animation: fd-shadow-b-open 600ms var(--fd-ease) both; }
+.fd[data-phase='closing'] .fd-shadow-a { animation: fd-shadow-a-close 540ms var(--fd-ease) both; }
+.fd[data-phase='opening'] .fd-shadow-a { animation: fd-shadow-a-open 600ms var(--fd-ease) both; }
+/* The full-screen grain (glass.css: fixed, soft-light blend) makes the browser re-blend the whole page for every frame of any animation that moves
+   a large area. While the device is playing on screen (float, lean, fold) it is switched off; it comes back when the device is paused or scrolled away. */
+body:has(.fd[data-halt='false'])::after { display: none; }
+/* a call picked mid-sentence: its wave and dots hold still while the halves fold */
+.fd[data-phase='closing'] :is(.fd-wave, .fd-dots) i, .fd[data-phase='closing'] .fd-face::before { animation-play-state: paused; }
+/* Pause, or off screen: everything stops where it is, the fold included */
+.fd[data-halt='true'], .fd[data-halt='true'] *, .fd[data-halt='true'] *::before { animation-play-state: paused !important; }
+
+@keyframes fd-float {
+  0%, 100% { transform: translate3d(0, 0, 0) rotateX(-3deg) rotateY(-11.5deg); }
+  33% { transform: translate3d(0, calc(var(--u) * -4), 0) rotateX(-5.2deg) rotateY(-8deg); }
+  66% { transform: translate3d(0, calc(var(--u) * -1.5), 0) rotateX(-3.6deg) rotateY(-9.4deg); }
+}
+@keyframes fd-sheen {
+  0%, 100% { transform: translateX(calc(var(--shk) * -9%)); }
+  33% { transform: translateX(calc(var(--shk) * 2%)); }
+  66% { transform: translateX(calc(var(--shk) * 10%)); }
+}
+@keyframes fd-shadow-float {
+  0%, 100% { transform: scale(1, 1); opacity: 0.95; }
+  33% { transform: scale(0.93, 0.88); opacity: 0.74; }
+  66% { transform: scale(0.97, 0.94); opacity: 0.86; }
+}
+@keyframes fd-b-close {
+  from { transform: var(--fd-open); }
+  to { transform: var(--fd-shut); }
+}
+@keyframes fd-b-open {
+  0% { transform: var(--fd-shut); }
+  80% { transform: var(--fd-over); animation-timing-function: ease-out; }
+  100% { transform: var(--fd-open); }
+}
+@keyframes fd-front-out { 0% { opacity: 1; filter: blur(0); } 50%, 100% { opacity: 0.5; filter: blur(var(--fd-blur)); } }
+@keyframes fd-front-in { 0%, 45% { opacity: 0.5; filter: blur(var(--fd-blur)); } 100% { opacity: 1; filter: blur(0); } }
+@keyframes fd-back-in { 0%, 40% { opacity: 0; } 85%, 100% { opacity: 1; } }
+@keyframes fd-back-out { 0% { opacity: 1; } 50%, 100% { opacity: 0; } }
+@keyframes fd-a-close { to { opacity: 0.72; filter: blur(calc(var(--fd-blur) * 0.55)); } }
+@keyframes fd-a-open { from { opacity: 0.72; filter: blur(calc(var(--fd-blur) * 0.55)); } }
+@keyframes fd-glow-in { from { opacity: 0; } to { opacity: 0.85; } }
+@keyframes fd-glow-out { from { opacity: 0.85; } to { opacity: 0; } }
+@keyframes fd-shadow-b-close { to { transform: var(--fd-slide); opacity: 0.55; } }
+@keyframes fd-shadow-b-open { from { transform: var(--fd-slide); opacity: 0.55; } }
+@keyframes fd-shadow-a-close { to { transform: scale(1.05, 1.22); } }
+@keyframes fd-shadow-a-open { from { transform: scale(1.05, 1.22); } }
+
+@keyframes fd-spin { to { transform: rotate(360deg); } }
+@keyframes fd-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+@keyframes fd-word { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+@keyframes fd-pop { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes fd-wave { 0%, 100% { transform: scaleY(0.25); } 50% { transform: scaleY(1); } }
+@keyframes fd-dot { 0%, 100% { transform: translateY(0); opacity: 0.4; } 50% { transform: translateY(-3px); opacity: 1; } }
+
+/* ------------------------------------------------------------------ stacked (a phone): spine horizontal, the first half on top, the fold turns about the spine */
+@media (max-width: 639.98px) {
+  .fd {
+    --hw: var(--tall-hw); --hh: var(--tall-hh); --sxa: var(--tall-sxa); --sxb: var(--tall-sxb); --sya: var(--tall-sya); --syb: var(--tall-syb);
+    --sw: var(--tall-sw); --sh: var(--tall-sh); --tw: var(--tall-tw); --th: var(--tall-th);
+    --fd-open: rotateX(0deg);
+    --fd-shut: rotateX(165deg);
+    --fd-over: rotateX(-2.5deg);
+    --fd-slide: scale(0.8, 0.8);
+    --dir: 180deg;
+    --sha: 90deg;
+    --shk: 1;
+    --shw: 200%;
+    --spine-dir: 90deg;
+  }
+  .fd-a { --rb: var(--ro) var(--ro) var(--ri) var(--ri); --rs: var(--so) var(--so) 0 0; --rp: var(--rim) var(--rim) 0 var(--rim); --shl: -50%; }
+  .fd-b { --rb: var(--ri) var(--ri) var(--ro) var(--ro); --rs: 0 0 var(--so) var(--so); --rp: 0 var(--rim) var(--rim) var(--rim); --shl: -50%; }
+  .fd-only-wide { display: none; }
+  .fd-only-tall { display: block; }
+  .fd-b { left: 0; top: calc(var(--u) * var(--hh)); transform-origin: 50% 0 0; }
+  .fd-back { transform: translateZ(calc(var(--u) * var(--depth) / -2)) rotateX(180deg); }
+  .fd-spine { left: 0; top: calc(var(--u) * var(--hh)); width: 100%; height: 0; }
+  .fd-barrel { left: 0; top: 0; width: 100%; height: calc(var(--u) * var(--bw)); margin: calc(var(--u) * var(--bw) / -2) 0 0; transform: rotateX(calc(var(--p) * -1deg)) translateZ(calc(var(--u) * var(--spine))); }
+  .fd-spine-glow { top: calc(var(--u) * -34); bottom: auto; height: calc(var(--u) * 68); left: calc(var(--u) * 6); right: calc(var(--u) * 6); width: auto; }
+  .fd-crease { top: auto; bottom: auto; left: 0; right: 0; width: auto; height: calc(var(--u) * 46); }
+  .fd-a .fd-crease { bottom: 0; background: linear-gradient(180deg, transparent, var(--fd-crease) 82%, var(--fd-crease-line)); }
+  .fd-b .fd-crease { top: 0; left: 0; right: 0; background: linear-gradient(0deg, transparent, var(--fd-crease) 82%, var(--fd-crease-line)); }
+  .fd-shadow-a { display: none; }
+  .fd-shadow-b { left: calc(var(--u) * 6); width: calc(var(--u) * (var(--tw) - 12)); }
+  .fd-cam { right: calc(var(--u) * 20); }
+  .fd .fd-bubble { max-width: 92%; padding-block: calc(var(--u) * 7); }
+  .fd-thread { gap: calc(var(--u) * 6); }
+  .fd-status { font-size: calc(var(--u) * 13); }
+  .fd-outcome-title { font-size: calc(var(--u) * 13); }
+  .fd-outcome-detail { font-size: calc(var(--u) * 13); }
+  .fd-chips { gap: 0.4rem; }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .fd { --fd-blur: 0px; }
+}
+/* reduced motion: a still, flat device. The strips, the barrel, the lid and the hinge light are 3D parts and go; the float, the sheen and the shadow's breathing stop. */
+@media (prefers-reduced-motion: reduce) {
+  .fd-facet, .fd-barrel, .fd-back, .fd-spine-glow { display: none; }
+  .fd-float, .fd-sheen-i, .fd-shadow > i { animation: none; }
+}

@@ -101,10 +101,10 @@ export function ReportBuilder({
           </div>
         </fieldset>
 
-        <fieldset className="mt-5 space-y-2.5">
+        <fieldset className="mt-5">
           <legend className="label mb-1">Sections</legend>
           {TOGGLES.map((t) => (
-            <label key={t.key} className="flex items-center gap-3 cursor-pointer text-[0.95rem]">
+            <label key={t.key} className="flex min-h-11 items-center gap-3 cursor-pointer text-[0.95rem]">
               <input
                 type="checkbox"
                 className="h-5 w-5 accent-[#8FD3FF]"
@@ -135,20 +135,17 @@ export function ReportBuilder({
 
         {downloadedFilename && (
           <div
-            className="mt-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-300 dark:text-emerald-200 flex items-center gap-2"
+            className="mt-3 rounded-xl border border-success/30 bg-success/10 p-3 text-xs text-success"
             role="status"
             data-testid="pdf-success-status"
           >
-            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-            <span>
-              Downloaded <strong>{downloadedFilename}</strong> successfully.
-            </span>
+            Downloaded <strong>{downloadedFilename}</strong> successfully.
           </div>
         )}
 
         {downloadError && (
           <div
-            className="mt-3 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-300 dark:text-rose-200"
+            className="mt-3 rounded-xl border border-danger/30 bg-danger/10 p-3 text-xs text-danger"
             role="alert"
             data-testid="pdf-error-status"
           >
@@ -164,7 +161,7 @@ export function ReportBuilder({
         </div>
         <h3 className="section-title mt-2">Appointment summary</h3>
         <p className="meta mt-1">
-          {config.patientDisplayName ? `${config.patientDisplayName} · ` : ''}Last {config.periodDays} days · Self-tracked in Stay
+          {config.patientDisplayName ? `${config.patientDisplayName}, ` : ''}last {config.periodDays} days, self-tracked in Stay
         </p>
         <p className="notice mt-4">
           Observational self-tracking. Not a clinical assessment, diagnosis, or medical device record.
@@ -193,7 +190,7 @@ export function ReportBuilder({
               <ul className="mt-1 text-ink-2 space-y-0.5 tnum">
                 {strategies.map((x) => (
                   <li key={x.strategyKey}>
-                    {x.label}: {x.startRatePercent !== null ? `${x.startRatePercent}% · ` : ''}{x.denominatorLabel}
+                    {x.label}: {x.startRatePercent !== null ? `${x.startRatePercent}%, ` : ''}{x.denominatorLabel}
                   </li>
                 ))}
               </ul>
@@ -203,7 +200,7 @@ export function ReportBuilder({
             <div>
               <h4 className="font-medium">Common barriers</h4>
               <p className="text-ink-2 mt-1">
-                {barriers.length ? barriers.slice(0, 4).map((b) => `${b.label} (${b.count})`).join(' · ') : 'None logged.'}
+                {barriers.length ? barriers.slice(0, 4).map((b) => `${b.label} (${b.count})`).join(', ') : 'None logged.'}
               </p>
             </div>
           )}
@@ -213,7 +210,7 @@ export function ReportBuilder({
               <p className="text-ink-2 mt-1 tnum">
                 {adherence.totalCheckins === 0
                   ? 'No check-ins in this period.'
-                  : `${adherence.takenRatePercent !== null ? `${adherence.takenRatePercent}% · ` : ''}${adherence.denominatorLabel}. Focus ${adherence.averageFocusRating ?? '–'}/5, sleep ${adherence.averageSleepQuality ?? '–'}/5.`}
+                  : `${adherence.takenRatePercent !== null ? `${adherence.takenRatePercent}%, ` : ''}${adherence.denominatorLabel}. Focus ${adherence.averageFocusRating ?? '–'}/5, sleep ${adherence.averageSleepQuality ?? '–'}/5.`}
               </p>
               {config.includeSideEffectNotes && adherence.sideEffectNotes.length > 0 && (
                 <ul className="mt-2 text-ink-2 space-y-1">

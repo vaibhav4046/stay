@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { TakenStatus, TreatmentCheckinRecord } from '@/types/domain';
 import { detectCrisisSignal, detectMedicationAdviceRequest, MEDICAL_BOUNDARY_FIXED_MESSAGE } from '@/lib/safety/crisis';
 import { useCrisisPanel } from '@/components/CrisisHelpPanel';
@@ -55,10 +55,17 @@ export function TreatmentCheckinForm({
   const [note, setNote] = useState(initialCheckin?.sideEffectNote ?? '');
   const [saved, setSaved] = useState(false);
   const [boundary, setBoundary] = useState<string | null>(null);
+  const [needTaken, setNeedTaken] = useState(false);
+  const treatmentRef = useRef<HTMLFieldSetElement>(null);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!taken) return;
+    if (!taken) {
+      // the button stays a real button: an empty click says what is missing and puts the cursor there
+      setNeedTaken(true);
+      treatmentRef.current?.querySelector('button')?.focus();
+      return;
+    }
     const crisis = detectCrisisSignal(note);
     if (crisis.triggered) {
       openCrisisPanel(crisis.message);
@@ -76,16 +83,15 @@ export function TreatmentCheckinForm({
   };
 
   return (
-    <form className="card p-5 sm:p-6" onSubmit={submit} aria-labelledby="checkin-title" data-testid="checkin-form">
-      <h2 id="checkin-title" className="card-title">Today&apos;s check-in</h2>
-      <p className="meta mt-1">About 30 seconds. Stay logs this for you and your clinician. It never gives dosing advice.</p>
+    <form className="card p-5 sm:p-6" onSubmit={submit} aria-label="Today's check-in" data-testid="checkin-form">
+      <p className="meta">About 30 seconds. Stay logs this for you and your clinician. It never gives dosing advice.</p>
       {initialCheckin && (
         <p className="meta mt-2 text-primary font-medium" data-testid="checkin-existing-note">
           You already recorded today&apos;s check-in. Any changes here will update today&apos;s entry.
         </p>
       )}
 
-      {showTreatment && <fieldset className="mt-5">
+      {showTreatment && <fieldset ref={treatmentRef} className="mt-5">
         <legend className="label">Treatment today</legend>
         <div className="mt-2 flex flex-wrap gap-2">
           {TAKEN_OPTIONS.map((o) => (
@@ -94,13 +100,14 @@ export function TreatmentCheckinForm({
               type="button"
               className="chip"
               aria-pressed={taken === o.key}
-              onClick={() => setTaken(o.key)}
+              onClick={() => (setTaken(o.key), setNeedTaken(false))}
               data-testid={`taken-${o.key}`}
             >
               {o.label}
             </button>
           ))}
         </div>
+        {needTaken && <p className="meta mt-2" role="status" data-testid="checkin-need-taken">Pick one for treatment today first.</p>}
       </fieldset>}
 
       <div className="mt-5 grid gap-5 sm:grid-cols-2">
@@ -108,7 +115,7 @@ export function TreatmentCheckinForm({
         <Rating id="sleep" label="Sleep last night" value={sleep} onChange={setSleep} />
       </div>
 
-      <label className="mt-5 flex items-center gap-3 cursor-pointer">
+      <label className="mt-5 flex min-h-11 items-center gap-3 cursor-pointer">
         <input
           type="checkbox"
           className="h-5 w-5 accent-[#8FD3FF]"
@@ -133,11 +140,11 @@ export function TreatmentCheckinForm({
       />
 
       <div className="mt-5 flex flex-wrap items-center gap-3">
-        <button type="submit" className="btn btn-primary" disabled={!taken} data-testid="checkin-submit">
+        <button type="submit" className="btn btn-primary" data-testid="checkin-submit">
           {initialCheckin ? "Update today's check-in" : 'Save check-in'}
         </button>
         {saved && (
-          <span className="meta" role="status" style={{ color: '#5BD6A0' }} data-testid="checkin-saved-msg">
+          <span className="meta" role="status" style={{ color: 'var(--color-success)' }} data-testid="checkin-saved-msg">
             {initialCheckin ? "Saved (updated today's check-in)." : 'Saved.'}
           </span>
         )}

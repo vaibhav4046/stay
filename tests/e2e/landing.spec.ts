@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { CHAPTERS, TRANSCRIPT } from '../../src/components/landing/demoData';
+import { TRANSCRIPT } from '../../src/components/landing/demoData';
 
 async function open(page: Page) {
   await page.goto('/', { waitUntil: 'networkidle' });
@@ -33,43 +33,66 @@ test.describe('Landing: hero', () => {
   });
 });
 
-test.describe('Landing: demo player', () => {
-  test('custom chrome: big play, scrubber, captions toggle, chapters that seek', async ({ page }) => {
+test.describe('Landing: the film', () => {
+  test('it is a stage, not a player: it plays by itself, muted, with a sound button and a captions button and nothing else', async ({ page }) => {
     await open(page);
-    const player = page.getByTestId('player');
-    await player.scrollIntoViewIfNeeded();
-    await expect(player.getByTestId('player-bigplay')).toBeVisible();
-    await expect(player.getByTestId('player-scrub')).toHaveAttribute('type', 'range');
-    await expect(player.getByTestId('player-toggle')).toHaveAccessibleName('Play');
+    const stage = page.getByTestId('film-stage');
+    await stage.scrollIntoViewIfNeeded();
+    const video = stage.locator('video');
+    await expect(video).toHaveJSProperty('muted', true);
+    await expect(video).toHaveJSProperty('loop', true);
+    await expect(video).toHaveAttribute('playsinline', '');
+    await expect(video).toHaveJSProperty('controls', false); // no player chrome
+    await expect(stage.locator('input[type="range"]')).toHaveCount(0); // no scrubber
     // the captions file is loaded as a real text track (one cue per transcript line), whether or not this browser can decode the video
     await expect.poll(() => page.evaluate(() => (document.querySelector('video')!.textTracks[0].cues ?? []).length)).toBe(TRANSCRIPT.length);
-
-    const cap = player.getByTestId('player-captions');
-    await expect(cap).toHaveAttribute('aria-pressed', 'true');
-    await cap.click();
-    await expect(cap).toHaveAttribute('aria-pressed', 'false');
-    await cap.click();
-    await expect(cap).toHaveAttribute('aria-pressed', 'true');
-
-    const chapters = player.getByTestId('chapter');
-    await expect(chapters).toHaveCount(CHAPTERS.length);
-    const target = CHAPTERS[2]; // the chapter starts where its caption starts
-    await chapters.filter({ hasText: target.label }).click();
-    const t = await page.evaluate(() => document.querySelector('video')!.currentTime);
-    expect(t).toBeGreaterThan(target.t - 0.05);
-    expect(t).toBeLessThan(target.t + 1);
-    await expect(chapters.filter({ hasText: target.label })).toHaveAttribute('aria-current', 'true');
   });
 
-  test('the player keeps one consistent frame: 16:9, never wider than the screen, same radius token as the stage', async ({ page }) => {
+  test('nothing of the film is downloaded until it is on screen (it is below the fold, and a phone should not pay for it on load)', async ({ page }) => {
+    const film: string[] = [];
+    page.on('request', (r) => { if (/stay-story-film-web\.mp4/.test(r.url())) film.push(r.url()); });
+    await page.goto('/', { waitUntil: 'load' });
+    await page.waitForTimeout(1500);
+    expect(film).toHaveLength(0);
+    await page.getByTestId('film-stage').scrollIntoViewIfNeeded();
+    await expect.poll(() => film.length, { timeout: 10_000 }).toBeGreaterThan(0);
+  });
+
+  test('the sound button turns sound on and off, and the captions button shows and hides the captions', async ({ page }) => {
+    await open(page);
+    const stage = page.getByTestId('film-stage');
+    await stage.scrollIntoViewIfNeeded();
+    const sound = stage.getByTestId('film-sound');
+    await expect(sound).toHaveAttribute('aria-pressed', 'false');
+    await sound.click();
+    await expect(sound).toHaveAttribute('aria-pressed', 'true');
+    await expect(stage.locator('video')).toHaveJSProperty('muted', false);
+    await sound.click();
+    await expect(stage.locator('video')).toHaveJSProperty('muted', true);
+    const cap = stage.getByTestId('film-captions');
+    await expect(cap).toHaveAttribute('aria-pressed', 'true');
+    await expect.poll(() => page.evaluate(() => document.querySelector('video')!.textTracks[0].mode)).toBe('showing');
+    await cap.click();
+    await expect(cap).toHaveAttribute('aria-pressed', 'false');
+    await expect.poll(() => page.evaluate(() => document.querySelector('video')!.textTracks[0].mode)).toBe('hidden');
+  });
+
+  test('with reduced motion it does not start by itself: the first frame waits with a play button', async ({ browser }) => {
+    const ctx = await browser.newContext({ reducedMotion: 'reduce' });
+    const page = await ctx.newPage();
+    await open(page);
+    await page.getByTestId('film-stage').scrollIntoViewIfNeeded();
+    await expect(page.getByTestId('film-start')).toBeVisible();
+    await ctx.close();
+  });
+
+  test('the stage keeps one consistent frame: 16:9, never wider than the screen', async ({ page }) => {
     for (const width of [390, 1440]) {
       await page.setViewportSize({ width, height: 900 });
       await open(page);
-      const box = (await page.locator('.lp-player').boundingBox())!;
+      const box = (await page.locator('.lp-film').boundingBox())!;
       expect(Math.abs(box.width / box.height - 16 / 9)).toBeLessThan(0.02);
       expect(box.width).toBeLessThanOrEqual(width);
-      const radius = await page.locator('.lp-player').evaluate((el) => getComputedStyle(el).borderTopLeftRadius);
-      expect(radius).toBe(width < 640 ? '0px' : '16px'); // edge to edge on a phone, --radius-stage otherwise
     }
   });
 
@@ -173,13 +196,13 @@ test.describe('Landing: accessibility and policy', () => {
     expect(errors.filter((e) => !/media|video|codec|mp4|DEMUXER|NotSupported/i.test(e))).toEqual([]);
   });
 
-  test('the keyboard can reach the hero start and the player', async ({ page }) => {
+  test('the keyboard can reach the hero start and the film sound button', async ({ page }) => {
     await open(page);
     await page.getByTestId('hero-input').focus();
     await page.keyboard.press('Tab'); // the start link
     await expect(page.getByTestId('hero-start')).toBeFocused();
-    await page.getByTestId('player-bigplay').focus();
-    await expect(page.getByTestId('player-bigplay')).toBeFocused();
+    await page.getByTestId('film-sound').focus();
+    await expect(page.getByTestId('film-sound')).toBeFocused();
   });
 
   test('reduced motion: no looping animation runs on the landing page', async ({ browser }) => {

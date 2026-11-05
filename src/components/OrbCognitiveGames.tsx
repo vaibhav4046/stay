@@ -16,10 +16,10 @@ interface OrbCognitiveGamesProps {
 }
 
 const SIMON_PADS = [
-  { id: 0, name: 'Emerald', dir: 'North', freq: 392.0, color: '#10B981', glow: 'rgba(16,185,129,0.55)', label: '🟢 Emerald (1)' },
-  { id: 1, name: 'Sapphire', dir: 'East', freq: 493.88, color: '#0EA5E9', glow: 'rgba(14,165,233,0.55)', label: '🔵 Sapphire (2)' },
-  { id: 2, name: 'Amber', dir: 'South', freq: 587.33, color: '#F59E0B', glow: 'rgba(245,158,11,0.55)', label: '🟡 Amber (3)' },
-  { id: 3, name: 'Violet', dir: 'West', freq: 659.25, color: '#8B5CF6', glow: 'rgba(139,92,246,0.55)', label: '🟣 Violet (4)' },
+  { id: 0, name: 'Emerald', dir: 'North', freq: 392.0, color: '#10B981', glow: 'rgba(16,185,129,0.55)', label: 'Emerald (1)' },
+  { id: 1, name: 'Sapphire', dir: 'East', freq: 493.88, color: '#0EA5E9', glow: 'rgba(14,165,233,0.55)', label: 'Sapphire (2)' },
+  { id: 2, name: 'Amber', dir: 'South', freq: 587.33, color: '#F59E0B', glow: 'rgba(245,158,11,0.55)', label: 'Amber (3)' },
+  { id: 3, name: 'Violet', dir: 'West', freq: 659.25, color: '#8B5CF6', glow: 'rgba(139,92,246,0.55)', label: 'Violet (4)' },
 ];
 
 const RALLY_DICTIONARY: Record<string, string[]> = {
@@ -101,13 +101,7 @@ export function OrbCognitiveGames({
     setDiff(d);
     onSelectDifficulty?.(d);
     onSpeak?.(
-      `Game difficulty set to ${d}. ${
-        d === 'easy'
-          ? 'Gentle pacing for a calm dopamine warm-up.'
-          : d === 'medium'
-          ? 'Balanced prefrontal working-memory pace.'
-          : 'High-speed executive challenge activated! Let us play.'
-      }`
+      `Difficulty set to ${d}. ${d === 'easy' ? 'A slow pace.' : d === 'medium' ? 'A medium pace.' : 'A fast pace.'}`
     );
   };
 
@@ -146,7 +140,7 @@ export function OrbCognitiveGames({
     const initial = Array.from({ length: startLen }, (_, i) => (i * 2 + 1) % 4);
     setSimonSeq(initial);
     setSimonScore(0);
-    onSpeak?.(`Watch the Orb quadrants light up in ${diff} mode, then tap or say the colors in order!`);
+    onSpeak?.(`Watch the orb light up, then tap or say the colours in the same order.`);
     playSimonSequence(initial);
   }, [diff, onSpeak, playSimonSequence]);
 
@@ -168,7 +162,7 @@ export function OrbCognitiveGames({
 
       if (simonSeq[idx] !== padId) {
         setSimonStatus('reset');
-        onSpeak?.("No worries at all! ADHD working memory warms up with repetition. Let's try that sequence again.");
+        onSpeak?.('Not that one. Watch the pattern again.');
         setTimeout(() => playSimonSequence(simonSeq), 900);
         return;
       }
@@ -180,7 +174,7 @@ export function OrbCognitiveGames({
         setSimonSeq(nextSeq);
         setBestSpan((prev) => Math.max(prev, nextSeq.length));
         setSimonStatus('won_round');
-        onSpeak?.(`Awesome working memory! Span is now ${nextSeq.length} pulses.`);
+        onSpeak?.(`Right. The pattern is now ${nextSeq.length} long.`);
         setTimeout(() => playSimonSequence(nextSeq), 850);
       }
     },
@@ -222,7 +216,7 @@ export function OrbCognitiveGames({
     } else if (goTarget === 'nogo') {
       playTone(220.0, 220);
       setGoMistakes((m) => m + 1);
-      onSpeak?.('Oops, that was a Crimson Hold decoy! Pause a split-second before tapping.');
+      onSpeak?.('That one was red. Wait for green.');
       setGoTarget('go');
       targetSpawnTimeRef.current = performance.now();
     } else {
@@ -254,7 +248,7 @@ export function OrbCognitiveGames({
       setRallyStreak((s) => s + 1);
       setRallyInput('');
       playTone(523.25, 150);
-      onSpeak?.(`${stayReply}! Your turn with the letter ${stayReply[stayReply.length - 1].toUpperCase()}.`);
+      onSpeak?.(`${stayReply}. Your word starts with ${stayReply[stayReply.length - 1].toUpperCase()}.`);
     },
     [onSpeak, rallyStreak]
   );
@@ -325,11 +319,8 @@ export function OrbCognitiveGames({
       {/* Header + Difficulty Selector */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-3">
         <div>
-          <span className="text-[0.68rem] font-bold uppercase tracking-widest text-[#8FD3FF] block">
-            A quick game with Stay
-          </span>
           <h3 className="text-sm font-bold text-ink">
-            Play with the Living Orb (Voice or Touch)
+            A quick game with Stay. Play by voice or by touch.
           </h3>
         </div>
 
@@ -421,7 +412,7 @@ export function OrbCognitiveGames({
               A memory warm-up: <strong>repeat the pattern</strong>
             </span>
             <span className="font-mono font-bold text-[#8FD3FF]" data-testid="simon-score">
-              Score: {simonScore} · Span: {bestSpan}
+              Score {simonScore}, longest {bestSpan}
             </span>
           </div>
 
@@ -456,12 +447,12 @@ export function OrbCognitiveGames({
           <div className="flex items-center justify-between gap-2 pt-1">
             <span className="text-xs text-ink-2">
               {simonStatus === 'showing'
-                ? '👀 Watch the Orb sequence...'
+                ? 'Watch the pattern.'
                 : simonStatus === 'input'
-                ? `🎯 Your turn (${userSeq.length}/${simonSeq.length}) — tap or say color!`
+                ? `Your turn: ${userSeq.length} of ${simonSeq.length}. Tap or say a colour.`
                 : simonStatus === 'won_round'
-                ? '✨ Sequence complete! Leveling up...'
-                : 'Ready — click Play Sequence or tap any quadrant'}
+                ? 'Right. Here is a longer one.'
+                : 'Press Play, or tap any colour.'}
             </span>
             <button
               type="button"
@@ -483,7 +474,7 @@ export function OrbCognitiveGames({
               A focus warm-up: <strong>tap on go, hold on stop</strong>
             </span>
             <span className="font-mono font-bold text-[#8FD3FF]" data-testid="gonogo-metrics">
-              RT: {lastReactionMs ?? '--'}ms · Accuracy: {inhibitionAccuracy}%
+              Reaction {lastReactionMs ?? '--'} ms, accuracy {inhibitionAccuracy}%
             </span>
           </div>
 
@@ -494,18 +485,18 @@ export function OrbCognitiveGames({
               data-testid="gonogo-target-btn"
               className={`flex-1 rounded-2xl p-4 text-center font-bold transition-all cursor-pointer border ${
                 goTarget === 'go'
-                  ? 'bg-emerald-600 text-white border-emerald-500 shadow-[0_8px_28px_rgba(16,185,129,0.35)]'
+                  ? 'bg-success text-canvas border-success'
                   : goTarget === 'nogo'
-                  ? 'bg-rose-600 text-white border-rose-500 shadow-[0_8px_28px_rgba(225,29,72,0.35)]'
+                  ? 'bg-danger text-canvas border-danger'
                   : 'bg-surface-2 text-ink border-line'
               }`}
             >
               {goTarget === 'go' ? (
-                <span>🟢 EMERALD SIGNAL — TAP NOW! (+15 pts)</span>
+                <span>Green. Tap now.</span>
               ) : goTarget === 'nogo' ? (
-                <span>🔴 CRIMSON DECOY — HOLD IMPULSE! (DO NOT TAP)</span>
+                <span>Red. Do not tap.</span>
               ) : (
-                <span>⏳ Wait for next neural signal...</span>
+                <span>Wait for the next one.</span>
               )}
             </button>
 
@@ -515,13 +506,12 @@ export function OrbCognitiveGames({
               data-testid="gonogo-toggle-auto"
               className="btn btn-secondary py-3 px-3.5 text-xs rounded-2xl shrink-0"
             >
-              {goRunning ? 'Pause Stream' : 'Auto Stream'}
+              {goRunning ? 'Pause' : 'Start'}
             </button>
           </div>
 
           <p className="text-[0.72rem] text-ink-2">
-            Score: <strong>{goScore}</strong> · Hits: <strong>{goHits}</strong> · Impulse slips:{' '}
-            <strong>{goMistakes}</strong>. Trains right-inferior frontal cortex braking before task sprints.
+            Score <strong>{goScore}</strong>, hits <strong>{goHits}</strong>, wrong taps <strong>{goMistakes}</strong>.
           </p>
         </div>
       )}
@@ -566,7 +556,7 @@ export function OrbCognitiveGames({
                 }
               }}
               data-testid="wordrally-input"
-              placeholder={`Say or type a word starting with "${rallyHistory[rallyHistory.length - 1]?.word.slice(-1).toUpperCase() || 'S'}"...`}
+              placeholder={`Say or type a word starting with ${rallyHistory[rallyHistory.length - 1]?.word.slice(-1).toUpperCase() || 'S'}`}
               className="flex-1 rounded-full bg-surface-2 px-3.5 py-1.5 text-xs text-ink border border-line focus:outline-none focus:border-[#8FD3FF]"
             />
             <button

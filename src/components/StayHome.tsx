@@ -17,7 +17,7 @@ import {
   detectImpulsiveActionRisk,
   detectSensoryGroundingRequest,
 } from '@/lib/safety/crisis';
-import { SUPPORTED_LANGUAGES, isAgentVerifiedLanguage, useVoiceAgent } from '@/lib/voice/useVoiceAgent';
+import { isAgentVerifiedLanguage, useVoiceAgent } from '@/lib/voice/useVoiceAgent';
 import { useAssistantHardware } from '@/lib/voice/useAssistantHardware';
 import { parseMultiIntentUtterance, type PanelId } from '@/lib/voice/voiceCommands';
 import { isSmallTalk } from '@/lib/voice/smallTalk';
@@ -57,6 +57,7 @@ import { MicConsentSheet } from '@/components/voice/MicConsentSheet';
 import { loadActiveSession, saveActiveSession } from '@/lib/coach/activeSession';
 import { RoutineSheet } from '@/components/RoutineSheet';
 import { ReminderSheet } from '@/components/ReminderSheet';
+import { MoreMenu } from '@/components/MoreMenu';
 import { takeDue } from '@/lib/reminders';
 import { WaveProgress } from '@/components/Wave';
 import { CallStayOverlay } from '@/components/voice/CallStayOverlay';
@@ -68,6 +69,7 @@ import { byokHeaders } from '@/lib/byok/config';
 import { loadParked, unparkThought, type ParkedItem } from '@/lib/coach/parkingLot';
 import { emitHost, onHostCommand } from '@/lib/host';
 import { usePersistentDraft } from '@/lib/storage/usePersistentDraft';
+import { looksLikeTask } from '@/lib/conversation/looksLikeTask';
 
 type Step = 'idle' | 'plan' | 'timer' | 'outcome' | 'done';
 
@@ -202,7 +204,7 @@ export function StayHome({
       lastNudge.current = 0;
       setRunning(true);
       setStep('timer');
-      say(`Timer started · ${valid} min`);
+      say(`Timer started, ${valid} min`);
     },
     [say],
   );
@@ -248,7 +250,7 @@ export function StayHome({
   const shareRef = useRef(share);
   shareRef.current = share;
 
-  /** The conversation asks for a panel (by voice or typing): it appears in the chat, not over it. */
+  /** The conversation asks for a panel (by voice or typing): it appears in the chat. */
   const openPanel = useCallback((p: PanelId) => {
     if (p === 'vision' && shareRef.current) return lookNowRef.current(); // already sharing: "what do you see" means look now
     if (p === 'parking') setParked(loadParked());
@@ -328,7 +330,7 @@ export function StayHome({
       } else if (cmd.type === 'change_voice') {
         sayVoice(cmd.voiceId);
       } else if (cmd.type === 'break_down') {
-        voiceRef.current?.sendUserTextMessage('Can you break this down into an ultra-micro step?');
+        voiceRef.current?.sendUserTextMessage('Can you make that step smaller?');
       } else if (cmd.type === 'synthesize_billion_shape') {
         orb.request(cmd.concept);
       } else if (cmd.type === 'change_orb_shape') {
@@ -441,11 +443,6 @@ export function StayHome({
   }, [share, glance]);
 
   useEffect(() => () => shareRef.current?.stream.getTracks().forEach((t) => t.stop()), []);
-  // saved values may be a bare 'en' while the list holds 'en-GB': match on the base language so the select never shows blank
-  const langValue =
-    SUPPORTED_LANGUAGES.find((l) => l.code === voice.selectedLanguage)?.code ??
-    SUPPORTED_LANGUAGES.find((l) => l.code.split('-')[0] === voice.selectedLanguage.split('-')[0])?.code ??
-    'auto';
   /** Switch voice by name or accent and say what happened: the persona's name, or why it cannot speak on this device yet. */
   const sayVoice = (query: string) => {
     const picked = voiceRef.current?.setSelectedVoice(query);
@@ -590,11 +587,12 @@ export function StayHome({
             userMemoryPrompt: [styleLine(loadInstructions()), buildMemorySystemPrompt(voiceRef.current.userMemory)].filter(Boolean).join('\n').slice(0, 1990),
             strategyHistory,
           }),
+          signal: AbortSignal.timeout(20_000), // a stalled network falls back to the local plan below, not an endless "Thinking"
         });
         const data = (await res.json()) as CoachPlanProposal & { error?: string };
         if (!res.ok || data.error) throw new Error(data.error || 'plan failed');
         const keyError = res.headers.get('x-stay-llm-key-error');
-        if (keyError) setNote(`Your own key did not work (${keyError.replace('_', ' ')}), so Stay used its shared brain. Check Settings.`);
+        if (keyError) setNote(`Your own key did not work (${keyError.replace('_', ' ')}), so Stay used its built-in key instead. Check Settings.`);
         if (data.safetyFlag === 'crisis') return triggerCrisis(data.spokenResponse);
         if (data.safetyFlag === 'medical_boundary') return setNote(data.spokenResponse);
         setPlan(data);
@@ -628,6 +626,12 @@ export function StayHome({
       }, 350);
       clearInput();
       setShrinkDepth(0);
+      // Safety first, before any panel, picture, grounding, impulse or command path (safety review, 4 Nov 2026: "I'm having a panic attack
+      // and I want to die" opened the breathing panel and no help)
+      if (detectCrisisSignal(t).triggered) {
+        voiceRef.current.sendUserTextMessage(t); // shows the message, closes any live voice, and its first check raises the help panel
+        return;
+      }
       orb.feed(t, 'typed');
       // a picture with the message (chosen, or the shared screen when the words point at it): Stay looks, no plan card
       const frame = pendingPicture ?? (share && looksVisual(t) ? frameFromVideo(shareVideoRef.current) : null);
@@ -644,10 +648,15 @@ export function StayHome({
       if (detectSensoryGroundingRequest(t).triggered) return setGrounding(true);
       const impulse = detectImpulsiveActionRisk(t);
       if (impulse.triggered) return setNote(impulse.message);
-      const multi = parseMultiIntentUtterance(t);
-      const isGame = multi.commands.some((c) => c.type === 'start_game' || c.type === 'game_action' || c.type === 'set_game_difficulty');
-      if (!isGame && (multi.commands.length === 0 || multi.conversationalContext)) void requestPlan(multi.conversationalContext || t);
-      voiceRef.current.sendUserTextMessage(t, { skipLocalPlan: true });
+      // A typed TASK ("I can't start my essay") gets the plan card with its Start button: that is the loop. Anything else (a question, a
+      // command, a "yes", a complaint) goes to the model and its app tool, one brain with the voice (reviews, 4 Nov 2026: a question got
+      // a plan card that said "open a new tab and type it", and "make it smaller" morphed the orb).
+      if (looksLikeTask(t)) {
+        void requestPlan(t);
+        voiceRef.current.sendUserTextMessage(t, { skipLocalPlan: true });
+      } else {
+        voiceRef.current.sendUserTextMessage(t);
+      }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [requestPlan, clearInput, pendingPicture, share, sendPicture, lookNow, say],
@@ -745,7 +754,9 @@ export function StayHome({
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       const tag = document.activeElement?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || e.repeat) return;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'BUTTON' || tag === 'A' || e.repeat) return;
+      // Space on a focused control or inside a dialog is that control's own key (QA review, 4 Nov 2026: it opened the mic consent sheet)
+      if (document.activeElement?.closest('[role="dialog"], [role="button"], [role="menu"]')) return;
       if (e.code === 'Space' && !spaceHeldRef.current) {
         spaceHeldRef.current = true;
         setIsHoldingSpace(true);
@@ -988,30 +999,13 @@ export function StayHome({
       {/* Thin focus progress bar at very top during active timer */}
       {running && step === 'timer' && (
         <div className="fixed left-0 right-0 top-0 z-50 h-1 bg-surface-2" role="progressbar" aria-valuenow={Math.round(progress * 100)} aria-valuemin={0} aria-valuemax={100}>
-          <div className="h-full bg-accent transition-all duration-500" style={{ width: `${Math.round(progress * 100)}%` }} />
+          {/* `scale` (not `transform`) so the global reduced-motion rule, which clears transform, still leaves the bar showing progress */}
+          <div className="h-full origin-left bg-accent transition-transform duration-500" style={{ scale: `${progress.toFixed(3)} 1` }} />
         </div>
       )}
 
-      {/* Quiet controls: language, how the voice is connected, and everything else behind More */}
-      <div className="flex items-center justify-between gap-2 pb-1" data-testid="home-controls">
-        <div className="flex min-w-0 items-center gap-2">
-          <label className="sr-only" htmlFor="stay-language">Language</label>
-          <select
-            id="stay-language"
-            data-testid="language-select"
-            value={langValue}
-            onChange={(e) => {
-              voiceRef.current?.setSelectedLanguage(e.target.value);
-              say(`Language: ${SUPPORTED_LANGUAGES.find((l) => l.code === e.target.value)?.label ?? e.target.value}`);
-            }}
-            className="rounded-full border border-line bg-surface px-2.5 py-1 text-xs font-medium text-ink"
-          >
-            {SUPPORTED_LANGUAGES.map((l) => (
-              <option key={l.code} value={l.code}>{l.label}</option>
-            ))}
-          </select>
-          <TransportBadge transport={voice.transportInfo} isConnected={voice.isConnected} replyTimes={voice.replyTimes} />
-        </div>
+      {/* One quiet control: everything else, language and the voice connection included, is behind More */}
+      <div className="flex items-center justify-end gap-2 pb-1" data-testid="home-controls">
         <button type="button" className="btn btn-ghost h-10 shrink-0 !px-3" onClick={() => setSheet('menu')} aria-label="More" data-testid="menu-button">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <circle cx="5" cy="12" r="1.7" /><circle cx="12" cy="12" r="1.7" /><circle cx="19" cy="12" r="1.7" />
@@ -1116,19 +1110,18 @@ export function StayHome({
               {plan.firstStep}
             </p>
             {plan.whyThisFits && <p className="mt-2 text-ink-2">{plan.whyThisFits}</p>}
-            <div className="mt-4 flex flex-wrap items-center gap-2">
+            <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1">
               <button type="button" className="btn btn-primary" onClick={() => startTimer(minutes)} data-testid="start-timer">
                 Start {minutes} min
               </button>
               {shrinkDepth >= 4 ? (
-                <span className="text-xs px-3 py-2 rounded-xl bg-surface-2 text-ink-3 border border-edge flex items-center gap-1.5" data-testid="shrink-floor">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  Smallest step floor reached
+                <span className="meta" data-testid="shrink-floor">
+                  This is the smallest step
                 </span>
               ) : (
                 <button
                   type="button"
-                  className="btn btn-secondary"
+                  className="btn btn-ghost underline underline-offset-4"
                   onClick={() => {
                     const nextDepth = shrinkDepth + 1;
                     setShrinkDepth(nextDepth);
@@ -1137,8 +1130,8 @@ export function StayHome({
                         prev
                           ? {
                               ...prev,
-                              firstStep: 'Smallest possible floor: take one slow breath with the orb for 10 seconds, then just touch the first item. Zero pressure to finish.',
-                              whyThisFits: 'When tasks feel this heavy, the nervous system is overwhelmed. Breathing resets the freeze response before doing anything else.',
+                              firstStep: 'This is as small as it gets. Take one slow breath, then touch the first thing you need.',
+                              whyThisFits: 'You only have to begin. You do not have to finish.',
                               timerMinutes: 2,
                             }
                           : null
@@ -1153,25 +1146,20 @@ export function StayHome({
                   Make it smaller {shrinkDepth > 0 ? `(${shrinkDepth}/3)` : ''}
                 </button>
               )}
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2" role="group" aria-labelledby="plan-minutes-label">
+              <span id="plan-minutes-label" className="meta mr-1">Minutes</span>
               {[5, 10, 25, 45, 90].map((m) => (
-                <button key={m} type="button" className="chip" aria-pressed={minutes === m} onClick={() => setMinutes(m)} aria-label={`${m} minute block`}>
+                <button key={m} type="button" className="chip min-w-11 justify-center" aria-pressed={minutes === m} onClick={() => setMinutes(m)} aria-label={`${m} minute block`}>
                   {m}
                 </button>
               ))}
             </div>
-            <p className="meta mt-2">Short blocks start easier. Pick a longer one when you are in flow, and Stay sits with you through it.</p>
           </section>
         )}
 
         {step === 'timer' && plan && (
           <section className="card w-full p-5 text-center" aria-label="Focus block" data-testid="timer-card">
-            <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-300 dark:text-amber-300" data-testid="active-timer-tab-warning">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75"></span>
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500"></span>
-              </span>
-              Active focus session running · Synced across browser tabs
-            </div>
             <p className="meta">{plan.firstStep}</p>
             <p className="tnum my-2 font-display text-5xl font-semibold" data-testid="clock">
               {clock(remaining)}
@@ -1225,8 +1213,8 @@ export function StayHome({
                     prev
                       ? {
                           ...prev,
-                          firstStep: 'Smallest possible floor: take one slow breath with the orb for 10 seconds, then just touch the first item. Zero pressure to finish.',
-                          whyThisFits: 'When tasks feel this heavy, the nervous system is overwhelmed. Breathing resets the freeze response before doing anything else.',
+                          firstStep: 'This is as small as it gets. Take one slow breath, then touch the first thing you need.',
+                          whyThisFits: 'You only have to begin. You do not have to finish.',
                           timerMinutes: 2,
                         }
                       : null
@@ -1259,7 +1247,7 @@ export function StayHome({
 
         {step === 'done' && (
           <section className="card w-full p-5 text-center" aria-label="Logged" data-testid="done-card">
-            <p className="font-display text-lg font-semibold">Logged{lastOutcome ? `: ${OUTCOMES.find((o) => o.key === lastOutcome)?.label.toLowerCase()}` : ''}</p>
+            <p className="font-display text-lg font-semibold">Logged{lastOutcome ? `: ${OUTCOMES.find((o) => o.key === lastOutcome)?.label}` : ''}</p>
             <p className="mt-1 text-ink-2">It is saved in this browser. Nothing is judged here.</p>
             <div className="mt-3 flex flex-wrap justify-center gap-2">
               {plan && (
@@ -1282,7 +1270,7 @@ export function StayHome({
                 onClose={() => setSheet(null)}
                 onToggle={(id) => {
                   setToday(toggleToday(id));
-                  say('Nice. That is a win.');
+                  say('Saved. You started.');
                   orb.feed('proud achievement', 'typed');
                 }}
                 onStart={(i) => void requestPlan(i.firstStep ? `${i.text}. First step: ${i.firstStep}` : i.text)}
@@ -1312,7 +1300,7 @@ export function StayHome({
                 const l = addToday([{ text: r.name, bucket: 'today' }]);
                 setToday(toggleToday(l[0].id));
                 showTodayNext.current = true;
-                say('Routine finished. That is a win.');
+                say('Routine finished.');
                 orb.feed('proud achievement', 'typed');
               }}
             />
@@ -1465,6 +1453,7 @@ export function StayHome({
         <button
           type="button"
           className="sr-only"
+          tabIndex={-1}
           style={{ position: 'fixed', bottom: 4, right: 4, zIndex: 9999, width: 1, height: 1, padding: 0, margin: 0, clip: 'auto', clipPath: 'none', opacity: 0.01, pointerEvents: 'auto' }}
           aria-pressed={presence.pinned}
           aria-label="Show Stay's face"
@@ -1498,82 +1487,23 @@ export function StayHome({
 
       {sheet === 'menu' && (
         <Sheet title="More" onClose={() => setSheet(null)}>
-          <div className="space-y-4">
-            <div>
-              <p className="text-[0.7rem] font-semibold uppercase tracking-wider text-ink-3 mb-1.5">Calm & Focus</p>
-              <div className="grid gap-1.5 sm:grid-cols-2">
-                <button type="button" className="btn btn-secondary justify-start text-sm py-2" onClick={() => (setSheet(null), setGrounding(true))}>
-                  Ground me (breathing)
-                </button>
-                <button type="button" className="btn btn-secondary justify-start text-sm py-2" onClick={() => openPanel('routines')} data-testid="menu-routines">
-                  Routines
-                </button>
-                <button type="button" className="btn btn-secondary justify-start text-sm py-2" onClick={() => openPanel('dump')} data-testid="menu-dump">
-                  Brain dump
-                </button>
-                <button type="button" className="btn btn-secondary justify-start text-sm py-2" onClick={() => openPanel('today')} data-testid="menu-today">
-                  Today&apos;s list
-                </button>
-                <button type="button" className="btn btn-secondary justify-start text-sm py-2 sm:col-span-2" onClick={() => openPanel('parking')} data-testid="parking-open">
-                  Parked thoughts
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <p className="text-[0.7rem] font-semibold uppercase tracking-wider text-ink-3 mb-1.5">Voice & Audio</p>
-              <div className="grid gap-1.5 sm:grid-cols-2">
-                <button type="button" className="btn btn-secondary justify-start text-sm py-2" onClick={() => setSheet('voice')}>
-                  Voice and language
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary justify-start text-sm py-2"
-                  onClick={() => {
-                    if (!quietMode) voice.disconnectVoiceSession();
-                    onQuietModeChange(!quietMode);
-                    setSheet(null);
-                  }}
-                >
-                  {quietMode ? 'Turn voice on' : 'Quiet mode (type only)'}
-                </button>
-                <button type="button" className="btn btn-secondary justify-start text-sm py-2 sm:col-span-2" onClick={() => voice.setCompanionMode(!voice.companionMode)} aria-pressed={voice.companionMode} data-testid="companion-toggle">
-                  {voice.companionMode ? 'Stay with me all day: on' : 'Stay with me all day: off'}
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <p className="text-[0.7rem] font-semibold uppercase tracking-wider text-ink-3 mb-1.5">Workspace & History</p>
-              <div className="grid gap-1.5 sm:grid-cols-2">
-                <button type="button" className="btn btn-secondary justify-start text-sm py-2" onClick={() => setSheet('remind')} data-testid="remind-open">
-                  Check-ins & reminders
-                </button>
-                <button type="button" className="btn btn-secondary justify-start text-sm py-2" onClick={() => setSheet('memory')}>
-                  What Stay remembers
-                </button>
-                <button type="button" className="btn btn-secondary justify-start text-sm py-2" onClick={() => openPanel('vision')} data-testid="menu-vision">
-                  Show Stay something
-                </button>
-                <button type="button" className="btn btn-secondary justify-start text-sm py-2" onClick={() => openPanel('call')} data-testid="menu-call-later">
-                  Have Stay call me
-                </button>
-                <button type="button" className="btn btn-secondary justify-start text-sm py-2" onClick={() => setSheet('history')} data-testid="menu-history">
-                  History
-                </button>
-                <button type="button" className="btn btn-secondary justify-start text-sm py-2" onClick={() => router.push('/app/settings')}>
-                  Settings & keys
-                </button>
-              </div>
-            </div>
-          </div>
-          <p className="meta mt-4">Just ask, by voice or typing: &ldquo;show my history&rdquo;, &ldquo;open brain dump&rdquo;, &ldquo;what do you remember&rdquo;, &ldquo;ground me&rdquo;.</p>
+          <MoreMenu
+            quietMode={quietMode}
+            onGround={() => (setSheet(null), setGrounding(true))}
+            onOpenPanel={openPanel}
+            onOpenVoice={() => setSheet('voice')}
+            onToggleQuiet={() => {
+              if (!quietMode) voice.disconnectVoiceSession();
+              onQuietModeChange(!quietMode);
+              setSheet(null);
+            }}
+          />
         </Sheet>
       )}
 
       {sheet === 'voice' && (
         <Sheet title="Voice and language" onClose={() => setSheet(null)}>
-          <VoicePicker selected={voice.selectedVoice} onSelect={(id) => { const p = voice.setSelectedVoice(id); if (p) setReceipt(`${p.name} armed — ready to speak`); }} fastVoice={voice.fastVoice} />
+          <VoicePicker selected={voice.selectedVoice} onSelect={(id) => { const p = voice.setSelectedVoice(id); if (p) setReceipt(`${p.name} ready to speak`); }} fastVoice={voice.fastVoice} />
           <label className="mt-5 flex cursor-pointer items-start gap-3" data-testid="fast-voice-row">
             <input type="checkbox" className="mt-1 h-5 w-5 accent-[#8FD3FF]" checked={voice.fastVoice} onChange={(e) => voice.setFastVoice(e.target.checked)} data-testid="fast-voice-toggle" />
             <span>
@@ -1581,11 +1511,18 @@ export function StayHome({
               <span className="meta block">On by default. Faster replies, and it waits through your pauses and stops when you talk. The thinking part uses your own key if you added one. Speaks English, Spanish, French, German, Italian and Portuguese; other languages use the standard voice.</span>
             </span>
           </label>
+          <label className="mt-5 flex cursor-pointer items-start gap-3" data-testid="companion-row">
+            <input type="checkbox" className="mt-1 h-5 w-5 accent-[#8FD3FF]" checked={voice.companionMode} onChange={(e) => voice.setCompanionMode(e.target.checked)} data-testid="companion-toggle" />
+            <span>
+              <span className="label block">Stay with me all day</span>
+              <span className="meta block">When a session ends on its own (the three-hour limit, a dropped connection), Stay quietly starts the next one.</span>
+            </span>
+          </label>
           <p className="label mt-5">Reply speed on this device</p>
           <p className="meta mt-1" data-testid="reply-speed" data-times={voice.replyTimes.join(",")} data-engine={voice.voiceEngine ?? ""}>
             {voice.replyTimes.length === 0
               ? 'Talk to Stay and the real time from the end of your speech to the first sound of its reply shows up here.'
-              : `Last ${(voice.replyTimes[voice.replyTimes.length - 1] / 1000).toFixed(1)} s, median ${(([...voice.replyTimes].sort((a, b) => a - b)[Math.floor(voice.replyTimes.length / 2)]) / 1000).toFixed(1)} s over ${voice.replyTimes.length} repl${voice.replyTimes.length === 1 ? 'y' : 'ies'}. Measured here, not a claim.`}
+              : `Last ${(voice.replyTimes[voice.replyTimes.length - 1] / 1000).toFixed(1)} s, median ${(([...voice.replyTimes].sort((a, b) => a - b)[Math.floor(voice.replyTimes.length / 2)]) / 1000).toFixed(1)} s over ${voice.replyTimes.length} repl${voice.replyTimes.length === 1 ? 'y' : 'ies'}. Measured on this device.`}
           </p>
           <p className="label mt-5">Language</p>
           <p className="meta mt-1">Auto-detect follows you if you switch mid-sentence. Languages marked * use your browser&apos;s speech recognition (best in Chrome or Edge).</p>
@@ -1596,6 +1533,11 @@ export function StayHome({
                 {l.code !== 'auto' && !isAgentVerifiedLanguage(l.code) ? ' *' : ''}
               </button>
             ))}
+          </div>
+          <p className="label mt-5">Voice connection</p>
+          <p className="meta mt-1">Stay listens and speaks with AssemblyAI. If another voice is ever used, it says so here.</p>
+          <div className="mt-2" data-testid="voice-connection">
+            <TransportBadge transport={voice.transportInfo} isConnected={voice.isConnected} replyTimes={voice.replyTimes} />
           </div>
         </Sheet>
       )}

@@ -21,31 +21,36 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [customUrl, setCustomUrl] = useState(() => getEffectiveSupabaseConfig()?.url || '');
   const [customAnonKey, setCustomAnonKey] = useState(() => getEffectiveSupabaseConfig()?.anonKey || '');
   const [testStatus, setTestStatus] = useState<string | null>(null);
+  const [testOk, setTestOk] = useState(false);
 
   if (!isOpen) return null;
 
   const handleSaveSupabase = () => {
     if (!customUrl.trim() || !customAnonKey.trim()) {
-      setTestStatus('Please enter both Supabase URL and Anon Key.');
+      setTestOk(false);
+      setTestStatus('Enter both the project URL and the anon key.');
       return;
     }
     saveCustomSupabaseConfig(customUrl, customAnonKey);
-    setTestStatus('✓ Saved credentials. Ready to connect.');
+    setTestOk(true);
+    setTestStatus('Saved on this device.');
   };
 
   const handleTestSupabase = async () => {
-    setTestStatus('Testing Supabase connection...');
+    setTestOk(false);
+    setTestStatus('Testing the connection...');
     try {
       const client = getSupabaseBrowserClient();
       if (!client) {
-        setTestStatus('Failed: Supabase client could not initialize with provided keys.');
+        setTestStatus('Could not connect with those keys.');
         return;
       }
       const { error } = await client.auth.getSession();
       if (error) {
         setTestStatus(`Error: ${error.message}`);
       } else {
-        setTestStatus('✓ Verified: Connected to Supabase Cloud Database.');
+        setTestOk(true);
+        setTestStatus('Connected.');
       }
     } catch (err) {
       setTestStatus(`Connection error: ${err instanceof Error ? err.message : String(err)}`);
@@ -56,7 +61,8 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     clearCustomSupabaseConfig();
     setCustomUrl('');
     setCustomAnonKey('');
-    setTestStatus('Cleared custom credentials. Defaulted to local mode.');
+    setTestOk(false);
+    setTestStatus('Removed your keys.');
   };
 
   const handleGoogleSignIn = async () => {
@@ -65,10 +71,10 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     try {
       const { error } = await signInWithGoogle();
       if (error) {
-        setErrorMsg(error.message || 'Could not initiate Google sign in.');
+        setErrorMsg(error.message || 'Could not start Google sign-in.');
       }
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : 'Sign in failed');
+      setErrorMsg(err instanceof Error ? err.message : 'Sign-in failed.');
     } finally {
       setSubmitting(false);
     }
@@ -84,9 +90,8 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       <div className="card w-full max-w-md p-6 bg-surface border border-line shadow-xl">
         <div className="flex items-center justify-between border-b border-line pb-3">
           <div className="flex items-center gap-2">
-            <span className="text-xl">🔐</span>
             <h3 id="auth-modal-title" className="font-display font-semibold text-ink text-base">
-              {user ? 'Account & Cloud Sync' : 'Sign in to Stay'}
+              {user ? 'Account and sync' : 'Sign in to Stay'}
             </h3>
           </div>
           <button
@@ -101,20 +106,20 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
         {user ? (
           <div className="mt-4 space-y-4">
-            <div className="rounded-lg bg-surface-recessed p-3 border border-line flex items-center gap-3">
+            <div className="rounded-lg bg-recessed p-3 border border-line flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center text-accent font-bold">
                 {user.email?.charAt(0).toUpperCase() || 'U'}
               </div>
               <div className="flex-1 min-w-0">
                 <span className="text-xs font-semibold text-ink block truncate">{user.email}</span>
-                <span className="text-[0.72rem] text-emerald-300 dark:text-emerald-400 font-medium">
-                  ✓ Cloud Sync Active (Multi-Device)
+                <span className="text-[0.72rem] text-success font-medium">
+                  Sync is on
                 </span>
               </div>
             </div>
 
             <p className="text-xs text-ink-2">
-              Your ADHD focus history, personal triggers, and calibration memory sync securely across your devices.
+              Your history and memory sync between your devices. What syncs is what History and Memory show.
             </p>
 
             <button
@@ -125,14 +130,14 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
               }}
               className="btn btn-secondary w-full text-xs py-2"
             >
-              Sign out of Google Account
+              Sign out
             </button>
           </div>
         ) : (
           <div className="mt-4 space-y-4">
             <p className="text-xs text-ink-2 leading-relaxed">
-              Stay works instantly with <strong>zero account required</strong> in private local guest mode. Sign in with
-              Google if you want to sync your cognitive memory, focus stats, and history across your phone and laptop.
+              Stay works without an account and keeps everything on this device. Sign in with Google if you want your
+              memory and history synced between your phone and laptop.
             </p>
 
             {errorMsg && (
@@ -142,8 +147,8 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             )}
 
             {!isConfigured && (
-              <p className="text-[0.75rem] text-ink-3 italic bg-surface-recessed p-2 rounded border border-line">
-                Note: Local guest mode is active. Cloud sync will connect once Supabase OAuth keys are set in your deployment environment.
+              <p className="text-[0.75rem] text-ink-3 italic bg-recessed p-2 rounded border border-line">
+                Sign-in is not set up on this server yet, so everything stays on this device.
               </p>
             )}
 
@@ -151,7 +156,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
               type="button"
               onClick={handleGoogleSignIn}
               disabled={submitting}
-              className="w-full flex items-center justify-center gap-3 bg-surface dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700/60 font-medium py-2.5 px-4 rounded-xl shadow-xs transition-colors text-sm"
+              className="btn btn-secondary w-full gap-3 text-sm"
               data-testid="google-signin-btn"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -179,10 +184,10 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             <div className="pt-2 border-t border-line">
               <details className="group text-xs text-ink-2">
                 <summary className="cursor-pointer font-medium text-accent hover:underline flex items-center justify-between">
-                  <span>⚡ Configure Supabase Database & OAuth Keys</span>
+                  <span>Use your own Supabase project</span>
                   <span className="text-xs group-open:rotate-180 transition-transform">▼</span>
                 </summary>
-                <div className="mt-3 space-y-2 bg-surface-recessed p-3 rounded-lg border border-line">
+                <div className="mt-3 space-y-2 bg-recessed p-3 rounded-lg border border-line">
                   <div>
                     <label className="text-[0.72rem] font-semibold text-ink-2 block">
                       Supabase Project URL
@@ -213,7 +218,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                       onClick={handleSaveSupabase}
                       className="btn btn-primary py-1 px-3 text-xs flex-1"
                     >
-                      Save & Connect
+                      Save and connect
                     </button>
                     <button
                       type="button"
@@ -234,7 +239,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   {testStatus && (
                     <p
                       className={`text-[0.72rem] font-medium ${
-                        testStatus.startsWith('✓') ? 'text-emerald-300' : 'text-amber-300'
+                        testOk ? 'text-success' : 'text-caution'
                       }`}
                     >
                       {testStatus}
@@ -250,7 +255,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 onClick={onClose}
                 className="text-xs text-ink-3 hover:text-ink underline transition-colors"
               >
-                Keep using private Local Guest mode
+                Keep using Stay without an account
               </button>
             </div>
           </div>

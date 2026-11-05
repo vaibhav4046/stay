@@ -1,8 +1,8 @@
 {
   "status": "PASS",
   "tier": "real-provider",
-  "gitSha": "62ff471ae56ea231f689e3082671ff1097ad6ab9",
-  "timestamp": "2026-11-01T21:05:28.067Z",
+  "gitSha": "bdcd654921791f4a2dbd88ad40f6c08afb70cd13",
+  "timestamp": "2026-11-04T05:40:41.097Z",
   "voice": "Adrienne (en-GB)",
   "limits": [
     "Chunk arrival measured over one network; playback is simulated with a 100 ms prebuffer, not the browser worklet",
@@ -12,69 +12,69 @@
     "A_clause_each": [
       {
         "syntheses": 4,
-        "firstAudioMs": 201,
-        "totalAudioSeconds": 10.32,
-        "arrivedByMs": 1177,
+        "firstAudioMs": 209,
+        "totalAudioSeconds": 10.16,
+        "arrivedByMs": 1168,
         "stalls": 0,
         "stallMs": 0,
         "silenceAtJoinsMs": [
-          498,
-          568,
-          530
+          511,
+          533,
+          541
         ]
       },
       {
         "syntheses": 3,
-        "firstAudioMs": 199,
-        "totalAudioSeconds": 9.04,
-        "arrivedByMs": 1071,
+        "firstAudioMs": 195,
+        "totalAudioSeconds": 9.12,
+        "arrivedByMs": 1051,
         "stalls": 0,
         "stallMs": 0,
         "silenceAtJoinsMs": [
-          629,
-          514
+          593,
+          517
         ]
       }
     ],
     "B_first_then_rest": [
       {
         "syntheses": 2,
-        "firstAudioMs": 209,
+        "firstAudioMs": 200,
         "totalAudioSeconds": 9.6,
-        "arrivedByMs": 1101,
+        "arrivedByMs": 1065,
         "stalls": 0,
         "stallMs": 0,
         "silenceAtJoinsMs": [
-          600
+          565
         ]
       },
       {
         "syntheses": 2,
-        "firstAudioMs": 195,
-        "totalAudioSeconds": 8.64,
-        "arrivedByMs": 1008,
+        "firstAudioMs": 205,
+        "totalAudioSeconds": 8.8,
+        "arrivedByMs": 1006,
         "stalls": 0,
         "stallMs": 0,
         "silenceAtJoinsMs": [
-          535
+          478
         ]
       }
     ],
     "C_whole_reply": [
       {
         "syntheses": 1,
-        "firstAudioMs": 203,
-        "totalAudioSeconds": 9.12,
-        "arrivedByMs": 997,
+        "firstAudioMs": 210,
+        "totalAudioSeconds": 9.28,
+        "arrivedByMs": 1082,
         "stalls": 0,
         "stallMs": 0,
         "silenceAtJoinsMs": []
       },
       {
         "syntheses": 1,
-        "firstAudioMs": 191,
+        "firstAudioMs": 196,
         "totalAudioSeconds": 8.24,
-        "arrivedByMs": 924,
+        "arrivedByMs": 958,
         "stalls": 0,
         "stallMs": 0,
         "silenceAtJoinsMs": []

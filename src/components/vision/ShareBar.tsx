@@ -37,7 +37,7 @@ export function ShareBar({ mode, stream, videoRef, glance, onGlance, onLook, onS
         </p>
         <p className="meta">With voice on, Stay looks once to start. After that it only looks when you ask, or press Look now.</p>
       </div>
-      <label className="flex cursor-pointer items-center gap-2 text-xs text-ink-2">
+      <label className="flex min-h-11 cursor-pointer items-center gap-2 text-xs text-ink-2">
         <input type="checkbox" className="h-4 w-4 accent-[#8FD3FF]" checked={glance} onChange={(e) => onGlance(e.target.checked)} data-testid="glance-toggle" />
         Glance every 2 min
       </label>

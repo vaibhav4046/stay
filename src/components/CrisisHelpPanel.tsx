@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { crisisResourcesFor, detectRegion } from '@/lib/safety/region';
+import { useModalFocus } from '@/lib/ui/useModalFocus';
 
 interface CrisisContextValue {
   openCrisisPanel: (reason?: string) => void;
@@ -44,9 +45,12 @@ export function CrisisHelpProvider({ children }: { children: React.ReactNode }) 
 
 function CrisisHelpPanel({ reason, onClose }: { reason?: string; onClose: () => void }) {
   const closeRef = useRef<HTMLButtonElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
   // the services for where the person is come first; the rest stay listed because the guess can be wrong
   const [resources] = useState(() => crisisResourcesFor(detectRegion()));
 
+  // declared first so it records what opened the panel before the Close button takes focus
+  useModalFocus(boxRef);
   useEffect(() => {
     closeRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
@@ -58,14 +62,15 @@ function CrisisHelpPanel({ reason, onClose }: { reason?: string; onClose: () => 
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center overflow-y-auto p-4"
       style={{ background: 'rgba(33,36,34,0.42)' }}
       role="dialog"
       aria-modal="true"
       aria-labelledby="crisis-title"
       data-testid="crisis-panel"
     >
-      <div className="card w-full max-w-lg p-6 sm:p-7">
+      {/* the whole card scrolls inside the screen: on a phone it is taller than the screen, and the title and the person's own numbers must be reachable */}
+      <div ref={boxRef} tabIndex={-1} className="card w-full max-w-lg max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain p-6 outline-none sm:p-7">
         <h2 id="crisis-title" className="section-title">
           If you might be in danger, talk to a person now
         </h2>
@@ -84,7 +89,7 @@ function CrisisHelpPanel({ reason, onClose }: { reason?: string; onClose: () => 
                 <p className="font-medium">{r.name}</p>
                 <p className="meta mt-0.5">{r.detail}</p>
               </div>
-              <a href={r.href} className="btn btn-primary shrink-0 tnum" style={{ minHeight: 40 }}>
+              <a href={r.href} className="btn btn-primary shrink-0 tnum">
                 {r.contact}
               </a>
             </li>

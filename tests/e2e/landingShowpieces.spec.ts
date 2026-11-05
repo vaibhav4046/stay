@@ -1,6 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { LIVE } from '../../src/components/landing/liveRun';
+import { CURRENT } from '../../src/components/landing/currentMeasured';
+import { SOAK } from '../../src/components/landing/soakMeasured';
 
 const open = async (page: Page) => {
   await page.goto('/');
@@ -40,7 +42,11 @@ test.describe('Landing showpieces: motion loop, feature cards, benchmark board',
     expect(rows.map((r) => parseInt(r, 10))).toEqual([...rows.map((r) => parseInt(r, 10))].sort((a, b) => a - b)); // time only moves forward
     expect(parseInt(rows[3], 10)).toBe(LIVE.firstSound);
 
-    const measure = JSON.parse(readFileSync('docs/evidence/real-provider/measure-0f93339.json', 'utf8'));
+    // the single recorded call is shown with the soak median and 95th percentile next to it
+    await expect(page.getByTestId('bench-soak')).toContainText(SOAK.longest.median.toLocaleString('en-US'));
+    await expect(page.getByTestId('bench-soak')).toContainText(SOAK.longest.p95.toLocaleString('en-US'));
+
+    const measure = JSON.parse(readFileSync(`docs/evidence/real-provider/measure-${CURRENT.gitSha}.json`, 'utf8'));
     await expect(page.getByTestId('bench-speed')).toContainText(`${(measure.firstPartialMs.p50 / 1000).toFixed(2)} s`);
     await expect(page.getByTestId('bench-speed')).toContainText(`${(measure.ttsFirstAudioMs.p50 / 1000).toFixed(2)} s`);
     await expect(page.getByTestId('bench-audio')).toContainText(String(LIVE.underflows));

@@ -6,11 +6,13 @@ import { ProofStrip } from '@/components/landing/ProofStrip';
 import { PipelineMotion } from '@/components/landing/PipelineMotion';
 import { FeatureBento } from '@/components/landing/FeatureBento';
 import { BenchmarkBoard } from '@/components/landing/BenchmarkBoard';
-import { DemoPlayer } from '@/components/landing/DemoPlayer';
+import { FilmStage } from '@/components/landing/FilmStage';
+import { FilmSeen } from '@/components/landing/FilmSeen';
 import { Results } from '@/components/landing/Results';
 import { Compare, NotFor, Platforms, Promises } from '@/components/landing/Sections';
 import { TRANSCRIPT } from '@/components/landing/transcript';
 import './landing.css';
+import './fold.css';
 import './facets.css';
 
 export default function Home() {
@@ -27,16 +29,14 @@ export default function Home() {
 
         <section id="watch" data-landing-section="2" className="lp-night lp-band" aria-labelledby="watch-title" data-testid="demo-video">
           <div className="lp-wrap">
-            <p className="eyebrow lp-eyebrow-night">The demo</p>
-            <h2 id="watch-title" className="section-title lp-night-title max-w-[26ch]">Watch a real call.</h2>
+            <h2 id="watch-title" className="section-title lp-night-title max-w-[26ch]">A paper due at nine. A thumb stuck on the feed.</h2>
             <p className="lp-night-copy mt-3 max-w-[62ch]">
-              A screen recording of the live app, with no sound: the browser cannot record page audio, so the words are in the captions. The speaker is a synthesised AssemblyAI voice fed into the microphone, marked as such in the captions; Stay&apos;s replies are real AssemblyAI speech. It shows the chat-first screen, a spoken interruption, a switch to Spanish, and two panels opened by typing.
+              Two minutes forty-nine seconds, a short story built around one real call. Pix is an invented character with a synthetic voice (ElevenLabs). Stay&apos;s replies and its voice (AssemblyAI) are the real thing, recorded in the real app. It plays on its own; press Sound to hear it.
             </p>
           </div>
-          <div className="lp-player-bleed">
-            <DemoPlayer />
-          </div>
+          <FilmStage />
           <div className="lp-wrap">
+            <FilmSeen />
             <details className="lp-details lp-transcript">
               <summary>Read the transcript</summary>
               <div className="lp-details-body">
@@ -63,13 +63,12 @@ export default function Home() {
             <BenchmarkBoard />
 
             <div className="mt-20">
-              <p className="eyebrow lp-eyebrow-night">Measured, with the limits</p>
               <h3 id="measured-title" className="section-title lp-night-title max-w-[24ch]">What we tested</h3>
             <ul className="lp-night-copy mt-6 max-w-[66ch] space-y-3">
-              <li><strong className="lp-night-strong">Safety first.</strong> Unit and browser suites (recorded in <code>docs/evidence/phase0-vitest.txt</code> and <code>docs/evidence/phase0-playwright.txt</code>) verify crisis wording in more than 30 languages against real phrasings and ordinary sentences that must not trigger, spacing-evasion protection, the medication boundary, and the rule that voice never deletes your data.</li>
+              <li><strong className="lp-night-strong">Safety.</strong> Unit and browser suites (recorded in <code>docs/evidence/phase0-vitest.txt</code> and <code>docs/evidence/phase0-playwright.txt</code>) verify crisis wording in 23 languages plus English against real phrasings and ordinary sentences that must not trigger, spacing-evasion protection, the medication boundary, and the rule that voice never deletes your data.</li>
               {/* evidence: docs/evidence/loop/T2-bench-2026-11-02-series1.json */}
               <li><strong className="lp-night-strong">Patience.</strong> A simulated speaker trailed off mid-sentence for 2.3 seconds with room noise. Stay waited through it and answered the finished thought (<code>docs/evidence/loop/T2-bench-2026-11-02-series1.json</code>).</li>
-              <li><strong className="lp-night-strong">Honesty.</strong> Every number below comes from a script in the repository (<code>docs/evidence/</code>), and the tests that found our own mistakes are in it too.</li>
+              <li><strong className="lp-night-strong">Sources.</strong> Every number on this page comes from a script in the repository (<code>docs/evidence/</code>). The tests that found our own mistakes are in there too.</li>
             </ul>
               <div className="mt-10">
                 <Results />
@@ -77,7 +76,6 @@ export default function Home() {
             </div>
 
             <div className="mt-20" data-testid="compare">
-              <p className="eyebrow lp-eyebrow-night">Alternatives</p>
               <h3 id="compare" className="section-title lp-night-title max-w-[24ch]">Why not just use something else?</h3>
               <div className="mt-6">
                 <Compare />
@@ -87,14 +85,13 @@ export default function Home() {
         </section>
 
         <section id="trust" data-landing-section="5" className="lp-section lp-wrap" aria-labelledby="trust-title">
-          <p className="eyebrow">Trust</p>
-          <h2 id="trust-title" className="section-title max-w-[22ch]">Built to be trusted with a hard day</h2>
+          <h2 id="trust-title" className="section-title max-w-[22ch]">What Stay does on a hard day</h2>
           <Promises />
 
           <div className="mt-16 grid gap-10 lg:grid-cols-2">
             <div id="platforms-block">
               <h3 id="platforms-title" className="sub-title">What exists today, and what does not</h3>
-              <p className="mt-3 max-w-[62ch] text-ink-2">A tick here means it is in the repository and works. Anything else says so plainly.</p>
+              <p className="mt-3 max-w-[62ch] text-ink-2">Green means it works today.</p>
               <Platforms />
             </div>
             <div data-testid="not-for-block">
@@ -128,10 +125,10 @@ export default function Home() {
           <div className="lp-cta-wrap mt-14">
           <div className="lp-cta lp-night">
             <div>
-              <h2 className="font-display text-2xl font-semibold leading-tight sm:text-3xl">Ready when you are.</h2>
-              <p className="lp-night-copy mt-2 max-w-[40ch]">One small thing is enough. Say it badly; Stay will wait.</p>
+              <h2 className="font-display text-2xl font-semibold leading-tight sm:text-3xl">Start with one small thing.</h2>
+              <p className="lp-night-copy mt-2 max-w-[40ch]">Say it badly. Stay will wait.</p>
             </div>
-            <Link href="/app/today" className="btn lp-cta-btn" data-testid="cta-open">
+            <Link href="/app/today" className="btn btn-primary" data-testid="cta-open">
               Open Stay
             </Link>
           </div>

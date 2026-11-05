@@ -6,7 +6,13 @@
  * 2. Any referenced docs/evidence/... path in user-facing docs does not exist on disk.
  * 3. Any user-facing doc making numeric test/latency claims lacks a docs/evidence/ link.
  * 4. Any evidence JSON under docs/evidence/{unit,browser-simulated,real-provider,real-mic} has a missing
- *    or stale gitSha (must match HEAD or HEAD~1).
+ *    gitSha, or one that is not among the last 50 commits (HEAD included). Older measurements that cannot be
+ *    re-run belong outside those four folders, with their date and commit stated wherever they are cited.
+ * 5. The speech measurement shown on the landing page (src/components/landing/currentMeasured.ts) is not the
+ *    newest docs/evidence/real-provider/measure-*.json, or is missing, or did not finish (status is not PASS).
+ *
+ * Not failures, printed as notes: evidence measured with uncommitted changes (`dirty: true`). The stamp is then
+ * the commit the working tree was based on, not an exact build.
  */
 
 import fs from 'node:fs';
@@ -23,7 +29,13 @@ const USER_FACING_FILES = [
   'docs/voice/VOICE_PROOF.md',
   'docs/voice/VOICE_PROTOCOL_AUDIT.md',
   'src/app/page.tsx',
+  'REVIEWERS.md',
+  'docs/ARCHITECTURE.md',
+  'docs/SAFETY.md',
+  'docs/STAY_ADHD_EVIDENCE_AND_LIMITS.md',
   'src/components/landing/Results.tsx',
+  'src/components/landing/BenchmarkBoard.tsx',
+  'src/components/landing/ProofStrip.tsx',
   'src/components/landing/AssemblyAiArchitecture.tsx',
   'src/components/landing/AdhdScienceHistory.tsx',
   'src/components/landing/Sections.tsx',
@@ -44,6 +56,8 @@ const BANNED_PATTERNS = [
   { re: /\b100%\s+verified\b/i, reason: 'Forbidden "100% verified" claim' },
   { re: /\b24\/7\s+therapist\b/i, reason: 'Forbidden "24/7 therapist" medical claim' },
   { re: /\bdopamine-aligned\b/i, reason: 'Forbidden dopamine mechanism claim' },
+  { re: /measured on this build/i, reason: 'Say which commit and date it was measured at ("this build" goes stale with the next commit)' },
+  { re: /\bHOME to 741741\b/i, reason: 'Crisis Text Line number is not in src/lib/safety/region.ts' },
 ];
 
 function getCommitShas() {
@@ -111,6 +125,8 @@ for (const rel of USER_FACING_FILES) {
 }
 
 const validShas = getCommitShas();
+const headSha = [...validShas][0] ?? 'unknown';
+const notes = [];
 const evidenceSubdirs = ['unit', 'browser-simulated', 'real-provider', 'real-mic'];
 for (const sub of evidenceSubdirs) {
   const dir = path.join(ROOT, 'docs', 'evidence', sub);
@@ -122,8 +138,10 @@ for (const sub of evidenceSubdirs) {
         failures.push(`${rel}: missing required "gitSha" field`);
       } else if (validShas.size > 0 && !validShas.has(data.gitSha)) {
         failures.push(
-          `${rel}: stale gitSha "${data.gitSha}" (expected HEAD ${[...validShas].join(' or ')})`,
+          `${rel}: stale gitSha "${data.gitSha.slice(0, 7)}" (not among the last 50 commits; HEAD is ${headSha.slice(0, 7)}). Re-run its script, or move it out of docs/evidence/${sub} and cite it by date.`,
         );
+      } else if (data.dirty === true) {
+        notes.push(`${rel}: measured at ${data.gitSha.slice(0, 7)} with uncommitted changes in the working tree (dirty: true)`);
       }
     } catch (err) {
       failures.push(`${rel}: invalid JSON (${err.message})`);
@@ -131,14 +149,36 @@ for (const sub of evidenceSubdirs) {
   }
 }
 
+// The speech measurement the landing page shows must be the newest one, and a finished run.
+const MEASURE_DIR = 'docs/evidence/real-provider';
+const LANDING_MEASURE_SRC = 'src/components/landing/currentMeasured.ts';
+const landingSrc = fs.existsSync(path.join(ROOT, LANDING_MEASURE_SRC)) ? fs.readFileSync(path.join(ROOT, LANDING_MEASURE_SRC), 'utf8') : '';
+const shownName = landingSrc.match(/real-provider\/(measure-[0-9a-f]+\.json)/)?.[1];
+const measureFiles = collectJsonFiles(path.join(ROOT, MEASURE_DIR))
+  .filter((f) => /measure-[0-9a-f]+\.json$/.test(f))
+  .map((f) => ({ name: path.basename(f), data: JSON.parse(fs.readFileSync(f, 'utf8')) }))
+  .filter((m) => typeof m.data.timestamp === 'string')
+  .sort((a, b) => b.data.timestamp.localeCompare(a.data.timestamp));
+if (!shownName) {
+  failures.push(`${LANDING_MEASURE_SRC}: does not import a ${MEASURE_DIR}/measure-<sha>.json file`);
+} else {
+  const shown = measureFiles.find((m) => m.name === shownName);
+  if (!shown) failures.push(`${LANDING_MEASURE_SRC}: imports ${shownName}, which is missing or has no timestamp`);
+  else {
+    if (shown.data.status !== 'PASS') failures.push(`${MEASURE_DIR}/${shownName}: shown on the landing page but status is ${shown.data.status}`);
+    if (measureFiles[0].name !== shownName) failures.push(`${LANDING_MEASURE_SRC}: shows ${shownName} (${shown.data.timestamp.slice(0, 10)}) but ${measureFiles[0].name} (${measureFiles[0].data.timestamp.slice(0, 10)}) is newer; re-point the import`);
+  }
+}
+
 if (failures.length > 0) {
   console.error('Honesty check (check-claims.mjs) FAILED:');
-  for (const f of failures) {
+  for (const f of new Set(failures)) {
     console.error(`  - ${f}`);
   }
   process.exit(1);
 }
 
+for (const n of notes) console.log(`  note: ${n}`);
 console.log(
-  `Honesty check (check-claims.mjs) PASSED: scanned ${USER_FACING_FILES.length} files, 0 banned claims, all evidence links and gitSha stamps verified.`,
+  `Honesty check (check-claims.mjs) PASSED: scanned ${USER_FACING_FILES.length} files, 0 banned claims, all evidence links and gitSha stamps verified, landing page shows the newest speech measurement${notes.length ? ` (${notes.length} note${notes.length === 1 ? '' : 's'} above)` : ''}.`,
 );

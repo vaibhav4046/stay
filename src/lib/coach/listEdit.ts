@@ -69,7 +69,7 @@ export function applyListEdit(spoken: string, now = new Date()): EditResult {
   const { item } = m;
   if (edit.kind === 'done') {
     toggleToday(item.id, now);
-    return { ok: true, say: `Marked ${short(item.text)} done. That is a win.`, changed: { id: item.id, text: item.text, action: 'done' } };
+    return { ok: true, say: `Marked ${short(item.text)} done.`, changed: { id: item.id, text: item.text, action: 'done' } };
   }
   if (edit.kind === 'remove') {
     removeToday(item.id, now);

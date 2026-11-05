@@ -18,15 +18,11 @@ export default function GlobalError({
   return (
     <div className="flex min-h-[80vh] flex-col items-center justify-center p-6 text-center">
       <div className="card max-w-md p-6 sm:p-8 space-y-4 border border-line bg-surface shadow-sm text-left">
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-caution inline-block" aria-hidden="true" />
-          <p className="eyebrow !mb-0">Take a breath</p>
-        </div>
         <h1 className="section-title text-xl sm:text-2xl font-semibold">
-          Nothing was lost
+          Something broke. Nothing was lost.
         </h1>
         <p className="text-sm text-ink-2 leading-relaxed">
-          An unexpected interruption occurred in the interface. Your saved blocks, memory, and settings remain safe on your device.
+          Your blocks, memory and settings are still on this device. Try again, or go back to Today.
         </p>
         <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
           <button

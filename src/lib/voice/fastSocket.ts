@@ -12,11 +12,13 @@ import { isImageDataUrl, looksVisual } from '@/lib/vision/image';
 import { honestFailureMessage, isFailureLine } from '@/lib/conversation/response';
 import { mayChangeLook, mayStartTimer } from '@/lib/conversation/capabilities';
 import { GATED_ACTIONS, mayDoAction } from '@/lib/conversation/actionGates';
+import { outcomeAsOpen } from '@/lib/voice/repairToolCall';
 import { MEDICAL_BOUNDARY_FIXED_MESSAGE } from '@/lib/safety/crisis';
 import { byokHeaders } from '@/lib/byok/config';
 import { makeThinkFilter } from '@/lib/voice/thinkFilter';
 import { cleanReply } from '@/lib/voice/replyHygiene';
 import type { TtsConnection } from '@/lib/voice/tts/types';
+import { isResumePhrase } from '@/lib/voice/voiceCommands';
 
 export type EndpointingMode = 'coaching' | 'reflective' | 'crisis';
 
@@ -48,12 +50,21 @@ export interface FastSocketConfig {
   ttsToken: string;
   /** Mints a new TTS token for every later voice session (language switch, reconnect, hourly rotation). */
   freshTtsToken?: () => Promise<string>;
+  /**
+   * Mints a new speech-to-text token. A token opens one session and lasts 3600 s, so every later session (a reconnect after an unexpected
+   * close, the rotation at 55 minutes) needs a new one. Without this, a closed speech-to-text socket ends the call as it always did.
+   */
+  freshSttToken?: () => Promise<string>;
   /** The few lines from the person's own notes that match what they just said (found on their device, sent as data). */
   recall?: (text: string) => string[];
   /** Mic format: 24 kHz mono 16-bit little-endian (what pcm-processor.js produces). */
   sampleRate?: number;
   /** How long to wait after a turn that trails off ("and, uh,") before answering. Default 2200 ms. */
   holdMs?: number;
+  /** how long the call must have been quiet before the app may speak first (a timer check-in, a nudge); default 2500 ms */
+  proactiveQuietMs?: number;
+  /** how long an app-started turn waits for a quiet moment before it is dropped as stale; default 25 s */
+  proactiveGiveUpMs?: number;
   /** Auto-detect mode: move the TTS session to the language the person switches to (when AssemblyAI TTS speaks it). */
   autoLanguage?: boolean;
   /** After an interruption, a short fragment ("Wait, stop.") is held this long in case the sentence continues. Default 900 ms. */
@@ -280,6 +291,9 @@ export function quickConfirmation(action: unknown, resultJson: string, ttsLangua
   return (QUICK_PHRASE[ttsLanguage] ?? QUICK_PHRASE.english)[kind];
 }
 
+/** What counts as the call being in use: someone spoke, or a reply began or ended. */
+const ACTIVITY_EVENTS = new Set(['input.speech.started', 'input.speech.stopped', 'transcript.user', 'transcript.agent', 'reply.started', 'reply.done']);
+
 /** What a prepared-but-not-yet-confirmed reply must not show the app. */
 const GATED_EVENTS = new Set(['reply.started', 'reply.text', 'reply.audio', 'transcript.agent', 'reply.done', 'tool.call']);
 
@@ -294,6 +308,15 @@ const REPLY_STALL_MS = 8000;
 const VOICELESS_FINISH_MS = 600;
 /** After three quick tries the voice connection is tried again this often, for as long as the call lasts. */
 const TTS_RETRY_MS = 15_000;
+/** After an unexpected speech-to-text close: wait this long, then twice as long, before each of the (at most) two tries. */
+const STT_RECONNECT_BASE_MS = 200;
+const STT_MAX_RECONNECTS = 2;
+/** A close this soon after a reconnect that worked is not a blip: fail honestly instead of looping. */
+const STT_FLAP_WINDOW_MS = 60_000;
+/** A speech-to-text session lasts 3600 s (fast-token route): move to a new one at 55 minutes, as the voice does, when nobody is mid-turn. */
+const STT_ROTATE_MS = 55 * 60 * 1000;
+/** A rotation that finds the person mid-turn (or could not get a token) looks again this often; the old session still works until 60 minutes. */
+const STT_ROTATE_RETRY_MS = 15_000;
 /** After a lone greeting or filler turn, how long to wait for the rest of the sentence before answering it. */
 const OPENER_HOLD_MS = 700;
 
@@ -346,13 +369,16 @@ export class FastSocket {
   onerror: (() => void) | null = null;
   onclose: (() => void) | null = null;
 
-  private cfg: Required<Omit<FastSocketConfig, "keyterms" | "ttsConnect" | "endpointingMode" | "freshTtsToken" | "recall">> & Pick<FastSocketConfig, "keyterms" | "ttsConnect" | "endpointingMode" | "freshTtsToken" | "recall">;
+  private cfg: Required<Omit<FastSocketConfig, "keyterms" | "ttsConnect" | "endpointingMode" | "freshTtsToken" | "freshSttToken" | "recall">> & Pick<FastSocketConfig, "keyterms" | "ttsConnect" | "endpointingMode" | "freshTtsToken" | "freshSttToken" | "recall">;
   private session: FastSession | null = null;
   private notes: string[] = [];
   private history: ChatMessage[] = [];
   private stt: WebSocket | null = null;
   private tts: WebSocket | TtsConnection | null = null;
   private inUserTurn = false;
+  private lastActivityAt = 0; // the last time anyone spoke or a reply started or ended
+  private idleRun: (() => void) | null = null; // an app-started turn waiting for a quiet moment (only the newest is kept)
+  private idleTimer: ReturnType<typeof setTimeout> | undefined;
   private lastTurnOrder = -1;
   private genId = 0;
   private abort: AbortController | null = null;
@@ -392,6 +418,14 @@ export class FastSocket {
   private ttsNeedsRotation = false;
   private ttsReconnectAttempts = 0;
   private ttsOpened = false;
+  private sttReconnecting = false; // one reconnect chain at a time
+  private sttReconnectedAt = 0; // when the last drop was repaired
+  private sttRotationTimer: ReturnType<typeof setTimeout> | undefined;
+  /** a new speech-to-text session counts its turns from 0 again; this keeps turn numbers (and the ids built from them) rising across sessions */
+  private turnOrderBase = 0;
+  private lastPartial = ''; // the newest words of the turn in progress (not yet confirmed by an end of turn)
+  private lastPartialOrder = -1;
+  private listeningPaused = false; // the app paused listening: the mic still streams, but only a wake phrase ("hey stay") is acted on
   private sttTermResolve: (() => void) | null = null;
   private ttsTermResolve: (() => void) | null = null;
   private ttsAudioStartedAt = 0;
@@ -404,7 +438,7 @@ export class FastSocket {
   private replyWatchdog: ReturnType<typeof setTimeout> | undefined;
 
   constructor(cfg: FastSocketConfig) {
-    this.cfg = { sampleRate: 16000, holdMs: 2200, interruptHoldMs: 900, warmUp: true, autoLanguage: false, ...cfg };
+    this.cfg = { sampleRate: 16000, holdMs: 2200, interruptHoldMs: 900, warmUp: true, autoLanguage: false, proactiveQuietMs: 2500, proactiveGiveUpMs: 25_000, ...cfg };
     queueMicrotask(() => {
       this.readyState = FastSocket.OPEN;
       this.onopen?.();
@@ -432,7 +466,10 @@ export class FastSocket {
   async terminateGracefully(timeoutMs = 5000): Promise<void> {
     if (this.closed) return;
     this.closed = true;
+    this.idleRun = null; // an app-started turn that was waiting is dropped with the call
+    if (this.idleTimer) clearTimeout(this.idleTimer);
     this.clearTtsTimers();
+    this.clearSttRotation();
     if (this.holdTimer) clearTimeout(this.holdTimer);
     this.cancel();
 
@@ -501,12 +538,22 @@ export class FastSocket {
       case 'capture.mode':
         this.captureOnly = m.on === true;
         break;
-      case 'reply.say':
-        if (typeof m.text === 'string' && m.text.trim()) this.speakOnly(m.text.trim().slice(0, 600)); // exact words, no model
+      case 'listening.pause':
+        this.setListeningPaused(m.on === true);
         break;
-      case 'reply.create':
-        void this.generate(typeof m.instructions === 'string' ? m.instructions : undefined);
+      case 'reply.say': {
+        const words = typeof m.text === 'string' ? m.text.trim().slice(0, 600) : '';
+        if (!words) break;
+        if (m.when === 'idle') this.whenIdle(() => this.speakOnly(words)); // exact words, no model
+        else this.speakOnly(words);
         break;
+      }
+      case 'reply.create': {
+        const instructions = typeof m.instructions === 'string' ? m.instructions : undefined;
+        if (m.when === 'idle') this.whenIdle(() => void this.generate(instructions));
+        else void this.generate(instructions);
+        break;
+      }
       case 'tool.result': {
         const w = this.toolWaiters.get(String(m.call_id));
         if (w) {
@@ -532,6 +579,7 @@ export class FastSocket {
     if (this.closed) return;
     this.closed = true;
     this.clearTtsTimers();
+    this.clearSttRotation();
     if (this.holdTimer) clearTimeout(this.holdTimer);
     this.cancel();
     for (const s of [this.stt, this.tts]) {
@@ -547,6 +595,8 @@ export class FastSocket {
   }
 
   private clearTtsTimers(): void {
+    // an app-started turn that is waiting for a quiet moment is NOT dropped here: a voice reconnect or rotation must not lose a timer's
+    // check-in (it is dropped when the call closes, or as stale after the give-up time)
     if (this.keepAliveTimer) {
       clearInterval(this.keepAliveTimer);
       this.keepAliveTimer = undefined;
@@ -653,6 +703,144 @@ export class FastSocket {
     this.handleTtsUnexpectedClose();
   }
 
+  // ---- speech-to-text: reconnect, rotation, pause ----------------------------------------------------------------------
+
+  private clearSttRotation(): void {
+    if (this.sttRotationTimer) clearTimeout(this.sttRotationTimer);
+    this.sttRotationTimer = undefined;
+  }
+
+  private scheduleSttRotation(ms = STT_ROTATE_MS): void {
+    this.clearSttRotation();
+    if (!this.cfg.freshSttToken) return;
+    this.sttRotationTimer = setTimeout(() => {
+      this.sttRotationTimer = undefined;
+      void this.rotateStt();
+    }, ms);
+  }
+
+  /** The person is in the middle of a turn: a new session now would lose the end of it. */
+  private sttBusy(): boolean {
+    return this.inUserTurn || this.carry !== '';
+  }
+
+  /** Moves to a new speech-to-text session just before the old one's hour is up, at a moment when nobody is talking. */
+  private async rotateStt(): Promise<void> {
+    if (this.closed || this.sttReconnecting) return;
+    if (this.sttBusy()) return this.scheduleSttRotation(STT_ROTATE_RETRY_MS);
+    let token: string;
+    try {
+      token = await this.cfg.freshSttToken!(); // fetched while the old session still listens
+    } catch {
+      return this.scheduleSttRotation(STT_ROTATE_RETRY_MS);
+    }
+    if (this.closed || this.sttReconnecting) return;
+    if (!token || this.sttBusy()) return this.scheduleSttRotation(STT_ROTATE_RETRY_MS);
+    this.sttReconnecting = true;
+    this.dropStt();
+    await this.reconnectStt(token, true); // planned and short: nothing to show
+  }
+
+  /** The speech-to-text socket closed (or sent an Error) while the call was live. */
+  private handleSttDrop(detail = ''): void {
+    if (this.closed || !this.session || this.sttReconnecting) return; // an Error and the close after it are one failure
+    // a one-time token cannot be reused, and a drop right after a repair is not a blip: say so instead of looping
+    if (!this.cfg.freshSttToken || Date.now() - this.sttReconnectedAt < STT_FLAP_WINDOW_MS) return this.fail('stt_closed', detail);
+    this.sttReconnecting = true;
+    this.clearSttRotation();
+    this.dropStt();
+    this.parkHeardTurn();
+    void this.reconnectStt();
+  }
+
+  /** Up to two tries, each with a fresh token. Only when both fail does the call end. */
+  private async reconnectStt(firstToken?: string, quiet = false): Promise<void> {
+    let detail = '';
+    let token = firstToken;
+    for (let attempt = 1; attempt <= STT_MAX_RECONNECTS; attempt++) {
+      if (!quiet) this.emit({ type: 'stt.reconnecting', attempt });
+      if (!token) await new Promise((r) => setTimeout(r, STT_RECONNECT_BASE_MS * 2 ** (attempt - 1)));
+      if (this.closed) return;
+      try {
+        token ??= await this.cfg.freshSttToken!();
+        if (this.closed) return;
+        if (!token) throw new Error('stt_token_unavailable');
+        await this.openStt(token);
+        this.sttReconnecting = false;
+        if (!quiet) {
+          this.sttReconnectedAt = Date.now();
+          this.emit({ type: 'stt.reconnected' });
+        }
+        return;
+      } catch (e) {
+        detail = e instanceof Error ? e.message : String(e);
+        token = undefined;
+        this.dropStt();
+      }
+    }
+    this.sttReconnecting = false;
+    this.fail('stt_closed', detail);
+  }
+
+  /** Lets go of the current speech-to-text socket. Detached first: closing it on purpose must not look like a new drop. */
+  private dropStt(): void {
+    const old = this.stt;
+    this.stt = null;
+    if (!old) return;
+    old.onclose = null;
+    old.onmessage = null;
+    old.onerror = null;
+    try {
+      if (old.readyState === WebSocket.OPEN) old.send(JSON.stringify({ type: 'Terminate' }));
+      old.close();
+    } catch {
+      // already gone
+    }
+  }
+
+  /**
+   * A drop in the middle of a turn loses the end of it. Keep the words heard so far as an unfinished thought: what the person says next
+   * (on the new session) joins it, and if they say nothing more it is answered after the usual short wait. The orb is never left waiting.
+   */
+  private parkHeardTurn(): void {
+    if (!this.inUserTurn || this.holdTimer) return; // nothing in progress, or a hold is already running
+    const heard = [this.carry, this.lastPartial].filter(Boolean).join(' ');
+    if (!heard) {
+      this.inUserTurn = false;
+      return;
+    }
+    const order = Math.max(this.lastTurnOrder, this.lastPartialOrder);
+    this.lastTurnOrder = order; // the new session's turns count on from here
+    this.carry = heard;
+    this.lastPartial = '';
+    this.dropSpec(); // a reply prepared from the partial words starts over from what is finally said
+    this.holdTimer = setTimeout(() => this.finishTurn(order), this.cfg.holdMs);
+  }
+
+  /** The app paused or resumed listening. Pausing drops a turn that was being held, so nothing is answered after the pause. */
+  private setListeningPaused(on: boolean): void {
+    if (on && !this.listeningPaused && (this.inUserTurn || this.carry)) {
+      if (this.holdTimer) clearTimeout(this.holdTimer);
+      this.holdTimer = undefined;
+      this.carry = '';
+      this.lastPartial = '';
+      this.holds = 0;
+      this.inUserTurn = false;
+      this.dropSpec();
+      this.emit({ type: 'transcript.user.delta', text: '' }); // clears the words on screen
+    }
+    this.listeningPaused = on;
+  }
+
+  /** Paused: the mic still streams, but nothing is answered, shown or kept. Only a wake phrase ends the pause, and it is not answered either. */
+  private onPausedTurn(text: string, order: number, endOfTurn: boolean): void {
+    if (!endOfTurn || !text || (order >= 0 && order <= this.lastTurnOrder)) return; // a partial, or the formatted re-send of a turn already seen
+    if (order >= 0) this.lastTurnOrder = order;
+    if (!isResumePhrase(text)) return;
+    this.listeningPaused = false;
+    this.emit({ type: 'listening.resumed' });
+  }
+
   // ---- internals --------------------------------------------------------------------------------------------------
 
   /** Stage timestamps (epoch ms, same clock as the benchmark rig) for per-stage latency reports. Debug flag only; free otherwise. */
@@ -662,6 +850,7 @@ export class FastSocket {
   }
 
   private emit(m: Json): void {
+    if (ACTIVITY_EVENTS.has(String(m.type))) this.lastActivityAt = Date.now();
     if (this.gated && GATED_EVENTS.has(String(m.type))) {
       this.held.push(m);
       return;
@@ -699,7 +888,7 @@ export class FastSocket {
     if (this.session.greeting) void this.speakOnly(this.session.greeting);
   }
 
-  private openStt(): Promise<void> {
+  private openStt(token = this.cfg.sttToken): Promise<void> {
     return new Promise((resolve, reject) => {
       const preset = this.cfg.endpointingMode ? ENDPOINTING_PRESETS[this.cfg.endpointingMode] : ENDPOINTING_PRESETS.coaching;
       const q = new URLSearchParams({
@@ -710,7 +899,7 @@ export class FastSocket {
         max_turn_silence: String(preset?.max_turn_silence ?? 1280),
         vad_threshold: '0.2',
         language_detection: 'true',
-        token: this.cfg.sttToken,
+        token,
       });
       const terms = (this.cfg.keyterms ?? []).filter((t) => t.length > 2 && t.length <= 50).slice(0, 100);
       if (terms.length > 0) q.set('keyterms_prompt', JSON.stringify(terms));
@@ -740,8 +929,11 @@ export class FastSocket {
         if (m.type === 'Begin') {
           begun = true;
           clearTimeout(beginTimer);
+          this.turnOrderBase = this.lastTurnOrder + 1; // a new session counts its turns from 0 again
+          this.scheduleSttRotation();
           resolve();
         } else if (m.type === 'SpeechStarted') {
+          if (this.listeningPaused) return;
           const speakingNow = this.agentSpeaking || Date.now() < this.playEndAt;
           const sinceAudioStartMs = Date.now() - this.ttsAudioStartedAt;
           if (speakingNow && this.ttsAudioStartedAt > 0 && sinceAudioStartMs >= 0 && sinceAudioStartMs < 250) {
@@ -764,7 +956,8 @@ export class FastSocket {
           this.sttTermResolve = null;
         } else if (m.type === 'Error') {
           clearTimeout(beginTimer);
-          this.fail('stt_error');
+          if (begun) this.handleSttDrop(String(m.error ?? 'stt_error'));
+          else reject(new Error(String(m.error || 'stt_error')));
         }
       };
       ws.onerror = () => {
@@ -775,7 +968,9 @@ export class FastSocket {
         clearTimeout(beginTimer);
         this.sttTermResolve?.();
         this.sttTermResolve = null;
-        if (!this.closed) this.fail('stt_closed');
+        if (this.closed || this.stt !== ws) return; // closed on purpose, or a session already replaced: says nothing about the current one
+        if (!begun) reject(new Error('stt_closed'));
+        else this.handleSttDrop();
       };
     });
   }
@@ -917,7 +1112,9 @@ export class FastSocket {
   /** Streaming transcript -> the Voice Agent's user events. */
   private onTurn(m: Json): void {
     const text = String(m.transcript || '').trim();
-    const order = Number(m.turn_order ?? -1);
+    const rawOrder = Number(m.turn_order ?? -1);
+    const order = rawOrder >= 0 ? rawOrder + this.turnOrderBase : -1;
+    if (this.listeningPaused) return this.onPausedTurn(text, order, Boolean(m.end_of_turn));
     if (order >= 0 && order <= this.lastTurnOrder) return; // a late or formatted re-send of a turn already handled
     const speakingNow = this.agentSpeaking || Date.now() < this.playEndAt;
     if (!m.end_of_turn) {
@@ -951,6 +1148,8 @@ export class FastSocket {
         clearTimeout(this.holdTimer);
         this.holdTimer = undefined; // they carried on: it was a pause, not the end
       }
+      this.lastPartial = text;
+      this.lastPartialOrder = order;
       this.emit({ type: 'transcript.user.delta', text: this.carry ? `${this.carry} ${text}` : text });
       const hasUtterance = typeof m.utterance === 'string' && m.utterance.trim().length > 0;
       this.speculate(text, hasUtterance);
@@ -965,6 +1164,7 @@ export class FastSocket {
     this.mark('eot');
     this.followLanguage(m);
     const full = this.carry ? `${this.carry} ${text}` : text;
+    this.lastPartial = ''; // the end of turn has the whole text now
     const unfinished = soundsUnfinished(full);
     if (this.spec && this.spec.key !== specKey(full)) this.dropSpec(); // they said more than the partial: start over
     // someone who cuts in with "Wait, stop." usually has more to say: give the rest of the sentence a moment
@@ -1010,8 +1210,10 @@ export class FastSocket {
 
   private finishTurn(order: number): void {
     if (this.closed) return;
+    if (this.holdTimer) clearTimeout(this.holdTimer); // a turn ended by the end of turn must not be finished again by its own hold timer
     const text = this.carry;
     this.carry = '';
+    this.lastPartial = '';
     this.holds = 0;
     this.specStarts = 0;
     this.interrupted = false;
@@ -1245,6 +1447,47 @@ export class FastSocket {
     }
   }
 
+  /**
+   * A turn the app starts (a timer ending, a reminder, a nudge) waits for a quiet moment: Stay is not speaking, the person is not talking
+   * or about to answer, and the call has been quiet for a while. Reported by the owner after real use, 4 Nov 2026: "the voice is breaking
+   * and in between the conversation started block timing". Before this, such a turn spoke the instant it fired, cutting off Stay's reply
+   * or talking over the person. If the conversation has not paused for 25 s the turn is dropped: it is stale, and the timer is on screen.
+   */
+  private whenIdle(run: () => void): void {
+    const quietMs = this.cfg.proactiveQuietMs ?? 2500;
+    const giveUpMs = this.cfg.proactiveGiveUpMs ?? 25_000;
+    const queuedAt = Date.now();
+    this.idleRun = run;
+    if (this.idleTimer) clearTimeout(this.idleTimer);
+    const tick = () => {
+      if (this.closed || !this.idleRun) return;
+      // also busy: the model is still working on the person's answer (starting now would cancel it), a tool is running, the last reply is
+      // still playing in the browser, or a brain dump is being captured. The first turn of a call has genId 0, so a fresh call is never busy.
+      const thinking = this.genId > 0 && !this.llmDone;
+      const busy =
+        this.agentSpeaking || this.inUserTurn || Boolean(this.carry) || this.spoken !== '' || this.spec !== null ||
+        thinking || this.toolWaiters.size > 0 || Date.now() < this.playEndAt || this.captureOnly;
+      if (!busy && Date.now() - this.lastActivityAt >= quietMs) {
+        const go = this.idleRun;
+        this.idleRun = null;
+        go();
+        return;
+      }
+      if (Date.now() - queuedAt > giveUpMs) {
+        this.idleRun = null; // the conversation went on: this is stale
+        return;
+      }
+      this.idleTimer = setTimeout(tick, 250);
+    };
+    tick();
+  }
+
+  /** Stay's last line, so a bare yes can be tied to what Stay offered. */
+  private lastAssistantLine(): string {
+    const m = [...this.history].reverse().find((x) => x.role === 'assistant' && typeof x.content === 'string');
+    return typeof m?.content === 'string' ? m.content : '';
+  }
+
   private speakOnly(text: string): void {
     const gen = ++this.genId;
     this.llmDone = true;
@@ -1276,12 +1519,12 @@ export class FastSocket {
     const lastUser = [...messages].reverse().find((x) => x.role === 'user');
     const asked = typeof lastUser?.content === 'string' ? lastUser.content : '';
     const fresh = this.latestImage && Date.now() - this.latestImage.at < 20_000 ? this.latestImage.data : null;
-    const image = toolFollowUp ? null : this.nextImage ?? (fresh && looksVisual(asked) ? fresh : null);
+    const image = toolFollowUp || extraInstruction ? null : this.nextImage ?? (fresh && looksVisual(asked) ? fresh : null);
     if (!toolFollowUp) this.nextImage = null;
     // the few lines of the person's own notes that match this turn (found on their device; the vault is never sent whole)
     let recalled: string[] = [];
     try {
-      recalled = !toolFollowUp && asked ? (this.cfg.recall?.(asked) ?? []).slice(0, 3) : [];
+      recalled = !toolFollowUp && !extraInstruction && asked ? (this.cfg.recall?.(asked) ?? []).slice(0, 3) : [];
     } catch {
       recalled = []; // a note lookup must never stop a reply
     }
@@ -1294,10 +1537,13 @@ export class FastSocket {
         headers: { 'Content-Type': 'application/json', ...byokHeaders(), ...(image ? { 'x-stay-image': '1' } : {}) },
         body: JSON.stringify({
           messages,
-          withTools: s.tools && !toolFollowUp && !image,
+          // an app-started turn (a timer ending) carries its instruction and needs no tools: the model answers it, not the last thing said
+          withTools: s.tools && !toolFollowUp && !image && !extraInstruction,
+          ...(extraInstruction ? { instruction: extraInstruction.slice(0, 400) } : {}),
           ...(image ? { image } : {}),
           context: {
             language: s.ttsLanguage,
+            localHour: new Date().getHours(),
             notes: this.notes.slice(-4),
             ...(this.session?.personal ? { personal: this.session.personal } : {}),
             ...(recalled.length ? { recall: recalled } : {}),
@@ -1425,8 +1671,11 @@ export class FastSocket {
     }
     // Same for the orb's look (persona run: "show me exactly how..." set the shape to "exactly" and Stay said Done to a question). The call
     // is not run; the model is told so and answers the person's words, without tools.
+    // "Show my report." sometimes arrives as an outcome call naming the screen: it is an open (live check, 4 Nov 2026)
+    const reopened = call && !toolFollowUp ? outcomeAsOpen(call.args, asked) : null;
+    if (call && reopened) call = { ...call, args: reopened };
     const calledAction = /"action"\s*:\s*"([a-z_]+)"/.exec(call?.args ?? '')?.[1] ?? '';
-    if (call && !toolFollowUp && ((/^(?:shape|color)$/.test(calledAction) && !mayChangeLook(asked)) || (GATED_ACTIONS.includes(calledAction) && !mayDoAction(calledAction, asked)))) {
+    if (call && !toolFollowUp && ((/^(?:shape|color)$/.test(calledAction) && !mayChangeLook(asked)) || (GATED_ACTIONS.includes(calledAction) && !mayDoAction(calledAction, asked, this.lastAssistantLine())))) {
       const id = call.id || `call-${Date.now()}`;
       this.history = [
         ...this.history,

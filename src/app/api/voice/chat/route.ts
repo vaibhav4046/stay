@@ -7,6 +7,7 @@ import { isOverloaded } from '@/lib/conversation/overload';
 import { isPersistentLowMood } from '@/lib/conversation/lowMood';
 import { mayChangeLook, mayStartTimer, recentOpeners, unsupportedActionAnswer } from '@/lib/conversation/capabilities';
 import { GATED_ACTIONS, mayDoAction } from '@/lib/conversation/actionGates';
+import { repairToolCall } from '@/lib/voice/repairToolCall';
 import { llmHeaders } from '@/lib/llm/provider';
 import { openLlmStream } from '@/lib/llm/stream';
 import { resolveDeterministicVoice, createDeterministicSseResponse } from '@/lib/voice/deterministicVoiceFallback';
@@ -47,6 +48,8 @@ const ContextSchema = z
     recall: z.array(z.string().max(200)).max(3).optional(),
     /** one sentence built on the device from the person's own logged blocks; used as the check-in of a task reply */
     offer: z.string().max(200).optional(),
+    /** the hour on the person's own clock (0 to 23), so a reply at 2 a.m. can know it is the middle of the night */
+    localHour: z.number().int().min(0).max(23).optional(),
   })
   .optional();
 
@@ -56,6 +59,8 @@ const BodySchema = z.object({
   context: ContextSchema,
   /** One picture to look at this turn (a screen or camera frame, or a file): a small JPEG/PNG/WebP data URL. Never stored. */
   image: z.string().max(MAX_IMAGE_CHARS).optional(),
+  /** A turn the app starts (a timer ending): what Stay is to say. The person said nothing this turn, so their last words are not what it answers. */
+  instruction: z.string().max(400).optional(),
 });
 
 /** Warm-up: the voice session calls this when it starts so the first real turn does not pay for a cold function. */
@@ -63,13 +68,95 @@ export async function GET() {
   return new Response(null, { status: 204, headers: { 'Cache-Control': 'no-store' } });
 }
 
-function createResilientStream(incoming: ReadableStream<Uint8Array>, lastUser: string): ReadableStream<Uint8Array> {
+/** The `failed_generation` text of a provider error, unescaped, or undefined. */
+function failedGenerationOf(buffered: string): string | undefined {
+  const m = /"failed_generation":\s*("(?:[^"\\]|\\.)*")/.exec(buffered);
+  if (!m) return undefined;
+  try {
+    return JSON.parse(m[1]) as string;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Streams the model's reply to the app. If it ends with no answer (an empty stream, or the model's own error such as a malformed tool
+ * call: the live film run, 4 Nov 2026, "Show my report" got "I could not reach my thinking service"), a malformed call that is clear is
+ * repaired, else `retry` asks the next model once; only when that also gives nothing does the person hear the honest message.
+ * Never an invented reply.
+ */
+function createResilientStream(
+  incoming: ReadableStream<Uint8Array>,
+  retry?: () => Promise<ReadableStream<Uint8Array> | null>,
+  repair?: (failedGeneration: string) => string | null,
+): ReadableStream<Uint8Array> {
   const reader = incoming.getReader();
   const decoder = new TextDecoder();
   const encoder = new TextEncoder();
   let emittedMeaningfulChunk = false;
   let buffered = '';
   let sseTail = ''; // the last, possibly unfinished, line of the stream
+
+  const failureChunk = (kind: 'unavailable' | 'timeout') =>
+    encoder.encode(
+      `data: ${JSON.stringify({
+        id: 'chatcmpl-det-fallback',
+        object: 'chat.completion.chunk',
+        choices: [{ index: 0, delta: { role: 'assistant', content: honestFailureMessage(kind) } }],
+      })}\n\ndata: [DONE]\n\n`,
+    );
+
+  /** Nothing usable came from the first answer: try the next model once, else say so. */
+  async function recover(controller: ReadableStreamDefaultController<Uint8Array>, kind: 'unavailable' | 'timeout', why: string, failed?: string) {
+    console.warn('[stay] ' + why + (failed ? ' ' + failed.replace(/\s+/g, ' ').slice(0, 200) : ''));
+    // the model wrote a tool call the provider refused: if what it meant is clear, make that call
+    const args = failed && repair ? repair(failed) : null;
+    if (args) {
+      controller.enqueue(
+        encoder.encode(
+          `data: ${JSON.stringify({
+            id: 'chatcmpl-repaired-call',
+            object: 'chat.completion.chunk',
+            choices: [{ index: 0, delta: { role: 'assistant', content: null, tool_calls: [{ index: 0, id: 'call_repaired', type: 'function', function: { name: 'app', arguments: args } }] } }],
+          })}
+
+data: [DONE]
+
+`,
+        ),
+      );
+      emittedMeaningfulChunk = true;
+      return;
+    }
+    let again: ReadableStream<Uint8Array> | null = null;
+    try {
+      again = retry ? await retry() : null;
+    } catch {
+      again = null;
+    }
+    if (again) {
+      const chunks: Uint8Array[] = [];
+      let text = '';
+      try {
+        const r2 = again.getReader();
+        for (;;) {
+          const { done, value } = await r2.read();
+          if (done) break;
+          chunks.push(value);
+          text += decoder.decode(value, { stream: true });
+        }
+      } catch {
+        // the second answer broke too: handled below
+      }
+      if (carriesAnswer(text.split('\n')) && !/event: error|tool_use_failed|invalid_request_error/.test(text)) {
+        for (const c of chunks) controller.enqueue(c);
+        emittedMeaningfulChunk = true;
+        return;
+      }
+    }
+    controller.enqueue(failureChunk(kind));
+    emittedMeaningfulChunk = true;
+  }
 
   return new ReadableStream({
     async start(controller) {
@@ -78,22 +165,7 @@ function createResilientStream(incoming: ReadableStream<Uint8Array>, lastUser: s
           const { done, value } = await reader.read();
           if (done) {
             if (!emittedMeaningfulChunk && carriesAnswer([sseTail])) emittedMeaningfulChunk = true;
-            if (!emittedMeaningfulChunk) {
-              // the stream ended with no answer: say so, never invent one
-              console.warn('[stay] empty_model_stream');
-              const fallback = { text: honestFailureMessage('unavailable') };
-              if (fallback.text) {
-                controller.enqueue(
-                  encoder.encode(
-                    `data: ${JSON.stringify({
-                      id: 'chatcmpl-det-fallback',
-                      object: 'chat.completion.chunk',
-                      choices: [{ index: 0, delta: { role: 'assistant', content: fallback.text } }],
-                    })}\n\ndata: [DONE]\n\n`
-                  )
-                );
-              }
-            }
+            if (!emittedMeaningfulChunk) await recover(controller, 'unavailable', 'empty_model_stream');
             controller.close();
             break;
           }
@@ -106,23 +178,7 @@ function createResilientStream(incoming: ReadableStream<Uint8Array>, lastUser: s
             buffered.includes('"code":"tool_use_failed"') ||
             buffered.includes('"type":"invalid_request_error"')
           ) {
-            if (!emittedMeaningfulChunk) {
-              // the stream ended with no answer: say so, never invent one
-              console.warn('[stay] empty_model_stream');
-              const fallback = { text: honestFailureMessage('unavailable') };
-              if (fallback.text) {
-                controller.enqueue(
-                  encoder.encode(
-                    `data: ${JSON.stringify({
-                      id: 'chatcmpl-det-fallback',
-                      object: 'chat.completion.chunk',
-                      choices: [{ index: 0, delta: { role: 'assistant', content: fallback.text } }],
-                    })}\n\ndata: [DONE]\n\n`
-                  )
-                );
-                emittedMeaningfulChunk = true;
-              }
-            }
+            if (!emittedMeaningfulChunk) await recover(controller, 'unavailable', 'model_stream_error_in_band', failedGenerationOf(buffered));
             controller.close();
             try { await reader.cancel(); } catch {}
             break;
@@ -136,21 +192,7 @@ function createResilientStream(incoming: ReadableStream<Uint8Array>, lastUser: s
           controller.enqueue(value);
         }
       } catch {
-        if (!emittedMeaningfulChunk) {
-          console.warn('[stay] model_stream_error');
-          const fallback = { text: honestFailureMessage('timeout') };
-          if (fallback.text) {
-            controller.enqueue(
-              encoder.encode(
-                `data: ${JSON.stringify({
-                  id: 'chatcmpl-det-fallback',
-                  object: 'chat.completion.chunk',
-                  choices: [{ index: 0, delta: { role: 'assistant', content: fallback.text } }],
-                })}\n\ndata: [DONE]\n\n`
-              )
-            );
-          }
-        }
+        if (!emittedMeaningfulChunk) await recover(controller, 'timeout', 'model_stream_error');
         controller.close();
       }
     },
@@ -179,7 +221,7 @@ export async function POST(req: NextRequest) {
       guard
     );
   }
-  const { messages: clientMessages, withTools, context, image } = parsed.data;
+  const { messages: clientMessages, withTools, context, image, instruction } = parsed.data;
   if (image !== undefined && !isImageDataUrl(image)) {
     return attachGuardHeaders(NextResponse.json({ error: 'Bad picture: send a small JPEG, PNG or WebP data URL.' }, { status: 400 }), guard);
   }
@@ -198,7 +240,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const lastUser = [...clientMessages].reverse().find((m) => m.role === 'user')?.content || '';
+  // an app-started turn answers the instruction, not the person's last words (those were already checked, answered and gated on their own turn)
+  const lastUser = instruction ? '' : [...clientMessages].reverse().find((m) => m.role === 'user')?.content || '';
   if (detectCrisisSignal(lastUser).triggered) {
     return attachGuardHeaders(NextResponse.json({ safety: 'crisis' }), guard);
   }
@@ -207,7 +250,7 @@ export async function POST(req: NextRequest) {
   }
 
   // a question about Stay itself gets its straight answer at once (no model, no delay, nothing invented)
-  const about = image ? null : answerAboutStay(lastUser);
+  const about = image || instruction ? null : answerAboutStay(lastUser);
   if (about) return createDeterministicSseResponse({ text: about });
 
   // a question about the screen with nothing shared: say so, never guess what might be on it
@@ -227,10 +270,13 @@ export async function POST(req: NextRequest) {
     { role: 'system' as const, content: image ? `${serverSystemPrompt}
 ${VISION_SYSTEM}` : serverSystemPrompt },
     ...(image ? withImage(clientMessages, image) : clientMessages),
+    // a last line from the app, as a user-role line on purpose: with a long history and the person's notes a trailing system line was ignored
+    // and the model answered the old topic again (live check, 4 Nov 2026); framed like this it did what it was told, 6 of 6
+    ...(instruction ? [{ role: 'user' as const, content: `[Message from the app, not from the person: ${instruction} Reply with only that, nothing else.]` }] : []),
   ];
 
   const tools =
-    withTools === false || image
+    withTools === false || image || instruction
       ? undefined
       : [
           {
@@ -240,7 +286,7 @@ ${VISION_SYSTEM}` : serverSystemPrompt },
               description: APP_TOOL.description,
               // a timer is offered to the model only when the person asked for one or said yes to Stay's offer of one; the orb's shape
               // and colour only when the words ask for a different look
-              parameters: withoutActions(APP_TOOL.parameters, [...(mayStartTimer(lastUser, recent) ? [] : ['timer_start']), ...(mayChangeLook(lastUser) ? [] : ['shape', 'color']), ...GATED_ACTIONS.filter((a) => !mayDoAction(a, lastUser))]),
+              parameters: withoutActions(APP_TOOL.parameters, [...(mayStartTimer(lastUser, recent) ? [] : ['timer_start']), ...(mayChangeLook(lastUser) ? [] : ['shape', 'color']), ...GATED_ACTIONS.filter((a) => !mayDoAction(a, lastUser, recent.at(-1) ?? ''))]),
             },
           },
         ];
@@ -277,7 +323,14 @@ ${VISION_SYSTEM}` : serverSystemPrompt },
     if (verdict !== 'ok') return attachGuardHeaders(NextResponse.json({ safety: verdict }), guard);
     return createDeterministicSseResponse({ text });
   }
-  const stream = createResilientStream(r.res.body as ReadableStream<Uint8Array>, lastUser);
+  // the same turn, once more, on the next model, when the first one ends with nothing to say
+  const spare = (process.env.GROQ_FALLBACK_MODELS || process.env.GROQ_FALLBACK_MODEL || 'openai/gpt-oss-20b').split(',')[0].trim();
+  const retry = async () => {
+    const again = await openLlmStream(req, { messages: outboundMessages, tools, maxTokens: 110, temperature: 0.7, serverModel: spare, timeoutMs: 6000 });
+    return again.res?.body ?? null;
+  };
+  const allowedActions = (tools?.[0]?.function.parameters.properties.action.enum ?? []) as readonly string[];
+  const stream = createResilientStream(r.res.body as ReadableStream<Uint8Array>, retry, (failed) => repairToolCall(failed, allowedActions));
   return new Response(stream, {
     headers: {
       'Content-Type': 'text/event-stream; charset=utf-8',

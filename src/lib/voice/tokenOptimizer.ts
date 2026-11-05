@@ -24,8 +24,12 @@ export class CompliantKeyRotationPool {
   private failovers = 0;
   private provider: 'assemblyai' | 'groq';
 
-  constructor(provider: 'assemblyai' | 'groq', rawEnvKeys: (string | undefined)[]) {
+  private ordered: boolean;
+
+  /** `ordered`: the first key in the list is used until it is spent, then the next; a key that has refilled is used again at once (default: share the load in turn). */
+  constructor(provider: 'assemblyai' | 'groq', rawEnvKeys: (string | undefined)[], opts: { ordered?: boolean } = {}) {
     this.provider = provider;
+    this.ordered = opts.ordered === true;
     const seen = new Set<string>();
     for (const raw of rawEnvKeys) {
       if (!raw) continue;
@@ -43,11 +47,11 @@ export class CompliantKeyRotationPool {
     if (this.keys.length === 0) return null;
     const now = Date.now();
     for (let offset = 0; offset < this.keys.length; offset++) {
-      const idx = (this.currentIndex + offset) % this.keys.length;
+      const idx = this.ordered ? offset : (this.currentIndex + offset) % this.keys.length;
       const entry = this.keys[idx];
       if (entry.cooldownUntil <= now) {
         if (offset > 0) this.rotations++;
-        this.currentIndex = (idx + 1) % this.keys.length;
+        this.currentIndex = this.ordered ? idx : (idx + 1) % this.keys.length;
         entry.uses++;
         return entry.key;
       }
@@ -94,10 +98,12 @@ const assemblyPool = new CompliantKeyRotationPool('assemblyai', [
   typeof process !== 'undefined' ? process.env.ASSEMBLYAI_API_KEY : undefined,
 ]);
 
-const groqPool = new CompliantKeyRotationPool('groq', [
-  typeof process !== 'undefined' ? process.env.GROQ_API_KEYS : undefined,
-  typeof process !== 'undefined' ? process.env.GROQ_API_KEY : undefined,
-]);
+// GROQ_API_KEY first, then GROQ_API_KEYS in the order written: each key is used until it is spent, and a refilled one is used again first
+const groqPool = new CompliantKeyRotationPool(
+  'groq',
+  [typeof process !== 'undefined' ? process.env.GROQ_API_KEY : undefined, typeof process !== 'undefined' ? process.env.GROQ_API_KEYS : undefined],
+  { ordered: true },
+);
 
 export function getNextAssemblyAiKey(): string | null {
   return assemblyPool.getNextHealthyKey();
@@ -115,8 +121,9 @@ export function getGroqKeys(): string[] {
   return groqPool.listKeys();
 }
 
-export function reportGroqKeyRateLimit(key: string): void {
-  groqPool.reportRateLimitOrError(key);
+/** `restMs`: how long the key asked to wait (a spent day's tokens frees slowly), kept between 15 s and 10 min so a refilled key is found again soon. */
+export function reportGroqKeyRateLimit(key: string, restMs?: number): void {
+  groqPool.reportRateLimitOrError(key, Math.min(Math.max(restMs ?? 60_000, 15_000), 600_000));
 }
 
 /** Collapses runs of blank lines and spaces in a prompt. That is all it does; it is not a compression scheme. */

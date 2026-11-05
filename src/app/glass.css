@@ -1,8 +1,8 @@
 /*
   Glass layer: loaded after globals.css, so it only restyles surfaces; no layout, no copy.
-  Translucent frosted panels over a soft aurora, a 1px lit edge, grain so large dark areas do not band, a scroll
-  progress line, quiet scrollbars. Dark only. Everything degrades to the opaque surfaces below when blur is not available
-  or when the person asks for reduced transparency.
+  Translucent panels over a soft aurora, a 1px lit edge, grain so large dark areas do not band, a scroll
+  progress line, quiet scrollbars. Dark only. Only the sticky headers, the sheets and the call are frosted (blur); cards, chips and
+  buttons are not. Everything degrades to the opaque surfaces below when blur is not available or when the person asks for reduced transparency.
 */
 :root {
   --glass-fill: rgb(15 22 32 / 0.55);
@@ -10,18 +10,21 @@
   --glass-line: rgb(228 246 255 / 0.11);
   --glass-edge: inset 0 1px 0 rgb(255 255 255 / 0.1), inset 0 -1px 0 rgb(0 0 0 / 0.4);
   --glass-shadow: 0 1px 2px rgb(0 0 0 / 0.45), 0 26px 50px -26px rgb(0 0 0 / 0.8);
-  --glass-blur: blur(18px) saturate(1.4);
+  /* the one frosted material: the landing header and the app header share it */
+  --bar-fill: linear-gradient(180deg, rgb(10 16 24 / 0.72), rgb(10 16 24 / 0.5));
+  --bar-blur: blur(20px) saturate(1.5);
   --bubble-user: linear-gradient(150deg, rgb(62 143 214 / 0.42), rgb(18 48 74 / 0.62));
   --bubble-agent: linear-gradient(150deg, rgb(255 255 255 / 0.07), rgb(255 255 255 / 0.025));
 }
 
 /* ---------- the room: aurora light and grain ---------- */
+/* the canvas: near-black with one cool blue light from above (DESIGN.md, Canvas) */
 html {
   background-image:
-    radial-gradient(900px 520px at 80% -8%, rgb(62 143 214 / 0.28), transparent 62%),
-    radial-gradient(720px 460px at 6% 16%, rgb(143 211 255 / 0.1), transparent 62%),
-    radial-gradient(1200px 640px at 50% 112%, rgb(62 143 214 / 0.16), transparent 62%),
-    linear-gradient(180deg, #0a1018 0%, #05080c 42%, #03060a 100%);
+    radial-gradient(900px 520px at 80% -8%, color-mix(in srgb, var(--color-accent-deep) 28%, transparent), transparent 62%),
+    radial-gradient(720px 460px at 6% 16%, color-mix(in srgb, var(--color-accent) 10%, transparent), transparent 62%),
+    radial-gradient(1200px 640px at 50% 112%, color-mix(in srgb, var(--color-accent-deep) 16%, transparent), transparent 62%),
+    linear-gradient(180deg, var(--color-night) 0%, var(--color-canvas) 42%, var(--color-canvas) 100%);
 }
 body::after {
   content: '';
@@ -34,24 +37,14 @@ body::after {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
 
-/* ---------- glass surfaces ---------- */
+/* ---------- surfaces: translucent, not frosted (blur stays on the sticky header, the sheets and the call) ---------- */
 .card,
 .glass,
-.lp-feature,
-.lp-platform,
-.lp-persona {
+.lp-platform {
   background: var(--glass-sheen), var(--glass-fill);
   border: 1px solid var(--glass-line);
   box-shadow: var(--glass-edge), var(--glass-shadow);
-  -webkit-backdrop-filter: var(--glass-blur);
-  backdrop-filter: var(--glass-blur);
-  border-radius: 14px;
-}
-.lp-feature:hover,
-.lp-platform:hover,
-.lp-persona:hover {
-  border-color: rgb(143 211 255 / 0.32);
-  box-shadow: var(--glass-edge), var(--glass-shadow), 0 0 60px -24px rgb(143 211 255 / 0.45);
+  border-radius: var(--radius-card);
 }
 .chip,
 .btn-secondary,
@@ -59,19 +52,17 @@ body::after {
   background: var(--glass-sheen), rgb(26 36 51 / 0.55);
   border: 1px solid var(--glass-line);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.07);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
 }
 .btn-secondary:hover:not(:disabled),
 .chip:hover { background: var(--glass-sheen), rgb(46 62 86 / 0.7); border-color: rgb(143 211 255 / 0.35); }
 .field {
   background: rgb(8 13 20 / 0.6);
-  border-color: var(--glass-line);
+  border-color: var(--color-field-edge); /* 3:1 against the page, so the edge of a field can be seen */
   box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.5);
   transition: border-color 160ms var(--ease-calm), box-shadow 160ms var(--ease-calm);
 }
 .field:focus { box-shadow: 0 0 0 3px rgb(143 211 255 / 0.16), inset 0 1px 2px rgb(0 0 0 / 0.5); }
-.btn-primary { box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.6), 0 0 0 1px rgb(143 211 255 / 0.55), 0 10px 30px -10px rgb(62 143 214 / 0.9), 0 0 36px -10px rgb(143 211 255 / 0.5); }
+[data-testid='composer'] .field:focus { box-shadow: none; } /* the form carries the focus ring */
 
 /* the sheets and the inline panels */
 .stay-panel { padding: 1.25rem 1.4rem; }
@@ -86,29 +77,29 @@ div[role='dialog'] {
 
 /* the bars: landing header and app header float as frosted glass */
 .glass-bar {
-  background: linear-gradient(180deg, rgb(10 16 24 / 0.72), rgb(10 16 24 / 0.5));
+  background: var(--bar-fill);
   border-bottom: 1px solid var(--glass-line);
-  -webkit-backdrop-filter: blur(20px) saturate(1.5);
-  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: var(--bar-blur);
+  backdrop-filter: var(--bar-blur);
   box-shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset;
 }
 .glass-nav {
-  background: var(--glass-sheen), rgb(12 19 28 / 0.62);
+  background: var(--bar-fill);
   border: 1px solid var(--glass-line);
   border-radius: 999px;
-  box-shadow: var(--glass-edge), 0 18px 40px -20px rgb(0 0 0 / 0.8);
-  -webkit-backdrop-filter: blur(20px) saturate(1.5);
-  backdrop-filter: blur(20px) saturate(1.5);
+  box-shadow: 0 18px 40px -20px rgb(0 0 0 / 0.8);
+  -webkit-backdrop-filter: var(--bar-blur);
+  backdrop-filter: var(--bar-blur);
 }
 
 /* the conversation */
 .bubble {
   border: 1px solid var(--glass-line);
-  border-radius: 18px;
+  border-radius: var(--radius-card);
   box-shadow: var(--glass-edge), 0 14px 28px -18px rgb(0 0 0 / 0.8);
 }
-.bubble-user { background: var(--bubble-user); border-color: rgb(143 211 255 / 0.3); border-bottom-right-radius: 6px; color: #eef6ff; }
-.bubble-agent { background: var(--bubble-agent); border-bottom-left-radius: 6px; color: #eef6ff; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.bubble-user { background: var(--bubble-user); border-color: color-mix(in srgb, var(--color-accent) 30%, transparent); border-bottom-right-radius: 6px; color: var(--color-ink); }
+.bubble-agent { background: var(--bubble-agent); border-bottom-left-radius: 6px; color: var(--color-ink); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
 .bubble-live { border-style: dashed; opacity: 0.92; }
 @keyframes stay-pop { from { opacity: 0; transform: translateY(8px) scale(0.985); } to { opacity: 1; transform: none; } }
 .stay-pop { animation: stay-pop 260ms var(--ease-calm) both; }
@@ -118,25 +109,25 @@ div[role='dialog'] {
 .typing-dots i:nth-child(3) { animation-delay: 0.3s; }
 @keyframes stay-dot { 0%, 80%, 100% { opacity: 0.25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-2px); } }
 
-/* the composer: a floating glass bar with a lit edge when it has focus */
+/* the composer: a floating glass bar, with a solid accent ring when it has focus */
 [data-testid='composer'] form {
   background: var(--glass-sheen), rgb(13 20 30 / 0.72);
   border-color: var(--glass-line);
   box-shadow: var(--glass-edge), 0 24px 60px -24px rgb(0 0 0 / 0.9), 0 0 0 1px rgb(0 0 0 / 0.2);
   -webkit-backdrop-filter: blur(22px) saturate(1.5);
   backdrop-filter: blur(22px) saturate(1.5);
-  border-radius: 20px;
+  border-radius: var(--radius-card);
 }
-[data-testid='composer'] form:focus-within { border-color: rgb(143 211 255 / 0.5); box-shadow: var(--glass-edge), 0 24px 60px -24px rgb(0 0 0 / 0.9), 0 0 0 3px rgb(143 211 255 / 0.14), 0 0 50px -14px rgb(143 211 255 / 0.4); }
+[data-testid='composer'] form:focus-within { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 
 /* ---------- scroll ---------- */
-html { scroll-behavior: smooth; scrollbar-width: thin; scrollbar-color: #2b3d56 transparent; }
+html { scroll-behavior: smooth; scrollbar-width: thin; scrollbar-color: var(--color-line-strong) transparent; }
 html.lenis, html.lenis body { height: auto; }
 html.lenis { scroll-behavior: auto; }
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #22324a; border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
-::-webkit-scrollbar-thumb:hover { background: #3a5173; background-clip: padding-box; border: 2px solid transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-line-strong); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-surface-3); background-clip: padding-box; border: 2px solid transparent; }
 
 .scroll-progress { display: none; }
 @supports (animation-timeline: scroll()) {
@@ -148,8 +139,7 @@ html.lenis { scroll-behavior: auto; }
     z-index: 70;
     transform-origin: 0 50%;
     transform: scaleX(0);
-    background: linear-gradient(90deg, #3e8fd6, #8fd3ff 60%, #e4f6ff);
-    box-shadow: 0 0 12px rgb(143 211 255 / 0.6);
+    background: var(--color-accent);
     animation: stay-progress linear both;
     animation-timeline: scroll(root block);
     pointer-events: none;
@@ -167,31 +157,17 @@ html.lenis { scroll-behavior: auto; }
   }
 }
 
-.lp-section { padding-block: clamp(2.75rem, 6vw, 4.75rem); }
-.lp-band { padding-block: clamp(3rem, 6.5vw, 5.5rem); }
-
-/* the night bands get their own aurora instead of a flat slab */
-.lp-night {
-  background:
-    radial-gradient(900px 380px at 18% 0%, rgb(62 143 214 / 0.2), transparent 62%),
-    radial-gradient(700px 320px at 92% 100%, rgb(143 211 255 / 0.1), transparent 62%),
-    var(--color-night);
-  border-block: 1px solid var(--glass-line);
-}
-.lp-tint { background: linear-gradient(180deg, rgb(143 211 255 / 0.03), transparent), color-mix(in srgb, var(--color-recessed) 60%, transparent); }
-
-/* hero polish */
-.lp-hero-orb::before { filter: blur(6px); }
-@media (max-width: 639px) { .lp-hero-orb { max-width: 230px; } .lp-hero { gap: 0.25rem; } }
+/* the night bands are a flat slab (the colour is in landing.css); only the edge is glass */
+.lp-night { border-block: 1px solid var(--glass-line); }
 
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
-  .card, .glass, .lp-feature, .lp-platform, .lp-persona, .chip, .btn-secondary, .notice, .bubble-agent, div[role='dialog'], [data-testid='composer'] form, .glass-bar, .glass-nav {
+  .card, .glass, .lp-platform, .chip, .btn-secondary, .notice, .bubble-agent, div[role='dialog'], [data-testid='composer'] form, .glass-bar, .glass-nav {
     -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--color-surface);
   }
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .card, .glass, .lp-feature, .lp-platform, .lp-persona { background: var(--glass-sheen), #0f1620; }
-  div[role='dialog'], [data-testid='composer'] form { background: #0f1620; }
+  .card, .glass, .lp-platform { background: var(--glass-sheen), var(--color-surface); }
+  div[role='dialog'], [data-testid='composer'] form { background: var(--color-surface); }
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }

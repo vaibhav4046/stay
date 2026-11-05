@@ -20,6 +20,7 @@ class FakeWS {
   static beginDelayMs = 0; // a new voice session takes this long to open (the model can finish first)
   static dropCancelAck = false; // a Cancel sent just before the socket is replaced never gets its ack
   static expiredTokens = new Set<string>(); // TTS tokens past their 60 s: the server opens, sends an Error and closes, as the live API does
+  static deadSttTokens = new Set<string>(); // STT tokens the service refuses: the socket errors and closes before Begin
   readyState = 0;
   sent: Array<string | Uint8Array> = [];
   onmessage: ((e: { data: string }) => void) | null = null;
@@ -41,6 +42,14 @@ class FakeWS {
         this.readyState = 1;
         this.push({ type: 'Error', error_code: 1008, error: 'Unauthorized: Signature has expired', retryable: false });
         this.close();
+      });
+      return;
+    }
+    if (!this.isTts && FakeWS.deadSttTokens.has(parsed.searchParams.get('token') ?? '')) {
+      queueMicrotask(() => {
+        this.readyState = 3;
+        this.onerror?.();
+        this.onclose?.();
       });
       return;
     }
@@ -83,14 +92,15 @@ const tick = (n = 6) => new Promise((r) => { let i = 0; const f = () => (++i >= 
 let events: Array<Record<string, unknown>>;
 let openedSockets: FastSocket[] = []; // closed after each test so a late timer of one test never writes into the next
 let fetchMock: ReturnType<typeof vi.fn>;
-async function open(opts: { tools?: boolean; greeting?: string; holdMs?: number; autoLanguage?: boolean; personal?: string; freshTtsToken?: () => Promise<string> } = {}) {
-  const s = new FastSocket({ sttToken: 'stt', ttsToken: 'tts', holdMs: opts.holdMs ?? 60, interruptHoldMs: opts.holdMs ?? 60, warmUp: false, autoLanguage: opts.autoLanguage, freshTtsToken: opts.freshTtsToken });
+async function open(opts: { tools?: boolean; greeting?: string; holdMs?: number; autoLanguage?: boolean; personal?: string; freshTtsToken?: () => Promise<string>; freshSttToken?: () => Promise<string>; fakeTimers?: boolean } = {}) {
+  const s = new FastSocket({ sttToken: 'stt', ttsToken: 'tts', holdMs: opts.holdMs ?? 60, interruptHoldMs: opts.holdMs ?? 60, proactiveQuietMs: 60, proactiveGiveUpMs: 700, warmUp: false, autoLanguage: opts.autoLanguage, freshTtsToken: opts.freshTtsToken, freshSttToken: opts.freshSttToken });
   events = [];
   openedSockets.push(s);
   s.onmessage = (e) => events.push(JSON.parse(e.data));
-  await tick(2);
+  const settle = (n: number) => (opts.fakeTimers ? vi.advanceTimersByTimeAsync(n) : tick(n)); // with fake timers a "tick" is a clock advance
+  await settle(2);
   s.send(JSON.stringify({ type: 'session.update', session: { system_prompt: 'You are Stay.', greeting: opts.greeting ?? '', output: { voice: 'anna' }, tools: opts.tools ? [{}] : [], tts_language: 'english', ...(opts.personal ? { personal: opts.personal } : {}) } }));
-  await tick(6);
+  await settle(6);
   const stt = FakeWS.instances.find((w) => !w.isTts)!;
   const tts = FakeWS.instances.find((w) => w.isTts)!;
   return { s, stt, tts };
@@ -104,6 +114,7 @@ beforeEach(() => {
   FakeWS.dropCancelAck = false;
   FakeWS.beginDelayMs = 0;
   FakeWS.expiredTokens = new Set();
+  FakeWS.deadSttTokens = new Set();
   (globalThis as unknown as { WebSocket: unknown }).WebSocket = FakeWS;
   fetchMock = vi.fn();
   (globalThis as unknown as { fetch: unknown }).fetch = fetchMock;
@@ -399,6 +410,69 @@ describe('FastSocket', () => {
     const sent = JSON.parse(fetchMock.mock.calls[1][1].body as string).messages as Array<{ role: string; content: string }>;
     expect(sent.some((m) => m.role === 'assistant' && /too many requests/.test(m.content))).toBe(false);
     expect(events.filter((e) => e.type === 'transcript.agent').map((e) => e.text)).toEqual([MSG, 'Open the document and write one line.']); // still shown and spoken
+  });
+
+  it('a timer check-in waits while the person is mid-sentence and speaks only after they have been answered (owner: "the voice is breaking and in between the conversation started block timing")', async () => {
+    fetchMock.mockResolvedValue(sse(text('Open the document and write one line.')));
+    const { s, stt } = await open();
+    stt.push({ type: 'Turn', transcript: 'So the thing is, I', end_of_turn: false, turn_order: 0 }); // they are still talking
+    await tick(8);
+    s.send(JSON.stringify({ type: 'reply.say', text: 'Two minutes are up. How did it go?', when: 'idle' }));
+    await new Promise((r) => setTimeout(r, 250));
+    expect(events.filter((e) => e.type === 'transcript.agent')).toHaveLength(0); // it did not talk over them
+    stt.push({ type: 'Turn', transcript: 'So the thing is, I keep stalling.', end_of_turn: true, turn_order: 0, turn_is_formatted: true });
+    await new Promise((r) => setTimeout(r, 350));
+    const said = events.filter((e) => e.type === 'transcript.agent').map((e) => e.text);
+    expect(said[0]).toBe('Open the document and write one line.'); // the reply to them came first, whole
+  });
+
+  it('a timer check-in on a quiet call is spoken, after a short quiet', async () => {
+    const { s } = await open();
+    s.send(JSON.stringify({ type: 'reply.say', text: 'Two minutes are up. How did it go?', when: 'idle' }));
+    await new Promise((r) => setTimeout(r, 400));
+    expect(events.find((e) => e.type === 'transcript.agent')?.text).toBe('Two minutes are up. How did it go?');
+  });
+
+  it('a check-in that cannot find a quiet moment is dropped as stale, never spoken late over the conversation', async () => {
+    const { s, stt } = await open();
+    stt.push({ type: 'Turn', transcript: 'and then I', end_of_turn: false, turn_order: 0 });
+    await tick(8);
+    s.send(JSON.stringify({ type: 'reply.say', text: 'Two minutes are up.', when: 'idle' }));
+    await new Promise((r) => setTimeout(r, 1100)); // longer than the give-up time while they are still mid-sentence
+    expect(events.filter((e) => e.type === 'transcript.agent')).toHaveLength(0);
+  });
+
+  it('a check-in that is an instruction reaches the server as the instruction, with no tools (before, the model never saw it and answered the last thing the person said again)', async () => {
+    fetchMock.mockResolvedValue(sse(text('Time is up. Did you get started?')));
+    const { s } = await open({ tools: true });
+    s.send(JSON.stringify({ type: 'conversation.message', role: 'user', content: 'Set a one minute timer.' }));
+    s.send(JSON.stringify({ type: 'reply.create', instructions: "The user's 1-minute timer just ended. Say in under 10 words that their time is up.", when: 'idle' }));
+    await new Promise((r) => setTimeout(r, 400));
+    const body = JSON.parse(fetchMock.mock.calls.at(-1)![1].body as string);
+    expect(body.instruction).toMatch(/timer just ended/);
+    expect(body.withTools).toBe(false);
+  });
+
+  it('a check-in does not start while the model is still working on the answer to the person (it cancelled that answer before)', async () => {
+    fetchMock.mockImplementationOnce(async () => {
+      await new Promise((r) => setTimeout(r, 500));
+      return sse(text('Open the document and write one line.'));
+    });
+    fetchMock.mockResolvedValue(sse(text('Time is up.')));
+    const { s, stt } = await open();
+    stt.push({ type: 'Turn', transcript: 'I need to start my essay.', end_of_turn: true, turn_order: 0, turn_is_formatted: true });
+    await new Promise((r) => setTimeout(r, 150)); // longer than the quiet time, shorter than the model
+    s.send(JSON.stringify({ type: 'reply.create', instructions: "The user's timer just ended. Say it is up.", when: 'idle' }));
+    await new Promise((r) => setTimeout(r, 900));
+    const said = events.filter((e) => e.type === 'transcript.agent').map((e) => e.text);
+    expect(said[0]).toBe('Open the document and write one line.');
+  });
+
+  it('words the app forces on the voice (no "when") are still spoken at once', async () => {
+    const { s } = await open();
+    s.send(JSON.stringify({ type: 'reply.say', text: 'Okay, I will do that.' }));
+    await tick(20);
+    expect(events.find((e) => e.type === 'transcript.agent')?.text).toBe('Okay, I will do that.');
   });
 
   it('speculates immediately on short greetings like "Hi hello" even without terminal punctuation', async () => {
@@ -952,5 +1026,259 @@ describe('regional AssemblyAI voices', () => {
   });
   it('an Indian English voice asked for Spanish speaks the native Spanish voice', () => {
     expect(fastVoiceFor('chaiwala', 'es')).toBe('1a48e481-7f02-5e96-bb84-68fcac65c2b2');
+  });
+});
+
+describe('FastSocket: speech-to-text reconnect', () => {
+  const sttSockets = () => FakeWS.instances.filter((w) => !w.isTts);
+  const ttsSockets = () => FakeWS.instances.filter((w) => w.isTts);
+  const tokenOf = (w: FakeWS) => new URL(w.url).searchParams.get('token');
+  const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  const freshTokens = () => {
+    let n = 0;
+    return vi.fn(async () => `stt-fresh-${++n}`);
+  };
+  const userTexts = () => events.filter((e) => e.type === 'transcript.user').map((e) => e.text);
+  const errors = () => events.filter((e) => e.type === 'session.error');
+
+  it('an unexpected close opens a new STT socket with a fresh token; the call stays ready and the conversation carries on', async () => {
+    fetchMock.mockImplementation(async () => sse(text('Okay, one small step.')));
+    const freshSttToken = freshTokens();
+    const { s, stt } = await open({ freshSttToken });
+    stt.push({ type: 'Turn', transcript: 'I keep avoiding my taxes.', end_of_turn: true, turn_order: 0 });
+    await tick(30);
+    events.length = 0;
+    stt.close(); // the service ends the speech-to-text session (the hour limit, a network blip)
+    await wait(500);
+    expect(sttSockets()).toHaveLength(2);
+    expect(tokenOf(sttSockets()[1])).toBe('stt-fresh-1');
+    expect(freshSttToken).toHaveBeenCalledTimes(1);
+    expect(types()).toEqual(['stt.reconnecting', 'stt.reconnected']); // a calm state, and no error
+    expect(s.readyState).toBe(FastSocket.OPEN);
+    expect(ttsSockets()).toHaveLength(1); // the voice is untouched
+    // the microphone now feeds the new socket
+    s.send(JSON.stringify({ type: 'input.audio', audio: 'AAAA' }));
+    expect(sttSockets()[1].sent.some((d) => d instanceof Uint8Array)).toBe(true);
+    // the new session numbers its turns from 0 again: it is still heard, as a new turn, with the history from before the drop
+    sttSockets()[1].push({ type: 'Turn', transcript: 'Okay, and then what?', end_of_turn: true, turn_order: 0 });
+    await tick(30);
+    expect(userTexts()).toEqual(['Okay, and then what?']);
+    expect(events.find((e) => e.type === 'transcript.user')?.item_id).toBe('u-1'); // not a second "u-0"
+    expect(types()).toContain('reply.done');
+    const body = JSON.parse(fetchMock.mock.calls[1][1].body as string);
+    expect(body.messages.map((m: { content: string }) => m.content)).toEqual(expect.arrayContaining(['I keep avoiding my taxes.', 'Okay, and then what?']));
+  });
+
+  it('a close in the middle of a turn keeps the words heard so far and joins what the person says next', async () => {
+    fetchMock.mockImplementation(async () => sse(text('Okay.')));
+    const { stt } = await open({ freshSttToken: freshTokens(), holdMs: 500 }); // a hold longer than the reconnect
+    stt.push({ type: 'Turn', transcript: 'I keep avoiding my', end_of_turn: false, turn_order: 0 });
+    stt.close();
+    await wait(350);
+    expect(errors()).toHaveLength(0);
+    expect(userTexts()).toEqual([]); // still their turn: not answered half-heard
+    sttSockets()[1].push({ type: 'Turn', transcript: 'taxes.', end_of_turn: true, turn_order: 0 });
+    await tick(30);
+    expect(userTexts()).toEqual(['I keep avoiding my taxes.']);
+    await wait(600); // the old hold timer must not answer the same turn again
+    expect(userTexts()).toHaveLength(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('a close in the middle of a turn never leaves the turn open: what was heard is answered after the usual wait', async () => {
+    fetchMock.mockImplementation(async () => sse(text('Okay.')));
+    const { s, stt } = await open({ freshSttToken: freshTokens(), holdMs: 60 });
+    stt.push({ type: 'Turn', transcript: 'I keep avoiding my taxes', end_of_turn: false, turn_order: 0 });
+    stt.close();
+    await wait(700);
+    expect(userTexts()).toEqual(['I keep avoiding my taxes']);
+    expect(types()).toContain('input.speech.stopped'); // the orb is not left on "listening to you"
+    expect(types()).toContain('reply.done');
+    expect(errors()).toHaveLength(0);
+    expect(s.readyState).toBe(FastSocket.OPEN);
+  });
+
+  it('a second drop soon after a reconnect fails honestly instead of looping', async () => {
+    const freshSttToken = freshTokens();
+    const { s, stt } = await open({ freshSttToken });
+    stt.close();
+    await wait(500);
+    expect(types()).toContain('stt.reconnected');
+    sttSockets()[1].close();
+    await wait(500);
+    expect(errors()).toHaveLength(1);
+    expect(errors()[0].code).toBe('stt_closed');
+    expect(s.readyState).toBe(3);
+    expect(sttSockets()).toHaveLength(2); // no third socket
+    expect(freshSttToken).toHaveBeenCalledTimes(1);
+  });
+
+  it('when the new socket cannot open it tries twice, then fails honestly', async () => {
+    FakeWS.deadSttTokens.add('stt-dead');
+    const freshSttToken = vi.fn(async () => 'stt-dead');
+    const { s, stt } = await open({ freshSttToken });
+    stt.close();
+    await wait(1400);
+    expect(freshSttToken).toHaveBeenCalledTimes(2);
+    expect(sttSockets()).toHaveLength(3); // the first one and two tries
+    expect(types().filter((t) => t === 'stt.reconnecting')).toHaveLength(2);
+    expect(types()).not.toContain('stt.reconnected');
+    expect(errors()).toHaveLength(1);
+    expect(errors()[0].code).toBe('stt_closed');
+    expect(s.readyState).toBe(3);
+  });
+
+  it('a failed token request counts as a failed try', async () => {
+    const freshSttToken = vi.fn(async (): Promise<string> => {
+      throw new Error('mint');
+    });
+    const { s, stt } = await open({ freshSttToken });
+    stt.close();
+    await wait(1400);
+    expect(freshSttToken).toHaveBeenCalledTimes(2);
+    expect(sttSockets()).toHaveLength(1);
+    expect(errors()).toHaveLength(1);
+    expect(s.readyState).toBe(3);
+  });
+
+  it('without a way to get a fresh token a close fails the call at once, as before (the one-time token cannot be reused)', async () => {
+    const { s, stt } = await open();
+    stt.close();
+    await tick(5);
+    expect(sttSockets()).toHaveLength(1);
+    expect(errors()).toHaveLength(1);
+    expect(errors()[0].code).toBe('stt_closed');
+    expect(s.readyState).toBe(3);
+  });
+
+  it('an Error from the service and the close after it are one failure: one new socket, not two', async () => {
+    const { stt } = await open({ freshSttToken: freshTokens() });
+    stt.push({ type: 'Error', error: 'session expired' });
+    stt.close();
+    await wait(600);
+    expect(sttSockets()).toHaveLength(2);
+    expect(types().filter((t) => t === 'stt.reconnecting')).toHaveLength(1);
+    expect(types()).toContain('stt.reconnected');
+    expect(errors()).toHaveLength(0);
+  });
+
+  it('closing the call on purpose never reconnects, even while a reconnect is waiting', async () => {
+    const { s, stt } = await open({ freshSttToken: freshTokens() });
+    stt.close();
+    s.close(); // the person ends the call during the short wait before the new socket
+    await wait(600);
+    expect(sttSockets()).toHaveLength(1);
+    expect(types()).not.toContain('stt.reconnected');
+  });
+
+  it('rotates the STT session at 55 minutes with a fresh token, before the hour limit ends it', async () => {
+    vi.useFakeTimers();
+    try {
+      const freshSttToken = freshTokens();
+      const { s, stt } = await open({ freshSttToken, fakeTimers: true });
+      s.send(JSON.stringify({ type: 'capture.mode', on: true })); // hear and transcribe only, no model in this test
+      await vi.advanceTimersByTimeAsync(54 * 60_000);
+      expect(sttSockets()).toHaveLength(1);
+      await vi.advanceTimersByTimeAsync(2 * 60_000);
+      expect(sttSockets()).toHaveLength(2);
+      expect(tokenOf(sttSockets()[1])).toBe('stt-fresh-1');
+      expect(stt.readyState).toBe(3); // the old one was closed on purpose
+      expect(types()).not.toContain('session.error');
+      expect(s.readyState).toBe(FastSocket.OPEN);
+      sttSockets()[1].push({ type: 'Turn', transcript: 'Still here, hearing you.', end_of_turn: true, turn_order: 0 });
+      await vi.advanceTimersByTimeAsync(50);
+      expect(userTexts()).toEqual(['Still here, hearing you.']);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('waits to rotate while the person is mid-turn, and rotates as soon as the turn is done', async () => {
+    vi.useFakeTimers();
+    try {
+      fetchMock.mockImplementation(async () => sse(text('Okay.')));
+      const { s, stt } = await open({ freshSttToken: freshTokens(), fakeTimers: true });
+      s.send(JSON.stringify({ type: 'capture.mode', on: true }));
+      await vi.advanceTimersByTimeAsync(54 * 60_000);
+      stt.push({ type: 'Turn', transcript: 'I have been thinking about', end_of_turn: false, turn_order: 0 });
+      await vi.advanceTimersByTimeAsync(2 * 60_000); // 55 minutes have passed, and they are still talking
+      expect(sttSockets()).toHaveLength(1);
+      stt.push({ type: 'Turn', transcript: 'I have been thinking about my taxes.', end_of_turn: true, turn_order: 0 });
+      await vi.advanceTimersByTimeAsync(20_000);
+      expect(userTexts()).toEqual(['I have been thinking about my taxes.']);
+      expect(sttSockets()).toHaveLength(2);
+      expect(types()).not.toContain('session.error');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe('FastSocket: paused listening ("Hey Stay" wakes it)', () => {
+  const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  const userTexts = () => events.filter((e) => e.type === 'transcript.user').map((e) => e.text);
+  const pause = (s: FastSocket, on = true) => s.send(JSON.stringify({ type: 'listening.pause', on }));
+
+  it('while paused nothing is answered, shown or remembered; "Hey Stay" resumes and is not answered itself', async () => {
+    fetchMock.mockImplementation(async () => sse(text('Okay, one small step.')));
+    const { s, stt } = await open();
+    pause(s);
+    events.length = 0;
+    stt.push({ type: 'SpeechStarted', timestamp: 1 });
+    stt.push({ type: 'Turn', transcript: 'Let me tell my friend about', end_of_turn: false, turn_order: 0 });
+    stt.push({ type: 'Turn', transcript: 'Let me tell my friend about my day.', end_of_turn: true, turn_order: 0 });
+    await tick(20);
+    expect(events).toEqual([]); // not even a "listening" flicker
+    expect(fetchMock).not.toHaveBeenCalled();
+    stt.push({ type: 'Turn', transcript: 'Hey, Stay.', end_of_turn: true, turn_order: 1 });
+    stt.push({ type: 'Turn', transcript: 'Hey, Stay.', end_of_turn: true, turn_order: 1, turn_is_formatted: true }); // the formatted re-send
+    await tick(20);
+    expect(types()).toEqual(['listening.resumed']);
+    expect(fetchMock).not.toHaveBeenCalled();
+    // awake again: the next turn is answered, and the paused talk never reached the model
+    stt.push({ type: 'Turn', transcript: 'I keep avoiding my taxes.', end_of_turn: true, turn_order: 2 });
+    await tick(30);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][1].body as string).not.toContain('my friend');
+    expect(userTexts()).toEqual(['I keep avoiding my taxes.']);
+  });
+
+  it('"resume" and "stay listen" wake it too; a sentence that merely contains the word does not', async () => {
+    fetchMock.mockImplementation(async () => sse(text('Okay.')));
+    const { s, stt } = await open();
+    pause(s);
+    events.length = 0;
+    stt.push({ type: 'Turn', transcript: 'I need to update my resume before Friday.', end_of_turn: true, turn_order: 0 });
+    await tick(10);
+    expect(events).toEqual([]);
+    stt.push({ type: 'Turn', transcript: 'Resume.', end_of_turn: true, turn_order: 1 });
+    await tick(10);
+    expect(types()).toEqual(['listening.resumed']);
+    pause(s);
+    events.length = 0;
+    stt.push({ type: 'Turn', transcript: 'Stay, listen.', end_of_turn: true, turn_order: 2 });
+    await tick(10);
+    expect(types()).toEqual(['listening.resumed']);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('un-pausing from the app lets the next turn through', async () => {
+    fetchMock.mockImplementation(async () => sse(text('Okay.')));
+    const { s, stt } = await open();
+    pause(s);
+    pause(s, false);
+    stt.push({ type: 'Turn', transcript: 'I keep avoiding my taxes.', end_of_turn: true, turn_order: 0 });
+    await tick(30);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('pausing drops a turn that was being held, so nothing is answered after the pause', async () => {
+    fetchMock.mockImplementation(async () => sse(text('Okay.')));
+    const { s, stt } = await open({ holdMs: 40 });
+    stt.push({ type: 'Turn', transcript: 'I keep avoiding my', end_of_turn: true, turn_order: 0 }); // trails off: held a moment in case the sentence goes on
+    pause(s);
+    await wait(300); // the hold would have answered it by now
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(userTexts()).toEqual([]);
   });
 });
