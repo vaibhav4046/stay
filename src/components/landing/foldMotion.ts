@@ -14,8 +14,8 @@ export type FoldEvent =
   | { type: 'settled' };
 
 export const FOLD_DEG = 180; // the second half lies exactly over the first (fold.css turns by the same number)
-export const CLOSE_MS = 540;
-export const OPEN_MS = 600;
+export const CLOSE_MS = 760; // long enough to watch the glass turn (it was 540, which read as a blink)
+export const OPEN_MS = 900;
 export const SNAP_MS = 450; // a released drag springs to the nearer end in about this long
 export const AUTO_UNFOLD_MS = 6000; // left folded by the person, it opens itself after this
 export const QUIET_MS = 12000; // after any fold or unfold by the person, the automatic fold waits this long
