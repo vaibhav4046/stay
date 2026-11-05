@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { AppLink } from './AppLink';
 import { useRef, type ComponentProps } from 'react';
 
 const PULL = 0.22; // how much of the pointer's distance from the centre the button follows
@@ -11,14 +11,14 @@ const clamp = (v: number) => Math.max(-MAX, Math.min(MAX, v));
  * A link that leans a few pixels toward a mouse pointer on the way in and settles when it leaves (CSS eases it: `.lp-magnet` in scroll.css).
  * Mouse only, and only when motion is welcome: touch and pen never move it, reduced motion switches it off.
  */
-export function MagneticLink({ className = '', ...props }: ComponentProps<typeof Link>) {
+export function MagneticLink({ className = '', ...props }: ComponentProps<typeof AppLink>) {
   const ref = useRef<HTMLAnchorElement>(null);
   const lean = (x: number, y: number) => {
     ref.current?.style.setProperty('--mx', `${x}px`);
     ref.current?.style.setProperty('--my', `${y}px`);
   };
   return (
-    <Link
+    <AppLink
       ref={ref}
       {...props}
       className={`${className} lp-magnet`}

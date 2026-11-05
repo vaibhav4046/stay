@@ -48,6 +48,11 @@ export async function enablePush(): Promise<PushState | 'error'> {
       await sub.unsubscribe().catch(() => undefined);
       return 'error';
     }
+    try {
+      window.localStorage.removeItem('stay_checkin_choices_v1');
+    } catch {
+      // nothing to forget
+    }
     return 'on';
   } catch {
     return 'error';
@@ -60,4 +65,52 @@ export async function disablePush(): Promise<void> {
   if (!sub) return;
   await fetch(ENDPOINT, { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ endpoint: sub.endpoint }) }).catch(() => undefined);
   await sub.unsubscribe().catch(() => undefined);
+  try {
+    window.localStorage.removeItem('stay_checkin_choices_v1');
+  } catch {
+    // nothing to forget
+  }
+}
+
+export interface CheckinChoices {
+  morning: boolean;
+  evening: boolean;
+  /** When a pause ends (ms since 1970), or 0. Kept on this device so Settings can show it; the server is what honours it. */
+  pausedUntil: number;
+}
+const CHOICES_KEY = 'stay_checkin_choices_v1';
+const DEFAULT_CHOICES: CheckinChoices = { morning: true, evening: true, pausedUntil: 0 };
+
+export function loadChoices(): CheckinChoices {
+  try {
+    const raw = JSON.parse(window.localStorage.getItem(CHOICES_KEY) || 'null');
+    if (raw && typeof raw.morning === 'boolean' && typeof raw.evening === 'boolean' && (raw.morning || raw.evening)) {
+      return { morning: raw.morning, evening: raw.evening, pausedUntil: typeof raw.pausedUntil === 'number' && raw.pausedUntil > Date.now() ? raw.pausedUntil : 0 };
+    }
+  } catch {
+    // unreadable: the defaults
+  }
+  return DEFAULT_CHOICES;
+}
+
+/** Tells the server and, only if it agrees, remembers the choice here. Returns the choices now in force, or null when it could not be saved. */
+export async function saveChoices(next: Partial<Omit<CheckinChoices, 'pausedUntil'>> & { pauseHours?: number }): Promise<CheckinChoices | null> {
+  if (!supported()) return null;
+  const sub = await (await navigator.serviceWorker.getRegistration())?.pushManager.getSubscription();
+  if (!sub) return null;
+  const cur = loadChoices();
+  const merged = { morning: next.morning ?? cur.morning, evening: next.evening ?? cur.evening };
+  const res = await fetch(ENDPOINT, {
+    method: 'PATCH',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ endpoint: sub.endpoint, prefs: merged, ...(next.pauseHours === undefined ? {} : { snoozeHours: next.pauseHours }) }),
+  }).catch(() => null);
+  if (!res?.ok) return null;
+  const saved: CheckinChoices = { ...merged, pausedUntil: next.pauseHours === undefined ? cur.pausedUntil : next.pauseHours === 0 ? 0 : Date.now() + next.pauseHours * 3_600_000 };
+  try {
+    window.localStorage.setItem(CHOICES_KEY, JSON.stringify(saved));
+  } catch {
+    // private mode: in force on the server, not remembered here
+  }
+  return saved;
 }

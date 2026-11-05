@@ -10,6 +10,10 @@ export const SLOTS: readonly Slot[] = ['morning', 'evening'];
 /** Local minutes after midnight: [start, end). */
 export const WINDOWS: Record<Slot, readonly [number, number]> = { morning: [9 * 60, 11 * 60], evening: [18 * 60 + 30, 20 * 60 + 30] };
 
+/** Which windows the person wants. At least one is always on; switching off both is what the main switch is for. */
+export type SlotPrefs = Record<Slot, boolean>;
+export const ALL_SLOTS: SlotPrefs = { morning: true, evening: true };
+
 export interface SentLog {
   day: string;
   slots: Slot[];
@@ -25,10 +29,10 @@ export function localParts(now: Date, timeZone: string): { day: string; minutes:
 }
 
 /** The slot to send right now, or null. A window that already opened before someone subscribed counts as sent (see `startLog`). */
-export function dueSlot(now: Date, timeZone: string, sent: SentLog): Slot | null {
+export function dueSlot(now: Date, timeZone: string, sent: SentLog, prefs: SlotPrefs = ALL_SLOTS): Slot | null {
   const { day, minutes } = localParts(now, timeZone);
   const done = sent.day === day ? sent.slots : [];
-  return SLOTS.find((s) => minutes >= WINDOWS[s][0] && minutes < WINDOWS[s][1] && !done.includes(s)) ?? null;
+  return SLOTS.find((s) => prefs[s] && minutes >= WINDOWS[s][0] && minutes < WINDOWS[s][1] && !done.includes(s)) ?? null;
 }
 
 /** On subscribing, today's windows that have already opened are marked sent, so the first real message is the next window, not a surprise at once. */

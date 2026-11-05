@@ -1,6 +1,8 @@
 'use client';
 
 import { byokHeaders } from '@/lib/byok/config';
+import { fitHistory } from '@/lib/voice/historyBudget';
+import { currentHoldMs, recordHold } from '@/lib/voice/patience';
 import { ContinuousPcmPlayer } from '@/lib/voice/playback/continuousPlayback';
 import { replyLanguageInstruction } from '@/lib/voice/replyLanguage';
 import { GLANCE_PROMPT, isQuietReply } from '@/lib/vision/image';
@@ -1520,7 +1522,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         const res = await fetch('/api/voice/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...byokHeaders() },
-          body: JSON.stringify({ messages: textHistoryRef.current.slice(-16), withTools, context }),
+          body: JSON.stringify({ messages: fitHistory(textHistoryRef.current.slice(-16)), withTools, context }),
           signal: AbortSignal.timeout(20_000), // a stalled network ends in an honest message, not an endless "Thinking" (QA review, 4 Nov 2026)
         });
         if ((res.headers.get('content-type') || '').includes('application/json')) {
@@ -2436,7 +2438,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
       // 4. Connect: either the managed Voice Agent socket (when explicitly selected in E2E), or fast voice (default)
       const socket: WebSocket = useFast
-        ? (new FastSocket({ sttToken: tokenJson.sttToken || '', ttsToken: tokenJson.ttsToken || '', recall: (() => { let files: ReturnType<typeof buildVault> | null = null; return (text: string) => { try { files ??= buildVault({ memory: loadUserMemory(), learnings: loadLearnings(), sessions: getLocalSessions(), list: loadToday().map((i) => ({ text: i.text, bucket: i.bucket, done: i.done })) }); return relevantNotes(text, files); } catch { return []; } }; })(), freshTtsToken: async () => String(((await (await fetch('/api/voice/fast-token', { method: 'POST', headers: byokHeaders() })).json()) as { ttsToken?: string }).ttsToken || ''), freshSttToken: async () => { const r = await fetch(`/api/voice/fast-token${longQuery}`, { method: 'POST', headers: byokHeaders() }); if (!r.ok) throw new Error(`fast-token ${r.status}`); return String(((await r.json()) as { sttToken?: string }).sttToken || ''); }, keyterms: appKeyterms(), autoLanguage: selectedLanguageRef.current === 'auto', ttsConnect: speech.ref.engine === 'assemblyai' ? undefined : () => createTtsConnection(speech.ref, speech.browserVoiceName)! }) as unknown as WebSocket)
+        ? (new FastSocket({ sttToken: tokenJson.sttToken || '', ttsToken: tokenJson.ttsToken || '', recall: (() => { let files: ReturnType<typeof buildVault> | null = null; return (text: string) => { try { files ??= buildVault({ memory: loadUserMemory(), learnings: loadLearnings(), sessions: getLocalSessions(), list: loadToday().map((i) => ({ text: i.text, bucket: i.bucket, done: i.done })) }); return relevantNotes(text, files); } catch { return []; } }; })(), freshTtsToken: async () => String(((await (await fetch('/api/voice/fast-token', { method: 'POST', headers: byokHeaders() })).json()) as { ttsToken?: string }).ttsToken || ''), freshSttToken: async () => { const r = await fetch(`/api/voice/fast-token${longQuery}`, { method: 'POST', headers: byokHeaders() }); if (!r.ok) throw new Error(`fast-token ${r.status}`); return String(((await r.json()) as { sttToken?: string }).sttToken || ''); }, keyterms: appKeyterms(), holdFor: currentHoldMs, onHold: (e) => recordHold(e.kind, e.afterMs), autoLanguage: selectedLanguageRef.current === 'auto', ttsConnect: speech.ref.engine === 'assemblyai' ? undefined : () => createTtsConnection(speech.ref, speech.browserVoiceName)! }) as unknown as WebSocket)
         : new WebSocket(`${tokenJson.wsUrl}?token=${encodeURIComponent(tokenJson.token || '')}`);
       setVoiceEngine(useFast ? 'fast' : 'agent');
       wsRef.current = socket;

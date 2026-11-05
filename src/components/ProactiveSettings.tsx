@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { disablePush, enablePush, readPushState, type PushState } from '@/lib/push/client';
+import { disablePush, enablePush, loadChoices, readPushState, saveChoices, type CheckinChoices, type PushState } from '@/lib/push/client';
 import { clearNudgeData, publishNudgeContext } from '@/lib/push/context';
 
 const NOTE: Record<Exclude<PushState, 'loading' | 'on' | 'off'>, string> = {
@@ -16,9 +16,22 @@ export function ProactiveSettings() {
   const [state, setState] = useState<PushState>('loading');
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [choices, setChoices] = useState<CheckinChoices>({ morning: true, evening: true, pausedUntil: 0 });
   useEffect(() => {
     readPushState().then(setState, () => setState('unsupported'));
+    setChoices(loadChoices());
   }, []);
+
+  /** One change at a time; the screen shows the new choice only once the server has it. */
+  const change = async (next: Parameters<typeof saveChoices>[0]) => {
+    setBusy(true);
+    setFailed(false);
+    const saved = await saveChoices(next);
+    if (saved) setChoices(saved);
+    else setFailed(true);
+    setBusy(false);
+  };
+  const paused = choices.pausedUntil > Date.now();
 
   const toggle = async (on: boolean) => {
     setBusy(true);
@@ -62,6 +75,37 @@ export function ProactiveSettings() {
         </label>
       ) : (
         <p className="meta mt-3" data-testid="proactive-note">{NOTE[state as keyof typeof NOTE]}</p>
+      )}
+      {state === 'on' && (
+        <div className="mt-3 border-t border-line pt-3" data-testid="checkin-choices">
+          <p className="text-sm font-medium text-ink">When</p>
+          <div className="mt-1 flex flex-wrap gap-x-6">
+            {(['morning', 'evening'] as const).map((slot) => (
+              <label key={slot} className="flex min-h-11 cursor-pointer items-center gap-2 text-[0.95rem]">
+                <input
+                  type="checkbox"
+                  className="h-5 w-5 accent-[#8FD3FF]"
+                  checked={choices[slot]}
+                  // one window always stays on: to stop everything, use the main switch
+                  disabled={busy || (choices[slot] && !choices[slot === 'morning' ? 'evening' : 'morning'])}
+                  onChange={(e) => void change({ [slot]: e.target.checked })}
+                  data-testid={`checkin-${slot}`}
+                />
+                {slot === 'morning' ? 'Morning (about 9 to 11)' : 'Evening (about 6:30 to 8:30)'}
+              </label>
+            ))}
+          </div>
+          <div className="mt-1 flex flex-wrap items-center gap-3">
+            {paused ? (
+              <>
+                <span className="meta" data-testid="checkin-paused">Paused until {new Date(choices.pausedUntil).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' })}.</span>
+                <button type="button" className="btn btn-ghost text-sm" disabled={busy} onClick={() => void change({ pauseHours: 0 })} data-testid="checkin-resume">Resume</button>
+              </>
+            ) : (
+              <button type="button" className="btn btn-secondary text-sm" disabled={busy} onClick={() => void change({ pauseHours: 24 })} data-testid="checkin-pause">Pause for a day</button>
+            )}
+          </div>
+        </div>
       )}
       {failed && <p className="meta mt-2" style={{ color: 'var(--color-danger)' }} role="alert">Could not turn it on. Check your connection and try again.</p>}
     </section>

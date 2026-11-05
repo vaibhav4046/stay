@@ -52,6 +52,7 @@ import { looksVisual, wantsToShow } from '@/lib/vision/image';
 import { answerAboutStay } from '@/lib/voice/aboutStay';
 import { CallLaterPanel, IncomingCallAlert, useIncomingCall } from '@/components/voice/CallLater';
 import { LiveChatBox } from '@/components/voice/LiveChatBox';
+import { timerEndedInstruction, timerEndedNoPlanInstruction } from '@/lib/voice/proactive';
 import { TransportBadge } from '@/components/voice/TransportBadge';
 import { MicConsentSheet } from '@/components/voice/MicConsentSheet';
 import { loadActiveSession, saveActiveSession } from '@/lib/coach/activeSession';
@@ -574,13 +575,11 @@ export function StayHome({
         chime();
         emitHost({ type: 'timer-ended' });
         if (proactiveCheckins && plan) {
-          voice.instructProactively(
-            `The user's ${minutes}-minute focus timer just ended. Speak first: in under 20 words, warmly ask whether they got started on "${plan.firstStep}". When they answer, call record_session_outcome.`,
-          );
+          voice.instructProactively(timerEndedInstruction(minutes, plan.firstStep));
         } else {
           // Stay says "when the time is up I'll tell you" for any timer, so it does, plan or no plan (field test: a timer nobody told about)
           setNote(`Time is up: your ${minutes} minutes are done.`);
-          if (!quietMode) voice.instructProactively(`The user's ${minutes}-minute timer just ended. Say in under 10 words that their time is up. Ask nothing.`);
+          if (!quietMode) voice.instructProactively(timerEndedNoPlanInstruction(minutes));
         }
       }
     }, 500);

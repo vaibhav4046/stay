@@ -15,6 +15,8 @@ import { AuthModal } from '@/components/AuthModal';
 import { KeysSection } from '@/components/KeysSection';
 import { StyleSettings } from '@/components/StyleSettings';
 import { ProactiveSettings } from '@/components/ProactiveSettings';
+import { PacingSettings } from '@/components/PacingSettings';
+import { resetPatience } from '@/lib/voice/patience';
 import { disablePush } from '@/lib/push/client';
 import { clearNudgeData } from '@/lib/push/context';
 import { PageSkeleton } from '@/components/PageSkeleton';
@@ -161,6 +163,8 @@ export default function SettingsPage() {
 
       <ProactiveSettings />
 
+      <PacingSettings />
+
       <KeysSection />
 
       <section className="card p-5 sm:p-6" aria-labelledby="data-title">
@@ -196,6 +200,7 @@ export default function SettingsPage() {
                     try {
                       await disablePush(); // the notification address is the one thing the server holds
                       await clearNudgeData(); // and the note this device keeps to write check-ins
+                      resetPatience(); // and how long it has learned you pause
                       await deleteAllUserData();
                       setDeleteError(null);
                       setDeleted(true);

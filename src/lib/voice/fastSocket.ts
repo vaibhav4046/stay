@@ -8,6 +8,7 @@
  * 0.3 s + first synthesized audio 0.2 s add up to about 1.4 s. This class is how that sum is realised and checked.
  */
 import { toSpeech } from '@/lib/voice/speechText';
+import { fitHistory } from '@/lib/voice/historyBudget';
 import { isImageDataUrl, looksVisual } from '@/lib/vision/image';
 import { honestFailureMessage, isFailureLine } from '@/lib/conversation/response';
 import { mayChangeLook, mayStartTimer } from '@/lib/conversation/capabilities';
@@ -61,6 +62,10 @@ export interface FastSocketConfig {
   sampleRate?: number;
   /** How long to wait after a turn that trails off ("and, uh,") before answering. Default 2200 ms. */
   holdMs?: number;
+  /** The wait for this person right now (learned from how they pause); used instead of `holdMs` when given. */
+  holdFor?: () => number;
+  /** Told each time a trailing-off hold ends: the person picked the sentence up again after `afterMs`, or the wait ran out unused. */
+  onHold?: (e: { kind: 'resumed' | 'expired'; afterMs: number }) => void;
   /** how long the call must have been quiet before the app may speak first (a timer check-in, a nudge); default 2500 ms */
   proactiveQuietMs?: number;
   /** how long an app-started turn waits for a quiet moment before it is dropped as stale; default 25 s */
@@ -369,7 +374,7 @@ export class FastSocket {
   onerror: (() => void) | null = null;
   onclose: (() => void) | null = null;
 
-  private cfg: Required<Omit<FastSocketConfig, "keyterms" | "ttsConnect" | "endpointingMode" | "freshTtsToken" | "freshSttToken" | "recall">> & Pick<FastSocketConfig, "keyterms" | "ttsConnect" | "endpointingMode" | "freshTtsToken" | "freshSttToken" | "recall">;
+  private cfg: Required<Omit<FastSocketConfig, "keyterms" | "ttsConnect" | "endpointingMode" | "freshTtsToken" | "freshSttToken" | "recall" | "holdFor" | "onHold">> & Pick<FastSocketConfig, "keyterms" | "ttsConnect" | "endpointingMode" | "freshTtsToken" | "freshSttToken" | "recall" | "holdFor" | "onHold">;
   private session: FastSession | null = null;
   private notes: string[] = [];
   private history: ChatMessage[] = [];
@@ -400,6 +405,8 @@ export class FastSocket {
   private carry = ''; // an unfinished thought, held while the person hesitates
   private holdTimer: ReturnType<typeof setTimeout> | undefined;
   private holds = 0;
+  /** When the current trailing-off hold began (0 when none): the evidence for how long this person pauses. */
+  private holdStartedAt = 0;
   private playEndAt = 0; // when the browser will have finished playing what it has received
   private interrupted = false; // the current user turn began while Stay was speaking or about to
   // A reply prepared early, on a finished-looking partial transcript. Everything it produces is held back (gated) and released only
@@ -1147,6 +1154,15 @@ export class FastSocket {
       if (this.holdTimer) {
         clearTimeout(this.holdTimer);
         this.holdTimer = undefined; // they carried on: it was a pause, not the end
+        if (this.holdStartedAt) {
+          const afterMs = Date.now() - this.holdStartedAt;
+          this.holdStartedAt = 0;
+          try {
+            this.cfg.onHold?.({ kind: 'resumed', afterMs });
+          } catch {
+            // learning must never stop the call
+          }
+        }
       }
       this.lastPartial = text;
       this.lastPartialOrder = order;
@@ -1178,7 +1194,28 @@ export class FastSocket {
       this.carry = full;
       this.inUserTurn = true;
       if (this.holdTimer) clearTimeout(this.holdTimer);
-      this.holdTimer = setTimeout(() => this.finishTurn(order), unfinished ? this.cfg.holdMs : opener ? OPENER_HOLD_MS : this.cfg.interruptHoldMs);
+      const trailing = unfinished;
+      let waitMs = opener ? OPENER_HOLD_MS : this.cfg.interruptHoldMs;
+      if (trailing) {
+        try {
+          waitMs = this.cfg.holdFor?.() ?? this.cfg.holdMs;
+        } catch {
+          waitMs = this.cfg.holdMs;
+        }
+        this.holdStartedAt = Date.now();
+      } else this.holdStartedAt = 0; // an opener or a cut-in is not a measure of how long they pause
+      this.holdTimer = setTimeout(() => {
+        if (this.holdStartedAt) {
+          const afterMs = Date.now() - this.holdStartedAt;
+          this.holdStartedAt = 0;
+          try {
+            this.cfg.onHold?.({ kind: 'expired', afterMs });
+          } catch {
+            // learning must never stop the call
+          }
+        }
+        this.finishTurn(order);
+      }, waitMs);
       return;
     }
     this.carry = full;
@@ -1513,7 +1550,7 @@ export class FastSocket {
       this.lastWordEndMs = 0;
     }
     const s = this.session as FastSession;
-    const messages: ChatMessage[] = [...this.history];
+    const messages: ChatMessage[] = fitHistory(this.history);
 
     // a picture for this turn: one sent with the typed message, or the latest shared frame when the person points at it
     const lastUser = [...messages].reverse().find((x) => x.role === 'user');
