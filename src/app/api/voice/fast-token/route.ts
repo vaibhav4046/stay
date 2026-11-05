@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getNextAssemblyAiKey } from '@/lib/voice/tokenOptimizer';
+import { assemblyKeyRefused, assemblyRestMs, getNextAssemblyAiKey, reportAssemblyAiKeyRateLimit } from '@/lib/voice/tokenOptimizer';
 import { attachGuardHeaders, guardPaidRoute } from '@/lib/security/apiGuard';
 
 /**
@@ -33,12 +33,28 @@ export async function POST(req: NextRequest) {
   const sttUrl = `https://streaming.assemblyai.com/v3/token?expires_in_seconds=60&max_session_duration_seconds=${long ? 10800 : 3600}`;
   const ttsUrl = `https://token.us.assemblyai.com/v1/token?product=tts&expires_in_seconds=60&max_session_duration_seconds=3600`;
   try {
-    const mint = async (targetUrl: string) => {
-      const r = await fetch(targetUrl, { headers: { Authorization: key }, cache: 'no-store' });
+    const mint = async (apiKey: string, targetUrl: string) => {
+      const r = await fetch(targetUrl, { headers: { Authorization: apiKey }, cache: 'no-store' });
       if (!r.ok) throw Object.assign(new Error('mint'), { status: r.status });
       return ((await r.json()) as { token?: string }).token;
     };
-    const [sttToken, ttsToken] = await Promise.all([mint(sttUrl), mint(ttsUrl)]);
+    // a shared key that AssemblyAI refuses (credit spent, rate limit) rests, and the next key in the list takes over
+    let apiKey = key;
+    let tokens: [string | undefined, string | undefined] | null = null;
+    for (let attempt = 0; attempt < 3 && !tokens; attempt++) {
+      try {
+        tokens = await Promise.all([mint(apiKey, sttUrl), mint(apiKey, ttsUrl)]);
+      } catch (e) {
+        const status = (e as { status?: number }).status ?? 0;
+        if (hasUserKey || !assemblyKeyRefused(status)) throw e;
+        reportAssemblyAiKeyRateLimit(apiKey, assemblyRestMs(status));
+        const next = getNextAssemblyAiKey();
+        if (!next || next === apiKey) throw e;
+        apiKey = next;
+      }
+    }
+    if (!tokens) throw Object.assign(new Error('mint'), { status: 429 });
+    const [sttToken, ttsToken] = tokens;
     if (!sttToken || !ttsToken) {
       return attachGuardHeaders(
         NextResponse.json({ error: 'Invalid token response from voice provider.' }, { status: 502 }),

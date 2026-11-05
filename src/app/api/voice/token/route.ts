@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getNextAssemblyAiKey, reportAssemblyAiKeyRateLimit } from '@/lib/voice/tokenOptimizer';
+import { assemblyKeyRefused, assemblyRestMs, getNextAssemblyAiKey, reportAssemblyAiKeyRateLimit } from '@/lib/voice/tokenOptimizer';
 import { attachGuardHeaders, guardPaidRoute } from '@/lib/security/apiGuard';
 
 async function handleMintToken(req: NextRequest) {
@@ -38,8 +38,8 @@ async function handleMintToken(req: NextRequest) {
       cache: 'no-store',
     });
 
-    if (!hasUserKey && (upstream.status === 429 || upstream.status === 401)) {
-      reportAssemblyAiKeyRateLimit(apiKey);
+    if (!hasUserKey && assemblyKeyRefused(upstream.status)) {
+      reportAssemblyAiKeyRateLimit(apiKey, assemblyRestMs(upstream.status));
       const backupKey = getNextAssemblyAiKey();
       if (backupKey && backupKey !== apiKey) {
         upstream = await fetch(url, {

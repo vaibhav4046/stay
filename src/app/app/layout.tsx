@@ -6,6 +6,13 @@ import { StayWordmark } from '@/components/StayMark';
 import { UrgentHelpButton } from '@/components/UrgentHelpButton';
 import { InstallPrompt } from '@/components/InstallPrompt';
 import { LatencyRecorder } from '@/components/lab/LatencyRecorder';
+import { CheckinInbox } from '@/components/CheckinInbox';
+import { useCheckinInbox } from '@/lib/push/inbox';
+
+/** Blue unread dot, the same one the card carries. */
+const UnreadDot = ({ className = '' }: { className?: string }) => (
+  <span className={`inline-block h-2 w-2 rounded-full ${className}`} style={{ background: 'var(--color-action)' }} role="img" aria-label="New message from Stay" data-testid="nav-unread-dot" />
+);
 
 const ICON = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' } as const;
 
@@ -19,6 +26,8 @@ const NAV = [
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { items: inbox, dismiss } = useCheckinInbox();
+  const unread = inbox.length > 0;
   return (
     <div className="min-h-[100dvh]">
       <header className="glass-bar sticky top-0 z-30">
@@ -38,6 +47,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   style={{ color: active ? '#E4F6FF' : '#A9BBCF', fontWeight: active ? 600 : 500, background: active ? 'rgba(143, 211, 255,0.16)' : 'transparent' }}
                 >
                   {n.label}
+                  {unread && n.href === '/app/today' && <UnreadDot className="ml-1.5 align-middle" />}
                 </Link>
               );
             })}
@@ -48,6 +58,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       <main className="mx-auto max-w-6xl px-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-4 sm:px-8 sm:py-8 sm:pb-12">
         <InstallPrompt />
+        <CheckinInbox items={inbox} onDismiss={dismiss} />
         {children}
         <LatencyRecorder />
       </main>
@@ -69,7 +80,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   className="flex h-16 flex-col items-center justify-center gap-1 text-[0.7rem]"
                   style={{ color: active ? '#8FD3FF' : '#A9BBCF', fontWeight: active ? 600 : 500 }}
                 >
-                  <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" {...ICON}>{n.icon}</svg>
+                  <span className="relative">
+                    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" {...ICON}>{n.icon}</svg>
+                    {unread && n.href === '/app/today' && <UnreadDot className="absolute -right-1 -top-0.5" />}
+                  </span>
                   {n.label}
                 </Link>
               </li>

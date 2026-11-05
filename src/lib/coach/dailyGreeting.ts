@@ -139,3 +139,7 @@ export const greetingCardDue = (now = new Date()) => read().dismissedDay !== loc
 export const greetingSpokenDue = (now = new Date()) => read().spokenDay !== localDay(now);
 export const markGreetingDismissed = (now = new Date()) => write({ ...read(), dismissedDay: localDay(now) });
 export const markGreetingSpoken = (now = new Date()) => write({ ...read(), spokenDay: localDay(now) });
+/** Coming back after a long time away: the card is due again today (a welcome back), once. */
+export const reopenGreetingCard = () => write({ ...read(), dismissedDay: '' });
+/** How long the page has to have been out of sight before Stay says welcome back. */
+export const WELCOME_BACK_AFTER_MS = 3 * 60 * 60 * 1000;

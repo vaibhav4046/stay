@@ -93,10 +93,18 @@ export class CompliantKeyRotationPool {
 }
 
 // Singleton pools for server/client telemetry
-const assemblyPool = new CompliantKeyRotationPool('assemblyai', [
-  typeof process !== 'undefined' ? process.env.ASSEMBLYAI_API_KEYS : undefined,
-  typeof process !== 'undefined' ? process.env.ASSEMBLYAI_API_KEY : undefined,
-]);
+// ASSEMBLYAI_API_KEY first, then ASSEMBLYAI_API_KEYS in the order written: the first key is used until its credit is spent, then the next takes over
+const assemblyPool = new CompliantKeyRotationPool(
+  'assemblyai',
+  [typeof process !== 'undefined' ? process.env.ASSEMBLYAI_API_KEY : undefined, typeof process !== 'undefined' ? process.env.ASSEMBLYAI_API_KEYS : undefined],
+  { ordered: true },
+);
+
+/** AssemblyAI answers a key it will not serve with 429 (slow down), 401/402/403 (rejected or out of credit) or 404 (unknown key). Any of them means: try the next key. */
+export const assemblyKeyRefused = (status: number): boolean => [401, 402, 403, 404, 429].includes(status);
+
+/** How long a refused key rests: a minute for "slow down", five for the rest, then it is tried again in case credit was added. */
+export const assemblyRestMs = (status: number): number => (status === 429 ? 60_000 : 300_000);
 
 // GROQ_API_KEY first, then GROQ_API_KEYS in the order written: each key is used until it is spent, and a refilled one is used again first
 const groqPool = new CompliantKeyRotationPool(
@@ -109,8 +117,8 @@ export function getNextAssemblyAiKey(): string | null {
   return assemblyPool.getNextHealthyKey();
 }
 
-export function reportAssemblyAiKeyRateLimit(key: string): void {
-  assemblyPool.reportRateLimitOrError(key);
+export function reportAssemblyAiKeyRateLimit(key: string, restMs?: number): void {
+  assemblyPool.reportRateLimitOrError(key, restMs);
 }
 
 export function getNextGroqKey(): string | null {

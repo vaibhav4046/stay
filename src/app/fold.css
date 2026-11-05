@@ -79,7 +79,6 @@
 }
 
 /* ------------------------------------------------------------------ the figure: the device, the controls, the caption */
-.fd-figure .fd { width: 89%; } /* room for the plate inside the column */
 .fd-figure { display: flex; flex-direction: column; gap: 1.9rem; width: 100%; max-width: 40rem; margin-inline: auto; }
 /* the controls and the caption sit above the soft light behind the device (it reaches a little past the device) */
 .fd-controls, .fd-caption { position: relative; z-index: 1; }
@@ -130,12 +129,7 @@
 .fd-a { --rb: var(--ro) var(--ri) var(--ri) var(--ro); --rs: var(--so) 0 0 var(--so); --rp: var(--rim) 0 var(--rim) var(--rim); --sx: var(--sxa); --sy: var(--sya); --shl: -100%; --ring-s: var(--fd-ti-a-hi); --ring-e: var(--fd-ring-mid); }
 .fd-b { --rb: var(--ri) var(--ro) var(--ro) var(--ri); --rs: 0 var(--so) var(--so) 0; --rp: var(--rim) var(--rim) var(--rim) 0; --sx: var(--sxb); --sy: var(--syb); --shl: -200%; --ring-s: var(--fd-ring-mid); --ring-e: var(--fd-ti-b-hi); }
 
-.fd-light {
-  /* the studio plate: a soft light surface behind the device, the way a product is shown, so the dark glass and the metal edge stand out */
-  position: absolute; inset: -10% -5.5% -5%; z-index: 0; pointer-events: none; border-radius: calc(var(--u) * 44);
-  background: radial-gradient(120% 95% at 50% 12%, var(--fd-plate-0) 0%, var(--fd-plate-1) 52%, var(--fd-plate-2) 100%);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 70%, transparent), inset 0 -40px 60px -40px color-mix(in srgb, var(--color-night) 28%, transparent), 0 28px 60px -34px color-mix(in srgb, var(--color-canvas) 80%, transparent);
-}
+.fd-light { display: none; } /* no backdrop of its own: the device stands on the page's background */
 /* the contact shadow: static layers under the device. Their opacity and transform move (with the float, the lean and the fold); nothing about a blur does. */
 .fd-shadows { position: absolute; inset: 0; z-index: 0; pointer-events: none; transform: translate3d(calc(var(--tilt-ry, 0) * var(--u) * -1.6), 0, 0); transition: transform 650ms var(--ease-calm); }
 .fd-shadow { position: absolute; top: calc(100% - var(--u) * 14); height: calc(var(--u) * 52); width: calc(var(--u) * (var(--hw) - 14)); }

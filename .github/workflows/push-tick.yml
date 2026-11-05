@@ -1,0 +1,24 @@
+name: Stay check-ins
+
+# Wakes the server every 15 minutes so it can send whichever calm check-ins are due (see src/lib/push/schedule.ts).
+# GitHub may start a scheduled run a few minutes late; each window is two hours wide, so that does not matter.
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Send due check-ins
+        env:
+          PUSH_TICK_SECRET: ${{ secrets.PUSH_TICK_SECRET }}
+        run: |
+          test -n "$PUSH_TICK_SECRET" || { echo "PUSH_TICK_SECRET is not set"; exit 1; }
+          curl --fail-with-body --silent --show-error --max-time 90 -X POST \
+            -H "Authorization: Bearer $PUSH_TICK_SECRET" \
+            https://stay-two-swart.vercel.app/api/push/tick
