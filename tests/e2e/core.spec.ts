@@ -267,8 +267,8 @@ test('one typed task makes exactly one plan request and the card never jumps bac
   expect(planCalls).toHaveLength(1);
 });
 
-test('the landing page shows measured results with their limits and does not name or chart other products', async ({ page }) => {
-  await page.goto('/');
+test('the proof page shows measured results with their limits and does not name or chart other products', async ({ page }) => {
+  await page.goto('/proof');
   const sec = page.getByTestId('measured');
   await expect(sec).toContainText('What we tested');
   // the fast-voice-vs-managed-voice table was removed (T0.6): its numbers had no raw data file, so none of it may come back
@@ -462,11 +462,13 @@ test.describe('Judge feedback: blocks, trust copy, check-in, urgent help', () =>
     await page.getByTestId('checkin-submit').waitFor();
   });
 
-  test('the measured numbers are readable on a phone without sideways scrolling', async ({ page }) => {
+  test('the home page and the measured numbers are readable on a phone without sideways scrolling', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/');
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
-    expect(overflow).toBeLessThanOrEqual(1);
+    for (const url of ['/', '/proof']) {
+      await page.goto(url);
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+      expect(overflow, url).toBeLessThanOrEqual(1);
+    }
     await expect(page.getByTestId('measured').getByText('Words wrong').first()).toBeAttached();
   });
 });

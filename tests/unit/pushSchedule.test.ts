@@ -114,3 +114,32 @@ describe('push validation', () => {
     expect(parseTimeZone(null)).toBeNull();
   });
 });
+
+describe('a real week, in many zones', () => {
+  const ZONES = ['UTC', 'Asia/Kolkata', 'Asia/Kathmandu', 'Australia/Lord_Howe', 'Pacific/Chatham', 'Pacific/Auckland', 'America/St_Johns', 'America/Los_Angeles', 'Europe/London', 'Pacific/Kiritimati', 'Pacific/Pago_Pago'];
+  // each window includes a daylight-saving change somewhere for at least one zone: late March, late October and early November 2026
+  const STARTS = ['2026-03-26T00:00:00Z', '2026-10-24T00:00:00Z', '2026-11-01T00:00:00Z'];
+
+  for (const tz of ZONES) {
+    it(`${tz}: two messages a day at most, only inside the windows, even across a clock change`, () => {
+      for (const start of STARTS) {
+        let log: { day: string; slots: ('morning' | 'evening')[] } = { day: '2000-01-01', slots: [] };
+        const perDay = new Map<string, number>();
+        for (let t = Date.parse(start); t < Date.parse(start) + 7 * 86_400_000; t += 15 * 60_000) {
+          const now = new Date(t);
+          const slot = dueSlot(now, tz, log);
+          if (!slot) continue;
+          const { day, minutes } = localParts(now, tz);
+          expect(minutes >= 9 * 60 && minutes < 11 * 60 || minutes >= 18 * 60 + 30 && minutes < 20 * 60 + 30, `${tz} ${now.toISOString()} local ${minutes}`).toBe(true);
+          log = { day, slots: [...(log.day === day ? log.slots : []), slot] };
+          perDay.set(day, (perDay.get(day) ?? 0) + 1);
+        }
+        // the first and last local day are cut by the span, so only the days in between must be complete
+        const days = [...perDay.keys()].sort();
+        expect(days.length).toBeGreaterThanOrEqual(7);
+        for (const d of days.slice(1, -1)) expect(perDay.get(d), `${tz} ${d}`).toBe(2);
+        for (const n of perDay.values()) expect(n).toBeLessThanOrEqual(2);
+      }
+    });
+  }
+});

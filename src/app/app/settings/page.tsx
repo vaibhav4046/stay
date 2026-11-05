@@ -16,6 +16,7 @@ import { KeysSection } from '@/components/KeysSection';
 import { StyleSettings } from '@/components/StyleSettings';
 import { ProactiveSettings } from '@/components/ProactiveSettings';
 import { disablePush } from '@/lib/push/client';
+import { clearNudgeData } from '@/lib/push/context';
 import { PageSkeleton } from '@/components/PageSkeleton';
 import { PageHeading } from '@/components/PageHeading';
 
@@ -194,6 +195,7 @@ export default function SettingsPage() {
                   onClick={async () => {
                     try {
                       await disablePush(); // the notification address is the one thing the server holds
+                      await clearNudgeData(); // and the note this device keeps to write check-ins
                       await deleteAllUserData();
                       setDeleteError(null);
                       setDeleted(true);

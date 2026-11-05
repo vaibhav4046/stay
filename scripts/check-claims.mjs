@@ -63,7 +63,8 @@ const BANNED_PATTERNS = [
 function getCommitShas() {
   const valid = new Set();
   try {
-    const list = execSync('git rev-list HEAD -n 50', { encoding: 'utf8' }).trim().split('\n');
+    // every ref, not just HEAD: a squash merge drops a pull request's commits from master's own history, but they are still this project's commits (kept on the PR branches)
+    const list = execSync('git rev-list --all -n 50', { encoding: 'utf8' }).trim().split('\n');
     for (const sha of list) {
       const s = sha.trim();
       if (s) valid.add(s);

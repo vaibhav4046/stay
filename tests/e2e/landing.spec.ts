@@ -6,21 +6,27 @@ async function open(page: Page) {
   await page.getByTestId('hero-example').waitFor();
 }
 
-test.describe('Landing: five sections', () => {
-  test('the page is exactly five sections, in order, and short enough to read', async ({ page }) => {
+/** The numbers, the tests and platform status live on their own page, so the home page can stay about the person. */
+async function openProof(page: Page, url = '/proof') {
+  await page.goto(url, { waitUntil: 'networkidle' });
+  await page.getByTestId('measured').waitFor();
+}
+
+test.describe('Landing: four sections', () => {
+  test('the page is exactly four sections, in order, and short enough to read', async ({ page }) => {
     await open(page);
     const ids = await page.locator('main [data-landing-section]').evaluateAll((els) => els.map((e) => e.getAttribute('data-landing-section')));
-    expect(ids).toEqual(['1', '2', '3', '4', '5']);
-    for (const id of ['#watch', '#how', '#measured', '#trust']) await expect(page.locator(`main ${id}`), id).toHaveCount(1);
+    expect(ids).toEqual(['1', '2', '3', '4']);
+    for (const id of ['#watch', '#how', '#trust']) await expect(page.locator(`main ${id}`), id).toHaveCount(1);
     const height = await page.evaluate(() => document.documentElement.scrollHeight);
-    expect(height).toBeLessThan(11000); // it was 19,800 px
+    expect(height).toBeLessThan(9000); // it was 19,800 px
   });
 
   test('the header links jump to the sections', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await open(page);
     const hrefs = await page.getByTestId('header-anchor').evaluateAll((els) => els.map((e) => e.getAttribute('href')));
-    expect(hrefs).toEqual(['#watch', '#how', '#measured', '#trust']);
+    expect(hrefs).toEqual(['#watch', '#how', '#trust']);
   });
 });
 
@@ -103,9 +109,9 @@ test.describe('Landing: the film', () => {
   });
 });
 
-test.describe('Landing: measured results', () => {
+test.describe('Proof page: measured results', () => {
   test('shows the measured numbers and the limits, names no other product, and lists the languages', async ({ page }) => {
-    await open(page);
+    await openProof(page);
     const sec = page.getByTestId('measured');
     await sec.scrollIntoViewIfNeeded();
     await expect(sec.getByTestId('measured-now')).toContainText('Words wrong');
@@ -118,23 +124,23 @@ test.describe('Landing: measured results', () => {
   });
 
   test('the bars animate in when scrolled to, and stay still with reduced motion', async ({ page }) => {
-    await open(page);
+    await openProof(page);
     const state = () => page.locator('[data-testid="measured"] [data-reveal]').first().getAttribute('data-reveal');
     await page.locator('[data-testid="measured"] [data-reveal]').first().scrollIntoViewIfNeeded();
     await expect.poll(state).toBe('in');
 
     const ctx = await page.context().browser()!.newContext({ reducedMotion: 'reduce' });
     const rm = await ctx.newPage();
-    await rm.goto('/', { waitUntil: 'networkidle' });
+    await rm.goto('/proof', { waitUntil: 'networkidle' });
     await rm.getByTestId('measured').scrollIntoViewIfNeeded();
     expect(await rm.locator('[data-reveal="armed"]').count()).toBe(0); // nothing is ever collapsed
     await ctx.close();
   });
 });
 
-test.describe('Landing: platforms and honesty', () => {
+test.describe('Proof page: platforms and honesty', () => {
   test('says plainly what exists: web and installable now, desktop and mobile apps not', async ({ page }) => {
-    await open(page);
+    await openProof(page);
     const pl = page.getByTestId('platforms');
     await expect(pl.getByTestId('platform-web')).toContainText('Available now');
     await expect(pl.getByTestId('platform-pwa')).toContainText('Installable now');

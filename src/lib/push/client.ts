@@ -1,5 +1,5 @@
 /** Browser side of Stay's own check-ins: ask permission from a tap, subscribe, tell the server, and undo all of it. */
-export type PushState = 'loading' | 'unsupported' | 'unconfigured' | 'denied' | 'off' | 'on';
+export type PushState = 'loading' | 'unsupported' | 'needs-install' | 'unconfigured' | 'denied' | 'off' | 'on';
 
 const ENDPOINT = '/api/push/subscribe';
 
@@ -19,8 +19,11 @@ async function config(): Promise<{ enabled: boolean; publicKey?: string }> {
   }
 }
 
+/** iPhone and iPad only deliver web notifications to an app that was added to the Home Screen; in a Safari tab the feature is simply absent. */
+const iosInBrowser = () => /iPhone|iPad|iPod/.test(navigator.userAgent) && (navigator as Navigator & { standalone?: boolean }).standalone !== true;
+
 export async function readPushState(): Promise<PushState> {
-  if (!supported()) return 'unsupported';
+  if (!supported()) return iosInBrowser() ? 'needs-install' : 'unsupported';
   if (!(await config()).enabled) return 'unconfigured';
   if (Notification.permission === 'denied') return 'denied';
   const reg = await navigator.serviceWorker.getRegistration();

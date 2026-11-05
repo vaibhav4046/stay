@@ -32,3 +32,13 @@ test('Settings explains a blocked notification permission instead of showing a d
   await expect(page.getByTestId('proactive-note')).toContainText('blocked');
   await expect(page.getByTestId('proactive-toggle')).toHaveCount(0);
 });
+
+test('on an iPhone in Safari it explains Add to Home Screen instead of a dead switch', async ({ browser }) => {
+  const ctx = await browser.newContext({ userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1' });
+  const page = await ctx.newPage();
+  await page.addInitScript(() => delete (window as unknown as { PushManager?: unknown }).PushManager); // Safari tabs have no push at all
+  await page.goto('/app/settings');
+  await expect(page.getByTestId('proactive-note')).toContainText('Add to Home Screen');
+  await expect(page.getByTestId('proactive-toggle')).toHaveCount(0);
+  await ctx.close();
+});

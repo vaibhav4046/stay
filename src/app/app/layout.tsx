@@ -8,6 +8,7 @@ import { InstallPrompt } from '@/components/InstallPrompt';
 import { LatencyRecorder } from '@/components/lab/LatencyRecorder';
 import { CheckinInbox } from '@/components/CheckinInbox';
 import { useCheckinInbox } from '@/lib/push/inbox';
+import { usePublishNudgeContext } from '@/lib/push/context';
 
 /** Blue unread dot, the same one the card carries. */
 const UnreadDot = ({ className = '' }: { className?: string }) => (
@@ -27,6 +28,7 @@ const NAV = [
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { items: inbox, dismiss } = useCheckinInbox();
+  usePublishNudgeContext();
   const unread = inbox.length > 0;
   return (
     <div className="min-h-[100dvh]">

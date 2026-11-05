@@ -19,6 +19,6 @@ jobs:
           PUSH_TICK_SECRET: ${{ secrets.PUSH_TICK_SECRET }}
         run: |
           test -n "$PUSH_TICK_SECRET" || { echo "PUSH_TICK_SECRET is not set"; exit 1; }
-          curl --fail-with-body --silent --show-error --max-time 90 -X POST \
+          curl --fail-with-body --silent --show-error --max-time 90 --retry 3 --retry-delay 20 --retry-all-errors -X POST \
             -H "Authorization: Bearer $PUSH_TICK_SECRET" \
             https://stay-two-swart.vercel.app/api/push/tick

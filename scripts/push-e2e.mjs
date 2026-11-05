@@ -78,6 +78,16 @@ step(t.status === 200 && tally.failed === 0 && tally.subscribers >= 1, `tick ans
 const denied = await fetch(`${URL_BASE}/api/push/tick`, { method: 'POST', headers: { authorization: 'Bearer nope' } });
 step(denied.status === 401, `tick refuses a wrong secret (${denied.status})`);
 
+// the app keeps a small note on this device (name and the newest open item); the service worker writes the check-in from it, the server never sees it
+await page.evaluate(() => {
+  localStorage.setItem('stay_today_list_v1', JSON.stringify([{ id: 'e2e-1', text: 'email the landlord', bucket: 'today', done: false, createdAt: new Date().toISOString() }]));
+  localStorage.setItem('stay_user_memory_v1', JSON.stringify({ name: 'Asha' }));
+});
+await page.goto('/app/today');
+const noted = await until(() => page.evaluate(async () => { const hit = await (await caches.open('stay-context')).match('/__stay-context'); const j = hit ? await hit.json() : null; return j && j.open ? j : null; }));
+step(noted?.open === 'email the landlord', `the app keeps the note on this device: ${JSON.stringify(noted)}`);
+await page.goto('/app/settings');
+
 // a real scheduled send: move this subscriber into a zone where it is morning or evening right now, forget what was sent, and tick
 const inWindow = (tz) => {
   const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: tz, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date()).map((x) => [x.type, x.value]));
@@ -98,6 +108,7 @@ for (let i = 0; i < 40 && !nudge; i++) {
   nudge = all.find((b) => !/^Stay is on/.test(b)) ?? null;
 }
 step(Boolean(nudge), `the check-in arrived in the browser: "${nudge}"`);
+step(/email the landlord/.test(nudge ?? ''), 'the sentence was written on this device from the list, not by the server');
 // the same words wait inside the app: a From Stay card with an unread dot, put there by the service worker, and the welcome note is not kept
 await page.goto('/app/today');
 const cardText = await page.getByTestId('checkin-text').textContent({ timeout: 15_000 }).catch(() => null);
