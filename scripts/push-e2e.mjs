@@ -42,12 +42,21 @@ await page.waitForFunction(() => document.querySelector('[data-testid=proactive-
 const failedBanner = await page.getByRole('alert').filter({ hasText: 'Could not turn it on' }).count();
 step(failedBanner === 0, 'turning it on did not show an error');
 
-const sub = await page.evaluate(async () => {
+// the Blob list is eventually consistent and the first push registration on a fresh profile can take a few seconds: poll, do not read once
+const until = async (fn, ms = 20_000) => {
+  for (const t0 = Date.now(); Date.now() - t0 < ms; await page.waitForTimeout(500)) {
+    const v = await fn();
+    if (v) return v;
+  }
+  return await fn();
+};
+const sub = await until(() => page.evaluate(async () => {
   const s = await (await navigator.serviceWorker.ready).pushManager.getSubscription();
   return s ? s.endpoint.split('/').slice(0, 3).join('/') : null;
-});
+}));
 step(Boolean(sub), `browser holds a real push subscription (${sub})`);
-step((await count()) === before + 1, 'server stored exactly one new record in the Blob store');
+const afterCount = await until(async () => ((await count()) === before + 1 ? before + 1 : 0)) || (await count());
+step(afterCount === before + 1, `server stored exactly one new record in the Blob store (before ${before}, after ${afterCount})`);
 
 // the welcome message must arrive at the service worker and be shown
 let shown = [];
@@ -89,6 +98,14 @@ for (let i = 0; i < 40 && !nudge; i++) {
   nudge = all.find((b) => !/^Stay is on/.test(b)) ?? null;
 }
 step(Boolean(nudge), `the check-in arrived in the browser: "${nudge}"`);
+// the same words wait inside the app: a From Stay card with an unread dot, put there by the service worker, and the welcome note is not kept
+await page.goto('/app/today');
+const cardText = await page.getByTestId('checkin-text').textContent({ timeout: 15_000 }).catch(() => null);
+step(cardText === nudge, `the app shows it as a From Stay card: "${cardText}"`);
+step((await page.getByTestId('checkin-dot').count()) === 1 && (await page.getByTestId('nav-unread-dot').count()) >= 1, 'unread dot on the card and on Today in the navigation');
+await page.getByTestId('checkin-dismiss').click();
+step((await page.getByTestId('checkin-inbox').count()) === 0, 'dismissing clears the card');
+await page.goto('/app/settings');
 const again = await (await fetch(`${URL_BASE}/api/push/tick`, { method: 'POST', headers: { authorization: `Bearer ${env.PUSH_TICK_SECRET}` } })).json();
 step(again.sent === 0, `a second tick in the same window sends nothing: ${JSON.stringify(again)}`);
 

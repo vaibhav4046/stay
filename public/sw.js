@@ -1,6 +1,7 @@
 /* Stay service worker: the app shell keeps opening with no connection. History, memory and the Today list are local anyway;
  * voice and plans need the network, and say so. API calls are never cached. */
 const CACHE = 'stay-shell-v3'; // v3: new logo and favicons
+const INBOX = 'stay-inbox'; // check-ins that arrived while the app was closed; the page reads and clears them
 const SHELL = ['/app/today', '/offline.html', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-maskable-192.png'];
 
 self.addEventListener('install', (event) => {
@@ -12,7 +13,7 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE && k !== INBOX).map((k) => caches.delete(k))))
       .then(() => self.clients.claim()),
   );
 });
@@ -27,7 +28,17 @@ self.addEventListener('push', (event) => {
   }
   const title = typeof data.title === 'string' && data.title ? data.title.slice(0, 60) : 'Stay';
   const body = typeof data.body === 'string' ? data.body.slice(0, 240) : '';
-  event.waitUntil(self.registration.showNotification(title, { body, icon: '/icons/icon-192.png', badge: '/icons/icon-192.png', tag: 'stay-proactive' }));
+  const at = Date.now();
+  const keep = data.inbox !== false && body; // the welcome note is shown once and not kept as a card
+  event.waitUntil(
+    Promise.all([
+      self.registration.showNotification(title, { body, icon: '/icons/icon-192.png', badge: '/icons/icon-192.png', tag: 'stay-proactive' }),
+      // the same words wait inside the app as a "From Stay" card with an unread dot, and the app icon gets a badge
+      keep ? caches.open(INBOX).then((c) => c.put('/__stay-inbox/' + at, new Response(JSON.stringify({ at, body }), { headers: { 'content-type': 'application/json' } }))).catch(() => undefined) : undefined,
+      keep && self.navigator.setAppBadge ? self.navigator.setAppBadge(1).catch(() => undefined) : undefined,
+      self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((wins) => wins.forEach((w) => w.postMessage({ type: 'stay-checkin' }))),
+    ]),
+  );
 });
 
 self.addEventListener('notificationclick', (event) => {
