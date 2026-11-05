@@ -1,0 +1,372 @@
+{
+  "pageErrors": [],
+  "gitSha": "3c72dbf",
+  "tier": "real provider + real browser; synthetic speaker injected as the microphone",
+  "base": "http://localhost:3120",
+  "steps": [
+    {
+      "step": "task",
+      "spoken": "I keep putting off replying to my landlord about the renewal.",
+      "speaker": "Betty (Irish English)",
+      "endOfSpeechToFirstSamplePlayedMs": 956,
+      "endOfSpeechToStaySpeakingMs": 1030,
+      "audibleOutputDetected": true,
+      "appMarksAfterEndOfSpeech": [
+        "eot@+266ms",
+        "req@+269ms",
+        "hdr@+598ms",
+        "srv@+598ms",
+        "tok1@+690ms",
+        "gen@+736ms",
+        "aud1@+888ms"
+      ],
+      "micToSocket": {
+        "lastLoudFrameSentMsAfterEndOfSpeech": 61,
+        "frameIntervalMs": {
+          "p50": 100,
+          "p95": 111,
+          "max": 149
+        },
+        "framesSent": 119
+      }
+    },
+    {
+      "step": "barge-in",
+      "spoken": "Wait, stop. Actually, can we just make it smaller?",
+      "speaker": "Audrey (American English)",
+      "wasSpeakingBefore": true,
+      "speakStartToStayStoppedMs": 805
+    },
+    {
+      "step": "spanish",
+      "spoken": "Hola, ahora necesito empezar mi declaración de impuestos, pero no sé por dónde empezar.",
+      "speaker": "Aday (Spanish)",
+      "endOfSpeechToFirstSamplePlayedMs": 2132,
+      "endOfSpeechToFirstAudioPacketMs": 1973,
+      "appMarksAfterEndOfSpeech": [
+        "eot@+1089ms",
+        "req@+1090ms",
+        "hdr@+1417ms",
+        "srv@+1417ms",
+        "tok1@+1518ms",
+        "gen@+1820ms",
+        "aud1@+1973ms"
+      ],
+      "heardWholeSentence": true
+    }
+  ],
+  "failures": [],
+  "consent": {
+    "shown": true,
+    "clicked": true
+  },
+  "transcript": [
+    {
+      "who": "stay",
+      "text": "Stay03:46 AMJust so you know, I'm an AI, not a person. Adrienne here. What are you putting off?"
+    },
+    {
+      "who": "person",
+      "text": "You03:47 AMI keep putting off replying to my landlord about the renewal."
+    },
+    {
+      "who": "stay",
+      "text": "Stay03:47 AMThat renewal note lingers. Grab your phone, open the messages app. Want to do that now?"
+    },
+    {
+      "who": "person",
+      "text": "You03:47 AMWait, stop. Actually, can we just make it smaller?"
+    },
+    {
+      "who": "stay",
+      "text": "Stay03:47 AMWrite a brief note: I’ll renew, thank you. Want help wording it?"
+    },
+    {
+      "who": "person",
+      "text": "You03:47 AMHola."
+    },
+    {
+      "who": "person",
+      "text": "You03:47 AMAhora necesito empezar mi declaración de impuestos, pero no sé por dónde empezar.Undo"
+    },
+    {
+      "who": "stay",
+      "text": "Stay03:47 AMEmpieza por reunir tus formularios W‑2 y 1099. ¿Los tienes a mano?Say againWhat I heard"
+    }
+  ],
+  "playback": {
+    "underflows": 0,
+    "prebufferMs": 200,
+    "bufferedMs": 0,
+    "state": "STOPPED"
+  },
+  "fastEventLogTail": [
+    "1793850411543 [fast] 15875 reply.started ",
+    "1793850411543 [fast] 15876 reply.text Just so you know, I'm an AI, not a person. Adrienne here. Wh",
+    "1793850412192 [fast] 16524 transcript.agent Just so you know, I'm an AI, not a person. Adrienne here. Wh",
+    "1793850412192 [fast] 16525 reply.done ",
+    "1793850412220 [fast] 16553 word.boundaries ",
+    "1793850418992 [fast] 23325 input.speech.started ",
+    "1793850418993 [fast] 23326 input.speech.started ",
+    "1793850418993 [fast] 23326 transcript.user.delta I can",
+    "1793850419093 [fast] 23426 transcript.user.delta I keep",
+    "1793850419102 [fast] 23435 barge_in.ready_listening ",
+    "1793850420301 [fast] 24634 transcript.user.delta I keep putting off replying",
+    "1793850421494 [fast] 25826 transcript.user.delta I keep putting off replying to my landlord",
+    "1793850422707 [fast] 27039 input.speech.stopped ",
+    "1793850422707 [fast] 27039 transcript.user I keep putting off replying to my landlord about the renewal",
+    "1793850423177 [fast] 27509 reply.started ",
+    "1793850423177 [fast] 27509 reply.text That renewal note lingers. Grab your phone, open the message",
+    "1793850423887 [fast] 28157 transcript.agent That renewal note lingers. Grab your phone, open the message",
+    "1793850423887 [fast] 28157 reply.done ",
+    "1793850423887 [fast] 28185 word.boundaries ",
+    "1793850424703 [fast] 29036 playback.duck ",
+    "1793850424703 [fast] 29036 input.speech.started ",
+    "1793850424706 [fast] 29038 playback.duck ",
+    "1793850424706 [fast] 29038 barge_in.committed ",
+    "1793850424706 [fast] 29038 input.speech.started ",
+    "1793850424706 [fast] 29038 transcript.user.delta Wait.",
+    "1793850424813 [fast] 29145 barge_in.ready_listening ",
+    "1793850425195 [fast] 29528 transcript.user.delta Wait, stop.",
+    "1793850426706 [fast] 31035 transcript.user.delta Wait, stop. Actually, can we",
+    "1793850428005 [fast] 32337 input.speech.stopped ",
+    "1793850428005 [fast] 32337 transcript.user Wait, stop. Actually, can we just make it smaller?",
+    "1793850428292 [fast] 32624 reply.started ",
+    "1793850428292 [fast] 32624 reply.text Write a brief note: I’ll renew, thank you. Want help wording",
+    "1793850428830 [fast] 33162 transcript.agent Write a brief note: I’ll renew, thank you. Want help wording",
+    "1793850428830 [fast] 33162 reply.done ",
+    "1793850428847 [fast] 33179 word.boundaries ",
+    "1793850435302 [fast] 39634 input.speech.started ",
+    "1793850435308 [fast] 39640 input.speech.started ",
+    "1793850435308 [fast] 39641 transcript.user.delta Hola.",
+    "1793850435418 [fast] 39751 barge_in.ready_listening ",
+    "1793850435704 [fast] 40036 barge_in.ready_listening ",
+    "1793850436303 [fast] 40635 input.speech.stopped ",
+    "1793850436303 [fast] 40635 transcript.user Hola.",
+    "1793850436602 [fast] 40934 input.speech.started ",
+    "1793850436603 [fast] 40936 input.speech.started ",
+    "1793850436603 [fast] 40936 transcript.user.delta Ahora necesito empezar.",
+    "1793850436715 [fast] 41047 barge_in.ready_listening ",
+    "1793850437721 [fast] 42053 word.boundaries ",
+    "1793850437902 [fast] 42234 transcript.user.delta Ahora necesito empezar mi declaración de impuestos.",
+    "1793850438012 [fast] 42344 barge_in.ready_listening ",
+    "1793850438967 [fast] 43299 word.boundaries ",
+    "1793850439294 [fast] 43626 transcript.user.delta Ahora necesito empezar mi declaración de impuestos, pero no ",
+    "1793850439404 [fast] 43737 barge_in.ready_listening ",
+    "1793850440495 [fast] 44827 tts.language ",
+    "1793850440495 [fast] 44828 input.speech.stopped ",
+    "1793850440496 [fast] 44828 transcript.user Ahora necesito empezar mi declaración de impuestos, pero no ",
+    "1793850441225 [fast] 45557 reply.started ",
+    "1793850441225 [fast] 45558 reply.text Empieza por reunir tus formularios W‑2 y 1099. ¿Los tienes a",
+    "1793850441864 [fast] 46190 transcript.agent Empieza por reunir tus formularios W‑2 y 1099. ¿Los tienes a",
+    "1793850441864 [fast] 46190 reply.done ",
+    "1793850441879 [fast] 46210 word.boundaries "
+  ],
+  "websockets": [
+    "wss://streaming.assemblyai.com/v3/ws?sample_rate=16000&encoding=pcm_s16le&speech_model=universal-3-6-pro&min_turn_silence=128&max_turn_silence=1280&vad_threshold=0.2&language_detection=true&token=REDACTED&keyterms_prompt=%5B%22Stay%22%2C%22ADHD%22%2C%22micro-step%22%2C%22parking+lot%22%2C%22brain+dump%22%2C%22two-minute+timer%22%2C%22step+next%22%2C%22wrap+up%22%2C%22park+it%22%5D",
+    "wss://tts.us.assemblyai.com/v1/ws?token=REDACTED&model_id=assemblyai-tts-1&voice_id=478badc1-a7eb-5bef-b916-c6e51bd2771e&language=english&encoding=pcm_s16le&sample_rate=24000",
+    "wss://tts.us.assemblyai.com/v1/ws?token=REDACTED&model_id=assemblyai-tts-1&voice_id=1a48e481-7f02-5e96-bb84-68fcac65c2b2&language=spanish&encoding=pcm_s16le&sample_rate=24000"
+  ],
+  "managedAgentSocketOpened": false,
+  "ttsLanguages": [
+    "english",
+    "spanish"
+  ],
+  "sttOpened": true,
+  "consoleErrors": [],
+  "connectRetries": [
+    "AssemblyAI voice connection failed before it was ready; trying again fast voice connection failed: stt_begin_timeout"
+  ],
+  "stateLog": [
+    {
+      "at": 1793850400508,
+      "s": "Ringing…",
+      "pb": "",
+      "buffered": 0,
+      "key": "Ringing…|"
+    },
+    {
+      "at": 1793850400644,
+      "s": "Ringing…",
+      "pb": "STOPPED",
+      "buffered": 0,
+      "key": "Ringing…|STOPPED"
+    },
+    {
+      "at": 1793850411602,
+      "s": "Speaking",
+      "pb": "STOPPED",
+      "buffered": 0,
+      "key": "Speaking|STOPPED"
+    },
+    {
+      "at": 1793850411742,
+      "s": "Speaking",
+      "pb": "BUFFERING",
+      "buffered": 160,
+      "key": "Speaking|BUFFERING"
+    },
+    {
+      "at": 1793850411835,
+      "s": "Speaking",
+      "pb": "PLAYING",
+      "buffered": 620,
+      "key": "Speaking|PLAYING"
+    },
+    {
+      "at": 1793850412271,
+      "s": "Speaking",
+      "pb": "DRAINING",
+      "buffered": 5296,
+      "key": "Speaking|DRAINING"
+    },
+    {
+      "at": 1793850417536,
+      "s": "Listening",
+      "pb": "DRAINING",
+      "buffered": 65,
+      "key": "Listening|DRAINING"
+    },
+    {
+      "at": 1793850418086,
+      "s": "Listening",
+      "pb": "STOPPED",
+      "buffered": 0,
+      "key": "Listening|STOPPED"
+    },
+    {
+      "at": 1793850422734,
+      "s": "Thinking",
+      "pb": "STOPPED",
+      "buffered": 0,
+      "key": "Thinking|STOPPED"
+    },
+    {
+      "at": 1793850423201,
+      "s": "Speaking",
+      "pb": "STOPPED",
+      "buffered": 0,
+      "key": "Speaking|STOPPED"
+    },
+    {
+      "at": 1793850423380,
+      "s": "Speaking",
+      "pb": "PLAYING",
+      "buffered": 463,
+      "key": "Speaking|PLAYING"
+    },
+    {
+      "at": 1793850423922,
+      "s": "Speaking",
+      "pb": "DRAINING",
+      "buffered": 5200,
+      "key": "Speaking|DRAINING"
+    },
+    {
+      "at": 1793850424725,
+      "s": "Listening",
+      "pb": "DRAINING",
+      "buffered": 4610,
+      "key": "Listening|DRAINING"
+    },
+    {
+      "at": 1793850425093,
+      "s": "Listening",
+      "pb": "STOPPED",
+      "buffered": 0,
+      "key": "Listening|STOPPED"
+    },
+    {
+      "at": 1793850428006,
+      "s": "Thinking",
+      "pb": "STOPPED",
+      "buffered": 0,
+      "key": "Thinking|STOPPED"
+    },
+    {
+      "at": 1793850428334,
+      "s": "Speaking",
+      "pb": "STOPPED",
+      "buffered": 0,
+      "key": "Speaking|STOPPED"
+    },
+    {
+      "at": 1793850428512,
+      "s": "Speaking",
+      "pb": "PLAYING",
+      "buffered": 531,
+      "key": "Speaking|PLAYING"
+    },
+    {
+      "at": 1793850428880,
+      "s": "Speaking",
+      "pb": "DRAINING",
+      "buffered": 4026,
+      "key": "Speaking|DRAINING"
+    },
+    {
+      "at": 1793850432903,
+      "s": "Speaking",
+      "pb": "STOPPED",
+      "buffered": 0,
+      "key": "Speaking|STOPPED"
+    },
+    {
+      "at": 1793850432950,
+      "s": "Listening",
+      "pb": "STOPPED",
+      "buffered": 0,
+      "key": "Listening|STOPPED"
+    },
+    {
+      "at": 1793850436304,
+      "s": "Thinking",
+      "pb": "STOPPED",
+      "buffered": 0,
+      "key": "Thinking|STOPPED"
+    },
+    {
+      "at": 1793850436634,
+      "s": "Listening",
+      "pb": "STOPPED",
+      "buffered": 0,
+      "key": "Listening|STOPPED"
+    },
+    {
+      "at": 1793850440538,
+      "s": "Thinking",
+      "pb": "STOPPED",
+      "buffered": 0,
+      "key": "Thinking|STOPPED"
+    },
+    {
+      "at": 1793850441239,
+      "s": "Speaking",
+      "pb": "STOPPED",
+      "buffered": 0,
+      "key": "Speaking|STOPPED"
+    },
+    {
+      "at": 1793850442444,
+      "s": "Speaking",
+      "pb": "DRAINING",
+      "buffered": 4597,
+      "key": "Speaking|DRAINING"
+    },
+    {
+      "at": 1793850446985,
+      "s": "Listening",
+      "pb": "DRAINING",
+      "buffered": 58,
+      "key": "Listening|DRAINING"
+    }
+  ],
+  "silentSpeakingMaxMs": 47,
+  "status": "PASS",
+  "limits": [
+    "Synthetic speaker (AssemblyAI TTS) played into the page microphone stream; no human voice, no room acoustics",
+    "One run, one machine, one network",
+    "Screen recording has no audio track (Chromium does not capture it)",
+    "Timings are polled from the call screen about every 40 ms; end of speech is the last loud sample of the clip; reply time is until the call screen first says Speaking"
+  ]
+}

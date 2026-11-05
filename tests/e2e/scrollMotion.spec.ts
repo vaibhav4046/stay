@@ -8,7 +8,7 @@ const supportsTimelines = (page: Page) => page.evaluate(() => CSS.supports('anim
 const progressScale = (page: Page) => page.locator('.lp-progress').evaluate((el) => parseFloat(getComputedStyle(el).scale.split(' ')[0] || '1'));
 
 test.describe('Landing: scroll motion', () => {
-  test('the coral progress line grows with the page: about 0 at the top, about 1 at the bottom', async ({ page }) => {
+  test('the progress line grows with the page: about 0 at the top, about 1 at the bottom', async ({ page }) => {
     await page.goto('/', { waitUntil: 'networkidle' });
     test.skip(!(await supportsTimelines(page)), 'this browser has no scroll-driven animations (the line is hidden there)');
     await expect(page.locator('.lp-progress')).toHaveCSS('display', 'block'); // (at 0 it has no width, so "visible" would say no)

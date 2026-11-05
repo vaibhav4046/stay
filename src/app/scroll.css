@@ -4,7 +4,7 @@
   with the hover transforms in facets.css), and one small border-radius and one small blur; nothing animates width, height, top or left.
   All of it is inside @supports and prefers-reduced-motion: no-preference: without scroll timelines the page is simply still (and the
   cards are revealed by ScrollFallback.tsx), and with reduced motion nothing moves and every piece of content is plainly visible.
-  Coral (--color-coral) is only the scroll progress, the active step, the title underline and link hover: navy and white stay in charge.
+  The action blue (--color-action) is only the scroll progress, the active step, the title underline and link hover: navy and white stay in charge.
 */
 
 /* Lenis: the browser's smooth anchor scroll would fight it (the class is on <html> only while Lenis runs) */
@@ -13,19 +13,19 @@ html.lenis.lenis-smooth { scroll-behavior: auto !important; }
 .lenis.lenis-stopped { overflow: clip; }
 .lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
 
-/* links in the page copy: a hairline that turns coral on hover (never an underline-only cue; the link is still underlined) */
+/* links in the page copy: a hairline that turns action-blue on hover (never an underline-only cue; the link is still underlined) */
 main a.underline { text-decoration-color: color-mix(in srgb, currentColor 45%, transparent); text-underline-offset: 0.2em; transition: text-decoration-color 200ms var(--ease-calm); }
-main a.underline:hover { text-decoration-color: var(--color-coral); }
-/* header links: a coral line draws under the one you point at or focus */
+main a.underline:hover { text-decoration-color: var(--color-action); }
+/* header links: a action-blue line draws under the one you point at or focus */
 [data-testid='header-anchor'] { position: relative; }
-[data-testid='header-anchor']::after { content: ''; position: absolute; left: 1.1rem; right: 1.1rem; bottom: 0.45rem; height: 2px; border-radius: 2px; background: var(--color-coral); opacity: 0; transition: opacity 200ms var(--ease-calm); }
+[data-testid='header-anchor']::after { content: ''; position: absolute; left: 1.1rem; right: 1.1rem; bottom: 0.45rem; height: 2px; border-radius: 2px; background: var(--color-action); opacity: 0; transition: opacity 200ms var(--ease-calm); }
 [data-testid='header-anchor']:hover::after, [data-testid='header-anchor']:focus-visible::after { opacity: 1; }
 
 /* the page-wide film grain (glass.css: fixed, soft-light) is switched off while the landing scrolls (ScrollFallback.tsx sets html[data-scrolling]): re-blending the whole page on every scrolled frame was the single biggest cost,
    and a 5% grain on near-black is all but invisible */
 html[data-scrolling]:has(.lp-progress) body::after { display: none; }
 
-/* the scroll line: hidden until it can be driven by the scroll; the layout's own blue one (glass.css) steps aside on the landing so there is one line, and it is coral */
+/* the scroll line: hidden until it can be driven by the scroll; the layout's own blue one (glass.css) steps aside on the landing so there is one line, and it is action-blue */
 .lp-progress { display: none; }
 html:has(.lp-progress) .scroll-progress { display: none; }
 
@@ -42,7 +42,7 @@ html[data-lp-io] [data-lp-in='0'] { opacity: 0; translate: 0 22px; }
     /* ---------------------------------------------------------------- 2. the progress line */
     @keyframes lp-progress { from { scale: 0 1; } to { scale: 1 1; } }
     .lp-progress {
-      display: block; position: fixed; inset: 0 0 auto 0; height: 2px; z-index: 60; pointer-events: none; background: var(--color-coral);
+      display: block; position: fixed; inset: 0 0 auto 0; height: 2px; z-index: 60; pointer-events: none; background: var(--color-action);
       transform-origin: 0 50%; scale: 0 1;
       animation: lp-progress linear both; animation-timeline: scroll(root block);
     }
@@ -62,10 +62,10 @@ html[data-lp-io] [data-lp-in='0'] { opacity: 0; translate: 0 22px; }
     .lp-band.lp-night { --lp-sheet-r: 20px; position: relative; isolation: isolate; background: transparent; border-block: 0; }
     @media (min-width: 768px) { .lp-band.lp-night { --lp-sheet-r: 32px; } }
     @keyframes lp-sheet { from { translate: 0 24px; } to { translate: 0 0; } }
-    .lp-band.lp-night::after { content: ''; position: absolute; inset: 0; z-index: -2; pointer-events: none; border-radius: var(--lp-sheet-r); background: var(--color-night); box-shadow: inset 0 1px 0 var(--color-night-line); }
+    .lp-band.lp-night::after { content: ''; position: absolute; inset: 0; z-index: -2; pointer-events: none; border-radius: var(--lp-sheet-r); background: var(--color-band); box-shadow: inset 0 1px 0 var(--color-night-line); }
     .lp-band.lp-night::before {
       content: ''; position: absolute; inset: -24px 0 auto 0; height: 240px; z-index: -1; pointer-events: none; border-radius: var(--lp-sheet-r) var(--lp-sheet-r) 0 0;
-      background: var(--color-night); box-shadow: inset 0 1px 0 var(--color-night-line);
+      background: var(--color-band); box-shadow: inset 0 1px 0 var(--color-night-line);
       animation: lp-sheet linear both; animation-timeline: view(); animation-range: entry 0% cover 50%;
     }
 
@@ -89,23 +89,23 @@ html[data-lp-io] [data-lp-in='0'] { opacity: 0; translate: 0 22px; }
     @keyframes lp-num { from { opacity: 0; translate: 0 10px; } to { opacity: 1; translate: 0 0; } }
     .bench-big, .tiles dd:first-of-type, .donut-num, .wf-ms, .wer li > span:last-child { animation: lp-num linear both; animation-timeline: view(); animation-range: entry 15% entry 75%; }
 
-    /* ---------------------------------------------------------------- section titles: a short coral line is drawn under each */
+    /* ---------------------------------------------------------------- section titles: a short action-blue line is drawn under each */
     @keyframes lp-line { from { scale: 0 1; } to { scale: 1 1; } }
     main h2.section-title { position: relative; }
-    main h2.section-title::after { content: ''; position: absolute; left: 0; bottom: -0.6rem; width: 2.75rem; height: 2px; border-radius: 2px; background: var(--color-coral); transform-origin: 0 50%; scale: 0 1; animation: lp-line linear both; animation-timeline: view(); animation-range: entry 20% entry 100%; }
+    main h2.section-title::after { content: ''; position: absolute; left: 0; bottom: -0.6rem; width: 2.75rem; height: 2px; border-radius: 2px; background: var(--color-action); transform-origin: 0 50%; scale: 0 1; animation: lp-line linear both; animation-timeline: view(); animation-range: entry 20% entry 100%; }
 
-    /* ---------------------------------------------------------------- the five steps: a coral line draws between them, the number of the step reached gets a ring */
+    /* ---------------------------------------------------------------- the five steps: a action-blue line draws between them, the number of the step reached gets a ring */
     @keyframes lp-ring { from { opacity: 0; } to { opacity: 1; } }
     @keyframes lp-draw-x { from { scale: 0 1; } to { scale: 1 1; } }
     @keyframes lp-draw-y { from { scale: 1 0; } to { scale: 1 1; } }
     .pipe { position: relative; view-timeline: --pipe block; --p0: 20%; --pspan: 30%; --poff: 0.5; }
     .pipe-step { display: grid; place-items: center; z-index: 1; width: 1.7rem; height: 1.7rem; border-radius: 50%; border: 1px solid var(--color-line-strong); background: var(--color-canvas); color: var(--color-ink-2); line-height: 1; }
-    .pipe-step::after { content: ''; position: absolute; inset: -1px; border-radius: 50%; border: 1.5px solid var(--color-coral); opacity: 0; animation: lp-ring linear both; animation-timeline: view(); animation-range: cover 28% cover 38%; }
+    .pipe-step::after { content: ''; position: absolute; inset: -1px; border-radius: 50%; border: 1.5px solid var(--color-action); opacity: 0; animation: lp-ring linear both; animation-timeline: view(); animation-range: cover 28% cover 38%; }
     @media (min-width: 900px) {
       .pipe { padding-top: 1.9rem; }
       .pipe::before, .pipe::after { content: ''; position: absolute; top: 0.5rem; left: 0; right: 0; height: 2px; border-radius: 2px; }
       .pipe::before { background: var(--color-line-strong); }
-      .pipe::after { background: var(--color-coral); transform-origin: 0 50%; scale: 0 1; animation: lp-draw-x linear both; animation-timeline: --pipe; animation-range: cover var(--p0) cover calc(var(--p0) + var(--pspan)); }
+      .pipe::after { background: var(--color-action); transform-origin: 0 50%; scale: 0 1; animation: lp-draw-x linear both; animation-timeline: --pipe; animation-range: cover var(--p0) cover calc(var(--p0) + var(--pspan)); }
       .pipe-step::after { animation-timeline: --pipe; animation-range: cover calc(var(--p0) + var(--pspan) * (var(--i, 0) + var(--poff)) / 5) cover calc(var(--p0) + var(--pspan) * (var(--i, 0) + var(--poff)) / 5 + 4%); }
       .pipe-node { --i: 0; }
     }
@@ -115,7 +115,7 @@ html[data-lp-io] [data-lp-in='0'] { opacity: 0; translate: 0 22px; }
       .pipe-step { right: auto; left: -2.65rem; top: 0.8rem; }
       .pipe-node:not(:last-child)::before, .pipe-node:not(:last-child)::after { content: ''; position: absolute; z-index: 0; left: -1.95rem; width: 2px; top: 1.65rem; height: calc(100% + 0.9rem); }
       .pipe-node:not(:last-child)::before { background: var(--color-line-strong); }
-      .pipe-node:not(:last-child)::after { background: var(--color-coral); transform-origin: 50% 0; scale: 1 0; animation: lp-draw-y linear both; animation-timeline: view(); animation-range: cover 34% cover 58%; }
+      .pipe-node:not(:last-child)::after { background: var(--color-action); transform-origin: 50% 0; scale: 1 0; animation: lp-draw-y linear both; animation-timeline: view(); animation-range: cover 34% cover 58%; }
     }
 
     /* ---------------------------------------------------------------- 7. the closing call to action */
