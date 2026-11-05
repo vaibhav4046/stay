@@ -3,6 +3,7 @@
 import { byokHeaders } from '@/lib/byok/config';
 import { fitHistory } from '@/lib/voice/historyBudget';
 import { currentHoldMs, recordHold } from '@/lib/voice/patience';
+import { recordCutIn, recordReply, styleLine } from '@/lib/voice/replyStyle';
 import { ContinuousPcmPlayer } from '@/lib/voice/playback/continuousPlayback';
 import { replyLanguageInstruction } from '@/lib/voice/replyLanguage';
 import { GLANCE_PROMPT, isQuietReply } from '@/lib/vision/image';
@@ -1516,7 +1517,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       const memory = loadUserMemory();
       const context = {
         localHour: new Date().getHours(),
-        personal: [learningsPromptLine(loadLearnings()), memoryLine(memory)].filter(Boolean).join(' ').slice(0, 600),
+        personal: [learningsPromptLine(loadLearnings()), memoryLine(memory), styleLine()].filter(Boolean).join(' ').slice(0, 600),
       };
       const ask = async (withTools: boolean) => {
         const res = await fetch('/api/voice/chat', {
@@ -2464,7 +2465,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
             session: {
               system_prompt: warmHumanPrompt,
               // the fast path builds its prompt on the server: it gets what Stay learned (evidence-based, editable in Memory) and the memory line as data
-              personal: [learningsPromptLine(loadLearnings()), memoryLine(memory)].filter(Boolean).join(' '),
+              personal: [learningsPromptLine(loadLearnings()), memoryLine(memory), styleLine()].filter(Boolean).join(' '),
               offer: learnedOffer(loadLearnings()),
               greeting,
               // No turn_detection block: sending any turn_detection object overrides the provider's tuned defaults and
@@ -2776,6 +2777,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
         }
 
         if (type === 'reply.started') {
+          recordReply(); // learning: how often the person cuts in (replyStyle.ts)
           replyEpochRef.current += 1;
           lipSyncBus.clearText();
           pendingToolResultsRef.current = [];
@@ -2928,6 +2930,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
             pendingToolResultsRef.current = [];
             stopPlaybackQueue();
             setVisualState('interrupted');
+            recordCutIn();
             dispatchVoiceEvent({ type: 'assistant_stopped', reason: 'barge_in' });
             return;
           }

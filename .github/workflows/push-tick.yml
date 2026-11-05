@@ -1,10 +1,12 @@
 name: Stay check-ins
 
-# Wakes the server every 15 minutes so it can send whichever calm check-ins are due (see src/lib/push/schedule.ts).
-# GitHub may start a scheduled run a few minutes late; each window is two hours wide, so that does not matter.
+# Wakes the server once an hour so it can send whichever calm check-ins are due (see src/lib/push/schedule.ts).
+# Each send window is two hours wide, so it holds at least two ticks: a late or failed run is retried the next hour, inside the same window.
+# Hourly on purpose: every run lists the Blob store (one "advanced operation"), and the free plan allows 2,000 a month and then locks the
+# store for 30 days. Every 15 minutes would be 2,880 a month; hourly is about 720, which leaves room for subscriptions and sends.
 on:
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: '5 * * * *'
   workflow_dispatch:
 
 permissions: {}

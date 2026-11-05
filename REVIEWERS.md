@@ -11,10 +11,10 @@ Stay is not a doctor or therapist: it never diagnoses and never advises on medic
 ```bash
 npm ci
 npx tsc --noEmit                 # types
-npx vitest run                   # 1,613 passed, 1 skipped on 4 Nov 2026 (the count grows); the model and AssemblyAI are mocked
+npx vitest run                   # 1,743 passed, 1 skipped on 5 Nov 2026 (the count grows); the model and AssemblyAI are mocked
 node scripts/claims-lint.mjs     # no banned claim, and every number on the site points at an evidence file
 npm run build && npx next start -p 3120 &
-PLAYWRIGHT_BASE_URL=http://localhost:3120 npx playwright test   # 218 browser tests listed on 4 Nov 2026 (`--list`), with a faked voice service
+PLAYWRIGHT_BASE_URL=http://localhost:3120 npx playwright test   # 262 browser tests passed on 5 Nov 2026, with a faked voice service
 ```
 
 With keys in `.env.local` (`ASSEMBLYAI_API_KEY`, `GROQ_API_KEY`; see `.env.example`), the live checks run against real services:
@@ -26,6 +26,12 @@ With keys in `.env.local` (`ASSEMBLYAI_API_KEY`, `GROQ_API_KEY`; see `.env.examp
 
 Browsers launched by these scripts are muted. Every number in the README, the landing page and `HACKATHON_SUBMISSION.md` links to a file
 under `docs/evidence/`; `docs/loop/LEDGER.md` lists each check, its label (synthetic-mic, file-mic, live-model, mocked-model) and what is not done.
+
+## Check-ins when the app is closed (opt-in, Settings)
+
+Stay can speak first with the tab closed: a scheduled GitHub Action (`.github/workflows/push-tick.yml`, hourly) calls `/api/push/tick`, which sends at most two short Web Push messages a day in the person's own morning and evening windows, never at night. The server keeps only the browser's notification address, keys and time zone (`src/lib/push/`, `src/app/api/push/`); the sentence itself is written on the device from the person's own list, so the server never sees it. Proof: `docs/evidence/push/real-run.txt` (a real Chrome, the real push service and the real store, against the live site; `node scripts/push-e2e.mjs` repeats it with keys in `.env.local`) and the unit tests in `tests/unit/push*.test.ts`.
+
+Limits, stated plainly: the scheduler runs hourly (free-plan Blob storage allows 2,000 list/write operations a month); a focus timer ending while the app is closed cannot send a message at the exact moment; iPhone needs the app added to the Home Screen; Firefox and Safari were not tested.
 
 ## Testing it with your own microphone
 

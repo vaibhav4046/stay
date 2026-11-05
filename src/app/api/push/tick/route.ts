@@ -4,7 +4,7 @@ import { dueSlot, messageFor } from '@/lib/push/schedule';
 import { listRecords, pushStoreConfigured, removeRecord, saveRecord, type PushRecord } from '@/lib/push/store';
 import { pushSendConfigured, sendPush } from '@/lib/push/send';
 
-/** Called every 15 minutes by a scheduled GitHub Action (.github/workflows/push-tick.yml) with a shared secret. Sends whichever messages are due. */
+/** Called once an hour by a scheduled GitHub Action (.github/workflows/push-tick.yml) with a shared secret. Sends whichever messages are due. */
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 

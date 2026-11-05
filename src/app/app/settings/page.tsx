@@ -17,6 +17,7 @@ import { StyleSettings } from '@/components/StyleSettings';
 import { ProactiveSettings } from '@/components/ProactiveSettings';
 import { PacingSettings } from '@/components/PacingSettings';
 import { resetPatience } from '@/lib/voice/patience';
+import { resetStyle } from '@/lib/voice/replyStyle';
 import { disablePush } from '@/lib/push/client';
 import { clearNudgeData } from '@/lib/push/context';
 import { PageSkeleton } from '@/components/PageSkeleton';
@@ -201,6 +202,7 @@ export default function SettingsPage() {
                       await disablePush(); // the notification address is the one thing the server holds
                       await clearNudgeData(); // and the note this device keeps to write check-ins
                       resetPatience(); // and how long it has learned you pause
+                      resetStyle(); // and how short it has learned to keep replies
                       await deleteAllUserData();
                       setDeleteError(null);
                       setDeleted(true);
