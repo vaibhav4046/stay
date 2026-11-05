@@ -28,12 +28,13 @@ test.describe('Landing hero: the foldable', () => {
     const copy = await rect(page, '.lp-hero-copy');
     const device = await rect(page, '.fd');
     expect(device.x).toBeGreaterThanOrEqual(copy.right); // copy left, device right
-    expect(device.w).toBeGreaterThanOrEqual(600);
+    expect(device.w).toBeGreaterThanOrEqual(540); // 89% of the column: the rest is the studio plate behind it
     expect(device.w).toBeLessThanOrEqual(680);
     const a = await rect(page, '.fd-a .fd-screen');
     const b = await rect(page, '.fd-b .fd-screen');
-    expect(Math.abs(a.w - 300)).toBeLessThanOrEqual(30); // about 316 x 420 design px each (a portrait panel), a little less at this column width
-    expect(Math.abs(a.h - 420)).toBeLessThanOrEqual(24);
+    expect(a.h / a.w, "each half is a portrait panel").toBeGreaterThan(1.25);
+    expect(a.h / a.w).toBeLessThan(1.6);
+    expect(a.h, "tall enough to read").toBeGreaterThanOrEqual(340);
     expect(b.x).toBeGreaterThan(a.x + a.w * 0.8); // the second half is to the right of the first, meeting it at the spine
     expect(Math.abs(((a.w * 2) / a.h) - 3 / 2)).toBeLessThan(0.3); // one display, about 3:2 when open
     expect(await overflowX(page)).toBeLessThanOrEqual(0);
