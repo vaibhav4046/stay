@@ -1,3 +1,5 @@
+import { RING_MAX_AHEAD_MS } from './schedule';
+
 /** What the server accepts as a push subscription. Only the browsers' own push services are allowed as targets, so the server can never be steered at someone else's address. */
 export interface PushSubscriptionJson {
   endpoint: string;
@@ -50,6 +52,13 @@ export function parsePrefs(raw: unknown): { morning: boolean; evening: boolean }
   const { morning, evening } = raw as { morning?: unknown; evening?: unknown };
   if (typeof morning !== 'boolean' || typeof evening !== 'boolean' || (!morning && !evening)) return null;
   return { morning, evening };
+}
+
+/** When a focus block ends: 0 cancels, otherwise a moment between five seconds and four hours from now. */
+export function parseRingAt(raw: unknown, now = Date.now()): number | null {
+  if (raw === 0) return 0;
+  if (typeof raw !== 'number' || !Number.isFinite(raw)) return null;
+  return raw >= now + 5_000 && raw <= now + RING_MAX_AHEAD_MS ? Math.round(raw) : null;
 }
 
 /** Whole hours of quiet, 0 (resume) to 72. */

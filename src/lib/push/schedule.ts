@@ -63,4 +63,9 @@ export function messageFor(slot: Slot, day: string, seed: number): string {
   return list[Math.abs(dayN + seed) % list.length];
 }
 
-export const allMessagesCalm = () => [...SLOTS.flatMap((s) => MESSAGES[s]), WELCOME].every(isCalm);
+export const allMessagesCalm = () => [...SLOTS.flatMap((s) => MESSAGES[s]), WELCOME, RING_MESSAGE].every(isCalm);
+
+/** The timer ping (src/lib/push/ring.ts): how far ahead a block may end, how late a missed one may still be sent, and the general line. */
+export const RING_MAX_AHEAD_MS = 4 * 3_600_000;
+export const RING_STALE_MS = 3 * 3_600_000;
+export const RING_MESSAGE = 'Your focus block just ended. Tap to say how it went.';

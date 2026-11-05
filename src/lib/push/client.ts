@@ -117,3 +117,37 @@ export async function saveChoices(next: Partial<Omit<CheckinChoices, 'pausedUnti
   }
   return saved;
 }
+
+/** The browser's own subscription, only when notifications are allowed (otherwise none can exist, and asking can freeze a browser with partial push support). */
+async function activeSubscription() {
+  if (!supported() || Notification.permission !== 'granted') return null;
+  return (await (await navigator.serviceWorker.getRegistration())?.pushManager.getSubscription()) ?? null;
+}
+
+const RING_KEY = 'stay_timer_ping_v1';
+/** A minute's grace after the block ends: an app that is open handles the end itself and cancels the ping first. */
+export const RING_GRACE_MS = 20_000;
+
+/**
+ * Ask the server to send a message when the focus block ends, for the person who has check-ins on and may close the app (0 cancels).
+ * Only when check-ins are on; silent otherwise. The same moment is never sent twice, so reopening a running block does not start a second wait.
+ */
+export async function setTimerPing(atMs: number): Promise<boolean> {
+  try {
+    const last = Number(window.localStorage.getItem(RING_KEY) || 0);
+    if (atMs === last) return true;
+    if (atMs === 0 && last === 0) return true;
+    const sub = await activeSubscription();
+    if (!sub) return false;
+    const res = await fetch(ENDPOINT, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ endpoint: sub.endpoint, ringAt: atMs }),
+    }).catch(() => null);
+    if (!res?.ok) return false;
+    window.localStorage.setItem(RING_KEY, String(atMs));
+    return true;
+  } catch {
+    return false;
+  }
+}
