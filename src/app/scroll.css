@@ -1,0 +1,126 @@
+/*
+  Landing scroll motion. Native scroll-driven animations (animation-timeline: scroll() / view()) driven by the scroll position, plus Lenis for the
+  wheel (SmoothScroll.tsx). Everything that moves here is transform, opacity (or the individual `translate` / `scale` properties, so it composes
+  with the hover transforms in facets.css), and one small border-radius and one small blur; nothing animates width, height, top or left.
+  All of it is inside @supports and prefers-reduced-motion: no-preference: without scroll timelines the page is simply still (and the
+  cards are revealed by ScrollFallback.tsx), and with reduced motion nothing moves and every piece of content is plainly visible.
+  Coral (--color-coral) is only the scroll progress, the active step, the title underline and link hover: navy and white stay in charge.
+*/
+
+/* Lenis: the browser's smooth anchor scroll would fight it (the class is on <html> only while Lenis runs) */
+html.lenis, html.lenis body { height: auto; }
+html.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-stopped { overflow: clip; }
+.lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+
+/* links in the page copy: a hairline that turns coral on hover (never an underline-only cue; the link is still underlined) */
+main a.underline { text-decoration-color: color-mix(in srgb, currentColor 45%, transparent); text-underline-offset: 0.2em; transition: text-decoration-color 200ms var(--ease-calm); }
+main a.underline:hover { text-decoration-color: var(--color-coral); }
+/* header links: a coral line draws under the one you point at or focus */
+[data-testid='header-anchor'] { position: relative; }
+[data-testid='header-anchor']::after { content: ''; position: absolute; left: 1.1rem; right: 1.1rem; bottom: 0.45rem; height: 2px; border-radius: 2px; background: var(--color-coral); opacity: 0; transition: opacity 200ms var(--ease-calm); }
+[data-testid='header-anchor']:hover::after, [data-testid='header-anchor']:focus-visible::after { opacity: 1; }
+
+/* the page-wide film grain (glass.css: fixed, soft-light) is switched off while the landing scrolls (ScrollFallback.tsx sets html[data-scrolling]): re-blending the whole page on every scrolled frame was the single biggest cost,
+   and a 5% grain on near-black is all but invisible */
+html[data-scrolling]:has(.lp-progress) body::after { display: none; }
+
+/* the scroll line: hidden until it can be driven by the scroll; the layout's own blue one (glass.css) steps aside on the landing so there is one line, and it is coral */
+.lp-progress { display: none; }
+html:has(.lp-progress) .scroll-progress { display: none; }
+
+/* the browsers without scroll timelines: cards rise when ScrollFallback.tsx sees them (it sets html[data-lp-io] only then) */
+html[data-lp-io] [data-lp-in] { transition: opacity 700ms var(--ease-calm), translate 700ms var(--ease-calm); }
+html[data-lp-io] [data-lp-in='0'] { opacity: 0; translate: 0 22px; }
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    /* the layout's blanket rise of whole sections (glass.css) would double up with the card rise below: off here */
+    .lp-section > .lp-wrap, .lp-section.lp-wrap, .lp-band > .lp-wrap { animation: none; }
+    main h2.section-title:not(.lp-split) { animation: lp-rise linear both; animation-timeline: view(); animation-range: entry 0% entry 55%; }
+
+    /* ---------------------------------------------------------------- 2. the progress line */
+    @keyframes lp-progress { from { scale: 0 1; } to { scale: 1 1; } }
+    .lp-progress {
+      display: block; position: fixed; inset: 0 0 auto 0; height: 2px; z-index: 60; pointer-events: none; background: var(--color-coral);
+      transform-origin: 0 50%; scale: 0 1;
+      animation: lp-progress linear both; animation-timeline: scroll(root block);
+    }
+
+    /* ---------------------------------------------------------------- 3. hero: the words drift up and soften, the device lags (about 0.85 of the scroll) and eases back */
+    @keyframes lp-hero-copy { to { translate: 0 -44px; opacity: 0.55; } }
+    @keyframes lp-hero-device { to { translate: 0 20px; scale: 0.96; } }
+    .lp-hero-copy { animation: lp-hero-copy linear both; animation-timeline: scroll(root block); animation-range: 0px 70vh; }
+    .lp-hero-example { transform-origin: 50% 35%; animation: lp-hero-device linear both; animation-timeline: scroll(root block); animation-range: 0px 70vh; }
+    /* the light behind the device drifts a little slower than the page, so it seems to follow (a small layer: a full-page one costs frames) */
+    @keyframes lp-light-drift { to { translate: 0 44px; opacity: 0.6; } }
+    .lp-hero .fd-light { animation: lp-light-drift linear both; animation-timeline: scroll(root block); animation-range: 0px 90vh; }
+
+    /* ---------------------------------------------------------------- sections: night bands are rounded sheets; the top of each slides up to 24px against the page.
+       Only a 220px cap moves (a layer as tall as the band costs frames), the body of the sheet is still. */
+    [data-landing-section='1'] { padding-bottom: 3rem; } /* room for the sheet's rounded top */
+    .lp-band.lp-night { --lp-sheet-r: 20px; position: relative; isolation: isolate; background: transparent; border-block: 0; }
+    @media (min-width: 768px) { .lp-band.lp-night { --lp-sheet-r: 32px; } }
+    @keyframes lp-sheet { from { translate: 0 24px; } to { translate: 0 0; } }
+    .lp-band.lp-night::after { content: ''; position: absolute; inset: 0; z-index: -2; pointer-events: none; border-radius: var(--lp-sheet-r); background: var(--color-night); box-shadow: inset 0 1px 0 var(--color-night-line); }
+    .lp-band.lp-night::before {
+      content: ''; position: absolute; inset: -24px 0 auto 0; height: 240px; z-index: -1; pointer-events: none; border-radius: var(--lp-sheet-r) var(--lp-sheet-r) 0 0;
+      background: var(--color-night); box-shadow: inset 0 1px 0 var(--color-night-line);
+      animation: lp-sheet linear both; animation-timeline: view(); animation-range: entry 0% cover 50%;
+    }
+
+    /* ---------------------------------------------------------------- 4. film: the stage opens from an inset rounded frame to full width */
+    .lp-film-wrap { --lp-film-r: 0px; view-timeline: --film block; }
+    @media (min-width: 1200px) { .lp-film-wrap { --lp-film-r: var(--radius-stage); } }
+    @keyframes lp-film-grow { from { scale: 0.88; } to { scale: 1; } }
+    @keyframes lp-film-round { from { border-radius: 28px; } to { border-radius: var(--lp-film-r); } }
+    .lp-film-wrap { animation: lp-film-grow cubic-bezier(0.3, 0.6, 0.35, 1) both; animation-timeline: --film; animation-range: entry 10% cover 45%; }
+    .lp-film { animation: lp-film-round cubic-bezier(0.3, 0.6, 0.35, 1) both; animation-timeline: --film; animation-range: entry 10% cover 45%; }
+    /* the heading arrives word by word */
+    @keyframes lp-word { from { opacity: 0; translate: 0 0.5em; filter: blur(5px); } to { opacity: 1; translate: 0 0; filter: blur(0); } }
+    .lp-split { view-timeline: --split block; }
+    .lp-w { display: inline-block; animation: lp-word linear both; animation-timeline: --split; animation-range: entry calc(var(--i) * 4%) entry calc(var(--i) * 4% + 36%); }
+
+    /* ---------------------------------------------------------------- 5 and 6. cards rise and fade, a few at a time */
+    @keyframes lp-rise { from { opacity: 0; translate: 0 26px; } to { opacity: 1; translate: 0 0; } }
+    .pipe-node, .bento-card, .bench-card, .lp-platform, .lp-promises li, .lp-seen li { --lp-stag: 0%; animation: lp-rise linear both; animation-timeline: view(); animation-range: entry calc(var(--i, 0) * var(--lp-stag)) entry calc(60% + var(--i, 0) * var(--lp-stag)); }
+    @media (min-width: 900px) { .pipe-node, .bento-card { --lp-stag: 7%; } }
+    /* the measured numbers arrive a little after their chart */
+    @keyframes lp-num { from { opacity: 0; translate: 0 10px; } to { opacity: 1; translate: 0 0; } }
+    .bench-big, .tiles dd:first-of-type, .donut-num, .wf-ms, .wer li > span:last-child { animation: lp-num linear both; animation-timeline: view(); animation-range: entry 15% entry 75%; }
+
+    /* ---------------------------------------------------------------- section titles: a short coral line is drawn under each */
+    @keyframes lp-line { from { scale: 0 1; } to { scale: 1 1; } }
+    main h2.section-title { position: relative; }
+    main h2.section-title::after { content: ''; position: absolute; left: 0; bottom: -0.6rem; width: 2.75rem; height: 2px; border-radius: 2px; background: var(--color-coral); transform-origin: 0 50%; scale: 0 1; animation: lp-line linear both; animation-timeline: view(); animation-range: entry 20% entry 100%; }
+
+    /* ---------------------------------------------------------------- the five steps: a coral line draws between them, the number of the step reached gets a ring */
+    @keyframes lp-ring { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes lp-draw-x { from { scale: 0 1; } to { scale: 1 1; } }
+    @keyframes lp-draw-y { from { scale: 1 0; } to { scale: 1 1; } }
+    .pipe { position: relative; view-timeline: --pipe block; --p0: 20%; --pspan: 30%; --poff: 0.5; }
+    .pipe-step { display: grid; place-items: center; z-index: 1; width: 1.7rem; height: 1.7rem; border-radius: 50%; border: 1px solid var(--color-line-strong); background: var(--color-canvas); color: var(--color-ink-2); line-height: 1; }
+    .pipe-step::after { content: ''; position: absolute; inset: -1px; border-radius: 50%; border: 1.5px solid var(--color-coral); opacity: 0; animation: lp-ring linear both; animation-timeline: view(); animation-range: cover 28% cover 38%; }
+    @media (min-width: 900px) {
+      .pipe { padding-top: 1.9rem; }
+      .pipe::before, .pipe::after { content: ''; position: absolute; top: 0.5rem; left: 0; right: 0; height: 2px; border-radius: 2px; }
+      .pipe::before { background: var(--color-line-strong); }
+      .pipe::after { background: var(--color-coral); transform-origin: 0 50%; scale: 0 1; animation: lp-draw-x linear both; animation-timeline: --pipe; animation-range: cover var(--p0) cover calc(var(--p0) + var(--pspan)); }
+      .pipe-step::after { animation-timeline: --pipe; animation-range: cover calc(var(--p0) + var(--pspan) * (var(--i, 0) + var(--poff)) / 5) cover calc(var(--p0) + var(--pspan) * (var(--i, 0) + var(--poff)) / 5 + 4%); }
+      .pipe-node { --i: 0; }
+    }
+    @media (max-width: 899.98px) {
+      /* stacked: a rail down the left, each card draws the stretch to the next one */
+      .pipe { padding-left: 2.4rem; }
+      .pipe-step { right: auto; left: -2.65rem; top: 0.8rem; }
+      .pipe-node:not(:last-child)::before, .pipe-node:not(:last-child)::after { content: ''; position: absolute; z-index: 0; left: -1.95rem; width: 2px; top: 1.65rem; height: calc(100% + 0.9rem); }
+      .pipe-node:not(:last-child)::before { background: var(--color-line-strong); }
+      .pipe-node:not(:last-child)::after { background: var(--color-coral); transform-origin: 50% 0; scale: 1 0; animation: lp-draw-y linear both; animation-timeline: view(); animation-range: cover 34% cover 58%; }
+    }
+
+    /* ---------------------------------------------------------------- 7. the closing call to action */
+    @keyframes lp-cta-in { from { scale: 0.94; } to { scale: 1; } }
+    .lp-cta { animation: lp-cta-in linear both; animation-timeline: view(); animation-range: entry 0% cover 50%; }
+    .lp-magnet { transition: background-color 140ms var(--ease-calm), border-color 140ms var(--ease-calm), color 140ms var(--ease-calm), transform 120ms var(--ease-calm), translate 380ms var(--ease-calm); translate: var(--mx, 0px) var(--my, 0px); }
+  }
+}

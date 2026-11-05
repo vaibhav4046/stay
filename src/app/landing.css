@@ -10,8 +10,8 @@
 @media (min-width: 640px) { .lp-wrap { padding-inline: 2rem; } }
 .lp-wrap strong { font-weight: 600; }
 
-.lp-section { padding-block: clamp(3.25rem, 7vw, 5.75rem); content-visibility: auto; contain-intrinsic-size: auto 900px; }
-.lp-band { padding-block: clamp(3.5rem, 8vw, 6.5rem); content-visibility: auto; contain-intrinsic-size: auto 900px; }
+.lp-section { padding-block: clamp(3.25rem, 7vw, 5.75rem); } /* no content-visibility: scroll-driven ranges (scroll.css) need the real height of every section */
+.lp-band { padding-block: clamp(3.5rem, 8vw, 6.5rem); }
 .lp-night { background: var(--color-night); color: var(--color-night-ink); }
 .lp-night-title { color: var(--color-night-ink); }
 .lp-night-copy { color: var(--color-night-ink-2); line-height: 1.65; }
@@ -122,6 +122,11 @@
 .lp-composer:focus-within { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 .lp-composer-input { flex: 1; min-width: 0; height: 3rem; padding: 0 1.1rem; border: 0; border-radius: 999px; background: transparent; color: var(--color-ink); font: inherit; outline: none; }
 .lp-composer-input::placeholder { color: var(--color-ink-2); }
-.lp-mic { flex: none; display: grid; place-items: center; width: 3rem; height: 3rem; border-radius: 999px; background: var(--color-accent); color: var(--color-canvas, #05080C); transition: transform 0.2s var(--ease-calm), background-color 0.2s var(--ease-calm); }
+.lp-mic { flex: none; display: grid; place-items: center; width: 3rem; height: 3rem; border-radius: 999px; background: var(--color-coral); color: var(--color-canvas, #05080C); transition: transform 0.2s var(--ease-calm), background-color 0.2s var(--ease-calm); }
 .lp-mic:hover { transform: scale(1.06); }
 .lp-mic:focus-visible { outline: 2px solid var(--color-ink); outline-offset: 2px; }
+
+/* coral, quietly: what is selected and what is about to be pressed */
+.lp-mic:hover { background: var(--color-coral-hover); }
+.lp-film-btn[aria-pressed='true'] { border-color: var(--color-coral); }
+.lp-composer:focus-within { outline-color: var(--color-coral); }

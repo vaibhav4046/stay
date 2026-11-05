@@ -2,6 +2,9 @@ import Link from 'next/link';
 import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
 import { Hero } from '@/components/landing/Hero';
 import { SmoothScroll } from '@/components/landing/SmoothScroll';
+import { ScrollFallback } from '@/components/landing/ScrollFallback';
+import { SplitWords } from '@/components/landing/SplitWords';
+import { MagneticLink } from '@/components/landing/MagneticLink';
 import { ProofStrip } from '@/components/landing/ProofStrip';
 import { PipelineMotion } from '@/components/landing/PipelineMotion';
 import { FeatureBento } from '@/components/landing/FeatureBento';
@@ -14,11 +17,14 @@ import { TRANSCRIPT } from '@/components/landing/transcript';
 import './landing.css';
 import './fold.css';
 import './facets.css';
+import './scroll.css';
 
 export default function Home() {
   return (
     <>
       <SmoothScroll />
+      <ScrollFallback />
+      <div className="lp-progress" aria-hidden="true" />
       <SiteHeader anchors />
       <main>
         {/* The page is five sections: 1 hero, 2 the real call, 3 how it works, 4 the proof, 5 trust and start. */}
@@ -29,7 +35,7 @@ export default function Home() {
 
         <section id="watch" data-landing-section="2" className="lp-night lp-band" aria-labelledby="watch-title" data-testid="demo-video">
           <div className="lp-wrap">
-            <h2 id="watch-title" className="section-title lp-night-title max-w-[26ch]">A paper due at nine. A thumb stuck on the feed.</h2>
+            <h2 id="watch-title" className="section-title lp-night-title lp-split max-w-[26ch]"><SplitWords text="A paper due at nine. A thumb stuck on the feed." /></h2>
             <p className="lp-night-copy mt-3 max-w-[62ch]">
               Two minutes forty-nine seconds, a short story built around one real call. Pix is an invented character with a synthetic voice (ElevenLabs). Stay&apos;s replies and its voice (AssemblyAI) are the real thing, recorded in the real app. It plays on its own; press Sound to hear it.
             </p>
@@ -128,9 +134,9 @@ export default function Home() {
               <h2 className="font-display text-2xl font-semibold leading-tight sm:text-3xl">Start with one small thing.</h2>
               <p className="lp-night-copy mt-2 max-w-[40ch]">Say it badly. Stay will wait.</p>
             </div>
-            <Link href="/app/today" className="btn btn-primary" data-testid="cta-open">
+            <MagneticLink href="/app/today" className="btn btn-primary" data-testid="cta-open">
               Open Stay
-            </Link>
+            </MagneticLink>
           </div>
           </div>
 

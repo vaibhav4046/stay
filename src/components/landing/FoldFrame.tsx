@@ -95,7 +95,6 @@ export function FoldSpine() {
       {barrelFacets().map((f) => (
         <i key={f.angle} className={`fd-barrel${f.spec ? ' fd-barrel-spec' : ''}`} style={vars({ '--p': f.angle, '--bw': +f.width.toFixed(2), '--shade': +f.shade.toFixed(3) })} />
       ))}
-      <i className="fd-spine-glow" />
     </div>
   );
 }

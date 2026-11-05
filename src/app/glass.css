@@ -84,12 +84,12 @@ div[role='dialog'] {
   box-shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset;
 }
 .glass-nav {
-  background: var(--bar-fill);
+  /* the landing's floating pill: a near-opaque fill, no blur. A blur behind a bar that sits over scrolling content is repainted on every scrolled frame (the
+     biggest remaining cost in software rendering); on near-black the difference is not visible. The app's bar (.glass-bar) keeps its blur. */
+  background: linear-gradient(180deg, rgb(10 16 24 / 0.9), rgb(10 16 24 / 0.84));
   border: 1px solid var(--glass-line);
   border-radius: 999px;
   box-shadow: 0 18px 40px -20px rgb(0 0 0 / 0.8);
-  -webkit-backdrop-filter: var(--bar-blur);
-  backdrop-filter: var(--bar-blur);
 }
 
 /* the conversation */
