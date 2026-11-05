@@ -120,6 +120,31 @@ await page.goto('/app/settings');
 const again = await (await fetch(`${URL_BASE}/api/push/tick`, { method: 'POST', headers: { authorization: `Bearer ${env.PUSH_TICK_SECRET}` } })).json();
 step(again.sent === 0, `a second tick in the same window sends nothing: ${JSON.stringify(again)}`);
 
+// the timer ping: a block that ends with the app closed. The ring is 100 s ahead, so the wait must survive a hand-over between serverless runs,
+// and the message must arrive within seconds of the moment, written on this device with the block's own words.
+await page.evaluate(async () => {
+  const c = await caches.open('stay-context');
+  await c.put('/__stay-context', new Response(JSON.stringify({ name: 'Asha', block: 'renew the passport' }), { headers: { 'content-type': 'application/json' } }));
+});
+const ringAt = Date.now() + 100_000;
+const patched = await page.evaluate(async (at) => {
+  const sub = await (await navigator.serviceWorker.ready).pushManager.getSubscription();
+  const res = await fetch('/api/push/subscribe', { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ endpoint: sub.endpoint, ringAt: at }) });
+  return res.status;
+}, ringAt);
+step(patched === 200, `asked for a timer ping 100 s ahead (${patched})`);
+const ringBody = () => page.evaluate(async () => (await (await navigator.serviceWorker.ready).getNotifications()).map((n) => n.body).find((b) => /renew the passport/.test(b)) ?? null);
+await page.waitForTimeout(70_000);
+step((await ringBody()) === null, 'nothing arrives before the moment');
+let arrivedAt = 0;
+for (let i = 0; i < 160 && !arrivedAt; i++) {
+  if (await ringBody()) arrivedAt = Date.now();
+  else await page.waitForTimeout(500);
+}
+const late = arrivedAt ? Math.round((arrivedAt - ringAt) / 100) / 10 : null;
+step(arrivedAt > 0 && late <= 20, `the ping arrived ${late} s after the moment, with the block's own words: "${await ringBody()}"`);
+step(JSON.parse(await page.evaluate(async () => JSON.stringify((await (await navigator.serviceWorker.ready).getNotifications()).length)) ) >= 1, 'it is shown as a notification');
+
 // switch off: the address leaves the server and the browser
 await toggle.click();
 await page.waitForFunction(() => document.querySelector('[data-testid=proactive-toggle]')?.checked === false, null, { timeout: 15_000 }).catch(() => undefined);

@@ -49,7 +49,7 @@ Stay is a calm, voice-first companion for adults with ADHD who get stuck startin
 
 ### Beyond the voice pipeline
 
-- **Check-ins when the app is closed (opt-in).** Web Push from a scheduled GitHub Action; at most two a day, in the person's own morning and evening windows, never at night; the person can switch either window off or pause for a day. The sentence is written on the device from the person's own list. Evidence: `docs/evidence/push/real-run.txt` (real Chrome, real push service, real store).
+- **Check-ins when the app is closed (opt-in).** Web Push from a scheduled GitHub Action; at most two a day, in the person's own morning and evening windows, never at night; the person can switch either window off or pause for a day. The sentence is written on the device from the person's own list. A focus block that ends while the app is closed pings at the moment it ends. Evidence: `docs/evidence/push/real-run.txt` (real Chrome, real push service, real store).
 - **It learns how long you pause.** The wait through a trailing-off pause is learned on the device from whether the person picks the sentence up again (bounded, visible in Settings, can be switched off or reset): `src/lib/voice/patience.ts`.
 - **Long conversations do not fail.** A history budget drops the oldest turns instead of the server refusing a long chat, including chats in scripts that take three bytes a letter: `src/lib/voice/historyBudget.ts`.
 

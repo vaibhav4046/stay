@@ -16,6 +16,8 @@ export interface PushRecord {
   /** Which windows are wanted (both when absent) and when a pause ends (none when absent). */
   prefs?: SlotPrefs;
   snoozeUntil?: number;
+  /** When the focus block the person started ends (ms since 1970); the ring is sent then, and cleared. */
+  ringAt?: number;
 }
 
 const PREFIX = 'push/';

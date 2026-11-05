@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
-import { dueSlot, messageFor } from '@/lib/push/schedule';
+import { authorised } from '@/lib/push/auth';
+import { dueSlot, messageFor, RING_MESSAGE, RING_STALE_MS } from '@/lib/push/schedule';
 import { listRecords, pushStoreConfigured, removeRecord, saveRecord, type PushRecord } from '@/lib/push/store';
 import { pushSendConfigured, sendPush } from '@/lib/push/send';
 
@@ -10,18 +11,30 @@ export const maxDuration = 60;
 
 const CONCURRENCY = 8;
 
-function authorised(req: NextRequest): boolean {
-  const secret = process.env.PUSH_TICK_SECRET;
-  if (!secret) return false;
-  const given = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ?? '';
-  const a = crypto.createHash('sha256').update(given).digest();
-  const b = crypto.createHash('sha256').update(secret).digest();
-  return crypto.timingSafeEqual(a, b);
-}
-
 const seedOf = (endpoint: string) => crypto.createHash('sha256').update(endpoint).digest().readUInt16BE(0);
 
-async function tickOne(rec: PushRecord, now: Date): Promise<'sent' | 'idle' | 'removed' | 'failed'> {
+/** A timer ping the chain did not deliver (src/lib/push/ring.ts): sent late if it is still worth it, dropped if it is stale. Returns the record to carry on with. */
+async function lateRing(rec: PushRecord, now: Date): Promise<{ rec: PushRecord; result?: 'sent' | 'removed' | 'failed' }> {
+  if (!rec.ringAt || now.getTime() < rec.ringAt) return { rec };
+  const cleared: PushRecord = { ...rec, ringAt: undefined };
+  if (now.getTime() - rec.ringAt > RING_STALE_MS) {
+    await saveRecord(cleared); // too late to be useful: forget it quietly
+    return { rec: cleared };
+  }
+  const result = await sendPush(rec.sub, RING_MESSAGE, 'timer');
+  if (result === 'gone') {
+    await removeRecord(rec.sub.endpoint).catch(() => undefined);
+    return { rec, result: 'removed' };
+  }
+  if (result !== 'ok') return { rec, result: 'failed' };
+  await saveRecord(cleared);
+  return { rec: cleared, result: 'sent' };
+}
+
+async function tickOne(original: PushRecord, now: Date): Promise<'sent' | 'idle' | 'removed' | 'failed'> {
+  const late = await lateRing(original, now);
+  if (late.result) return late.result;
+  const rec = late.rec;
   if (rec.snoozeUntil && now.getTime() < rec.snoozeUntil) return 'idle'; // paused by the person
   const slot = dueSlot(now, rec.tz, rec.sent, rec.prefs);
   if (!slot) return 'idle';

@@ -53,6 +53,8 @@ import { answerAboutStay } from '@/lib/voice/aboutStay';
 import { CallLaterPanel, IncomingCallAlert, useIncomingCall } from '@/components/voice/CallLater';
 import { LiveChatBox } from '@/components/voice/LiveChatBox';
 import { timerEndedInstruction, timerEndedNoPlanInstruction } from '@/lib/voice/proactive';
+import { RING_GRACE_MS, setTimerPing } from '@/lib/push/client';
+import { publishNudgeContext } from '@/lib/push/context';
 import { TransportBadge } from '@/components/voice/TransportBadge';
 import { MicConsentSheet } from '@/components/voice/MicConsentSheet';
 import { loadActiveSession, saveActiveSession } from '@/lib/coach/activeSession';
@@ -586,6 +588,19 @@ export function StayHome({
     return () => window.clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [running, minutes, proactiveCheckins, plan, quietMode]);
+
+  // With check-ins on, a block that ends while the app is closed still pings: asked for when the block starts, cancelled when it ends or is stopped here.
+  // (A block that is running when the app reopens re-asks for the same moment, which the server ignores.)
+  const wasRunning = useRef(false);
+  useEffect(() => {
+    if (running) {
+      wasRunning.current = true;
+      void publishNudgeContext().then(() => setTimerPing(deadline.current + RING_GRACE_MS));
+    } else if (wasRunning.current) {
+      wasRunning.current = false;
+      void setTimerPing(0);
+    }
+  }, [running]);
 
   const requestPlan = useCallback(
     async (text: string, preferredStrategy?: CoachPlanProposal['strategyKey']) => {

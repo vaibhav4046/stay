@@ -16,6 +16,10 @@
       function (who, open) { return 'Good morning' + who + '. Want to take one small step on "' + open + '"? Say the first bit out loud.'; },
       function (who, open) { return 'Morning' + who + '. "' + open + '" can start tiny. Tap and tell me what is in the way.'; },
     ],
+    timer: [
+      function (who, block) { return 'Time is up' + who + '. Did you get started on "' + block + '"?'; },
+      function (who, block) { return 'Your block is done' + who + '. How did "' + block + '" go? Tap to tell me.'; },
+    ],
     evening: [
       function (who, open) { return 'Evening' + who + '. Want to park "' + open + '" for tomorrow, or take one small step on it now?'; },
       function (who, open) { return 'Hi' + who + '. If "' + open + '" is still in your head, say it out loud and I will hold it.'; },
@@ -23,9 +27,9 @@
     ],
   };
 
-  /** slot: 'morning' | 'evening'. ctx: { name?, open? } from this device. fallback: the server's general line, used when there is nothing personal to say. */
+  /** slot: 'morning' | 'evening' (about the newest open item) or 'timer' (about the block that just ended). ctx: { name?, open?, block? } from this device. fallback: the server's general line, used when there is nothing personal to say. */
   function composeNudge(slot, ctx, fallback, day) {
-    var open = clean(ctx && ctx.open, 60);
+    var open = clean(ctx && (slot === 'timer' ? ctx.block : ctx.open), 60);
     var list = VARIANTS[slot];
     if (!open || !list) return fallback;
     var name = clean(ctx && ctx.name, 24);
