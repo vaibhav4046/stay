@@ -301,7 +301,8 @@
 /* its face goes translucent and blurred as it turns edge on (its back, the frosted lid, comes up as it lies over the first half: .fd-back) */
 .fd[data-phase='closed'] .fd-b .fd-edges { display: none; } /* the second half's edge lies on the first's: one set is enough */
 /* the first half goes dim while the lid comes over it; shut, it is hidden under the opaque lid. Nothing is blurred once the device has shut: it is crisp. */
-.fd:not([data-phase='play']) .fd-a .fd-screen { opacity: calc(1 - 0.16 * var(--f)); }
+.fd:not([data-phase='play']) .fd-a .fd-screen { opacity: calc(1 - 0.34 * var(--f)); filter: blur(calc(var(--f) * 9px)); }
+/* the first screen goes translucent and soft as the second half comes over it, so the second reads as the sharp one in front; opening, it comes back into focus (the same number, run backwards) */
 /* The full-screen grain (glass.css: fixed, soft-light blend) makes the browser re-blend the whole page for every frame of any animation that moves
    a large area. While the device is playing on screen (float, lean, fold) it is switched off; it comes back when the device is paused or scrolled away. */
 body:has(.fd[data-halt='false'])::after { display: none; }

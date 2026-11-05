@@ -83,9 +83,10 @@ const HOLD = 3800;
 const SOLVE_MS = 1100; // the ring turns while it is being worked out, then it is a tick
 const TICK = 60;
 // The fold (foldMotion.ts, useFoldDevice.ts, fold.css): at the end of a call the second screen swings shut over the first, lies shut a beat
-// (SHUT_MS) while the next call is swapped in, then unfolds (OPEN_MS) and the new call begins the moment it is open. About 1.2 s in all.
+// (SHUT_MS) while the next call is swapped in, then unfolds (OPEN_MS) and the new call begins the moment it is open. About 1.8 s in all.
 // The person can fold and unfold it too (button, tap, drag): then the call goes on where it was and the timeline leaves the device alone.
-const SHUT_MS = 60;
+const SHUT_MS = 160;
+const INTRO_MS = 700; // on the first view the device wakes: it folds shut and opens once, so a visitor sees what it does without waiting for the first call to end
 
 /** The moment each word appears, in ms from the first word. */
 export function wordOffsets(text: string, who: 'you' | 'stay'): number[] {
@@ -266,6 +267,17 @@ export function HeroExample() {
       }
     }, TICK);
     return () => clearInterval(id);
+  }, [halted, reduced, driver]);
+
+  // The first view: fold shut and open once. Not in an automated browser (tests, audits, crawlers) and not with reduced motion; never again on the page.
+  const introPlayed = useRef(false);
+  useEffect(() => {
+    if (introPlayed.current || halted || reduced || navigator.webdriver) return;
+    const id = setTimeout(() => {
+      introPlayed.current = true;
+      driver.send({ type: 'request', to: 'closed', by: 'auto' });
+    }, INTRO_MS);
+    return () => clearTimeout(id);
   }, [halted, reduced, driver]);
 
   // Shut by the timeline (or a scene chosen while it was folded): the next call is swapped in under the glass, then it opens.
