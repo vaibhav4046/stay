@@ -140,4 +140,188 @@ test.describe('Landing hero: the foldable', () => {
     expect(await page.locator('.fd-only-wide .fd-facet').first().evaluate((el) => getComputedStyle(el).display)).toBe('none');
     expect(await page.locator('.fd-float').evaluate((el) => getComputedStyle(el).animationName)).toBe('none');
   });
+
+  test.describe('the person folds it', () => {
+    const fig = (page: Page) => page.getByTestId('hero-example');
+    const foldVar = (page: Page) => page.locator('.fd').evaluate((el) => Number((el as HTMLElement).style.getPropertyValue('--fold') || 0));
+    /** Press at `from` (a fraction of the device's width), drag `dx` px along it in 12 steps, and let go (unless `hold`). */
+    const drag = async (page: Page, from: number, dx: number, hold = false) => {
+      const b = (await page.locator('.fd').boundingBox())!;
+      const y = b.y + b.height / 2;
+      const x = b.x + b.width * from;
+      await page.mouse.move(x, y);
+      await page.mouse.down();
+      await page.mouse.move(x + dx, y, { steps: 12 });
+      if (!hold) await page.mouse.up();
+    };
+
+    test('the Fold button toggles the fold and says what it will do next; Escape does nothing', async ({ page }) => {
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await open(page);
+      const btn = page.getByTestId('hero-fold');
+      expect((await btn.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+      await expect(fig(page)).toHaveAttribute('data-fold', 'open');
+      await expect(btn).toHaveText('Fold');
+      await btn.click();
+      await expect(fig(page)).toHaveAttribute('data-fold', 'closed');
+      await expect(btn).toHaveText('Unfold');
+      await expect(page.locator('.fd')).toHaveAttribute('data-phase', 'closed', { timeout: 3000 });
+      expect(await foldVar(page)).toBeCloseTo(1, 2);
+      await page.keyboard.press('Escape');
+      await expect(fig(page)).toHaveAttribute('data-fold', 'closed');
+      await btn.click();
+      await expect(fig(page)).toHaveAttribute('data-fold', 'open');
+      await expect(page.locator('.fd')).toHaveAttribute('data-phase', 'play', { timeout: 3000 });
+      expect(await foldVar(page)).toBeCloseTo(0, 2);
+    });
+
+    test('keyboard: Enter and Space on the focused button fold and unfold', async ({ page }) => {
+      await open(page);
+      const btn = page.getByTestId('hero-fold');
+      await btn.focus();
+      await page.keyboard.press('Enter');
+      await expect(fig(page)).toHaveAttribute('data-fold', 'closed');
+      await page.keyboard.press('Space');
+      await expect(fig(page)).toHaveAttribute('data-fold', 'open');
+    });
+
+    test('a tap on the device toggles it, shut or open', async ({ page }) => {
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await open(page);
+      await page.locator('.fd').click();
+      await expect(fig(page)).toHaveAttribute('data-fold', 'closed');
+      await expect(page.locator('.fd')).toHaveAttribute('data-phase', 'closed', { timeout: 3000 });
+      await page.locator('.fd').click();
+      await expect(fig(page)).toHaveAttribute('data-fold', 'open');
+    });
+
+    test('dragging the second half 200 px toward the first shuts it, and dragging back opens it; the angle follows the pointer', async ({ page }) => {
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await open(page);
+      await drag(page, 0.8, -90, true);
+      const mid = await foldVar(page);
+      expect(mid).toBeGreaterThan(0.1);
+      expect(mid).toBeLessThan(0.9);
+      await expect(page.locator('.fd')).toHaveAttribute('data-phase', 'dragging');
+      expect(await page.locator('.fd-b').evaluate((el) => getComputedStyle(el).transform)).not.toBe('none');
+      expect(await page.locator('.fd-b .fd-front').evaluate((el) => Number(getComputedStyle(el).opacity))).toBeLessThan(1); // the glass comes up with the angle
+      await page.mouse.move((await page.locator('.fd').boundingBox())!.x + 100, 400, { steps: 6 });
+      expect(await foldVar(page)).toBeGreaterThan(mid);
+      await page.mouse.up();
+      await expect(fig(page)).toHaveAttribute('data-fold', 'closed');
+      await expect(page.locator('.fd')).toHaveAttribute('data-phase', 'closed', { timeout: 3000 });
+      expect(await foldVar(page)).toBeCloseTo(1, 2);
+      expect(await page.evaluate(() => String(getSelection()))).toBe(''); // no text was selected
+      expect(await page.evaluate(() => window.scrollY)).toBe(0); // and the page did not move
+      await drag(page, 0.3, 200);
+      await expect(fig(page)).toHaveAttribute('data-fold', 'open');
+      await expect(page.locator('.fd')).toHaveAttribute('data-phase', 'play', { timeout: 3000 });
+      expect(await foldVar(page)).toBeCloseTo(0, 2);
+    });
+
+    test('letting go short of the half way point springs back open', async ({ page }) => {
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await open(page);
+      await drag(page, 0.8, -80);
+      await expect(page.locator('.fd')).toHaveAttribute('data-phase', 'play', { timeout: 3000 });
+      await expect(fig(page)).toHaveAttribute('data-fold', 'open');
+    });
+
+    test('stacked on a phone the fold is dragged up and down (vertical drags are the device, horizontal ones scroll)', async ({ page }) => {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await open(page);
+      await page.locator('.fd').scrollIntoViewIfNeeded();
+      expect(await page.locator('.fd-hit').evaluate((el) => getComputedStyle(el).touchAction)).toBe('pan-x');
+      const b = (await page.locator('.fd').boundingBox())!;
+      const x = b.x + b.width / 2;
+      await page.mouse.move(x, b.y + b.height * 0.8);
+      await page.mouse.down();
+      await page.mouse.move(x, b.y + b.height * 0.8 - 190, { steps: 12 });
+      await page.mouse.up();
+      await expect(fig(page)).toHaveAttribute('data-fold', 'closed');
+    });
+
+    test('the call keeps its place across a fold: the same lines are there when it opens', async ({ page }) => {
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await open(page);
+      const before = await page.locator('.fd-a .bubble').allTextContents();
+      expect(before.length).toBeGreaterThan(0);
+      await page.getByTestId('hero-fold').click();
+      await expect(page.locator('.fd')).toHaveAttribute('data-phase', 'closed', { timeout: 3000 });
+      await page.waitForTimeout(1500); // it goes on under the glass
+      await page.getByTestId('hero-fold').click();
+      await expect(page.locator('.fd')).toHaveAttribute('data-phase', 'play', { timeout: 3000 });
+      const after = await page.locator('.fd-a .bubble').allTextContents();
+      expect(after.length).toBeGreaterThanOrEqual(before.length);
+      expect(after[0]).toContain('I have been on Instagram for two hours'); // not restarted, not another scene
+      for (let i = 0; i < before.length - 1; i++) expect(after[i]).toBe(before[i]); // (the last one may still have been arriving)
+      await expect(page.getByTestId('hero-scene-doomscroll')).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    test('shut, the cover display shows the Stay mark and what the call is doing; the second screen is aria-hidden while shut', async ({ page }) => {
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await open(page);
+      await expect(page.locator('.fd-b .fd-screen')).not.toHaveAttribute('aria-hidden', 'true');
+      await page.getByTestId('hero-fold').click();
+      await expect(page.locator('.fd')).toHaveAttribute('data-phase', 'closed', { timeout: 3000 });
+      await expect(page.locator('.fd-b .fd-screen')).toHaveAttribute('aria-hidden', 'true');
+      await expect(page.locator('.fd-back .fd-cover img')).toHaveAttribute('src', /stay-mark/);
+      await expect(page.locator('.fd-back .fd-cover-status')).toHaveText(/^(Listening|Speaking)$/);
+      expect(await page.locator('.fd-back').evaluate((el) => Number(getComputedStyle(el).opacity))).toBe(1);
+      await expect(page.locator('.fd')).toHaveAttribute('aria-hidden', 'true'); // the picture stays out of the way; the list below has the words
+    });
+
+    test('a fold left alone opens itself after about 6 seconds', async ({ page }) => {
+      test.setTimeout(30_000);
+      await open(page);
+      await page.getByTestId('hero-fold').click();
+      await expect(fig(page)).toHaveAttribute('data-fold', 'closed');
+      await page.waitForTimeout(4000);
+      await expect(fig(page)).toHaveAttribute('data-fold', 'closed');
+      await expect(fig(page)).toHaveAttribute('data-fold', 'open', { timeout: 6000 });
+    });
+
+    test('Pause freezes a fold the timeline is making, where it is', async ({ page }) => {
+      await open(page);
+      await page.getByTestId('hero-scene-study').click();
+      await expect(page.locator('.fd')).toHaveAttribute('data-phase', 'closing');
+      await page.getByTestId('hero-pause').click();
+      const held = await foldVar(page);
+      await page.waitForTimeout(900);
+      expect(await foldVar(page)).toBeCloseTo(held, 3);
+      await expect(page.locator('.fd')).toHaveAttribute('data-phase', 'closing');
+      await page.getByTestId('hero-pause').click();
+      await expect(page.locator('.fd')).toHaveAttribute('data-phase', 'play', { timeout: 4000 });
+    });
+
+    test('reduced motion: the button swaps open and shut with a crossfade, no 3D swing, no drag, no auto fold', async ({ page }) => {
+      test.setTimeout(30_000);
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await open(page);
+      const btn = page.getByTestId('hero-fold');
+      await expect(btn).toBeVisible();
+      await btn.click();
+      await expect(fig(page)).toHaveAttribute('data-fold', 'closed');
+      await expect(page.locator('.fd')).toHaveAttribute('data-phase', 'closed'); // at once: no closing in between
+      expect(await foldVar(page)).toBe(0); // the angle never moves
+      expect(await page.locator('.fd-b').evaluate((el) => getComputedStyle(el).transform)).toBe('none');
+      await expect.poll(() => page.locator('.fd-stage').evaluate((el) => Number(getComputedStyle(el).opacity))).toBe(0);
+      await expect.poll(() => page.locator('.fd-flat').evaluate((el) => Number(getComputedStyle(el).opacity))).toBe(1);
+      await expect(page.locator('.fd-flat .fd-cover-status')).toBeVisible();
+      expect(await page.evaluate(() => document.getAnimations().filter((a) => /^fd-(b|front|back)/.test((a as CSSAnimation).animationName ?? '')).length)).toBe(0);
+      await page.waitForTimeout(7000); // nothing opens it by itself
+      await expect(fig(page)).toHaveAttribute('data-fold', 'closed');
+      await btn.click();
+      await expect(fig(page)).toHaveAttribute('data-fold', 'open');
+      await expect.poll(() => page.locator('.fd-stage').evaluate((el) => Number(getComputedStyle(el).opacity))).toBe(1);
+      const b = (await page.locator('.fd').boundingBox())!; // a drag does not turn anything
+      await page.mouse.move(b.x + b.width * 0.8, b.y + b.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(b.x + b.width * 0.8 - 200, b.y + b.height / 2, { steps: 8 });
+      await page.mouse.up();
+      expect(await foldVar(page)).toBe(0);
+      await expect(page.locator('.fd')).toHaveAttribute('data-phase', 'play');
+    });
+  });
 });

@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { FoldBody, FoldEdges, FoldSpine, foldVars } from './FoldFrame';
+import { OPEN_MS, QUIET_MS, autoDecision, isMoving, type FoldMachine } from './foldMotion';
+import { useFoldDevice } from './useFoldDevice';
 
 type Line = { who: 'you' | 'stay'; text: string };
 
@@ -80,12 +82,10 @@ const GAP = 650;
 const HOLD = 3800;
 const SOLVE_MS = 1100; // the ring turns while it is being worked out, then it is a tick
 const TICK = 60;
-// The fold: the second screen swings shut over the first (CLOSE_MS), lies shut a beat while the next call is swapped in (SHUT_MS),
-// then unfolds (OPEN_MS, the last part of it a short settle) and the new call begins the moment it is open. About 1.2 s in all.
-// fold.css animates the same numbers. Nothing on the screens moves while they fold, so the blur is not recomputed on every frame.
-const CLOSE_MS = 540;
+// The fold (foldMotion.ts, useFoldDevice.ts, fold.css): at the end of a call the second screen swings shut over the first, lies shut a beat
+// (SHUT_MS) while the next call is swapped in, then unfolds (OPEN_MS) and the new call begins the moment it is open. About 1.2 s in all.
+// The person can fold and unfold it too (button, tap, drag): then the call goes on where it was and the timeline leaves the device alone.
 const SHUT_MS = 60;
-const OPEN_MS = 600;
 
 /** The moment each word appears, in ms from the first word. */
 export function wordOffsets(text: string, who: 'you' | 'stay'): number[] {
@@ -119,22 +119,12 @@ const PLANS = SCENES.map((s) => plan(s.lines));
 /** Where the first scene starts: the first line and Stay's reply are already on screen, then the call carries on. */
 const OPENING = PLANS[0].steps[1].end;
 
-type Phase = 'play' | 'closing' | 'opening';
-/** t: ms into the call (frozen while the screens close, and negative while they open: the new call starts as they finish); p: ms into the fold; next: the scene that will be showing after the fold. */
-type Clock = { scene: number; next: number; phase: Phase; t: number; p: number };
+/** t: ms into the call (frozen while the timeline folds the device, and negative while it opens: the new call starts as it finishes); next: the scene that will be showing after the fold. */
+type Clock = { scene: number; next: number; t: number };
 
-function advance(c: Clock): Clock {
-  const p = c.p + TICK;
-  if (c.phase === 'closing') {
-    return p >= CLOSE_MS + SHUT_MS ? { scene: c.next, next: c.next, phase: 'opening', t: -OPEN_MS, p: 0 } : { ...c, p };
-  }
-  const t = c.t + TICK;
-  if (c.phase === 'opening') {
-    if (p < OPEN_MS) return { ...c, t, p };
-    return c.next === c.scene ? { ...c, t, phase: 'play', p } : { ...c, t, phase: 'closing', p: 0 }; // a scene was chosen while opening
-  }
+function advance(c: Clock, hold: boolean): Clock {
   const { total } = PLANS[c.scene];
-  return t >= total ? { ...c, t: total, phase: 'closing', p: 0, next: (c.scene + 1) % SCENES.length } : { ...c, t };
+  return hold || c.t >= total ? c : { ...c, t: Math.min(total, c.t + TICK) };
 }
 
 function Wave() {
@@ -174,12 +164,12 @@ function Bubble({ row, t, reduced }: { row: Row; t: number; reduced: boolean }) 
   );
 }
 
-type ScreenProps = { id: 'a' | 'b'; rows: Row[]; scene: number; t: number; reduced: boolean; status: string | null; speaking: boolean; children?: React.ReactNode };
+type ScreenProps = { id: 'a' | 'b'; rows: Row[]; scene: number; t: number; reduced: boolean; status: string | null; speaking: boolean; folded?: boolean; children?: React.ReactNode };
 
-function Screen({ id, rows, scene, t, reduced, status, speaking, children }: ScreenProps) {
+function Screen({ id, rows, scene, t, reduced, status, speaking, folded, children }: ScreenProps) {
   return (
     <>
-    <div className="fd-screen" data-screen={id}>
+    <div className="fd-screen" data-screen={id} aria-hidden={folded ? 'true' : undefined}>
       <div className="fd-bar">
         <span className="fd-face" data-mode={speaking ? 'speaking' : 'idle'}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -202,16 +192,43 @@ function Screen({ id, rows, scene, t, reduced, status, speaking, children }: Scr
   );
 }
 
+/** The small display on the outside of the shut device (and, with reduced motion, the whole shut device): the Stay mark and what the call is doing. */
+function Cover({ status, speaking }: { status: string; speaking: boolean }) {
+  return (
+    <div className="fd-cover">
+      <span className="fd-face" data-mode={speaking ? 'speaking' : 'idle'}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/brand/stay-mark.svg" alt="" width={24} height={24} />
+      </span>
+      <span className="fd-status fd-cover-status">{status}</span>
+    </div>
+  );
+}
+
 const TILT_MAX = 8; // degrees: the most the device turns to follow the pointer
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
 export function HeroExample() {
-  const [clock, setClock] = useState<Clock>({ scene: 0, next: 0, phase: 'play', t: OPENING, p: 0 });
+  const [clock, setClock] = useState<Clock>({ scene: 0, next: 0, t: OPENING });
   const [paused, setPaused] = useState(false);
   const [reduced, setReduced] = useState(false);
   const [onScreen, setOnScreen] = useState(true);
   const ref = useRef<HTMLElement>(null);
   const deviceRef = useRef<HTMLDivElement>(null);
+  const hitRef = useRef<HTMLDivElement>(null);
+  const clockRef = useRef(clock);
+  clockRef.current = clock;
+  const quiet = useRef(0); // ms the automatic fold still waits after the person touched the device
+  const folded = useRef(0); // ms the person has left it folded
+  const halted = paused || !onScreen;
+
+  // The person touched the device (button, tap, a drag let go): the timeline waits QUIET_MS. If it was the timeline's own fold they stopped, that scene change is off.
+  const onUser = (m: FoldMachine) => {
+    quiet.current = QUIET_MS;
+    folded.current = 0;
+    if (m.state === 'closing' && m.by === 'auto') setClock((c) => (c.next === c.scene ? c : { ...c, next: c.scene }));
+  };
+  const { fm, driver } = useFoldDevice({ deviceRef, hitRef, halted, reduced, onUser });
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -229,13 +246,34 @@ export function HeroExample() {
     return () => io.disconnect();
   }, []);
 
-  const halted = paused || !onScreen;
-
+  // The call's clock, and the timeline's decisions: fold at the end of a call, open a fold the person forgot. Paused or off screen, none of it runs.
   useEffect(() => {
     if (halted || reduced) return;
-    const id = setInterval(() => setClock(advance), TICK);
+    const id = setInterval(() => {
+      const m = driver.m;
+      setClock((c) => advance(c, m.state === 'closing' && m.by === 'auto'));
+      quiet.current = Math.max(0, quiet.current - TICK);
+      folded.current = m.state === 'closed' && m.by === 'user' ? folded.current + TICK : 0;
+      const c = clockRef.current;
+      const act = autoDecision({ state: m.state, by: m.by, foldedMs: folded.current, quietMs: quiet.current, wantSwap: c.next !== c.scene || c.t >= PLANS[c.scene].total });
+      if (act === 'unfold') driver.send({ type: 'request', to: 'open', by: 'auto' });
+      if (act === 'fold') {
+        setClock((x) => (x.next !== x.scene ? x : { ...x, next: (x.scene + 1) % SCENES.length }));
+        driver.send({ type: 'request', to: 'closed', by: 'auto' });
+      }
+    }, TICK);
     return () => clearInterval(id);
-  }, [halted, reduced]);
+  }, [halted, reduced, driver]);
+
+  // Shut by the timeline (or a scene chosen while it was folded): the next call is swapped in under the glass, then it opens.
+  useEffect(() => {
+    if (halted || fm.state !== 'closed' || fm.by !== 'auto') return;
+    const id = setTimeout(() => {
+      setClock((c) => ({ scene: c.next, next: c.next, t: -OPEN_MS }));
+      driver.send({ type: 'request', to: 'open', by: 'auto' });
+    }, SHUT_MS);
+    return () => clearTimeout(id);
+  }, [fm, halted, driver]);
 
   // The device leans toward the pointer, up to TILT_MAX degrees. Mouse and pen only, never touch, never with reduced motion, and only while it is playing on screen.
   // The tilt is two custom properties; fold.css turns them into an eased transform, so this code never animates anything.
@@ -256,7 +294,7 @@ export function HeroExample() {
       if (!frame) frame = requestAnimationFrame(apply);
     };
     const move = (e: PointerEvent) => {
-      if (e.pointerType === 'touch') return;
+      if (e.pointerType === 'touch' || el.dataset.phase === 'dragging') return; // not while the person is turning the device by hand
       const r = el.getBoundingClientRect();
       aim(clamp((e.clientX - (r.left + r.width / 2)) / (window.innerWidth / 2), -1, 1), clamp((e.clientY - (r.top + r.height / 2)) / (window.innerHeight / 2), -1, 1));
     };
@@ -274,21 +312,27 @@ export function HeroExample() {
     };
   }, [halted, reduced]);
 
-  // asking for reduced motion mid-call: land on the scene that was on its way, fully drawn, with no fold
+  // asking for reduced motion mid-call: land on the scene that was on its way, fully drawn (the device itself is settled by useFoldDevice)
   useEffect(() => {
-    if (reduced) setClock((c) => ({ ...c, scene: c.next, phase: 'play' }));
+    if (reduced) setClock((c) => ({ ...c, scene: c.next }));
   }, [reduced]);
 
+  // choosing a scene: the device folds, the scene is swapped in under the glass, it opens (a device the person left folded does the same)
   const pick = (i: number) => {
     setPaused(false);
-    setClock((c) => {
-      if (reduced) return { scene: i, next: i, phase: 'play', t: 0, p: 0 };
-      return c.phase === 'play' ? { ...c, next: i, phase: 'closing', p: 0 } : { ...c, next: i };
-    });
+    quiet.current = 0;
+    if (reduced) {
+      setClock({ scene: i, next: i, t: 0 });
+      driver.send({ type: 'request', to: 'open', by: 'auto' });
+      return;
+    }
+    setClock((c) => ({ ...c, next: i }));
+    driver.send({ type: 'request', to: 'closed', by: 'auto' });
   };
 
   const { scene, next, t } = clock;
-  const phase = reduced ? 'play' : clock.phase;
+  const phase = fm.state === 'open' ? 'play' : fm.state;
+  const timelineFold = fm.state === 'closing' && fm.by === 'auto';
   const current = SCENES[scene];
   const { steps, outcomeAt } = PLANS[scene];
   const outcome = OUTCOME[current.id];
@@ -296,7 +340,7 @@ export function HeroExample() {
 
   // what is on screen now: every line that has started (all of them when motion is reduced), each on its own screen
   const rows: Row[] = current.lines.map((line, i) => ({ line, i, step: steps[i] })).filter(({ step }) => reduced || t >= step.start);
-  const live = reduced || phase === 'closing' ? undefined : rows.find(({ step }) => t >= step.start && t < step.end);
+  const live = reduced || timelineFold ? undefined : rows.find(({ step }) => t >= step.start && t < step.end);
   const speaking = live?.line.who === 'stay' && t >= live.step.textStart;
   const status = paused ? 'Paused' : reduced ? 'Example' : live ? (live.line.who === 'you' ? 'Listening' : 'Speaking') : 'Listening';
   const lastOnB = !reduced && rows.length > 0 && onSecondScreen(rows[rows.length - 1].i, count);
@@ -306,13 +350,14 @@ export function HeroExample() {
   const solved = reduced || t >= outcomeAt + SOLVE_MS;
 
   return (
-    <figure ref={ref} className="lp-hero-example fd-figure" data-testid="hero-example" aria-labelledby="hero-example-caption">
+    <figure ref={ref} className="lp-hero-example fd-figure" data-testid="hero-example" data-fold={fm.head} aria-labelledby="hero-example-caption">
       {/* the device is a picture of the call; the same words are in the list below for a screen reader */}
-      <div ref={deviceRef} className="fd" data-phase={phase} data-halt={halted ? 'true' : 'false'} style={foldVars()} aria-hidden="true">
+      <div ref={deviceRef} className="fd" data-phase={phase} data-moving={isMoving(fm.state) ? 'true' : 'false'} data-halt={halted ? 'true' : 'false'} style={foldVars()} aria-hidden="true">
         <div className="fd-light" />
         <div className="fd-shadows">
           <i className="fd-shadow fd-shadow-a"><i /></i>
           <i className="fd-shadow fd-shadow-b"><i /></i>
+          <i className="fd-contact" />
         </div>
         <div className="fd-stage">
           <div className="fd-tilt">
@@ -332,7 +377,7 @@ export function HeroExample() {
                 <FoldEdges role="b" />
                 <div className="fd-front">
                   <FoldBody role="b" />
-                  <Screen id="b" rows={rowsB} scene={scene} t={t} reduced={reduced} status={lastOnB ? status : null} speaking={!!speaking && lastOnB}>
+                  <Screen id="b" rows={rowsB} scene={scene} t={t} reduced={reduced} status={lastOnB ? status : null} speaking={!!speaking && lastOnB} folded={fm.head === 'closed'}>
                     <i className="fd-cam fd-only-wide" />
                     <div className="fd-outcome-slot">
                       {solvedShown && (
@@ -348,11 +393,16 @@ export function HeroExample() {
                   </Screen>
                   <i className="fd-ring" />
                 </div>
-                <i className="fd-back" />
+                <div className="fd-back">
+                  <i className="fd-lid-streak" />
+                  <Cover status={status} speaking={!!speaking} />
+                </div>
               </div>
             </div>
           </div>
         </div>
+        <div className="fd-flat"><Cover status={status} speaking={!!speaking} /></div>
+        <div ref={hitRef} className="fd-hit" />
       </div>
 
       <div className="fd-controls">
@@ -370,6 +420,9 @@ export function HeroExample() {
             </button>
           ))}
         </div>
+        <button type="button" onClick={driver.toggle} className="fd-chip fd-fold" data-testid="hero-fold">
+          {fm.head === 'closed' ? 'Unfold' : 'Fold'}
+        </button>
         {!reduced && (
           <button type="button" onClick={() => setPaused((p) => !p)} aria-pressed={paused} className="fd-chip fd-pause" data-testid="hero-pause">
             {paused ? 'Play' : 'Pause'}
