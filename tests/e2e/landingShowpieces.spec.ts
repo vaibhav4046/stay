@@ -6,17 +6,23 @@ import { SOAK } from '../../src/components/landing/soakMeasured';
 
 const open = async (page: Page) => {
   await page.goto('/');
+  await expect(page.getByTestId('features')).toBeAttached();
+};
+/** The five-stage loop and the benchmark board live on the proof page, not the home page. */
+const openProof = async (page: Page) => {
+  await page.goto('/proof');
   await expect(page.getByTestId('pipeline')).toBeAttached();
 };
 
 test.describe('Landing showpieces: motion loop, feature cards, benchmark board', () => {
   test('the page has the five-stage loop, six feature cards and the benchmark board, as faceted glass', async ({ page }) => {
-    await open(page);
+    await openProof(page);
     await expect(page.getByTestId('pipeline').locator('li')).toHaveCount(5);
-    await expect(page.getByTestId('features').locator('li[data-testid^="feature-"]')).toHaveCount(6);
     for (const id of ['bench-waterfall', 'bench-words', 'bench-languages', 'bench-speed', 'bench-audio']) {
       await expect(page.getByTestId(id), id).toBeAttached();
     }
+    await open(page);
+    await expect(page.getByTestId('features').locator('li[data-testid^="feature-"]')).toHaveCount(6);
     const card = page.getByTestId('feature-pauses');
     const css = await card.evaluate((el) => {
       const s = getComputedStyle(el);
@@ -28,7 +34,7 @@ test.describe('Landing showpieces: motion loop, feature cards, benchmark board',
   });
 
   test('every number on the board is read from the evidence files, and the waterfall adds up', async ({ page }) => {
-    await open(page);
+    await openProof(page);
     const wf = page.getByTestId('bench-waterfall');
     await wf.scrollIntoViewIfNeeded();
     const run = JSON.parse(readFileSync(LIVE.file, 'utf8'));
@@ -63,34 +69,36 @@ test.describe('Landing showpieces: motion loop, feature cards, benchmark board',
             return t?.iterations === Infinity && el?.closest('#how-it-works, #features');
           }).length,
       );
+    const loopsOnBothPages = async (page: Page) => {
+      await open(page);
+      await page.locator('#features').scrollIntoViewIfNeeded(); // sections far down are not rendered (content-visibility) until they are near
+      const home = await looping(page);
+      await openProof(page);
+      await page.locator('#how-it-works').scrollIntoViewIfNeeded();
+      return home + (await looping(page));
+    };
     const moving = await browser.newContext();
-    const a = await moving.newPage();
-    await open(a);
-    await a.locator('#how-it-works').scrollIntoViewIfNeeded(); // sections far down are not rendered (content-visibility) until they are near
-    await a.locator('#features').scrollIntoViewIfNeeded();
-    expect(await looping(a)).toBeGreaterThan(10);
+    expect(await loopsOnBothPages(await moving.newPage())).toBeGreaterThan(10);
     await moving.close();
 
     const still = await browser.newContext({ reducedMotion: 'reduce' });
-    const b = await still.newPage();
-    await open(b);
-    await b.locator('#how-it-works').scrollIntoViewIfNeeded();
-    await b.locator('#features').scrollIntoViewIfNeeded();
-    expect(await looping(b)).toBe(0);
+    expect(await loopsOnBothPages(await still.newPage())).toBe(0);
     await still.close();
   });
 
   for (const width of [320, 390, 1440]) {
     test(`no sideways scroll at ${width}px and the cards stay inside the screen`, async ({ page }) => {
       await page.setViewportSize({ width, height: 900 });
-      await open(page);
-      for (const id of ['pipeline', 'features', 'benchmarks']) {
-        const box = await page.getByTestId(id).boundingBox();
-        expect(box, id).not.toBeNull();
-        expect(box!.x + box!.width, id).toBeLessThanOrEqual(width + 1);
+      for (const [load, ids] of [[open, ['features']], [openProof, ['pipeline', 'benchmarks']]] as const) {
+        await load(page);
+        for (const id of ids) {
+          const box = await page.getByTestId(id).boundingBox();
+          expect(box, id).not.toBeNull();
+          expect(box!.x + box!.width, id).toBeLessThanOrEqual(width + 1);
+        }
+        const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
+        expect(overflow).toBe(false);
       }
-      const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
-      expect(overflow).toBe(false);
     });
   }
 

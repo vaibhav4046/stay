@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { disablePush, enablePush, readPushState, type PushState } from '@/lib/push/client';
+import { clearNudgeData, publishNudgeContext } from '@/lib/push/context';
 
 const NOTE: Record<Exclude<PushState, 'loading' | 'on' | 'off'>, string> = {
-  unsupported: 'This browser cannot receive background notifications. On iPhone, add Stay to the Home Screen first.',
+  unsupported: 'This browser cannot receive background notifications. Chrome, Edge, Firefox and Safari on a Mac can.',
+  'needs-install': 'On iPhone, notifications work for apps on your Home Screen. Tap Share, then Add to Home Screen, open Stay from there, and come back to this switch.',
   unconfigured: 'Check-ins are not switched on for this copy of Stay.',
   denied: 'Notifications are blocked for this site. Allow them in the browser settings, then come back.',
 };
@@ -24,9 +26,11 @@ export function ProactiveSettings() {
     if (on) {
       const next = await enablePush();
       if (next === 'error') setFailed(true);
+      else if (next === 'on') void publishNudgeContext(); // so the very first check-in can already be about their list
       setState(next === 'error' ? 'off' : next);
     } else {
       await disablePush();
+      await clearNudgeData();
       setState('off');
     }
     setBusy(false);

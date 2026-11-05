@@ -11,7 +11,7 @@ export type SendResult = 'ok' | 'gone' | 'failed';
 
 export async function sendPush(sub: PushSubscriptionJson, body: string, topic: string): Promise<SendResult> {
   try {
-    await webpush.sendNotification(sub, JSON.stringify({ title: 'Stay', body, inbox: topic !== 'welcome' }), {
+    await webpush.sendNotification(sub, JSON.stringify({ title: 'Stay', body, inbox: topic !== 'welcome', slot: topic === 'welcome' ? undefined : topic }), {
       vapidDetails: { subject: process.env.PUSH_CONTACT || SITE, publicKey: process.env.VAPID_PUBLIC_KEY ?? '', privateKey: process.env.VAPID_PRIVATE_KEY ?? '' },
       TTL: 6 * 60 * 60, // an unread nudge from this morning is stale by afternoon
       urgency: 'low',

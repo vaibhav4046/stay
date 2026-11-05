@@ -5,7 +5,6 @@ import { UrgentHelpButton } from '@/components/UrgentHelpButton';
 const ANCHORS = [
   { href: '#watch', label: 'Watch' },
   { href: '#how', label: 'How it works' },
-  { href: '#measured', label: 'Measured' },
   { href: '#trust', label: 'Trust' },
 ];
 
@@ -74,6 +73,7 @@ export function SiteFooter() {
           <p className="mb-1 font-medium text-ink">About</p>
           <Link href="/privacy" className="inline-flex min-h-11 items-center text-ink-2 hover:text-ink">Privacy</Link>
           <Link href="/terms" className="inline-flex min-h-11 items-center text-ink-2 hover:text-ink">Terms and safety</Link>
+          <Link href="/proof" className="inline-flex min-h-11 items-center text-ink-2 hover:text-ink">How we tested it</Link>
           <a href="https://github.com/vaibhav4046/stay" rel="noopener noreferrer" className="inline-flex min-h-11 items-center text-ink-2 hover:text-ink">Source code</a>
         </nav>
       </div>
