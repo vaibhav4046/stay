@@ -17,7 +17,7 @@ The form (https://forms.gle/XCW2RdZGbarVLnKEA) needs a Google sign-in, so it is 
 **What is real and what is not (say this in the form):**
 - Stay's replies and voice in the film are real, recorded once in the live app. Pix's voice, the effects and the music are synthetic (ElevenLabs), and the film says so.
 - All speech tests used synthetic speakers. Nobody has tested a human voice in a real room yet.
-- Stay is proactive while the page is open (timer check-ins, reminders as notifications, a welcome back after hours away, an all-day companion mode). It cannot wake itself when the browser is closed.
+- Stay is proactive: with the page open (timer check-ins, reminders, a welcome back after hours away, an all-day companion mode) and, if the person switches it on in Settings, with the app closed: a scheduled server sends at most two short, general Web Push messages a day (morning and evening windows in their time zone, never at night). The server holds only the browser's notification address and time zone. Tested end to end with a real Chrome, the real push service and the real store.
 - Not a crisis service, no medication advice, history stays on the device.
 
 **Evidence to point judges at:** docs/evidence/ (real-provider speech measurements, real-e2e call, 70-minute soak, 227-test browser suite), REVIEWERS.md for a five-minute path.

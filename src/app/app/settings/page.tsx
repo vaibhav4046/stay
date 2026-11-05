@@ -14,6 +14,8 @@ import { useAuth } from '@/lib/auth/useAuth';
 import { AuthModal } from '@/components/AuthModal';
 import { KeysSection } from '@/components/KeysSection';
 import { StyleSettings } from '@/components/StyleSettings';
+import { ProactiveSettings } from '@/components/ProactiveSettings';
+import { disablePush } from '@/lib/push/client';
 import { PageSkeleton } from '@/components/PageSkeleton';
 import { PageHeading } from '@/components/PageHeading';
 
@@ -156,6 +158,8 @@ export default function SettingsPage() {
 
       <StyleSettings />
 
+      <ProactiveSettings />
+
       <KeysSection />
 
       <section className="card p-5 sm:p-6" aria-labelledby="data-title">
@@ -189,6 +193,7 @@ export default function SettingsPage() {
                   className="btn btn-danger"
                   onClick={async () => {
                     try {
+                      await disablePush(); // the notification address is the one thing the server holds
                       await deleteAllUserData();
                       setDeleteError(null);
                       setDeleted(true);

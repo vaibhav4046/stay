@@ -1,0 +1,20 @@
+Stay check-ins: real end-to-end run (scripts/push-e2e.mjs), 5 Nov 2026, local build of branch proactive-push.
+No mocks: Chrome (real profile folder, muted) -> real push service (fcm.googleapis.com) -> local Next server -> private Vercel Blob store.
+
+PASS  settings shows the check-ins switch (server reports push configured)
+PASS  turning it on did not show an error
+PASS  browser holds a real push subscription (https://fcm.googleapis.com)
+PASS  server stored exactly one new record in the Blob store
+PASS  service worker showed the welcome notification: {"title":"Stay","body":"Stay is on. I will check in softly, at most twice a day, and you can switch me off any time in Settings.","tag":"stay-proactive"}
+PASS  record holds only sub, tz, created, sent
+PASS  tick answered 200: {"subscribers":1,"sent":0,"idle":1,"removed":0,"failed":0}
+PASS  tick refuses a wrong secret (401)
+PASS  found a zone where it is inside a send window right now: Pacific/Honolulu
+PASS  tick sent the due message: {"subscribers":1,"sent":1,"idle":0,"removed":0,"failed":0}
+PASS  the check-in arrived in the browser: "Winding down? Tell me what is left in your head and we will sort it or park it."
+PASS  a second tick in the same window sends nothing: {"subscribers":1,"sent":0,"idle":1,"removed":0,"failed":0}
+PASS  browser subscription removed
+PASS  server record removed (store back to its starting size)
+
+Not covered: a phone, Safari/iOS (needs the app added to the Home Screen), Firefox, and a day-long wait for the real morning/evening windows.
+The scheduled-window send above moved the stored time zone to one where it was evening, then called the tick endpoint.

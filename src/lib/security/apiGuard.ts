@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 
-export type RateBucket = 'token' | 'chat' | 'coach' | 'tts' | 'orb' | 'agent';
+export type RateBucket = 'token' | 'chat' | 'coach' | 'tts' | 'orb' | 'agent' | 'push';
 
 const BUCKET_LIMITS: Record<RateBucket, { perSession: number; perIp: number; windowMs: number }> = {
   token: { perSession: 10, perIp: 20, windowMs: 60_000 },
@@ -10,6 +10,7 @@ const BUCKET_LIMITS: Record<RateBucket, { perSession: number; perIp: number; win
   tts: { perSession: 30, perIp: 60, windowMs: 60_000 },
   orb: { perSession: 30, perIp: 60, windowMs: 60_000 },
   agent: { perSession: 20, perIp: 30, windowMs: 60_000 },
+  push: { perSession: 6, perIp: 12, windowMs: 60_000 },
 };
 
 const MAX_CONCURRENT_VOICE_SESSIONS = 3;

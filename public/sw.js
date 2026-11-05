@@ -17,6 +17,29 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+/* Stay's own check-ins when the app is closed (opt-in, Settings). The text comes from the server; where a tap lands never does. */
+self.addEventListener('push', (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch (e) {
+    data = {};
+  }
+  const title = typeof data.title === 'string' && data.title ? data.title.slice(0, 60) : 'Stay';
+  const body = typeof data.body === 'string' ? data.body.slice(0, 240) : '';
+  event.waitUntil(self.registration.showNotification(title, { body, icon: '/icons/icon-192.png', badge: '/icons/icon-192.png', tag: 'stay-proactive' }));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((wins) => {
+      const open = wins.find((w) => new URL(w.url).origin === self.location.origin);
+      return open ? open.focus() : self.clients.openWindow('/app/today');
+    }),
+  );
+});
+
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
