@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { CoachSessionRecord } from '@/types/domain';
 import type { TodayItem } from '@/lib/coach/todayList';
-import { BANNED_PHRASES, buildDailyGreeting, countWinsYesterday, greetingCardDue, greetingSpokenDue, isCalm, markGreetingDismissed, markGreetingSpoken, openFromBefore } from '@/lib/coach/dailyGreeting';
+import { BANNED_PHRASES, buildDailyGreeting, countWinsYesterday, greetingCardDue, greetingSpokenDue, isCalm, markGreetingDismissed, markGreetingSpoken, openFromBefore, reopenGreetingCard, WELCOME_BACK_AFTER_MS } from '@/lib/coach/dailyGreeting';
 
 const store = new Map<string, string>();
 // @ts-expect-error node test shim
@@ -119,5 +119,13 @@ describe('once a day', () => {
     expect(greetingCardDue(at(19, 20))).toBe(false);
     expect(greetingCardDue(at(20, 8))).toBe(true);
     expect(greetingSpokenDue(at(20, 8))).toBe(true);
+  });
+
+  it('coming back after hours away makes the card due again the same day (a welcome back)', () => {
+    markGreetingDismissed(at(19, 9));
+    expect(greetingCardDue(at(19, 20))).toBe(false);
+    reopenGreetingCard();
+    expect(greetingCardDue(at(19, 20))).toBe(true);
+    expect(WELCOME_BACK_AFTER_MS).toBe(3 * 60 * 60 * 1000);
   });
 });

@@ -40,7 +40,7 @@ import { resolvePersona } from '@/lib/voice/personas';
 import { voiceNeeds } from '@/lib/voice/tts/caps';
 import { BrainDumpSheet } from '@/components/BrainDumpSheet';
 import { MemorySheet } from '@/components/MemorySheet';
-import { buildDailyGreeting, countWinsYesterday, greetingCardDue, greetingSpokenDue, markGreetingSpoken, openFromBefore, type DailyGreeting } from '@/lib/coach/dailyGreeting';
+import { WELCOME_BACK_AFTER_MS, reopenGreetingCard, buildDailyGreeting, countWinsYesterday, greetingCardDue, greetingSpokenDue, markGreetingSpoken, openFromBefore, type DailyGreeting } from '@/lib/coach/dailyGreeting';
 import { refreshLearnings } from '@/lib/coach/learnings';
 import { loadInstructions, styleLine } from '@/lib/coach/customInstructions';
 import { TodayCard } from '@/components/TodayCard';
@@ -454,12 +454,32 @@ export function StayHome({
     refreshLearnings(sessions);
   }, [sessions]);
 
+  // Stay is proactive while it is open, in the background too: coming back to the tab after hours away brings the calm card again (a welcome back with
+  // what was left open), and a system notification if the person allowed them. A browser tab cannot wake itself once it is closed.
+  const [welcomeBack, setWelcomeBack] = useState(0);
+  useEffect(() => {
+    let hiddenAt = 0;
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') {
+        hiddenAt = Date.now();
+        return;
+      }
+      if (hiddenAt && Date.now() - hiddenAt >= WELCOME_BACK_AFTER_MS) {
+        reopenGreetingCard();
+        setWelcomeBack((n) => n + 1);
+      }
+      hiddenAt = 0;
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, []);
+
   // the calm first-open-of-the-day card; rebuilt as the day's real data (wins, what was left open) loads in
   useEffect(() => {
     if (!greetingCardDue()) return setDaily(null);
     const now = new Date();
     setDaily(buildDailyGreeting({ now, name: loadUserMemory().name, winsYesterday: countWinsYesterday(today, sessions, now), openFromBefore: openFromBefore(today, now), quiet: quietMode }));
-  }, [today, sessions, quietMode]);
+  }, [today, sessions, quietMode, welcomeBack]);
 
   // the orb turns into a person while Stay speaks (or when asked), and back to the topical shape when you talk
   const presence = useOrbPresence({
