@@ -51,6 +51,7 @@ test('a choice the server did not accept is not shown as saved', async ({ page }
   await subscribedBrowser(page, 503);
   await page.goto('/app/settings');
   await page.getByTestId('checkin-morning').click();
-  await expect(page.getByRole('alert')).toBeVisible();
+  // Next.js also renders an empty role="alert" route announcer, so match the message itself.
+  await expect(page.getByRole('alert').filter({ hasText: 'Could not turn it on' })).toBeVisible();
   await expect(page.getByTestId('checkin-morning')).toBeChecked();
 });
