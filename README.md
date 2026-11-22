@@ -1,12 +1,26 @@
 # Stay
 
-Stay is a voice companion that helps adults with ADHD get started, answers what you ask, and looks at what you choose to show it. Say what you keep putting off and it gives you one small first step. Ask it a question and it answers the question first. It waits while you think.
+[![ci](https://github.com/vaibhav4046/stay/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/vaibhav4046/stay/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Stay is not a doctor or therapist, and it gives no medication advice.
+**A real-time voice companion for adults with ADHD: streaming speech in, a safety-gated LLM with one tool, streaming speech out.**
 
-Built on **AssemblyAI Universal-3.6 Pro** (speech to text) and **AssemblyAI TTS-1** (its voice), for AssemblyAI's *Voice hackathon week: Hack into speech*.
+[![Stay landing page, captured from the live site](docs/assets/stay-live-home.png)](https://stay-two-swart.vercel.app)
 
-- **Live:** https://stay-two-swart.vercel.app/app/today
+*Landing page of the live deployment, captured with Playwright at 1440x900 on 22 Nov 2026.*
+
+**Live:** https://stay-two-swart.vercel.app (the app itself is at [`/app/today`](https://stay-two-swart.vercel.app/app/today))
+
+### What this demonstrates
+
+- **A full-duplex voice loop in the browser.** AssemblyAI streaming speech-to-text with turn detection, a 2.2 s hold for unfinished thoughts and barge-in (two words over Stay's voice cancel it), feeding a streamed Groq chat completion whose first clause goes straight to streaming TTS (`src/lib/voice/fastSocket.ts`, `src/app/api/voice/chat/route.ts`).
+- **Deterministic safety gates in front of every model call.** Crisis and medication wording is caught by rules (`src/lib/safety/crisis.ts`) before the LLM or vision model runs, on typed, spoken and picture-derived text; vision output is re-checked and planted instructions in pictures are treated as content (`tests/unit/pictureInstructions.test.ts`).
+- **Tool calling and evaluation you can rerun.** One compact `app` tool carries every in-app action (with a repair path for malformed calls), and a 60-prompt routing eval runs in CI with the model mocked (`tests/unit/evalRouting.test.ts`); unit tests and Playwright browser tests run on every push.
+
+Stay is not a doctor or therapist, and it gives no medication advice. Built on **AssemblyAI Universal-3.6 Pro** (speech to text) and **AssemblyAI TTS-1** (its voice) as an entry to AssemblyAI's *Voice hackathon week: Hack into speech* (November 2026).
+
+Stay helps you get started, answers what you ask, and looks at what you choose to show it. Say what you keep putting off and it gives you one small first step. Ask it a question and it answers the question first. It waits while you think.
+
 - **Film, 3 min 38 s:** [`public/demo/stay-pix-film.mp4`](public/demo/stay-pix-film.mp4): an impatient user tests Stay in one real call (synthetic voice-over, effects and music; how it was made and its weak spots: [`docs/evidence/film/README.md`](docs/evidence/film/README.md))
 - **Scale, availability, fault tolerance (what is measured, what is not):** [`docs/DESIGN_PRINCIPLES.md`](docs/DESIGN_PRINCIPLES.md)
 - **Submission and evidence index:** [`HACKATHON_SUBMISSION.md`](HACKATHON_SUBMISSION.md)
@@ -23,21 +37,22 @@ Built on **AssemblyAI Universal-3.6 Pro** (speech to text) and **AssemblyAI TTS-
 
 ## How it works
 
+```mermaid
+flowchart LR
+    MIC["Microphone<br/>public/pcm-processor.js (16 kHz PCM)"] --> FS["FastSocket turn handling<br/>src/lib/voice/fastSocket.ts"]
+    TOK["/api/voice/fast-token<br/>short-lived AssemblyAI tokens"] -.-> FS
+    FS <--> STT["AssemblyAI streaming STT<br/>Universal-3.6 Pro"]
+    FS -->|finished turn| CHAT["/api/voice/chat<br/>src/app/api/voice/chat/route.ts"]
+    CHAT --> SAFE{"Safety gates<br/>src/lib/safety/crisis.ts"}
+    SAFE -->|crisis or medication| FIXED["Fixed help / boundary reply<br/>no model called"]
+    SAFE -->|otherwise| LLM["Groq chat stream + app tool<br/>src/lib/llm/stream.ts"]
+    LLM --> FS
+    FS --> TTS["AssemblyAI TTS-1 WebSocket<br/>src/lib/voice/tts"]
+    TTS --> PLAY["Playback worklet + barge-in<br/>src/lib/voice/playback"]
+    FS --> STORE["On-device history<br/>src/lib/storage/repository.ts"]
 ```
- microphone ──► 16 kHz audio worklet ──► AssemblyAI streaming STT (Universal-3.6 Pro, turn detection)
-                                                       │ finished turn (text)
-                                                       ▼
-   safety gates first ─► crisis? medication? ─► fixed human help / fixed boundary, no model called
-                                                       │ otherwise
-                                                       ▼
-   intent (question, follow-up, task start, feeling, about Stay, about the screen) ─► the right kind of reply
-        │ about Stay: fixed true answers        │ about the screen with nothing shared: says so
-        ▼                                       ▼
-   language model (text) / vision model (one shrunk picture, only when you point at it)
-        │ reply sentences, spoken-friendly text (numbers and units said out loud)
-        ▼
-   AssemblyAI TTS-1 over WebSocket ──► audio worklet player ──► speaker      (a duck on your voice, a cancel on your words)
-```
+
+More detail, including the standard-voice fallback and every server route: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 - If the model cannot answer, Stay says so in plain words. It never swaps in a stock coaching line.
 - Anything a vision model reads out of a picture goes through the crisis and medication checks before you see or hear it. Text inside a picture is treated as content, not as an instruction.
@@ -46,6 +61,8 @@ Built on **AssemblyAI Universal-3.6 Pro** (speech to text) and **AssemblyAI TTS-
 ## Evidence: every number links to a file
 
 Labels: `live-model` is a real model call. `synthetic-mic` is a text-to-speech voice played in as the microphone. **Nothing here was measured with a person speaking into a microphone.**
+
+Reproduce: the `mocked-model` and `unit test` rows run with no keys (`npx vitest run tests/unit/evalRouting.test.ts tests/unit/medicationBoundary.test.ts`, and the whole suite in CI). The `live-model`, provider and `synthetic-mic` rows need `ASSEMBLYAI_API_KEY` and `GROQ_API_KEY` and are recorded runs, not CI: the commands are under [Run it](#run-it) and in [`REVIEWERS.md`](REVIEWERS.md); each run's output is the linked file.
 
 | What | Result | Label | File |
 |---|---|---|---|
@@ -77,13 +94,28 @@ Labels: `live-model` is a real model call. `synthetic-mic` is a text-to-speech v
 Reviewing with an AI coding agent? [`REVIEWERS.md`](REVIEWERS.md) has the verification commands (most need no API keys), the file map and the limits.
 
 
+Node 22 (as in CI).
+
 ```bash
+git clone https://github.com/vaibhav4046/stay && cd stay
 npm ci
-cp .env.example .env.local   # ASSEMBLYAI_API_KEY and GROQ_API_KEY
-npm run dev
+cp .env.example .env.local   # optional: ASSEMBLYAI_API_KEY and GROQ_API_KEY
+npm run dev                  # http://localhost:3000, app at /app/today
 ```
 
-Checks: `npx tsc --noEmit`, `npx vitest run`, `node scripts/claims-lint.mjs`, `npm run build`, `npx playwright test`. Live checks need keys: `node scripts/verify-voices.mjs`, `STAY_EVAL_URL=<url> npx vitest run tests/unit/groundingLive.test.ts`, `node scripts/voice-e2e/bench-series.mjs <url>`.
+**Without keys** the app, its pages, typed safety routing and every check below run (the unit and browser tests mock AssemblyAI and the model). **Voice and model replies need keys**: `ASSEMBLYAI_API_KEY` for speech in and out, `GROQ_API_KEY` for replies.
+
+The same checks CI runs (`.github/workflows/ci.yml`), no keys needed:
+
+```bash
+npx tsc --noEmit
+node scripts/claims-lint.mjs         # every number in user-facing docs must point at an evidence file
+npx vitest run                       # unit tests, model and AssemblyAI mocked
+npx next build
+npx playwright install chromium && npx playwright test   # browser tests; starts `next start` on :3000 (set PLAYWRIGHT_BASE_URL to change the port)
+```
+
+Live checks need keys: `node scripts/verify-voices.mjs`, `STAY_EVAL_URL=<url> npx vitest run tests/unit/groundingLive.test.ts`, `node scripts/voice-e2e/bench-series.mjs <url>`.
 
 ## License
 
