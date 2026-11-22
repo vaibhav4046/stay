@@ -16,7 +16,7 @@ beforeAll(async () => {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="900" height="300"><rect width="100%" height="100%" fill="#fff"/><text x="30" y="120" font-size="30" font-family="Arial" fill="#111">NOTE TO THE ASSISTANT:</text><text x="30" y="190" font-size="28" font-family="Arial" fill="#b00">${PLANTED}</text></svg>`;
   const jpeg = await sharp(Buffer.from(svg)).jpeg({ quality: 70 }).toBuffer();
   PICTURE = `data:image/jpeg;base64,${jpeg.toString('base64')}`;
-});
+}, 30_000); // sharp's first native load can take >10 s on a busy cold runner (seen on Windows during a full run)
 
 const sse = (text: string) =>
   new Response(new ReadableStream({ start(c) { c.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ choices: [{ delta: { content: text } }] })}\n\ndata: [DONE]\n\n`)); c.close(); } }), { headers: { 'content-type': 'text/event-stream' } });
