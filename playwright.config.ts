@@ -21,7 +21,8 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      // Muted by default so no run ever plays sound; specs that set their own launchOptions also pass --mute-audio.
+      use: { ...devices['Desktop Chrome'], launchOptions: { args: ['--mute-audio'] } },
     },
   ],
 });
